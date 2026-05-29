@@ -15,10 +15,15 @@ export const appearanceOptions: Record<LinkAppearances, { label: string; value: 
   },
 }
 
+type LinkOverrides = Partial<GroupField> & {
+  /** Short DB identifier when nested paths exceed SQLite's 63-char limit */
+  dbName?: string
+}
+
 type LinkType = (options?: {
   appearances?: LinkAppearances[] | false
   disableLabel?: boolean
-  overrides?: Partial<GroupField>
+  overrides?: LinkOverrides
 }) => Field
 
 export const link: LinkType = ({ appearances, disableLabel = false, overrides = {} } = {}) => {

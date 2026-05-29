@@ -7,6 +7,16 @@ import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { ContentBlock } from '@/blocks/Content/Component'
 import { FormBlock } from '@/blocks/Form/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
+import { HeroBlock } from '@/blocks/HeroBlock/Component'
+import { StatsBlock } from '@/blocks/StatsBlock/Component'
+import { MissionBlock } from '@/blocks/MissionBlock/Component'
+import { PropertiesBlock } from '@/blocks/PropertiesBlock/Component'
+import { InteractiveMapBlock } from '@/blocks/InteractiveMapBlock/Component'
+import { VirtualTourBlock } from '@/blocks/VirtualTourBlock/Component'
+import { AdvisorsBlock } from '@/blocks/AdvisorsBlock/Component'
+import { TestimonialsBlock } from '@/blocks/TestimonialsBlock/Component'
+import { KnowledgeBaseBlock } from '@/blocks/KnowledgeBaseBlock/Component'
+import { DualActionBlock } from '@/blocks/DualActionBlock/Component'
 
 const blockComponents = {
   archive: ArchiveBlock,
@@ -14,6 +24,16 @@ const blockComponents = {
   cta: CallToActionBlock,
   formBlock: FormBlock,
   mediaBlock: MediaBlock,
+  heroBlock: HeroBlock,
+  statsBlock: StatsBlock,
+  missionBlock: MissionBlock,
+  propertiesBlock: PropertiesBlock,
+  interactiveMapBlock: InteractiveMapBlock,
+  virtualTourBlock: VirtualTourBlock,
+  advisorsBlock: AdvisorsBlock,
+  testimonialsBlock: TestimonialsBlock,
+  knowledgeBaseBlock: KnowledgeBaseBlock,
+  dualActionBlock: DualActionBlock,
 }
 
 export const RenderBlocks: React.FC<{
@@ -34,10 +54,10 @@ export const RenderBlocks: React.FC<{
 
             if (Block) {
               return (
-                <div className="my-16" key={index}>
+                <Fragment key={index}>
                   {/* @ts-expect-error there may be some mismatch between the expected types here */}
                   <Block {...block} disableInnerContainer />
-                </div>
+                </Fragment>
               )
             }
           }

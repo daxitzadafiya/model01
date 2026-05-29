@@ -7,6 +7,16 @@ import { CallToAction } from '../../blocks/CallToAction/config'
 import { Content } from '../../blocks/Content/config'
 import { FormBlock } from '../../blocks/Form/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
+import { HeroBlock } from '../../blocks/HeroBlock/config'
+import { StatsBlock } from '../../blocks/StatsBlock/config'
+import { MissionBlock } from '../../blocks/MissionBlock/config'
+import { PropertiesBlock } from '../../blocks/PropertiesBlock/config'
+import { InteractiveMapBlock } from '../../blocks/InteractiveMapBlock/config'
+import { VirtualTourBlock } from '../../blocks/VirtualTourBlock/config'
+import { AdvisorsBlock } from '../../blocks/AdvisorsBlock/config'
+import { TestimonialsBlock } from '../../blocks/TestimonialsBlock/config'
+import { KnowledgeBaseBlock } from '../../blocks/KnowledgeBaseBlock/config'
+import { DualActionBlock } from '../../blocks/DualActionBlock/config'
 import { hero } from '@/heros/config'
 import { slugField } from 'payload'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
@@ -72,7 +82,23 @@ export const Pages: CollectionConfig<'pages'> = {
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock],
+              blocks: [
+                CallToAction,
+                Content,
+                MediaBlock,
+                Archive,
+                FormBlock,
+                HeroBlock,
+                StatsBlock,
+                MissionBlock,
+                PropertiesBlock,
+                InteractiveMapBlock,
+                VirtualTourBlock,
+                AdvisorsBlock,
+                TestimonialsBlock,
+                KnowledgeBaseBlock,
+                DualActionBlock,
+              ],
               required: true,
               admin: {
                 initCollapsed: true,
