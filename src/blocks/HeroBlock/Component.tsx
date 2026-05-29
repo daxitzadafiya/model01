@@ -28,7 +28,7 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
           </button>
         </div>
         {/* Scroll Indicator */}
-        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden sm:flex flex-col items-center animate-bounce text-white/70">
+        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden  flex-col items-center animate-bounce text-white/70 md:hidden sm:hidden">
           <span className="font-label-sm text-label-sm mb-2">SCROLL</span>
           <span className="material-symbols-outlined">keyboard_arrow_down</span>
         </div>

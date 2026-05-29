@@ -1,0 +1,22 @@
+.logo {
+  width: 193px;
+  height: 34px;
+  height: auto;
+  object-fit: contain;
+}
+
+.light {
+  display: block;
+}
+
+.dark {
+  display: none;
+}
+
+:global(html[data-theme='dark']) .light {
+  display: none;
+}
+
+:global(html[data-theme='dark']) .dark {
+  display: block;
+}

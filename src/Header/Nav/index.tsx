@@ -13,7 +13,7 @@ type Props = {
 const navLinkClass = (isActive: boolean) =>
   `font-label-nav text-label-nav font-medium transition-colors duration-300 ${
     isActive
-      ? 'text-primary font-bold border-b-2 border-tertiary pb-1'
+      ? 'text-primary font-bold pb-1'
       : 'text-secondary hover:text-tertiary'
   }`
 

@@ -13,7 +13,7 @@ export async function Footer() {
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 md:gap-gutter">
         <div className="sm:col-span-2 md:col-span-1">
           <h2 className="font-headline-md text-headline-md md:text-headline-md text-surface-bright mb-4 md:mb-8">
-            ROUMPOS
+          ROUMPOS REAL ESTATE
           </h2>
           <p className="font-body-md text-body-md text-on-primary-fixed-variant mb-6 md:mb-8 max-w-md">
             Elevating the Greek real estate experience through heritage,
@@ -81,7 +81,8 @@ export async function Footer() {
       </div>
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-12 md:mt-20 pt-6 md:pt-8 border-t border-on-primary-fixed-variant/20 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
         <p className="font-label-sm text-label-sm text-on-primary-fixed-variant">
-          © 2024 ROUMPOS REAL ESTATE. ALL RIGHTS RESERVED.
+
+          © {new Date().getFullYear()} ROUMPOS REAL ESTATE. ALL RIGHTS RESERVED.
         </p>
         <div className="flex flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 md:gap-6 font-label-sm text-label-sm text-white">
           <Link className="hover:text-tertiary" href="#">
