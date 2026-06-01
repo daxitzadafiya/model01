@@ -9,6 +9,8 @@
  * The admin "Locale" menu only shows languages added in Globals → Localization
  * (see filterAdminLocales).
  */
+import type { LocalizationConfigWithLabels } from 'payload'
+
 import { filterAdminLocales } from './filterAdminLocales'
 
 export const cmsLocales = [
@@ -27,7 +29,7 @@ export const defaultLocale: Locale = 'en'
 
 export const localeCodes: Locale[] = cmsLocales.map((l) => l.code)
 
-export const payloadLocalization = {
+export const payloadLocalization: LocalizationConfigWithLabels = {
   locales: cmsLocales.map(({ code, label }) => ({ code, label })),
   defaultLocale,
   fallback: true,

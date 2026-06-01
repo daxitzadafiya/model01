@@ -1,13 +1,8 @@
-import type { PayloadRequest } from 'payload'
+import type { LocalizationConfigWithLabels, PayloadRequest } from 'payload'
 
 import { defaultLocale } from './locales'
 
-type AdminLocale = {
-  code: string
-  label?: string
-  rtl?: boolean
-  fallbackLocale?: string | string[]
-}
+type PayloadLocale = LocalizationConfigWithLabels['locales'][number]
 
 const fallbackCodes = ['en', 'de'] as const
 
@@ -19,9 +14,9 @@ export async function filterAdminLocales({
   locales,
   req,
 }: {
-  locales: AdminLocale[]
+  locales: PayloadLocale[]
   req: PayloadRequest
-}): Promise<AdminLocale[]> {
+}): Promise<PayloadLocale[]> {
   try {
     const global = await req.payload.findGlobal({
       slug: 'localization',

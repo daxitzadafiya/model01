@@ -1,4 +1,4 @@
-import type { GlobalConfig } from 'payload'
+import type { GlobalConfig, Option } from 'payload'
 
 import {
   cmsLocales,
@@ -13,6 +13,12 @@ const contentLocaleOptions = cmsLocales.map(({ code, label }) => ({
   label: `${label} (${code})`,
   value: code,
 }))
+
+function getSelectOptionValue(option: Option): string {
+  if (typeof option === 'string') return option
+  if ('value' in option && option.value != null) return String(option.value)
+  return ''
+}
 
 export const Localization: GlobalConfig = {
   slug: 'localization',
@@ -70,7 +76,8 @@ export const Localization: GlobalConfig = {
                 .filter((code): code is string => Boolean(code)) ?? []
 
             return options.filter((option) => {
-              const value = String(option.value)
+              const value = getSelectOptionValue(option)
+              if (!value) return false
               if (value === siblingData?.locale) return true
               return !usedLocales.includes(value)
             })
@@ -78,7 +85,7 @@ export const Localization: GlobalConfig = {
           admin: {
             description: `CMS code (not the display name). Pool: ${localeCodes.join(', ')} — only codes you add in src/i18n/locales.ts.`,
           },
-          validate: (value) => {
+          validate: (value: string | null | undefined) => {
             if (!value || !localeCodes.includes(value as Locale)) {
               return `Choose a valid locale code (${localeCodes.join(', ')}). Display names belong in "Display name", not here.`
             }
@@ -117,7 +124,7 @@ export const Localization: GlobalConfig = {
 
         const seen = new Set<string>()
         for (const row of rows) {
-          const code = row?.locale
+          const code = (row as { locale?: string | null })?.locale
           if (!code) continue
           if (seen.has(code)) {
             return `Each language must use a different Content locale. Duplicate: ${code}`
