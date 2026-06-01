@@ -42,7 +42,7 @@ export const MissionBlock: React.FC<Props> = ({ subtitle, title, content, button
           </p>
           {buttonText && (
             <div className="flex gap-8 mt-4">
-              <button className="font-label-nav text-label-nav text-primary border-b border-primary pb-1 hover:text-tertiary hover:border-tertiary transition-all">
+              <button className="font-label-nav text-label-nav text-primary border-b cursor-pointer border-primary pb-1 hover:text-tertiary hover:border-tertiary transition-all">
                 {buttonText}
               </button>
             </div>

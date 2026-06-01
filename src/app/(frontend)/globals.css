@@ -275,3 +275,22 @@ html[data-theme='light'] {
     rgba(0, 0, 0, 0.4)
   );
 }
+.about-hero-gradient {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.45) 35%,
+    rgba(0, 0, 0, 0.15) 60%,
+    transparent 100%
+  );
+}
+@media (max-width: 767px) {
+  .about-hero-gradient {
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.35) 50%,
+      rgba(0, 0, 0, 0.5) 100%
+    );
+  }
+}

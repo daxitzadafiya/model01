@@ -240,6 +240,9 @@ export interface Page {
     | TestimonialsBlock
     | KnowledgeBaseBlock
     | DualActionBlock
+    | FounderSpotlightBlock
+    | WhoWeAreBlock
+    | AboutUsHeroBlock
   )[];
   meta?: {
     title?: string | null;
@@ -1082,6 +1085,127 @@ export interface DualActionBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FounderSpotlightBlock".
+ */
+export interface FounderSpotlightBlock {
+  /**
+   * Small label above the founder name
+   */
+  subtitle?: string | null;
+  name: string;
+  /**
+   * e.g. Founder & Managing Director
+   */
+  role: string;
+  /**
+   * Optional pull quote displayed prominently
+   */
+  quote?: string | null;
+  bio: string;
+  portrait: number | Media;
+  highlights?:
+    | {
+        /**
+         * e.g. 25+
+         */
+        value: string;
+        /**
+         * e.g. Years of Excellence
+         */
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'founderSpotlightBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "WhoWeAreBlock".
+ */
+export interface WhoWeAreBlock {
+  /**
+   * Small uppercase label displayed above the title
+   */
+  subtitle?: string | null;
+  /**
+   * Main seriffed heading of the section
+   */
+  title: string;
+  /**
+   * Main narrative text explaining who you are
+   */
+  description: string;
+  /**
+   * Featured brand image
+   */
+  image: number | Media;
+  /**
+   * Core values, standards, or highlights (max 3 items)
+   */
+  pillars?:
+    | {
+        title: string;
+        description: string;
+        icon?: ('star' | 'heart' | 'shield' | 'trending-up' | 'award' | 'eye') | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Text displayed on the call-to-action button
+   */
+  buttonText?: string | null;
+  ctaLink: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+    label: string;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'whoWeAreBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "AboutUsHeroBlock".
+ */
+export interface AboutUsHeroBlock {
+  /**
+   * Small label above the headline
+   */
+  label?: string | null;
+  /**
+   * Large serif headline (line breaks are preserved)
+   */
+  headline: string;
+  /**
+   * Supporting paragraph below the headline
+   */
+  description: string;
+  /**
+   * Full-width background photograph
+   */
+  backgroundImage: number | Media;
+  /**
+   * Section height on desktop
+   */
+  height?: ('compact' | 'large' | 'fullscreen') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'aboutUsHeroBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1507,6 +1631,9 @@ export interface PagesSelect<T extends boolean = true> {
         testimonialsBlock?: T | TestimonialsBlockSelect<T>;
         knowledgeBaseBlock?: T | KnowledgeBaseBlockSelect<T>;
         dualActionBlock?: T | DualActionBlockSelect<T>;
+        founderSpotlightBlock?: T | FounderSpotlightBlockSelect<T>;
+        whoWeAreBlock?: T | WhoWeAreBlockSelect<T>;
+        aboutUsHeroBlock?: T | AboutUsHeroBlockSelect<T>;
       };
   meta?:
     | T
@@ -1820,6 +1947,70 @@ export interface DualActionBlockSelect<T extends boolean = true> {
               label?: T;
             };
       };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FounderSpotlightBlock_select".
+ */
+export interface FounderSpotlightBlockSelect<T extends boolean = true> {
+  subtitle?: T;
+  name?: T;
+  role?: T;
+  quote?: T;
+  bio?: T;
+  portrait?: T;
+  highlights?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "WhoWeAreBlock_select".
+ */
+export interface WhoWeAreBlockSelect<T extends boolean = true> {
+  subtitle?: T;
+  title?: T;
+  description?: T;
+  image?: T;
+  pillars?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        icon?: T;
+        id?: T;
+      };
+  buttonText?: T;
+  ctaLink?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "AboutUsHeroBlock_select".
+ */
+export interface AboutUsHeroBlockSelect<T extends boolean = true> {
+  label?: T;
+  headline?: T;
+  description?: T;
+  backgroundImage?: T;
+  height?: T;
   id?: T;
   blockName?: T;
 }

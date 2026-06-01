@@ -20,13 +20,13 @@ export async function Footer() {
             transparency, and architectural excellence.
           </p>
           <div className="flex gap-4">
-            <span className="material-symbols-outlined cursor-pointer hover:text-tertiary transition-colors">
+            <span className="material-symbols-outlined cursor-pointer text-tertiary transition-colors">
               public
             </span>
-            <span className="material-symbols-outlined cursor-pointer hover:text-tertiary transition-colors">
+            <span className="material-symbols-outlined cursor-pointer text-tertiary transition-colors">
               share
             </span>
-            <span className="material-symbols-outlined cursor-pointer hover:text-tertiary transition-colors">
+            <span className="material-symbols-outlined cursor-pointer text-tertiary transition-colors">
               language
             </span>
           </div>

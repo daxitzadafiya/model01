@@ -17,6 +17,9 @@ import { AdvisorsBlock } from '../../blocks/AdvisorsBlock/config'
 import { TestimonialsBlock } from '../../blocks/TestimonialsBlock/config'
 import { KnowledgeBaseBlock } from '../../blocks/KnowledgeBaseBlock/config'
 import { DualActionBlock } from '../../blocks/DualActionBlock/config'
+import { FounderSpotlightBlock } from '../../blocks/FounderSpotlightBlock/config'
+import { WhoWeAreBlock } from '../../blocks/WhoWeAreBlock/config'
+import { AboutUsHeroBlock } from '../../blocks/AboutUsHeroBlock/config'
 import { hero } from '@/heros/config'
 import { slugField } from 'payload'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
@@ -98,6 +101,9 @@ export const Pages: CollectionConfig<'pages'> = {
                 TestimonialsBlock,
                 KnowledgeBaseBlock,
                 DualActionBlock,
+                FounderSpotlightBlock,
+                WhoWeAreBlock,
+                AboutUsHeroBlock,
               ],
               required: true,
               admin: {
