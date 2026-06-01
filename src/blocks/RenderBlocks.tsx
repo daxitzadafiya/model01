@@ -17,6 +17,9 @@ import { AdvisorsBlock } from '@/blocks/AdvisorsBlock/Component'
 import { TestimonialsBlock } from '@/blocks/TestimonialsBlock/Component'
 import { KnowledgeBaseBlock } from '@/blocks/KnowledgeBaseBlock/Component'
 import { DualActionBlock } from '@/blocks/DualActionBlock/Component'
+import { FounderSpotlightBlock } from '@/blocks/FounderSpotlightBlock/Component'
+import { WhoWeAreBlock } from '@/blocks/WhoWeAreBlock/Component'
+import { AboutUsHeroBlock } from '@/blocks/AboutUsHeroBlock/Component'
 
 const blockComponents = {
   archive: ArchiveBlock,
@@ -34,6 +37,9 @@ const blockComponents = {
   testimonialsBlock: TestimonialsBlock,
   knowledgeBaseBlock: KnowledgeBaseBlock,
   dualActionBlock: DualActionBlock,
+  founderSpotlightBlock: FounderSpotlightBlock,
+  whoWeAreBlock: WhoWeAreBlock,
+  aboutUsHeroBlock: AboutUsHeroBlock,
 }
 
 export const RenderBlocks: React.FC<{
