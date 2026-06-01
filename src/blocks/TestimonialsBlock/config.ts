@@ -17,11 +17,13 @@ export const TestimonialsBlock: Block = {
           name: 'quote',
           type: 'textarea',
           required: true,
+          localized: true,
         },
         {
           name: 'authorName',
           type: 'text',
           required: true,
+          localized: true,
         },
         {
           name: 'authorRole',

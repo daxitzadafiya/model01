@@ -8,11 +8,12 @@ import { Media } from '@/components/Media'
 type Props = Extract<Page['layout'][0], { blockType: 'heroBlock' }>
 
 export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage, showSearch }) => {
+  console.log(title, buttonText, backgroundImage, showSearch)
   const ref = useReveal()
 
   return (
     <div ref={ref}>
-      <section className="relative min-h-[100dvh] md:h-screen w-full overflow-hidden -mt-16 md:-mt-20">
+      <section className="relative min-h-[100dvh] md:h-screen w-full overflow-hidden">
         <div className="absolute inset-0 hero-gradient z-10"></div>
         {typeof backgroundImage === 'object' && backgroundImage !== null && (
           <div className="absolute inset-0 w-full h-full object-cover">
@@ -36,7 +37,7 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
 
       {/* Floating Search */}
       {showSearch && (
-        <div className="relative z-30 max-w-5xl mx-auto -mt-10 md:-mt-16 px-margin-mobile md:px-margin-desktop reveal">
+        <div className="relative z-30 max-w-5xl mx-auto -mt-10 md:-mt-16 px-margin-mobile md:px-margin-desktop">
           <div className="bg-surface-container-lowest p-2 rounded-xl md:rounded-2xl shadow-2xl">
             <div className="flex border-b border-outline-variant/30 px-4 md:px-6">
               <button className="py-3 md:py-4 px-4 md:px-6 font-label-nav text-label-nav text-primary border-b-2 border-tertiary">
@@ -48,9 +49,13 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 md:p-6 items-end">
               <div>
-                <label className="block font-label-sm text-label-sm text-secondary mb-2">LOCATION</label>
+                <label className="block font-label-sm text-label-sm text-secondary mb-2">
+                  LOCATION
+                </label>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-tertiary">location_on</span>
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-tertiary">
+                    location_on
+                  </span>
                   <input
                     className="w-full pl-10 pr-4 py-3 bg-surface-container border border-outline-variant rounded-lg focus:border-tertiary focus:ring-0 text-body-md font-body-md"
                     placeholder="Athens, Cyclades..."
@@ -59,7 +64,9 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
                 </div>
               </div>
               <div>
-                <label className="block font-label-sm text-label-sm text-secondary mb-2">PROPERTY TYPE</label>
+                <label className="block font-label-sm text-label-sm text-secondary mb-2">
+                  PROPERTY TYPE
+                </label>
                 <select className="w-full px-4 py-3 bg-surface-container border border-outline-variant rounded-lg focus:border-tertiary focus:ring-0 text-body-md font-body-md">
                   <option>All Types</option>
                   <option>Villa</option>
@@ -68,7 +75,9 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
                 </select>
               </div>
               <div>
-                <label className="block font-label-sm text-label-sm text-secondary mb-2">PRICE RANGE</label>
+                <label className="block font-label-sm text-label-sm text-secondary mb-2">
+                  PRICE RANGE
+                </label>
                 <select className="w-full px-4 py-3 bg-surface-container border border-outline-variant rounded-lg focus:border-tertiary focus:ring-0 text-body-md font-body-md">
                   <option>Any Price</option>
                   <option>€1M - €3M</option>

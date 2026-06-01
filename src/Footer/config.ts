@@ -12,6 +12,7 @@ export const Footer: GlobalConfig = {
     {
       name: 'navItems',
       type: 'array',
+      localized: true,
       fields: [
         link({
           appearances: false,
@@ -19,6 +20,7 @@ export const Footer: GlobalConfig = {
       ],
       maxRows: 6,
       admin: {
+        description: 'Footer links for the current locale (switch locale in the admin bar to edit each language).',
         initCollapsed: true,
         components: {
           RowLabel: '@/Footer/RowLabel#RowLabel',

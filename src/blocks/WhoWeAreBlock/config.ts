@@ -12,6 +12,7 @@ export const WhoWeAreBlock: Block = {
     {
       name: 'subtitle',
       type: 'text',
+      localized: true,
       defaultValue: 'WHO WE ARE',
       admin: {
         description: 'Small uppercase label displayed above the title',
@@ -21,6 +22,7 @@ export const WhoWeAreBlock: Block = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
       admin: {
         description: 'Main seriffed heading of the section',
       },
@@ -29,6 +31,7 @@ export const WhoWeAreBlock: Block = {
       name: 'description',
       type: 'textarea',
       required: true,
+      localized: true,
       admin: {
         description: 'Main narrative text explaining who you are',
       },
@@ -54,6 +57,7 @@ export const WhoWeAreBlock: Block = {
           name: 'title',
           type: 'text',
           required: true,
+          localized: true,
           admin: {
             placeholder: 'e.g. Uncompromising Excellence',
           },
@@ -62,6 +66,7 @@ export const WhoWeAreBlock: Block = {
           name: 'description',
           type: 'textarea',
           required: true,
+          localized: true,
           admin: {
             placeholder: 'e.g. We set the standard for quality across all projects.',
           },
@@ -84,6 +89,7 @@ export const WhoWeAreBlock: Block = {
     {
       name: 'buttonText',
       type: 'text',
+      localized: true,
       admin: {
         description: 'Text displayed on the call-to-action button',
       },

@@ -7,20 +7,24 @@ export const MissionBlock: Block = {
     {
       name: 'subtitle',
       type: 'text',
+      localized: true,
     },
     {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'content',
       type: 'textarea',
       required: true,
+      localized: true,
     },
     {
       name: 'buttonText',
       type: 'text',
+      localized: true,
     },
     {
       name: 'image',

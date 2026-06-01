@@ -7,11 +7,13 @@ export const PropertiesBlock: Block = {
     {
       name: 'subtitle',
       type: 'text',
+      localized: true,
     },
     {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'backgroundColor',
@@ -41,11 +43,13 @@ export const PropertiesBlock: Block = {
           name: 'location',
           type: 'text',
           required: true,
+          localized: true,
         },
         {
           name: 'title',
           type: 'text',
           required: true,
+          localized: true,
         },
         {
           name: 'beds',

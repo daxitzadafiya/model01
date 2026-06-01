@@ -15,12 +15,14 @@ export const VirtualTourBlock: Block = {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
       defaultValue: 'Step Inside Your Future Home from Anywhere in the World.',
     },
     {
       name: 'buttonText',
       type: 'text',
       required: true,
+      localized: true,
       defaultValue: 'EXPLORE NOW',
     },
     link({

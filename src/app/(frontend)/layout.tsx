@@ -30,12 +30,14 @@ import configPromise from '@payload-config'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
+import { getActiveLocale } from '@/i18n/getLanguageMenu'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
+  const { locale } = await getActiveLocale()
 
   return (
-    <html className={cn(GeistSans.variable, GeistMono.variable, outfit.variable, ebGaramond.variable)} lang="en" suppressHydrationWarning>
+    <html className={cn(GeistSans.variable, GeistMono.variable, outfit.variable, ebGaramond.variable)} lang={locale} suppressHydrationWarning>
       <head>
         <InitTheme />
         <link href="/favicon.ico" rel="icon" sizes="32x32" />

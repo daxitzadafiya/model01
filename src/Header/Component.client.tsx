@@ -4,13 +4,17 @@ import { usePathname } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
 import type { Header } from '@/payload-types'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import type { LanguageMenuItem, Locale } from '@/i18n/config'
 import { HeaderNav } from './Nav'
 
 interface HeaderClientProps {
   data: Header
+  locale: Locale
+  languageMenu: LanguageMenuItem[]
 }
 
-export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
+export const HeaderClient: React.FC<HeaderClientProps> = ({ data, locale, languageMenu }) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
@@ -53,8 +57,9 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
 
         <HeaderNav data={data} mobileOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <span className="material-symbols-outlined text-primary cursor-pointer hover:scale-110 transition-transform text-[22px] md:text-[24px]">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <LanguageSwitcher items={languageMenu} currentLocale={locale} />
+          <span className="material-symbols-outlined text-primary cursor-pointer hover:scale-110 transition-transform text-[22px] md:text-[24px] p-1">
             favorite
           </span>
           <button

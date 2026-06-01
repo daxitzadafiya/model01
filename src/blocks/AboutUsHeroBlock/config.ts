@@ -11,6 +11,7 @@ export const AboutUsHeroBlock: Block = {
     {
       name: 'label',
       type: 'text',
+      localized: true,
       defaultValue: 'About Us',
       admin: {
         description: 'Small label above the headline',
@@ -21,6 +22,7 @@ export const AboutUsHeroBlock: Block = {
       type: 'textarea',
       required: true,
       defaultValue: "We don't just sell properties. We help you find home.",
+      localized: true,
       admin: {
         description: 'Large serif headline (line breaks are preserved)',
       },
@@ -29,6 +31,7 @@ export const AboutUsHeroBlock: Block = {
       name: 'description',
       type: 'textarea',
       required: true,
+      localized: true,
       defaultValue:
         'A full-service real estate company dedicated to helping clients confidently find, buy, sell, and invest in exceptional properties.',
       admin: {

@@ -11,17 +11,33 @@ import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
+import { Localization } from './globals/Localization/config'
 import { Theme } from './globals/Theme/config'
+import { payloadLocalization } from './i18n/locales'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { hasAdminCredentials } from './constants/adminUser'
 import { ensureAdminUser } from './utilities/ensureAdminUser'
 
+// Import locales Languages
+import { de } from '@payloadcms/translations/languages/de'
+import { en } from '@payloadcms/translations/languages/en'
+import { es } from '@payloadcms/translations/languages/es'
+import { fr } from '@payloadcms/translations/languages/fr'
+
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  // i18n localization
+  i18n: {
+    supportedLanguages: { en, de, fr, es },
+  },
+
+  // localization (content locales — see src/i18n/locales.ts to add codes)
+  localization: payloadLocalization,
+
   onInit: async (payload) => {
     // Skip during `next build` — workers initialize Payload in parallel and SQLite locks
     if (process.env.NEXT_PHASE === 'phase-production-build') return
@@ -50,7 +66,7 @@ export default buildConfig({
           rel: 'icon',
           type: 'image/ico',
           url: '/favicon.ico',
-        }
+        },
       ],
     },
     importMap: {
@@ -89,7 +105,7 @@ export default buildConfig({
   }),
   collections: [Pages, Posts, Media, Categories, Users],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, Theme],
+  globals: [Header, Footer, Theme, Localization],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

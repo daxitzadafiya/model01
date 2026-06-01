@@ -12,6 +12,7 @@ export const Header: GlobalConfig = {
     {
       name: 'navItems',
       type: 'array',
+      localized: true,
       fields: [
         link({
           appearances: false,
@@ -19,6 +20,7 @@ export const Header: GlobalConfig = {
       ],
       maxRows: 6,
       admin: {
+        description: 'Navigation links for the current locale (switch locale in the admin bar to edit each language).',
         initCollapsed: true,
         components: {
           RowLabel: '@/Header/RowLabel#RowLabel',

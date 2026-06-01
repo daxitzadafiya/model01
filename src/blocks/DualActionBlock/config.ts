@@ -7,16 +7,19 @@ const panelFields: Field[] = [
     name: 'title',
     type: 'text',
     required: true,
+    localized: true,
   },
   {
     name: 'description',
     type: 'textarea',
     required: true,
+    localized: true,
   },
   {
     name: 'buttonText',
     type: 'text',
     required: true,
+    localized: true,
   },
   link({
     appearances: false,

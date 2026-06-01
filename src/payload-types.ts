@@ -111,18 +111,25 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  fallbackLocale: null;
+  fallbackLocale:
+    | ('false' | 'none' | 'null')
+    | false
+    | null
+    | ('en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl')
+    | ('en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl')[];
   globals: {
     header: Header;
     footer: Footer;
     theme: Theme;
+    localization: Localization;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     theme: ThemeSelect<false> | ThemeSelect<true>;
+    localization: LocalizationSelect<false> | LocalizationSelect<true>;
   };
-  locale: null;
+  locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -2516,6 +2523,9 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface Header {
   id: number;
+  /**
+   * Navigation links for the current locale (switch locale in the admin bar to edit each language).
+   */
   navItems?:
     | {
         link: {
@@ -2545,6 +2555,9 @@ export interface Header {
  */
 export interface Footer {
   id: number;
+  /**
+   * Footer links for the current locale (switch locale in the admin bar to edit each language).
+   */
   navItems?:
     | {
         link: {
@@ -2596,6 +2609,39 @@ export interface Theme {
      */
     background: string;
   };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Languages listed here appear on the website switcher and in the admin “Locale” menu (top right). Content locale must exist in src/i18n/locales.ts. Add a row per language, then save.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "localization".
+ */
+export interface Localization {
+  id: number;
+  /**
+   * Add languages with + Add Language. Content locale must be a code from the list (not a display name like "Deutsch").
+   */
+  languages?:
+    | {
+        enabled?: boolean | null;
+        /**
+         * CMS code (not the display name). Pool: en, de, el, fr, es, it, nl — only codes you add in src/i18n/locales.ts.
+         */
+        locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
+        /**
+         * Menu label (e.g. En - UK, Deutsch, Ελληνικά)
+         */
+        label: string;
+        /**
+         * Header badge (e.g. EN, DE, EL)
+         */
+        shortCode: string;
+        flag: 'gb' | 'us' | 'de' | 'fr' | 'es' | 'gr' | 'it' | 'nl';
+        id?: string | null;
+      }[]
+    | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2658,6 +2704,25 @@ export interface ThemeSelect<T extends boolean = true> {
         tertiary?: T;
         surface?: T;
         background?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "localization_select".
+ */
+export interface LocalizationSelect<T extends boolean = true> {
+  languages?:
+    | T
+    | {
+        enabled?: T;
+        locale?: T;
+        label?: T;
+        shortCode?: T;
+        flag?: T;
+        id?: T;
       };
   updatedAt?: T;
   createdAt?: T;

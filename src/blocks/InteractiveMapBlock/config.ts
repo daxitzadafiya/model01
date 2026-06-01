@@ -7,11 +7,13 @@ export const InteractiveMapBlock: Block = {
     {
       name: 'subtitle',
       type: 'text',
+      localized: true,
     },
     {
       name: 'title',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'locations',
@@ -21,6 +23,7 @@ export const InteractiveMapBlock: Block = {
           name: 'label',
           type: 'text',
           required: true,
+          localized: true,
         },
       ],
     },
@@ -32,11 +35,13 @@ export const InteractiveMapBlock: Block = {
           name: 'name',
           type: 'text',
           required: true,
+          localized: true,
         },
         {
           name: 'address',
           type: 'text',
           required: true,
+          localized: true,
         },
       ],
     },
@@ -65,10 +70,12 @@ export const InteractiveMapBlock: Block = {
         {
           name: 'title',
           type: 'text',
+          localized: true,
         },
         {
           name: 'subtitle',
           type: 'text',
+          localized: true,
         },
         {
           name: 'isPulsing',

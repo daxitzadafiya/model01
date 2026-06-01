@@ -13,12 +13,14 @@ export const KnowledgeBaseBlock: Block = {
       name: 'subtitle',
       type: 'text',
       defaultValue: 'KNOWLEDGE BASE',
+      localized: true,
     },
     {
       name: 'title',
       type: 'text',
       required: true,
       defaultValue: 'Latest News',
+      localized: true,
     },
     {
       name: 'populateBy',
@@ -72,6 +74,7 @@ export const KnowledgeBaseBlock: Block = {
           name: 'title',
           type: 'text',
           required: true,
+          localized: true,
         },
         {
           name: 'url',

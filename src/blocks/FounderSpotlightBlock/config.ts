@@ -15,11 +15,13 @@ export const FounderSpotlightBlock: Block = {
       admin: {
         description: 'Small label above the founder name',
       },
+      localized: true,
     },
     {
       name: 'name',
       type: 'text',
       required: true,
+      localized: true,
     },
     {
       name: 'role',
@@ -28,6 +30,7 @@ export const FounderSpotlightBlock: Block = {
       admin: {
         description: 'e.g. Founder & Managing Director',
       },
+      localized: true,
     },
     {
       name: 'quote',
@@ -35,11 +38,13 @@ export const FounderSpotlightBlock: Block = {
       admin: {
         description: 'Optional pull quote displayed prominently',
       },
+      localized: true,
     },
     {
       name: 'bio',
       type: 'textarea',
       required: true,
+      localized: true,
     },
     {
       name: 'portrait',
@@ -56,6 +61,7 @@ export const FounderSpotlightBlock: Block = {
           name: 'value',
           type: 'text',
           required: true,
+          localized: true,
           admin: {
             description: 'e.g. 25+',
           },
@@ -64,6 +70,7 @@ export const FounderSpotlightBlock: Block = {
           name: 'label',
           type: 'text',
           required: true,
+          localized: true,
           admin: {
             description: 'e.g. Years of Excellence',
           },

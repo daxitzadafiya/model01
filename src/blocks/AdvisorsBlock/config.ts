@@ -12,12 +12,14 @@ export const AdvisorsBlock: Block = {
       name: 'subtitle',
       type: 'text',
       defaultValue: 'MEET OUR TEAM',
+      localized: true,
     },
     {
       name: 'title',
       type: 'text',
       required: true,
       defaultValue: 'Meet Our Distinguished Agents',
+      localized: true,
     },
     {
       name: 'advisors',
@@ -34,11 +36,13 @@ export const AdvisorsBlock: Block = {
           name: 'name',
           type: 'text',
           required: true,
+          localized: true,
         },
         {
           name: 'role',
           type: 'text',
           required: true,
+          localized: true,
           label: 'Title / Role',
           admin: {
             description: 'e.g. Founder & Managing Director',
@@ -47,6 +51,7 @@ export const AdvisorsBlock: Block = {
         {
           name: 'description',
           type: 'textarea',
+          localized: true,
           admin: {
             description: 'Short biography shown below the title',
           },
