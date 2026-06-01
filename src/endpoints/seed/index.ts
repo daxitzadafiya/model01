@@ -9,6 +9,7 @@ import { imageHero1 } from './image-hero-1'
 import { post1 } from './post-1'
 import { post2 } from './post-2'
 import { post3 } from './post-3'
+import { ensureAdminUser } from '@/utilities/ensureAdminUser'
 
 const collections: CollectionSlug[] = [
   'categories',
@@ -67,17 +68,11 @@ export const seed = async ({
       .map((collection) => payload.db.deleteVersions({ collection, req, where: {} })),
   )
 
-  payload.logger.info(`— Seeding demo author and user...`)
+  payload.logger.info(`— Seeding admin and demo author...`)
 
-  await payload.delete({
-    collection: 'users',
-    depth: 0,
-    where: {
-      email: {
-        equals: 'demo-author@example.com',
-      },
-    },
-  })
+  await payload.db.deleteMany({ collection: 'users', req, where: {} })
+
+  await ensureAdminUser(payload)
 
   payload.logger.info(`— Seeding media...`)
 
@@ -103,6 +98,7 @@ export const seed = async ({
         name: 'Demo Author',
         email: 'demo-author@example.com',
         password: 'password',
+        roles: ['editor'],
       },
     }),
     payload.create({

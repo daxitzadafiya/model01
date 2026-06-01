@@ -21,6 +21,19 @@ export const Users: CollectionConfig = {
       name: 'name',
       type: 'text',
     },
+    {
+      name: 'roles',
+      type: 'select',
+      hasMany: true,
+      options: ['admin', 'editor', 'user'],
+      defaultValue: ['user'],
+      required: true,
+      saveToJWT: true,
+      access: {
+        update: ({ req: { user } }) =>
+          Boolean(user?.collection === 'users' && user.roles.includes('admin')),
+      },
+    },
   ],
   timestamps: true,
 }

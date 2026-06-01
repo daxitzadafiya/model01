@@ -15,11 +15,21 @@ import { Theme } from './globals/Theme/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
+import { hasAdminCredentials } from './constants/adminUser'
+import { ensureAdminUser } from './utilities/ensureAdminUser'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  onInit: async (payload) => {
+    // Skip during `next build` — workers initialize Payload in parallel and SQLite locks
+    if (process.env.NEXT_PHASE === 'phase-production-build') return
+
+    if (hasAdminCredentials()) {
+      await ensureAdminUser(payload)
+    }
+  },
   admin: {
     components: {
       graphics: {
