@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState, useTransition } from 'react'
+import { Check, ChevronDown } from 'lucide-react'
 
 import { setLocale } from '@/i18n/actions'
 import { getMenuItemForLocale, type LanguageMenuItem, type Locale } from '@/i18n/config'
@@ -99,14 +100,10 @@ export const LanguageSwitcher: React.FC<Props> = ({ items, currentLocale }) => {
         <span className="hidden font-label-nav text-[11px] uppercase tracking-wider text-secondary sm:inline">
           {active.triggerCode}
         </span>
-        <span
-          className={cn(
-            'material-symbols-outlined text-[16px] text-secondary transition-transform duration-200',
-            open && 'rotate-180',
-          )}
-        >
-          expand_more
-        </span>
+        <ChevronDown
+          size={16}
+          className={cn('text-secondary transition-transform duration-200', open && 'rotate-180')}
+        />
       </button>
 
       {open && (
@@ -141,12 +138,7 @@ export const LanguageSwitcher: React.FC<Props> = ({ items, currentLocale }) => {
                     {item.label}
                   </span>
                   {isActive && (
-                    <span
-                      className="material-symbols-outlined text-[14px] text-tertiary"
-                      aria-hidden
-                    >
-                      check
-                    </span>
+                    <Check size={16} className="text-tertiary" aria-hidden />
                   )}
                 </button>
               </li>

@@ -883,6 +883,14 @@ export interface PropertiesBlock {
   subtitle?: string | null;
   title: string;
   backgroundColor?: ('surface' | 'surface-container-low') | null;
+  showSoldBadge?: boolean | null;
+  dataSource?: ('cms' | 'crm') | null;
+  crmPreset?: ('featured' | 'seaView' | 'custom') | null;
+  crmLimit?: number | null;
+  /**
+   * Used only when "CRM Query Preset" is set to "Custom Query JSON". Enter a valid JSON payload.
+   */
+  crmQueryJson?: string | null;
   properties?:
     | {
         image: number | Media;
@@ -1789,6 +1797,11 @@ export interface PropertiesBlockSelect<T extends boolean = true> {
   subtitle?: T;
   title?: T;
   backgroundColor?: T;
+  showSoldBadge?: T;
+  dataSource?: T;
+  crmPreset?: T;
+  crmLimit?: T;
+  crmQueryJson?: T;
   properties?:
     | T
     | {

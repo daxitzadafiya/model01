@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
 import { Media } from '@/components/Media'
@@ -50,7 +51,7 @@ export const AdvisorsBlock: React.FC<Props> = ({ subtitle, title, advisors }) =>
               aria-label="Previous advisors"
               className="w-11 h-11 md:w-12 md:h-12 rounded-full border border-outline-variant flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer"
             >
-              <span className="material-symbols-outlined">chevron_left</span>
+              <ChevronLeft size={20} />
             </button>
             <button
               type="button"
@@ -58,7 +59,7 @@ export const AdvisorsBlock: React.FC<Props> = ({ subtitle, title, advisors }) =>
               aria-label="Next advisors"
               className="w-11 h-11 md:w-12 md:h-12 rounded-full border border-outline-variant flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer"
             >
-              <span className="material-symbols-outlined">chevron_right</span>
+              <ChevronRight size={20} />
             </button>
           </div>
         )}

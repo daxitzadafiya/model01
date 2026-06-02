@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { ChevronDown, MapPin, Search } from 'lucide-react'
 import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
 import { Media } from '@/components/Media'
@@ -13,7 +14,7 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
 
   return (
     <div ref={ref}>
-      <section className="relative min-h-[100dvh] md:h-screen w-full overflow-hidden">
+      <section className="relative min-h-dvh md:h-screen w-full overflow-hidden">
         <div className="absolute inset-0 hero-gradient z-10"></div>
         {typeof backgroundImage === 'object' && backgroundImage !== null && (
           <div className="absolute inset-0 w-full h-full object-cover">
@@ -31,7 +32,7 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
         {/* Scroll Indicator */}
         <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden  flex-col items-center animate-bounce text-white/70 md:hidden sm:hidden">
           <span className="font-label-sm text-label-sm mb-2">SCROLL</span>
-          <span className="material-symbols-outlined">keyboard_arrow_down</span>
+          <ChevronDown size={20} />
         </div>
       </section>
 
@@ -53,9 +54,10 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
                   LOCATION
                 </label>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-tertiary">
-                    location_on
-                  </span>
+                  <MapPin
+                    size={16}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-tertiary"
+                  />
                   <input
                     className="w-full pl-10 pr-4 py-3 bg-surface-container border border-outline-variant rounded-lg focus:border-tertiary focus:ring-0 text-body-md font-body-md"
                     placeholder="Athens, Cyclades..."
@@ -86,7 +88,7 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
                 </select>
               </div>
               <button className="w-full h-[50px] bg-primary text-white rounded-full font-label-nav text-label-nav uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined">search</span>
+                <Search size={16} />
                 Search
               </button>
             </div>

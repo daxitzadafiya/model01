@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { Quote } from 'lucide-react'
 import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
 import { cn } from '@/utilities/ui'
@@ -76,12 +77,11 @@ export const TestimonialsBlock: React.FC<Props> = ({ testimonials }) => {
       onBlur={() => setIsPaused(false)}
     >
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop text-center">
-        <span
-          className="material-symbols-outlined text-tertiary text-5xl md:text-6xl mb-6 md:mb-8 block"
-          style={{ fontSize: '60px', fontVariationSettings: '"FILL" 1' }}
-        >
-          format_quote
-        </span>
+        <Quote
+          size={60}
+          fill="currentColor"
+          className="text-tertiary mb-6 md:mb-8 mx-auto block opacity-70"
+        />
 
         <div className="relative min-h-[200px] md:min-h-[180px] flex flex-col items-center justify-center">
           {current && (

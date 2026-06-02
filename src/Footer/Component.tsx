@@ -2,6 +2,17 @@ import { getCachedGlobal } from '@/utilities/getGlobals'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import Link from 'next/link'
 import React from 'react'
+import {
+  Award,
+  BadgeCheck,
+  Globe,
+  Languages,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Share2,
+} from 'lucide-react'
 
 import { CMSLink } from '@/components/Link'
 
@@ -22,15 +33,9 @@ export async function Footer() {
             transparency, and architectural excellence.
           </p>
           <div className="flex gap-4">
-            <span className="material-symbols-outlined cursor-pointer text-tertiary transition-colors">
-              public
-            </span>
-            <span className="material-symbols-outlined cursor-pointer text-tertiary transition-colors">
-              share
-            </span>
-            <span className="material-symbols-outlined cursor-pointer text-tertiary transition-colors">
-              language
-            </span>
+            <Globe size={20} className="cursor-pointer text-tertiary transition-colors" />
+            <Share2 size={20} className="cursor-pointer text-tertiary transition-colors" />
+            <Languages size={20} className="cursor-pointer text-tertiary transition-colors" />
           </div>
         </div>
         <div>
@@ -51,15 +56,15 @@ export async function Footer() {
           </h4>
           <ul className="space-y-3 md:space-y-4 font-body-md text-body-md">
             <li className="flex items-center gap-3 text-white">
-              <span className="material-symbols-outlined text-tertiary shrink-0">call</span>
+              <Phone size={18} className="text-tertiary shrink-0" />
               +30 210 3388 000
             </li>
             <li className="flex items-center gap-3 text-white">
-              <span className="material-symbols-outlined text-tertiary shrink-0">mail</span>
+              <Mail size={18} className="text-tertiary shrink-0" />
               info@roumpos.com
             </li>
             <li className="flex items-start gap-3 text-white">
-              <span className="material-symbols-outlined text-tertiary shrink-0">location_on</span>
+              <MapPin size={18} className="text-tertiary shrink-0" />
               Skoufa 12, Athens
             </li>
           </ul>
@@ -70,13 +75,13 @@ export async function Footer() {
           </h4>
           <div className="flex flex-wrap gap-4">
             <div className="bg-white/10 w-14 h-14 md:w-16 md:h-16 rounded flex items-center justify-center opacity-50 grayscale text-white">
-              <span className="material-symbols-outlined">verified</span>
+              <BadgeCheck size={20} />
             </div>
             <div className="bg-white/10 w-14 h-14 md:w-16 md:h-16 rounded flex items-center justify-center opacity-50 grayscale text-white">
-              <span className="material-symbols-outlined">workspace_premium</span>
+              <Award size={20} />
             </div>
             <div className="bg-white/10 w-14 h-14 md:w-16 md:h-16 rounded flex items-center justify-center opacity-50 grayscale text-white">
-              <span className="material-symbols-outlined">security</span>
+              <ShieldCheck size={20} />
             </div>
           </div>
         </div>

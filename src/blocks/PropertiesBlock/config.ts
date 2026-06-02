@@ -25,8 +25,62 @@ export const PropertiesBlock: Block = {
       defaultValue: 'surface',
     },
     {
+      name: 'showSoldBadge',
+      type: 'checkbox',
+      label: 'Show SOLD badge on all cards in this block',
+      defaultValue: false,
+    },
+    {
+      name: 'dataSource',
+      type: 'select',
+      label: 'Property Source',
+      defaultValue: 'cms',
+      options: [
+        { label: 'Payload CMS (manual)', value: 'cms' },
+        { label: 'CRM API (dynamic)', value: 'crm' },
+      ],
+    },
+    {
+      name: 'crmPreset',
+      type: 'select',
+      label: 'CRM Query Preset',
+      defaultValue: 'featured',
+      options: [
+        { label: 'Featured Properties', value: 'featured' },
+        { label: 'Sea View Properties', value: 'seaView' },
+        { label: 'Custom Query JSON', value: 'custom' },
+      ],
+      admin: {
+        condition: (_, siblingData) => siblingData?.dataSource === 'crm',
+      },
+    },
+    {
+      name: 'crmLimit',
+      type: 'number',
+      label: 'CRM Result Limit',
+      defaultValue: 5,
+      min: 1,
+      admin: {
+        condition: (_, siblingData) => siblingData?.dataSource === 'crm',
+      },
+    },
+    {
+      name: 'crmQueryJson',
+      type: 'textarea',
+      label: 'CRM Custom Query (JSON)',
+      admin: {
+        description:
+          'Used only when "CRM Query Preset" is set to "Custom Query JSON". Enter a valid JSON payload.',
+        condition: (_, siblingData) =>
+          siblingData?.dataSource === 'crm' && siblingData?.crmPreset === 'custom',
+      },
+    },
+    {
       name: 'properties',
       type: 'array',
+      admin: {
+        condition: (_, siblingData) => siblingData?.dataSource !== 'crm',
+      },
       fields: [
         {
           name: 'image',

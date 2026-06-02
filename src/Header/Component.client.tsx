@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
+import { Heart, Menu, X } from 'lucide-react'
 
 import type { Header } from '@/payload-types'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -59,9 +60,10 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, locale, langua
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <LanguageSwitcher items={languageMenu} currentLocale={locale} />
-          <span className="material-symbols-outlined text-primary cursor-pointer hover:scale-110 transition-transform text-[22px] md:text-[24px] p-1">
-            favorite
-          </span>
+          <Heart
+            className="text-primary cursor-pointer hover:scale-110 transition-transform p-1"
+            size={30}
+          />
           <button
             type="button"
             className="hidden md:inline-flex px-6 py-2.5 rounded-full border border-tertiary text-tertiary font-label-nav text-label-nav hover:bg-tertiary hover:text-white transition-all duration-300 active:scale-95"
@@ -75,9 +77,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, locale, langua
             className="md:hidden w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center text-primary"
             onClick={() => setMenuOpen((open) => !open)}
           >
-            <span className="material-symbols-outlined">
-              {menuOpen ? 'close' : 'menu'}
-            </span>
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>

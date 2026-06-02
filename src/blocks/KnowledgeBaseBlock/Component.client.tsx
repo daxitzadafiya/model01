@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useReveal } from '@/utilities/useReveal'
 import { Media } from '@/components/Media'
 import { CMSLink, type CMSLinkType } from '@/components/Link'
@@ -67,7 +68,7 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
             aria-label="Previous articles"
             className="w-11 h-11 rounded-full border border-outline-variant flex items-center justify-center"
           >
-            <span className="material-symbols-outlined">chevron_left</span>
+            <ChevronLeft size={20} />
           </button>
           <button
             type="button"
@@ -75,7 +76,7 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
             aria-label="Next articles"
             className="w-11 h-11 rounded-full border border-outline-variant flex items-center justify-center"
           >
-            <span className="material-symbols-outlined">chevron_right</span>
+            <ChevronRight size={20} />
           </button>
         </div>
       )}

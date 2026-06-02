@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { MapPin } from 'lucide-react'
 import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
 import { Media } from '@/components/Media'
@@ -35,9 +36,7 @@ export const InteractiveMapBlock: React.FC<Props> = ({ subtitle, title, location
           <div className="space-y-6">
             {offices?.map((office, i) => (
               <div key={i} className={`flex items-start gap-4 p-4 rounded-lg transition-all ${i === 0 ? 'bg-white/5 border border-white/10' : 'hover:bg-white/5'}`}>
-                <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: '"FILL" 1' }}>
-                  location_on
-                </span>
+                <MapPin size={20} className="text-tertiary shrink-0" />
                 <div>
                   <h4 className="font-body-md text-body-md font-bold">
                     {office.name}
@@ -62,12 +61,7 @@ export const InteractiveMapBlock: React.FC<Props> = ({ subtitle, title, location
               className="absolute group cursor-pointer"
               style={{ top: `${pin.topPercentage}%`, left: `${pin.leftPercentage}%` }}
             >
-              <span 
-                className={`material-symbols-outlined text-tertiary text-4xl ${pin.isPulsing ? 'animate-pulse' : ''}`}
-                style={{ fontVariationSettings: '"FILL" 1' }}
-              >
-                location_on
-              </span>
+              <MapPin size={36} className={`text-tertiary ${pin.isPulsing ? 'animate-pulse' : ''}`} />
               {(pin.title || pin.subtitle) && (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white text-primary p-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
                   <p className="font-label-sm text-label-sm font-bold">{pin.title}</p>
