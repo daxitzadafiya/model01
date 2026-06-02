@@ -47,18 +47,5 @@ export const AboutUsHeroBlock: Block = {
         description: 'Full-width background photograph',
       },
     },
-    {
-      name: 'height',
-      type: 'select',
-      defaultValue: 'large',
-      options: [
-        { label: 'Compact (60vh)', value: 'compact' },
-        { label: 'Large (85vh)', value: 'large' },
-        { label: 'Full screen', value: 'fullscreen' },
-      ],
-      admin: {
-        description: 'Section height on desktop',
-      },
-    },
   ],
 }

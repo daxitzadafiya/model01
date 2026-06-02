@@ -239,6 +239,14 @@ export const seed = async ({
     payload.updateGlobal({
       slug: 'footer',
       data: {
+        tagline:
+          'Elevating the Greek real estate experience through heritage, transparency, and architectural excellence.',
+        socialLinks: [
+          { icon: 'public', url: 'https://roumpos.com', newTab: true },
+          { icon: 'share', url: 'https://roumpos.com', newTab: true },
+          { icon: 'language', url: 'https://roumpos.com', newTab: true },
+        ],
+        quickLinksTitle: 'QUICK LINKS',
         navItems: [
           {
             link: {
@@ -263,6 +271,25 @@ export const seed = async ({
               url: 'https://payloadcms.com/',
             },
           },
+        ],
+        contactTitle: 'CONTACT US',
+        contact: {
+          phone: '+30 210 3388 000',
+          email: 'info@horizonestates.com',
+          address: 'Skoufa 12, Athens',
+        },
+        certificationsTitle: 'CERTIFICATIONS',
+        certifications: [
+          { icon: 'verified' },
+          { icon: 'workspace_premium' },
+          { icon: 'security' },
+        ],
+        copyrightText: '© {year} HORIZON ESTATES. ALL RIGHTS RESERVED.',
+        legalLinks: [
+          { link: { type: 'custom', label: 'Privacy Policy', url: '#' } },
+          { link: { type: 'custom', label: 'Terms of Service', url: '#' } },
+          { link: { type: 'custom', label: 'Cookie Policy', url: '#' } },
+          { link: { type: 'custom', label: 'Certifications', url: '#' } },
         ],
       },
     }),

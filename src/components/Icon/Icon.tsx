@@ -15,7 +15,7 @@ export const Icon = (props: Props) => {
       width={25}
       height={25}
       className={clsx('size-[25px]', className)}
-      src="/favicon.ico"
+      src="/site-favicon"
     />
   )
 }

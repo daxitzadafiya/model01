@@ -12,6 +12,7 @@ import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { Localization } from './globals/Localization/config'
+import { SiteLogo } from './globals/Logo/config'
 import { Theme } from './globals/Theme/config'
 import { payloadLocalization } from './i18n/locales'
 import { plugins } from './plugins'
@@ -64,8 +65,7 @@ export default buildConfig({
       icons: [
         {
           rel: 'icon',
-          type: 'image/ico',
-          url: '/favicon.ico',
+          url: '/site-favicon',
         },
       ],
     },
@@ -105,7 +105,7 @@ export default buildConfig({
   }),
   collections: [Pages, Posts, Media, Categories, Users],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, Theme, Localization],
+  globals: [Header, Footer, Theme, Localization, SiteLogo],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

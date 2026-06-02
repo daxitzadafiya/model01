@@ -122,12 +122,14 @@ export interface Config {
     footer: Footer;
     theme: Theme;
     localization: Localization;
+    logo: Logo;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     theme: ThemeSelect<false> | ThemeSelect<true>;
     localization: LocalizationSelect<false> | LocalizationSelect<true>;
+    logo: LogoSelect<false> | LogoSelect<true>;
   };
   locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   widgets: {
@@ -250,6 +252,10 @@ export interface Page {
     | FounderSpotlightBlock
     | WhoWeAreBlock
     | AboutUsHeroBlock
+    | MapBlock
+    | ContactSectionBlock
+    | PrivacyPolicyBlock
+    | CertificatesBlock
   )[];
   meta?: {
     title?: string | null;
@@ -1211,13 +1217,169 @@ export interface AboutUsHeroBlock {
    * Full-width background photograph
    */
   backgroundImage: number | Media;
-  /**
-   * Section height on desktop
-   */
-  height?: ('compact' | 'large' | 'fullscreen') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'aboutUsHeroBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MapBlock".
+ */
+export interface MapBlock {
+  /**
+   * Google Maps embed URL. In Google Maps: Share → Embed a map → copy the src value from the iframe code.
+   */
+  mapUrl: string;
+  /**
+   * Map height in pixels.
+   */
+  height?: number | null;
+  /**
+   * Accessible title for the embedded map.
+   */
+  title?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'mapBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContactSectionBlock".
+ */
+export interface ContactSectionBlock {
+  /**
+   * Small uppercase label above the form title (left side).
+   */
+  formEyebrow?: string | null;
+  formTitle: string;
+  formDescription?: string | null;
+  /**
+   * Optional. If empty, submit label from the selected form is used.
+   */
+  submitLabelOverride?: string | null;
+  formTrustNote?: string | null;
+  enableResubmit?: boolean | null;
+  resubmitButtonLabel?: string | null;
+  /**
+   * Heading shown after successful form submission.
+   */
+  successTitle?: string | null;
+  /**
+   * Subtext shown below the success title.
+   */
+  successSubtitle?: string | null;
+  offices?:
+    | {
+        label?: string | null;
+        city: string;
+        addressLines?:
+          | {
+              line: string;
+              id?: string | null;
+            }[]
+          | null;
+        phone?: string | null;
+        email?: string | null;
+        image?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Select a form from the Forms collection. Manage fields and submissions under Forms / Form Submissions in admin.
+   */
+  form: number | Form;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'contactSectionBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PrivacyPolicyBlock".
+ */
+export interface PrivacyPolicyBlock {
+  eyebrow?: string | null;
+  title: string;
+  introText?: string | null;
+  tocTitle?: string | null;
+  sections?:
+    | {
+        /**
+         * Used for in-page navigation anchor (e.g. introduction, data-collection).
+         */
+        anchorId: string;
+        tocLabel: string;
+        heading: string;
+        body?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        /**
+         * Optional highlighted quote panel.
+         */
+        highlightQuote?: string | null;
+        featureCards?:
+          | {
+              icon: string;
+              title: string;
+              description: string;
+              id?: string | null;
+            }[]
+          | null;
+        bulletItems?:
+          | {
+              icon?: string | null;
+              text: string;
+              id?: string | null;
+            }[]
+          | null;
+        visualPanel?: {
+          image?: (number | null) | Media;
+          icon?: string | null;
+          title?: string | null;
+        };
+        contactPanel?: {
+          title?: string | null;
+          email?: string | null;
+          buttonLabel?: string | null;
+        };
+        showDividerBefore?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'privacyPolicyBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CertificatesBlock".
+ */
+export interface CertificatesBlock {
+  /**
+   * Small label above the section title.
+   */
+  subtitle?: string | null;
+  title: string;
+  certificates: {
+    title: string;
+    subtitle?: string | null;
+    image: number | Media;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'certificatesBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1259,6 +1421,8 @@ export interface FormSubmission {
         id?: string | null;
       }[]
     | null;
+  recaptchaRequired?: boolean | null;
+  recaptchaToken?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1649,6 +1813,10 @@ export interface PagesSelect<T extends boolean = true> {
         founderSpotlightBlock?: T | FounderSpotlightBlockSelect<T>;
         whoWeAreBlock?: T | WhoWeAreBlockSelect<T>;
         aboutUsHeroBlock?: T | AboutUsHeroBlockSelect<T>;
+        mapBlock?: T | MapBlockSelect<T>;
+        contactSectionBlock?: T | ContactSectionBlockSelect<T>;
+        privacyPolicyBlock?: T | PrivacyPolicyBlockSelect<T>;
+        certificatesBlock?: T | CertificatesBlockSelect<T>;
       };
   meta?:
     | T
@@ -2030,7 +2198,121 @@ export interface AboutUsHeroBlockSelect<T extends boolean = true> {
   headline?: T;
   description?: T;
   backgroundImage?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MapBlock_select".
+ */
+export interface MapBlockSelect<T extends boolean = true> {
+  mapUrl?: T;
   height?: T;
+  title?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContactSectionBlock_select".
+ */
+export interface ContactSectionBlockSelect<T extends boolean = true> {
+  formEyebrow?: T;
+  formTitle?: T;
+  formDescription?: T;
+  submitLabelOverride?: T;
+  formTrustNote?: T;
+  enableResubmit?: T;
+  resubmitButtonLabel?: T;
+  successTitle?: T;
+  successSubtitle?: T;
+  offices?:
+    | T
+    | {
+        label?: T;
+        city?: T;
+        addressLines?:
+          | T
+          | {
+              line?: T;
+              id?: T;
+            };
+        phone?: T;
+        email?: T;
+        image?: T;
+        id?: T;
+      };
+  form?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PrivacyPolicyBlock_select".
+ */
+export interface PrivacyPolicyBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  title?: T;
+  introText?: T;
+  tocTitle?: T;
+  sections?:
+    | T
+    | {
+        anchorId?: T;
+        tocLabel?: T;
+        heading?: T;
+        body?: T;
+        highlightQuote?: T;
+        featureCards?:
+          | T
+          | {
+              icon?: T;
+              title?: T;
+              description?: T;
+              id?: T;
+            };
+        bulletItems?:
+          | T
+          | {
+              icon?: T;
+              text?: T;
+              id?: T;
+            };
+        visualPanel?:
+          | T
+          | {
+              image?: T;
+              icon?: T;
+              title?: T;
+            };
+        contactPanel?:
+          | T
+          | {
+              title?: T;
+              email?: T;
+              buttonLabel?: T;
+            };
+        showDividerBefore?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CertificatesBlock_select".
+ */
+export interface CertificatesBlockSelect<T extends boolean = true> {
+  subtitle?: T;
+  title?: T;
+  certificates?:
+    | T
+    | {
+        title?: T;
+        subtitle?: T;
+        image?: T;
+        id?: T;
+      };
   id?: T;
   blockName?: T;
 }
@@ -2365,6 +2647,8 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
         value?: T;
         id?: T;
       };
+  recaptchaRequired?: T;
+  recaptchaToken?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2569,9 +2853,71 @@ export interface Header {
 export interface Footer {
   id: number;
   /**
+   * Short description shown below the logo.
+   */
+  tagline?: string | null;
+  /**
+   * Social or external links shown as Material Symbols icons.
+   */
+  socialLinks?:
+    | {
+        /**
+         * Material Symbols icon name (e.g. public, share, language).
+         */
+        icon: string;
+        url: string;
+        newTab?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  quickLinksTitle?: string | null;
+  /**
    * Footer links for the current locale (switch locale in the admin bar to edit each language).
    */
   navItems?:
+    | {
+        link: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+          label: string;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  contactTitle?: string | null;
+  contact?: {
+    phone?: string | null;
+    email?: string | null;
+    address?: string | null;
+  };
+  certificationsTitle?: string | null;
+  certifications?:
+    | {
+        /**
+         * Material Symbols icon name (e.g. verified, workspace_premium).
+         */
+        icon: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Use {year} as a placeholder for the current year.
+   */
+  copyrightText?: string | null;
+  /**
+   * Legal and policy links shown in the bottom bar.
+   */
+  legalLinks?:
     | {
         link: {
           type?: ('reference' | 'custom') | null;
@@ -2659,6 +3005,33 @@ export interface Localization {
   createdAt?: string | null;
 }
 /**
+ * Site logos used in the header, footer, and admin panel.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "logo".
+ */
+export interface Logo {
+  id: number;
+  /**
+   * Alternative text for accessibility.
+   */
+  alt: string;
+  /**
+   * Logo for light backgrounds (e.g. header). Falls back to /logo.png.
+   */
+  lightLogo?: (number | null) | Media;
+  /**
+   * Logo for dark backgrounds (e.g. footer). Falls back to /logow.png.
+   */
+  darkLogo?: (number | null) | Media;
+  /**
+   * Favicon used in browser tabs for both frontend and admin. Falls back to /favicon.ico.
+   */
+  favicon?: (number | null) | Media;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -2686,7 +3059,47 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
+  tagline?: T;
+  socialLinks?:
+    | T
+    | {
+        icon?: T;
+        url?: T;
+        newTab?: T;
+        id?: T;
+      };
+  quickLinksTitle?: T;
   navItems?:
+    | T
+    | {
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+              label?: T;
+            };
+        id?: T;
+      };
+  contactTitle?: T;
+  contact?:
+    | T
+    | {
+        phone?: T;
+        email?: T;
+        address?: T;
+      };
+  certificationsTitle?: T;
+  certifications?:
+    | T
+    | {
+        icon?: T;
+        id?: T;
+      };
+  copyrightText?: T;
+  legalLinks?:
     | T
     | {
         link?:
@@ -2737,6 +3150,19 @@ export interface LocalizationSelect<T extends boolean = true> {
         flag?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "logo_select".
+ */
+export interface LogoSelect<T extends boolean = true> {
+  alt?: T;
+  lightLogo?: T;
+  darkLogo?: T;
+  favicon?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

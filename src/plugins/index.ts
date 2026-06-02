@@ -13,6 +13,7 @@ import { beforeSyncWithSearch } from '@/search/beforeSync'
 
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { verifyRecaptchaToken } from '@/utilities/verifyRecaptcha'
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
@@ -78,6 +79,82 @@ export const plugins: Plugin[] = [
           }
           return field
         })
+      },
+    },
+    formSubmissionOverrides: {
+      fields: ({ defaultFields }) => {
+        return [
+          ...defaultFields,
+          // Hidden fields used to verify public reCAPTCHA before accepting submissions.
+          {
+            name: 'recaptchaRequired',
+            type: 'checkbox',
+            defaultValue: false,
+            required: false,
+            admin: {
+              hidden: true,
+              readOnly: true,
+            },
+          },
+          {
+            name: 'recaptchaToken',
+            type: 'text',
+            required: false,
+            admin: {
+              hidden: true,
+              readOnly: true,
+            },
+          },
+        ]
+      },
+      hooks: {
+        beforeChange: [
+          async ({ data, req, operation }) => {
+            if (operation !== 'create') return data
+
+            const form = data?.form
+
+            // Enforce reCAPTCHA ONLY for the public "Contact Form".
+            // This prevents users from bypassing by modifying any client-sent flags.
+            let isContactForm = false
+            if (typeof form === 'number') {
+              try {
+                const formDoc = await req.payload.findByID({
+                  collection: 'forms',
+                  id: form,
+                  depth: 0,
+                  overrideAccess: true,
+                })
+                isContactForm = formDoc?.title === 'Contact Form'
+              } catch {
+                // If we can't determine the form type, fail closed and enforce reCAPTCHA.
+                isContactForm = true
+              }
+            } else if (typeof form === 'object' && form !== null) {
+              // In case Payload passes the populated object rather than just the ID.
+              isContactForm = (form as any)?.title === 'Contact Form'
+            }
+
+            if (!isContactForm) return data
+
+            const token = data?.recaptchaToken
+            if (typeof token !== 'string' || !token) {
+              throw new Error('Please complete reCAPTCHA before submitting.')
+            }
+
+            const forwardedFor = req.headers.get('x-forwarded-for')
+            const remoteip = forwardedFor ? forwardedFor.split(',')[0]?.trim() : undefined
+
+            const ok = await verifyRecaptchaToken({
+              token,
+              remoteip,
+            })
+
+            if (!ok) throw new Error('reCAPTCHA verification failed. Please try again.')
+
+            return data
+          },
+        ],
       },
     },
   }),

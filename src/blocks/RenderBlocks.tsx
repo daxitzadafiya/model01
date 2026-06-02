@@ -20,6 +20,10 @@ import { DualActionBlock } from '@/blocks/DualActionBlock/Component'
 import { FounderSpotlightBlock } from '@/blocks/FounderSpotlightBlock/Component'
 import { WhoWeAreBlock } from '@/blocks/WhoWeAreBlock/Component'
 import { AboutUsHeroBlock } from '@/blocks/AboutUsHeroBlock/Component'
+import { MapBlock } from '@/blocks/MapBlock/Component'
+import { ContactSectionBlock } from '@/blocks/ContactSectionBlock/Component'
+import { PrivacyPolicyBlock } from '@/blocks/PrivacyPolicyBlock/Component'
+import { CertificatesBlock } from '@/blocks/CertificatesBlock/Component'
 
 const blockComponents = {
   archive: ArchiveBlock,
@@ -40,6 +44,10 @@ const blockComponents = {
   founderSpotlightBlock: FounderSpotlightBlock,
   whoWeAreBlock: WhoWeAreBlock,
   aboutUsHeroBlock: AboutUsHeroBlock,
+  mapBlock: MapBlock,
+  contactSectionBlock: ContactSectionBlock,
+  privacyPolicyBlock: PrivacyPolicyBlock,
+  certificatesBlock: CertificatesBlock,
 }
 
 export const RenderBlocks: React.FC<{

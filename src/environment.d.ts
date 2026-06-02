@@ -13,6 +13,8 @@ declare global {
       VERCEL_PROJECT_PRODUCTION_URL: string
       ADMIN_EMAIL: string
       ADMIN_PASSWORD: string
+      NEXT_PUBLIC_RECAPTCHA_SITE_KEY: string
+      NEXT_PUBLIC_RECAPTCHA_SECRET_KEY: string
     }
   }
 }

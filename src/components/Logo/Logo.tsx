@@ -1,43 +1,96 @@
+'use client'
+
 import clsx from 'clsx'
 import React from 'react'
+import { useEffect, useState } from 'react'
 
+import type { Logo as LogoGlobal } from '@/payload-types'
+import { getLogoSources, type LogoSources } from './getLogoSources'
 import styles from './Logo.module.css'
 
 interface Props {
   className?: string
   loading?: 'lazy' | 'eager'
   priority?: 'auto' | 'high' | 'low'
-}
-
-const logoProps = {
-  alt: 'Roumpos',
-  width: 193,
-  height: 34,
-  decoding: 'async' as const,
+  /** Always show the light (white) logo variant, for use on dark backgrounds */
+  onDarkBackground?: boolean
+  sources?: LogoSources
 }
 
 export const Logo = (props: Props) => {
-  const { loading: loadingFromProps, priority: priorityFromProps, className } = props
+  const {
+    loading: loadingFromProps,
+    priority: priorityFromProps,
+    className,
+    onDarkBackground = false,
+    sources: sourcesFromProps,
+  } = props
+
+  const [dynamicSources, setDynamicSources] = useState<LogoSources | null>(null)
+
+  useEffect(() => {
+    if (sourcesFromProps) return
+
+    let isCancelled = false
+
+    const loadLogo = async () => {
+      try {
+        const response = await fetch('/api/globals/logo?depth=1')
+        if (!response.ok) return
+
+        const logoData = (await response.json()) as LogoGlobal
+        if (!isCancelled) {
+          setDynamicSources(getLogoSources(logoData))
+        }
+      } catch {
+        // Keep fallback logo sources if request fails
+      }
+    }
+
+    void loadLogo()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [sourcesFromProps])
+
+  const resolvedSources = sourcesFromProps ?? dynamicSources ?? getLogoSources()
+  const { lightSrc, darkSrc, alt, width, height } = resolvedSources
 
   const loading = loadingFromProps || 'lazy'
   const priority = priorityFromProps || 'low'
 
+  const logoProps = {
+    alt,
+    width,
+    height,
+    decoding: 'async' as const,
+  }
+
   return (
-    <span className={clsx('inline-block max-w-[9.375rem] w-full', className)}>
+    <span
+      className={clsx(
+        'inline-block w-full max-w-[12.5rem] sm:max-w-[14.5rem] md:max-w-[17.5rem]',
+        className,
+      )}
+    >
       {/* eslint-disable @next/next/no-img-element */}
       <img
         {...logoProps}
-        className={clsx(styles.logo, styles.light)}
+        className={clsx(styles.logo, onDarkBackground ? styles.onDark : styles.light)}
         fetchPriority={priority}
         loading={loading}
-        src="/logo.png"
+        src={lightSrc}
       />
       <img
         {...logoProps}
-        className={clsx(styles.logo, styles.dark)}
+        className={clsx(
+          styles.logo,
+          onDarkBackground ? styles.onDarkVisible : styles.dark,
+        )}
         fetchPriority={priority}
         loading={loading}
-        src="/logow.png"
+        src={darkSrc}
       />
     </span>
   )
