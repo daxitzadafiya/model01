@@ -20,6 +20,36 @@ export type CMSLinkType = {
   url?: string | null
 }
 
+export function getCMSLinkHref({
+  type,
+  reference,
+  url,
+}: Pick<CMSLinkType, 'type' | 'reference' | 'url'>): string | null {
+  if (type === 'reference' && typeof reference?.value === 'object' && reference.value.slug) {
+    return reference.relationTo !== 'pages'
+      ? `/${reference.relationTo}/${reference.value.slug}`
+      : `/${reference.value.slug}`
+  }
+
+  return url ?? null
+}
+
+export function isCMSLinkActive(pathname: string, href: string): boolean {
+  const normalize = (path: string) => (path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path)
+  const path = normalize(pathname)
+  const link = normalize(href)
+
+  if (link === '/home' || link === '/') {
+    return path === '/' || path === '/home'
+  }
+
+  if (path === link) {
+    return true
+  }
+
+  return path.startsWith(`${link}/`)
+}
+
 export const CMSLink: React.FC<CMSLinkType> = (props) => {
   const {
     type,
@@ -33,12 +63,7 @@ export const CMSLink: React.FC<CMSLinkType> = (props) => {
     url,
   } = props
 
-  const href =
-    type === 'reference' && typeof reference?.value === 'object' && reference.value.slug
-      ? `${reference?.relationTo !== 'pages' ? `/${reference?.relationTo}` : ''}/${
-          reference.value.slug
-        }`
-      : url
+  const href = getCMSLinkHref({ type, reference, url })
 
   if (!href) return null
 

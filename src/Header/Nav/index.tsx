@@ -1,8 +1,9 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
 import React from 'react'
 import type { Header as HeaderType } from '@/payload-types'
-import { CMSLink } from '@/components/Link'
+import { CMSLink, getCMSLinkHref, isCMSLinkActive } from '@/components/Link'
 
 type Props = {
   data: HeaderType
@@ -18,13 +19,19 @@ const navLinkClass = (isActive: boolean) =>
   }`
 
 export const HeaderNav: React.FC<Props> = ({ data, mobileOpen, onClose }) => {
+  const pathname = usePathname()
   const navItems = data?.navItems || []
+
+  const linkIsActive = (link: (typeof navItems)[number]['link']) => {
+    const href = getCMSLinkHref(link)
+    return href ? isCMSLinkActive(pathname, href) : false
+  }
 
   return (
     <>
       <div className="hidden md:flex items-center gap-8">
         {navItems.map(({ link }, i) => (
-          <CMSLink key={i} {...link} className={navLinkClass(i === 0)} />
+          <CMSLink key={i} {...link} className={navLinkClass(linkIsActive(link))} />
         ))}
       </div>
 
@@ -40,7 +47,7 @@ export const HeaderNav: React.FC<Props> = ({ data, mobileOpen, onClose }) => {
             <nav className="flex flex-col px-margin-mobile py-6 gap-1">
               {navItems.map(({ link }, i) => (
                 <div key={i} onClick={onClose} role="presentation">
-                  <CMSLink {...link} className={`block py-3 ${navLinkClass(i === 0)}`} />
+                  <CMSLink {...link} className={`block py-3 ${navLinkClass(linkIsActive(link))}`} />
                 </div>
               ))}
               <button
