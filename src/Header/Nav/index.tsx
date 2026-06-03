@@ -13,9 +13,7 @@ type Props = {
 
 const navLinkClass = (isActive: boolean) =>
   `font-label-nav text-label-nav font-medium transition-colors duration-300 ${
-    isActive
-      ? 'text-primary font-bold pb-1'
-      : 'text-secondary hover:text-tertiary'
+    isActive ? 'text-tertiary' : 'text-secondary hover:text-tertiary'
   }`
 
 export const HeaderNav: React.FC<Props> = ({ data, mobileOpen, onClose }) => {
@@ -50,13 +48,6 @@ export const HeaderNav: React.FC<Props> = ({ data, mobileOpen, onClose }) => {
                   <CMSLink {...link} className={`block py-3 ${navLinkClass(linkIsActive(link))}`} />
                 </div>
               ))}
-              <button
-                type="button"
-                className="mt-4 w-full px-6 py-3 rounded-full border border-tertiary text-tertiary font-label-nav text-label-nav hover:bg-tertiary hover:text-white transition-all"
-                onClick={onClose}
-              >
-                Book a Consultation
-              </button>
             </nav>
           </div>
         </>

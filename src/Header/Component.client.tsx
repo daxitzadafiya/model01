@@ -69,17 +69,11 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({
         <HeaderNav data={data} mobileOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
         <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-          <LanguageSwitcher items={languageMenu} currentLocale={locale} />
           <Heart
             className="text-primary cursor-pointer hover:scale-110 transition-transform p-1"
             size={30}
           />
-          <button
-            type="button"
-            className="hidden md:inline-flex px-6 py-2.5 rounded-full border border-tertiary text-tertiary font-label-nav text-label-nav hover:bg-tertiary hover:text-white transition-all duration-300 active:scale-95"
-          >
-            Book a Consultation
-          </button>
+          <LanguageSwitcher items={languageMenu} currentLocale={locale} />
           <button
             type="button"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}

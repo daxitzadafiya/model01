@@ -1,12 +1,16 @@
 import { OPTIMA_CONFIG } from '@/constants/optima'
 
 type ResizeType = 'user' | 'property' | 'cms_medias'
-type PropertyAttachment = {
+
+export type PropertyAttachment = {
   model_id?: unknown
   file_md5_name?: unknown
   publish_status?: unknown
+  document?: unknown
   order?: unknown
 }
+
+const stripTrailingSlash = (url: string) => url.replace(/\/$/, '')
 
 const getFileNameFromPath = (value: string) => {
   const parts = value.split('/')
@@ -17,6 +21,24 @@ const getImageExtension = (filename: string) => {
   const parts = filename.split('.')
   return (parts[parts.length - 1] || '').toLowerCase()
 }
+
+const isTruthy = (value: unknown): boolean => {
+  if (value === null || value === undefined || value === false) return false
+  if (typeof value === 'string' && !value.trim()) return false
+  if (typeof value === 'number' && value === 0) return false
+  return true
+}
+
+const isDocumentFlag = (value: unknown): boolean => {
+  if (value === true) return true
+  if (value === 1 || value === '1') return true
+  if (typeof value === 'string' && value.trim().toLowerCase() === 'true') return true
+  return false
+}
+
+/** PHP: isset($pic['publish_status']) && !empty($pic['publish_status']) */
+export const isPublishedPropertyAttachment = (attachment: PropertyAttachment): boolean =>
+  isTruthy(attachment.publish_status)
 
 const resolveAttachmentName = (attachment: unknown) => {
   if (!attachment) return ''
@@ -49,6 +71,62 @@ const resolveAttachmentName = (attachment: unknown) => {
   }
 
   return ''
+}
+
+const asNumber = (value: unknown, fallback: number) => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return fallback
+}
+
+const getAttachmentModelId = (attachment: PropertyAttachment) => {
+  if (typeof attachment.model_id === 'string' && attachment.model_id.trim()) {
+    return attachment.model_id.trim()
+  }
+  if (typeof attachment.model_id === 'number' && Number.isFinite(attachment.model_id)) {
+    return String(attachment.model_id)
+  }
+  return ''
+}
+
+const getAttachmentFileName = (attachment: PropertyAttachment) => {
+  if (typeof attachment.file_md5_name === 'string' && attachment.file_md5_name.trim()) {
+    return decodeURIComponent(attachment.file_md5_name.trim())
+  }
+  return resolveAttachmentName(attachment)
+}
+
+/** PHP: isset($pic['document']) && $pic['document'] != 1 */
+export const isPropertyImageAttachment = (attachment: PropertyAttachment): boolean => {
+  const document = attachment.document
+  if (document === undefined || document === null) return false
+  return !isDocumentFlag(document)
+}
+
+/**
+ * Builds a property attachment image URL (mirrors PHP attachment logic).
+ *
+ * - Resize: `{property_img_resize_link}{model_id}/{image_size}/{file}`
+ * - Plain: `{com_img}/{model_id}/{file}`
+ */
+export const buildPropertyAttachmentImageUrl = (
+  attachment: PropertyAttachment,
+  imageSize = 1000,
+): string => {
+  const modelId = getAttachmentModelId(attachment)
+  const fileName = getAttachmentFileName(attachment)
+  if (!modelId || !fileName) return ''
+
+  if (imageSize > 0) {
+    const resizeBase = stripTrailingSlash(OPTIMA_CONFIG.propertyResizeBase)
+    return `${resizeBase}/${modelId}/${imageSize}/${fileName}`
+  }
+
+  const comImg = stripTrailingSlash(OPTIMA_CONFIG.commercialImageBase)
+  return `${comImg}/${modelId}/${fileName}`
 }
 
 /**
@@ -91,45 +169,27 @@ export const resizeOptimaImage = (
 }
 
 export const getOptimaPropertyAttachmentImage = (attachment: unknown, size = 1000): string => {
-  const fileName = resolveAttachmentName(attachment)
-  if (!fileName) return ''
-  return resizeOptimaImage(fileName, size, 'property')
+  if (!attachment || typeof attachment !== 'object') return ''
+  const record = attachment as PropertyAttachment
+  if (!isPropertyImageAttachment(record)) return ''
+  return buildPropertyAttachmentImageUrl(record, size)
 }
-
-const asNumber = (value: unknown, fallback: number) => {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value === 'string') {
-    const parsed = Number(value)
-    if (Number.isFinite(parsed)) return parsed
-  }
-  return fallback
-}
-
-const isPublishedAttachment = (attachment: PropertyAttachment) => attachment.publish_status === true
 
 export const getPublishedPropertyAttachmentImage = (attachments: unknown, size = 1000): string => {
   if (!Array.isArray(attachments)) return ''
 
-  const published = (attachments as PropertyAttachment[])
-    .filter(isPublishedAttachment)
+  const publishedImages = (attachments as PropertyAttachment[])
+    .filter(isPublishedPropertyAttachment)
+    .filter(isPropertyImageAttachment)
     .sort(
       (a, b) =>
         asNumber(a.order, Number.MAX_SAFE_INTEGER) - asNumber(b.order, Number.MAX_SAFE_INTEGER),
     )
 
-  const first = published[0]
-  if (!first) return ''
+  for (const attachment of publishedImages) {
+    const url = buildPropertyAttachmentImageUrl(attachment, size)
+    if (url) return url
+  }
 
-  const modelId =
-    typeof first.model_id === 'string' && first.model_id.trim() ? first.model_id.trim() : ''
-  const fileMd5Name =
-    typeof first.file_md5_name === 'string' && first.file_md5_name.trim()
-      ? first.file_md5_name.trim()
-      : ''
-
-  if (!modelId || !fileMd5Name) return ''
-
-  // Mirrors PHP:
-  // self::$property_img_resize_link . '/' . $pic['model_id'] . '/' . $size . '/' . urldecode($pic['file_md5_name'])
-  return `${OPTIMA_CONFIG.propertyResizeBase}${modelId}/${size}/${decodeURIComponent(fileMd5Name)}`
+  return ''
 }

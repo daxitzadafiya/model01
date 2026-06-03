@@ -609,10 +609,10 @@ export function normalizeCRMProperty(
   locale: string,
   options: NormalizeCRMPropertyOptions = {},
 ): NormalizedCRMProperty {
-  const images = Array.isArray(property.images) ? property.images : []
   const propertyAttachments = Array.isArray(property.property_attachments)
     ? property.property_attachments
     : []
+  const images = Array.isArray(property.images) ? property.images : []
   const firstImage = images.find(
     (image): image is Record<string, unknown> => !!image && typeof image === 'object',
   )
