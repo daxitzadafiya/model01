@@ -264,6 +264,13 @@ html[data-theme='light'] {
     transparent 100%
   );
 }
+.hover-lift {
+  transition: transform 0.3s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-8px);
+}
+
 @media (max-width: 767px) {
   .about-hero-gradient {
     background: linear-gradient(

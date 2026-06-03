@@ -11,6 +11,7 @@ import { HeroBlock } from '../../blocks/HeroBlock/config'
 import { StatsBlock } from '../../blocks/StatsBlock/config'
 import { MissionBlock } from '../../blocks/MissionBlock/config'
 import { PropertiesBlock } from '../../blocks/PropertiesBlock/config'
+import { PropertyListBlock } from '../../blocks/PropertyListBlock/config'
 import { InteractiveMapBlock } from '../../blocks/InteractiveMapBlock/config'
 import { VirtualTourBlock } from '../../blocks/VirtualTourBlock/config'
 import { AdvisorsBlock } from '../../blocks/AdvisorsBlock/config'
@@ -99,6 +100,7 @@ export const Pages: CollectionConfig<'pages'> = {
                 StatsBlock,
                 MissionBlock,
                 PropertiesBlock,
+                PropertyListBlock,
                 InteractiveMapBlock,
                 VirtualTourBlock,
                 AdvisorsBlock,

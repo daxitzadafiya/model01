@@ -245,6 +245,7 @@ export interface Page {
     | StatsBlock
     | MissionBlock
     | PropertiesBlock
+    | PropertyListBlock
     | InteractiveMapBlock
     | VirtualTourBlock
     | AdvisorsBlock
@@ -915,6 +916,32 @@ export interface PropertiesBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'propertiesBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PropertyListBlock".
+ */
+export interface PropertyListBlock {
+  showBreadcrumb?: boolean | null;
+  breadcrumbParentLabel?: string | null;
+  breadcrumbParentHref?: string | null;
+  pageTitle?: string | null;
+  resultsLabel?: string | null;
+  listingPreset: 'forSale' | 'sold' | 'featured' | 'seaView' | 'custom';
+  /**
+   * Used when "Property collection" is Custom Query JSON. Paste the query object or full payload. MongoDB operators must be valid JSON, e.g. "archived": {"$ne": true}. You can also paste {$ne: true} — it will be auto-fixed.
+   */
+  crmQueryJson?: string | null;
+  pageSize?: number | null;
+  showFilters?: boolean | null;
+  /**
+   * Link for the full-width "Search By Map" button.
+   */
+  mapSearchUrl?: string | null;
+  forceSoldBadge?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'propertyListBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1827,6 +1854,7 @@ export interface PagesSelect<T extends boolean = true> {
         statsBlock?: T | StatsBlockSelect<T>;
         missionBlock?: T | MissionBlockSelect<T>;
         propertiesBlock?: T | PropertiesBlockSelect<T>;
+        propertyListBlock?: T | PropertyListBlockSelect<T>;
         interactiveMapBlock?: T | InteractiveMapBlockSelect<T>;
         virtualTourBlock?: T | VirtualTourBlockSelect<T>;
         advisorsBlock?: T | AdvisorsBlockSelect<T>;
@@ -2006,6 +2034,25 @@ export interface PropertiesBlockSelect<T extends boolean = true> {
         price?: T;
         id?: T;
       };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PropertyListBlock_select".
+ */
+export interface PropertyListBlockSelect<T extends boolean = true> {
+  showBreadcrumb?: T;
+  breadcrumbParentLabel?: T;
+  breadcrumbParentHref?: T;
+  pageTitle?: T;
+  resultsLabel?: T;
+  listingPreset?: T;
+  crmQueryJson?: T;
+  pageSize?: T;
+  showFilters?: T;
+  mapSearchUrl?: T;
+  forceSoldBadge?: T;
   id?: T;
   blockName?: T;
 }

@@ -56,6 +56,7 @@ export const LanguageSwitcher: React.FC<Props> = ({ items, currentLocale }) => {
 
     setOpen(false)
     startTransition(async () => {
+      document.documentElement.lang = item.locale
       await setLocale(item.locale)
       router.refresh()
     })

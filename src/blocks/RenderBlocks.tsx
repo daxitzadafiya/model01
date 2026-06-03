@@ -11,6 +11,7 @@ import { HeroBlock } from '@/blocks/HeroBlock/Component'
 import { StatsBlock } from '@/blocks/StatsBlock/Component'
 import { MissionBlock } from '@/blocks/MissionBlock/Component'
 import { PropertiesBlock } from '@/blocks/PropertiesBlock/Component'
+import { PropertyListBlock } from '@/blocks/PropertyListBlock/Component'
 import { InteractiveMapBlock } from '@/blocks/InteractiveMapBlock/Component'
 import { VirtualTourBlock } from '@/blocks/VirtualTourBlock/Component'
 import { AdvisorsBlock } from '@/blocks/AdvisorsBlock/Component'
@@ -35,6 +36,7 @@ const blockComponents = {
   statsBlock: StatsBlock,
   missionBlock: MissionBlock,
   propertiesBlock: PropertiesBlock,
+  propertyListBlock: PropertyListBlock,
   interactiveMapBlock: InteractiveMapBlock,
   virtualTourBlock: VirtualTourBlock,
   advisorsBlock: AdvisorsBlock,

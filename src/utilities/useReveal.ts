@@ -2,12 +2,25 @@
 
 import { useEffect, useRef } from 'react'
 
-export function useReveal() {
-  const ref = useRef<HTMLDivElement>(null)
+const collectRevealElements = (root: ParentNode): Element[] => {
+  const elements: Element[] = []
+  if (root instanceof Element && root.classList.contains('reveal')) {
+    elements.push(root)
+  }
+  root.querySelectorAll('.reveal').forEach((el) => {
+    if (!elements.includes(el)) elements.push(el)
+  })
+  return elements
+}
+
+export function useReveal<T extends HTMLElement = HTMLDivElement>() {
+  const ref = useRef<T>(null)
 
   useEffect(() => {
     const element = ref.current
     if (!element) return
+
+    const tracked = new WeakSet<Element>()
 
     const isVisible = (el: Element) => {
       const rect = el.getBoundingClientRect()
@@ -15,11 +28,12 @@ export function useReveal() {
       return rect.top < viewportHeight * 0.95 && rect.bottom > 0
     }
 
-    const observer = new IntersectionObserver(
+    const intersectionObserver = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('active')
-          observer.unobserve(entry.target)
+          intersectionObserver.unobserve(entry.target)
+          tracked.delete(entry.target)
         }
       },
       {
@@ -28,42 +42,67 @@ export function useReveal() {
       },
     )
 
-    const revealElements = Array.from(element.querySelectorAll('.reveal'))
-    if (element.classList.contains('reveal')) revealElements.push(element)
+    const activateReveal = (el: Element) => {
+      if (!el.classList.contains('reveal') || el.classList.contains('active')) return
 
-    revealElements.forEach((el) => {
       if (isVisible(el)) {
         el.classList.add('active')
         return
       }
-      observer.observe(el)
+
+      if (!tracked.has(el)) {
+        tracked.add(el)
+        intersectionObserver.observe(el)
+      }
+    }
+
+    const scanReveals = (root: ParentNode = element) => {
+      collectRevealElements(root).forEach(activateReveal)
+    }
+
+    scanReveals()
+
+    const rafId = window.requestAnimationFrame(() => scanReveals())
+
+    const mutationObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof Element) {
+            scanReveals(node)
+          }
+        })
+      }
     })
 
-    const rafId = window.requestAnimationFrame(() => {
-      revealElements.forEach((el) => {
-        if (!el.classList.contains('active') && isVisible(el)) {
-          el.classList.add('active')
-          observer.unobserve(el)
-        }
-      })
+    mutationObserver.observe(element, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'],
     })
 
-    // Failsafe: prevent hidden blank sections if observer misses any element
-    const timeoutId = window.setTimeout(() => {
-      revealElements.forEach((el) => {
-        if (!el.classList.contains('active')) {
-          el.classList.add('active')
-          observer.unobserve(el)
-        }
+    const failsafeId = window.setTimeout(() => {
+      element.querySelectorAll('.reveal:not(.active)').forEach((el) => {
+        el.classList.add('active')
+        intersectionObserver.unobserve(el)
       })
     }, 1200)
 
     return () => {
       window.cancelAnimationFrame(rafId)
-      window.clearTimeout(timeoutId)
-      observer.disconnect()
+      window.clearTimeout(failsafeId)
+      mutationObserver.disconnect()
+      intersectionObserver.disconnect()
     }
   }, [])
 
   return ref
+}
+
+/** Call after async content mounts so `.reveal` elements become visible immediately. */
+export function activateRevealElements(root: ParentNode | null | undefined) {
+  if (!root) return
+  collectRevealElements(root).forEach((el) => {
+    el.classList.add('active')
+  })
 }
