@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 
 import { getClientSideURL } from '@/utilities/getURL'
+import { parseFormSubmissionError } from '@/utilities/parseFormSubmissionError'
 
 type FormSubmissionState = {
   isLoading: boolean
@@ -21,6 +22,8 @@ type UseFormSubmissionOptions = {
    */
   recaptchaRequired?: boolean
   recaptchaToken?: string
+  /** Contact section: forward submission to Optima CRM (see `src/plugins/index.ts`). */
+  syncToOptimaCrm?: boolean
 }
 
 export function useFormSubmission(
@@ -62,6 +65,7 @@ export function useFormSubmission(
             body: JSON.stringify({
               form: formID,
               submissionData: dataToSend,
+              ...(options.syncToOptimaCrm ? { syncToOptimaCrm: true } : {}),
               ...(options.recaptchaRequired
                 ? {
                     recaptchaRequired: true,
@@ -82,8 +86,8 @@ export function useFormSubmission(
           if (req.status >= 400) {
             setIsLoading(false)
             setError({
-              message: res.errors?.[0]?.message || 'Internal Server Error',
-              status: res.status,
+              message: parseFormSubmissionError(res),
+              status: String(req.status),
             })
             return
           }
@@ -113,6 +117,7 @@ export function useFormSubmission(
       confirmationType,
       options.recaptchaRequired,
       options.recaptchaToken,
+      options.syncToOptimaCrm,
     ],
   )
 

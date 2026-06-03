@@ -13,6 +13,8 @@ import { beforeSyncWithSearch } from '@/search/beforeSync'
 
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { isContactFormTitle } from '@/utilities/isContactFormSubmission'
+import { submitContactToOptimaCrm } from '@/utilities/submitContactToOptimaCrm'
 import { verifyRecaptchaToken } from '@/utilities/verifyRecaptcha'
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
@@ -105,6 +107,16 @@ export const plugins: Plugin[] = [
               readOnly: true,
             },
           },
+          {
+            name: 'syncToOptimaCrm',
+            type: 'checkbox',
+            defaultValue: false,
+            required: false,
+            admin: {
+              hidden: true,
+              readOnly: true,
+            },
+          },
         ]
       },
       hooks: {
@@ -113,10 +125,8 @@ export const plugins: Plugin[] = [
             if (operation !== 'create') return data
 
             const form = data?.form
+            let formTitle: string | undefined
 
-            // Enforce reCAPTCHA ONLY for the public "Contact Form".
-            // This prevents users from bypassing by modifying any client-sent flags.
-            let isContactForm = false
             if (typeof form === 'number') {
               try {
                 const formDoc = await req.payload.findByID({
@@ -125,32 +135,37 @@ export const plugins: Plugin[] = [
                   depth: 0,
                   overrideAccess: true,
                 })
-                isContactForm = formDoc?.title === 'Contact Form'
+                formTitle = formDoc?.title
               } catch {
-                // If we can't determine the form type, fail closed and enforce reCAPTCHA.
-                isContactForm = true
+                // fall through
               }
-            } else if (typeof form === 'object' && form !== null) {
-              // In case Payload passes the populated object rather than just the ID.
-              isContactForm = (form as any)?.title === 'Contact Form'
+            } else if (typeof form === 'object' && form !== null && 'title' in form) {
+              formTitle = (form as { title?: string }).title
             }
 
-            if (!isContactForm) return data
+            const syncToOptima =
+              data?.syncToOptimaCrm === true || isContactFormTitle(formTitle)
 
-            const token = data?.recaptchaToken
-            if (typeof token !== 'string' || !token) {
-              throw new Error('Please complete reCAPTCHA before submitting.')
+            if (!syncToOptima) return data
+
+            if (data?.recaptchaRequired === true) {
+              const token = data?.recaptchaToken
+              if (typeof token !== 'string' || !token) {
+                throw new Error('Please complete reCAPTCHA before submitting.')
+              }
+
+              const forwardedFor = req.headers.get('x-forwarded-for')
+              const remoteip = forwardedFor ? forwardedFor.split(',')[0]?.trim() : undefined
+
+              const ok = await verifyRecaptchaToken({
+                token,
+                remoteip,
+              })
+
+              if (!ok) throw new Error('reCAPTCHA verification failed. Please try again.')
             }
 
-            const forwardedFor = req.headers.get('x-forwarded-for')
-            const remoteip = forwardedFor ? forwardedFor.split(',')[0]?.trim() : undefined
-
-            const ok = await verifyRecaptchaToken({
-              token,
-              remoteip,
-            })
-
-            if (!ok) throw new Error('reCAPTCHA verification failed. Please try again.')
+            await submitContactToOptimaCrm(data?.submissionData)
 
             return data
           },

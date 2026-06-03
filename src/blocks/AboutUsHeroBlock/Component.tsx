@@ -18,7 +18,10 @@ export const AboutUsHeroBlock: React.FC<Props> = ({
   const ref = useReveal()
 
   return (
-    <section ref={ref} className="relative w-full overflow-hidden flex items-center min-h-[40vh] md:min-h-[42vh]">
+    <section
+      ref={ref}
+      className="relative w-full overflow-hidden flex items-center min-h-[40vh] md:min-h-[42vh] pt-12 md:pt-14"
+    >
       {typeof backgroundImage === 'object' && backgroundImage !== null && (
         <div className="absolute inset-0">
           <Media resource={backgroundImage} fill priority imgClassName="object-cover object-center" />

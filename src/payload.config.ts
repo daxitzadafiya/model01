@@ -11,6 +11,7 @@ import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
+import { CookieConsent } from './globals/CookieConsent/config'
 import { Localization } from './globals/Localization/config'
 import { SiteLogo } from './globals/Logo/config'
 import { Theme } from './globals/Theme/config'
@@ -31,6 +32,8 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  serverURL: getServerSideURL(),
+
   // i18n localization
   i18n: {
     supportedLanguages: { en, de, fr, es },
@@ -105,7 +108,7 @@ export default buildConfig({
   }),
   collections: [Pages, Posts, Media, Categories, Users],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, Theme, Localization, SiteLogo],
+  globals: [Header, Footer, Theme, Localization, SiteLogo, CookieConsent],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

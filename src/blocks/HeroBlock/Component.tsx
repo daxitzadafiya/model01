@@ -21,7 +21,7 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
             <Media resource={backgroundImage} fill priority imgClassName="object-cover" />
           </div>
         )}
-        <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-margin-mobile md:px-margin-desktop pt-20 pb-32 md:pt-0 md:pb-0">
+        <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-margin-mobile md:px-margin-desktop pt-20 pb-32 md:pt-8 md:pb-0">
           <h1 className="font-headline-lg-mobile md:font-display-lg text-headline-lg-mobile md:text-display-lg text-white max-w-4xl mb-6 md:mb-8 reveal">
             {title}
           </h1>

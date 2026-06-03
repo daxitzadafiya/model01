@@ -7,6 +7,8 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { link } from '@/fields/link'
+
 const richTextField = (name: string, label: string): Field => ({
   name,
   type: 'richText',
@@ -24,6 +26,7 @@ const richTextField = (name: string, label: string): Field => ({
 
 export const PrivacyPolicyBlock: Block = {
   slug: 'privacyPolicyBlock',
+  dbName: 'pp',
   interfaceName: 'PrivacyPolicyBlock',
   labels: {
     singular: 'Privacy Policy Layout',
@@ -48,7 +51,7 @@ export const PrivacyPolicyBlock: Block = {
       type: 'textarea',
       localized: true,
       defaultValue:
-        'Last updated: October 24, 2024. This policy outlines our commitment to protecting your digital footprint with the same discretion we apply to our physical estates.',
+        'Last updated: May 24, 2026. This policy outlines our commitment to protecting your digital footprint with the same discretion we apply to our physical estates.',
     },
     {
       name: 'tocTitle',
@@ -59,6 +62,7 @@ export const PrivacyPolicyBlock: Block = {
     {
       name: 'sections',
       type: 'array',
+      dbName: 'secs',
       minRows: 1,
       admin: {
         initCollapsed: true,
@@ -181,7 +185,23 @@ export const PrivacyPolicyBlock: Block = {
               name: 'buttonLabel',
               type: 'text',
               localized: true,
+              admin: {
+                description: 'Text shown on the button.',
+              },
             },
+            link({
+              appearances: false,
+              disableLabel: true,
+              overrides: {
+                name: 'buttonLink',
+                dbName: 'blink',
+                label: 'Button action',
+                admin: {
+                  description:
+                    'Internal page or custom URL. If empty, the button uses a mailto link to the email above.',
+                },
+              },
+            }),
           ],
         },
         {

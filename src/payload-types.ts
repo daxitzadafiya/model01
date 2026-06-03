@@ -123,6 +123,7 @@ export interface Config {
     theme: Theme;
     localization: Localization;
     logo: Logo;
+    cookieConsent: CookieConsent;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -130,6 +131,7 @@ export interface Config {
     theme: ThemeSelect<false> | ThemeSelect<true>;
     localization: LocalizationSelect<false> | LocalizationSelect<true>;
     logo: LogoSelect<false> | LogoSelect<true>;
+    cookieConsent: CookieConsentSelect<false> | CookieConsentSelect<true>;
   };
   locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   widgets: {
@@ -1351,7 +1353,27 @@ export interface PrivacyPolicyBlock {
         contactPanel?: {
           title?: string | null;
           email?: string | null;
+          /**
+           * Text shown on the button.
+           */
           buttonLabel?: string | null;
+          /**
+           * Internal page or custom URL. If empty, the button uses a mailto link to the email above.
+           */
+          buttonLink?: {
+            type?: ('reference' | 'custom') | null;
+            newTab?: boolean | null;
+            reference?:
+              | ({
+                  relationTo: 'pages';
+                  value: number | Page;
+                } | null)
+              | ({
+                  relationTo: 'posts';
+                  value: number | Post;
+                } | null);
+            url?: string | null;
+          };
         };
         showDividerBefore?: boolean | null;
         id?: string | null;
@@ -1423,6 +1445,7 @@ export interface FormSubmission {
     | null;
   recaptchaRequired?: boolean | null;
   recaptchaToken?: string | null;
+  syncToOptimaCrm?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2291,6 +2314,14 @@ export interface PrivacyPolicyBlockSelect<T extends boolean = true> {
               title?: T;
               email?: T;
               buttonLabel?: T;
+              buttonLink?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                  };
             };
         showDividerBefore?: T;
         id?: T;
@@ -2649,6 +2680,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
       };
   recaptchaRequired?: T;
   recaptchaToken?: T;
+  syncToOptimaCrm?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3032,6 +3064,75 @@ export interface Logo {
   createdAt?: string | null;
 }
 /**
+ * Banner shown on the public site until visitors accept or reject cookies. Edit the message and button labels per locale.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cookieConsent".
+ */
+export interface CookieConsent {
+  id: number;
+  enabled?: boolean | null;
+  /**
+   * Lets visitors dismiss the banner for this session without saving a choice.
+   */
+  showCloseButton?: boolean | null;
+  /**
+   * Short heading shown in the banner.
+   */
+  title?: string | null;
+  /**
+   * Explain which cookies you use and why. Shown in the banner body.
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  acceptLabel: string;
+  /**
+   * Leave empty to hide the reject button.
+   */
+  rejectLabel?: string | null;
+  /**
+   * Optional link to your cookie or privacy policy page.
+   */
+  policyLink: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+    label: string;
+  };
+  /**
+   * Browser cookie name used to remember the visitor choice.
+   */
+  storageKey: string;
+  /**
+   * How long the choice is remembered (days).
+   */
+  expiryDays: number;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -3163,6 +3264,32 @@ export interface LogoSelect<T extends boolean = true> {
   lightLogo?: T;
   darkLogo?: T;
   favicon?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cookieConsent_select".
+ */
+export interface CookieConsentSelect<T extends boolean = true> {
+  enabled?: T;
+  showCloseButton?: T;
+  title?: T;
+  content?: T;
+  acceptLabel?: T;
+  rejectLabel?: T;
+  policyLink?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
+      };
+  storageKey?: T;
+  expiryDays?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

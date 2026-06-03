@@ -1,12 +1,14 @@
 'use client'
 
-import type { CountryField, SelectField } from '@payloadcms/plugin-form-builder/types'
+import type { CheckboxField, CountryField, SelectField } from '@payloadcms/plugin-form-builder/types'
 import type { Control, FieldErrorsImpl } from 'react-hook-form'
 import type { UseFormRegister } from 'react-hook-form'
 import { Controller } from 'react-hook-form'
 import React from 'react'
 
 import { Error } from '@/blocks/Form/Error'
+import { Checkbox as CheckboxUi } from '@/components/ui/checkbox'
+import { cn } from '@/utilities/ui'
 import {
   Select as SelectComponent,
   SelectContent,
@@ -151,7 +153,7 @@ export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> 
   errors,
   register,
   defaultValue,
-  rows = 6,
+  rows = 4,
 }) => (
   <ContactFieldWrapper
     errors={errors}
@@ -173,6 +175,74 @@ export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> 
   </ContactFieldWrapper>
 )
 
+const ACCEPTANCE_ERROR = 'You must accept the Privacy Policy to continue.'
+
+const checkboxClassName =
+  'mt-0.5 size-5 shrink-0 rounded-md border-outline-variant/50 shadow-none data-[state=checked]:border-tertiary data-[state=checked]:bg-tertiary data-[state=checked]:text-white focus-visible:ring-4 focus-visible:ring-tertiary/20'
+
+function renderCheckboxLabel(label: string, required?: boolean) {
+  const parts = label.split(/(Privacy Policy)/i)
+
+  return (
+    <span className="font-body-md text-body-md leading-relaxed text-on-surface">
+      {required && <span className="mr-1 text-tertiary">*</span>}
+      {parts.map((part, index) =>
+        /^Privacy Policy$/i.test(part) ? (
+          <span
+            className="font-medium text-tertiary decoration-tertiary/40 underline-offset-2"
+            key={index}
+          >
+            {part}
+          </span>
+        ) : (
+          <React.Fragment key={index}>{part}</React.Fragment>
+        ),
+      )}
+    </span>
+  )
+}
+
+export const ContactCheckboxField: React.FC<
+  CheckboxField & {
+    control: Control
+    errors: Partial<FieldErrorsImpl>
+    register: UseFormRegister<any>
+  }
+> = ({ name, label, required, control, errors, defaultValue }) => (
+  <div>
+    <Controller
+      control={control}
+      defaultValue={defaultValue ?? false}
+      name={name}
+      rules={{
+        validate: (value) => value === true || ACCEPTANCE_ERROR,
+      }}
+      render={({ field: { onChange, value } }) => (
+        <label
+          className={cn(
+            'flex cursor-pointer items-start gap-3 rounded-xl border bg-white px-4 py-3.5 transition-colors border-outline-variant/35 hover:border-tertiary/40 has-focus-visible:border-tertiary has-focus-visible:ring-4 has-focus-visible:ring-tertiary/20',
+          )}
+          htmlFor={name}
+        >
+          <CheckboxUi
+            checked={Boolean(value)}
+            className={checkboxClassName}
+            id={name}
+            onCheckedChange={(checked) => onChange(checked === true)}
+          />
+          {label ? renderCheckboxLabel(label, required) : null}
+        </label>
+      )}
+    />
+    {errors[name] && (
+      <p className="mt-2 flex items-start gap-1.5 font-body-sm text-body-sm text-error">
+        <span className="material-symbols-outlined shrink-0 text-[16px]">error</span>
+        <span>{(errors[name]?.message as string) || ACCEPTANCE_ERROR}</span>
+      </p>
+    )}
+  </div>
+)
+
 export const contactFields = {
   text: ContactTextField,
   email: ContactEmailField,
@@ -180,6 +250,7 @@ export const contactFields = {
   textarea: ContactTextareaField,
   select: ContactSelectField,
   country: ContactCountryField,
+  checkbox: ContactCheckboxField,
 }
 
 function ContactSelectField(props: SelectField & { control: Control; errors: Partial<FieldErrorsImpl> }) {

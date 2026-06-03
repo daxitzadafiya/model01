@@ -59,8 +59,17 @@ export const ContactForm: React.FC<Props> = ({
   const [isRecaptchaReady, setIsRecaptchaReady] = useState(false)
   const [recaptchaLoadError, setRecaptchaLoadError] = useState<string | null>(null)
   const [recaptchaValidationError, setRecaptchaValidationError] = useState<string | null>(null)
+  const [recaptchaMountKey, setRecaptchaMountKey] = useState(0)
   const widgetIdRef = useRef<number | null>(null)
   const recaptchaContainerRef = useRef<HTMLDivElement | null>(null)
+
+  const clearRecaptchaWidget = () => {
+    if (recaptchaContainerRef.current) {
+      recaptchaContainerRef.current.innerHTML = ''
+    }
+    widgetIdRef.current = null
+    setIsRecaptchaReady(false)
+  }
 
   const formMethods = useForm<any>({
     defaultValues: formFields as any,
@@ -75,6 +84,7 @@ export const ContactForm: React.FC<Props> = ({
   const { isLoading, hasSubmitted, error, onSubmit, resetSubmission } = useFormSubmission(
     formFromProps,
     {
+      syncToOptimaCrm: true,
       recaptchaRequired: recaptchaConfigured,
       recaptchaToken,
     },
@@ -88,23 +98,22 @@ export const ContactForm: React.FC<Props> = ({
     if (hasSubmitted) {
       formMethods.reset({})
       setRecaptchaToken('')
-      setIsRecaptchaReady(false)
       setRecaptchaLoadError(null)
       setRecaptchaValidationError(null)
-      if (widgetIdRef.current !== null && window.grecaptcha?.reset) {
-        window.grecaptcha.reset(widgetIdRef.current)
-      }
+      clearRecaptchaWidget()
     }
   }, [hasSubmitted, formMethods])
 
   useEffect(() => {
-    if (!recaptchaEnabled) return
+    if (!recaptchaEnabled || hasSubmitted) return
 
     const renderWidget = () => {
       const container = recaptchaContainerRef.current
       if (!container) return
       if (!window.grecaptcha) return
       if (widgetIdRef.current !== null) return
+
+      container.innerHTML = ''
       const standardRender =
         typeof window.grecaptcha?.render === 'function' ? window.grecaptcha.render : undefined
       const enterpriseRender =
@@ -179,14 +188,17 @@ export const ContactForm: React.FC<Props> = ({
     script.src = 'https://www.google.com/recaptcha/api.js'
     script.addEventListener('load', onScriptLoad)
     document.body.appendChild(script)
-  }, [recaptchaEnabled, recaptchaSiteKey])
+
+    return () => {
+      clearRecaptchaWidget()
+    }
+  }, [recaptchaEnabled, recaptchaSiteKey, hasSubmitted, recaptchaMountKey])
 
   const resetSubmissionWithRecaptcha = () => {
     setRecaptchaToken('')
     setRecaptchaValidationError(null)
-    if (widgetIdRef.current !== null && window.grecaptcha?.reset) {
-      window.grecaptcha.reset(widgetIdRef.current)
-    }
+    clearRecaptchaWidget()
+    setRecaptchaMountKey((key) => key + 1)
     resetSubmission()
   }
 
@@ -262,11 +274,6 @@ export const ContactForm: React.FC<Props> = ({
       {isLoading && !hasSubmitted && (
         <p className="font-body-md text-body-md text-on-surface-variant">Loading, please wait...</p>
       )}
-      {error && (
-        <p className="font-body-md text-body-md text-error mb-4">
-          {error.status || '500'}: {error.message || ''}
-        </p>
-      )}
       {!hasSubmitted && (
         <form className="space-y-5" id={String(formID)} onSubmit={handleSubmit(handleContactSubmit)}>
           {eyebrow && (
@@ -286,6 +293,18 @@ export const ContactForm: React.FC<Props> = ({
 
           {description && (
             <p className="font-body-md text-body-md text-on-surface-variant">{description}</p>
+          )}
+
+          {error && (
+            <div
+              className="rounded-xl border border-error/30 bg-error/5 px-4 py-3"
+              role="alert"
+            >
+              <p className="flex items-start gap-2 font-body-md text-body-md text-error">
+                <span className="material-symbols-outlined mt-0.5 shrink-0 text-[20px]">error</span>
+                <span>{error.message}</span>
+              </p>
+            </div>
           )}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -333,7 +352,7 @@ export const ContactForm: React.FC<Props> = ({
 
           {recaptchaEnabled && (
             <div className="space-y-2">
-              <div ref={recaptchaContainerRef} />
+              <div key={`recaptcha-${recaptchaMountKey}`} ref={recaptchaContainerRef} />
               {recaptchaLoadError && (
                 <p className="font-body-sm text-body-sm text-error">{recaptchaLoadError}</p>
               )}

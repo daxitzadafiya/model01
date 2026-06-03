@@ -2,12 +2,53 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 
+import { CMSLink } from '@/components/Link'
 import RichText from '@/components/RichText'
 import { Media } from '@/components/Media'
 import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
 
 type Props = Extract<Page['layout'][0], { blockType: 'privacyPolicyBlock' }>
+
+type ContactPanel = NonNullable<NonNullable<Props['sections']>[number]['contactPanel']>
+
+function getContactPanelLink(contactPanel: ContactPanel) {
+  const { buttonLink, email } = contactPanel
+  const hasConfiguredLink = Boolean(
+    buttonLink?.url || (buttonLink?.type === 'reference' && buttonLink?.reference),
+  )
+
+  if (hasConfiguredLink && buttonLink) {
+    return buttonLink
+  }
+
+  if (email) {
+    return { type: 'custom' as const, url: `mailto:${email}`, newTab: false }
+  }
+
+  return null
+}
+
+const ContactPanel: React.FC<{ panel: ContactPanel }> = ({ panel }) => {
+  const actionLink = getContactPanelLink(panel)
+
+  return (
+    <div className="border border-tertiary/30 p-8 md:p-10 bg-surface text-center mt-6">
+      {panel.title && <h4 className="font-headline-sm text-headline-sm mb-2">{panel.title}</h4>}
+      {panel.email && (
+        <p className="font-label-nav text-label-nav text-tertiary mb-6 uppercase">{panel.email}</p>
+      )}
+      {panel.buttonLabel && actionLink && (
+        <CMSLink
+          {...actionLink}
+          appearance="inline"
+          className="inline-flex px-10 py-3.5 bg-primary text-on-primary rounded-full font-label-nav text-label-nav uppercase tracking-widest hover:bg-tertiary text-white transition-all duration-300"
+          label={panel.buttonLabel}
+        />
+      )}
+    </div>
+  )
+}
 
 export const PrivacyPolicyBlock: React.FC<Props> = ({
   eyebrow,
@@ -104,7 +145,9 @@ export const PrivacyPolicyBlock: React.FC<Props> = ({
         <article className="md:w-3/4 max-w-none">
           {(sections || []).map((section, i) => (
             <React.Fragment key={section.id || i}>
-              {section.showDividerBefore && <hr className="border-t border-outline-variant my-12 md:my-16 reveal" />}
+              {section.showDividerBefore && (
+                <hr className="border-t border-outline-variant my-12 md:my-16 reveal" />
+              )}
               <section
                 className="mb-12 md:mb-16 reveal scroll-mt-32"
                 id={section.anchorId || undefined}
@@ -123,7 +166,9 @@ export const PrivacyPolicyBlock: React.FC<Props> = ({
 
                 {section.highlightQuote && (
                   <div className="bg-surface-container p-6 md:p-8 border-l-4 border-tertiary my-6 md:my-8">
-                    <p className="font-body-md text-on-surface-variant italic m-0">{section.highlightQuote}</p>
+                    <p className="font-body-md text-on-surface-variant italic m-0">
+                      {section.highlightQuote}
+                    </p>
                   </div>
                 )}
 
@@ -135,10 +180,14 @@ export const PrivacyPolicyBlock: React.FC<Props> = ({
                         key={card.id || cardIndex}
                       >
                         {card.icon && (
-                          <span className="material-symbols-outlined text-tertiary mb-3">{card.icon}</span>
+                          <span className="material-symbols-outlined text-tertiary mb-3">
+                            {card.icon}
+                          </span>
                         )}
                         {card.title && (
-                          <h4 className="font-label-nav text-label-nav uppercase mb-2">{card.title}</h4>
+                          <h4 className="font-label-nav text-label-nav uppercase mb-2">
+                            {card.title}
+                          </h4>
                         )}
                         {card.description && (
                           <p className="font-label-sm text-label-sm text-on-surface-variant">
@@ -163,46 +212,37 @@ export const PrivacyPolicyBlock: React.FC<Props> = ({
                   </ul>
                 )}
 
-                {section.visualPanel && typeof section.visualPanel.image === 'object' && section.visualPanel.image !== null && (
-                  <div className="relative overflow-hidden aspect-16/6 bg-black my-6 md:my-8 rounded-lg group">
-                    <Media
-                      imgClassName="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
-                      resource={section.visualPanel.image}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        {section.visualPanel.icon && (
-                          <span className="material-symbols-outlined text-on-primary text-5xl mb-4">
-                            {section.visualPanel.icon}
-                          </span>
-                        )}
-                        {section.visualPanel.title && (
-                          <h3 className="text-on-primary font-headline-sm uppercase tracking-widest">
-                            {section.visualPanel.title}
-                          </h3>
-                        )}
+                {section.visualPanel &&
+                  typeof section.visualPanel.image === 'object' &&
+                  section.visualPanel.image !== null && (
+                    <div className="relative overflow-hidden aspect-16/6 bg-black my-6 md:my-8 rounded-lg group">
+                      <Media
+                        imgClassName="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+                        resource={section.visualPanel.image}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          {section.visualPanel.icon && (
+                            <span className="material-symbols-outlined text-on-primary text-5xl mb-4">
+                              {section.visualPanel.icon}
+                            </span>
+                          )}
+                          {section.visualPanel.title && (
+                            <h3 className="text-on-primary font-headline-sm uppercase tracking-widest">
+                              {section.visualPanel.title}
+                            </h3>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {section.contactPanel && (section.contactPanel.title || section.contactPanel.email || section.contactPanel.buttonLabel) && (
-                  <div className="border border-tertiary/30 p-8 md:p-10 bg-surface text-center mt-6">
-                    {section.contactPanel.title && (
-                      <h4 className="font-headline-sm text-headline-sm mb-2">{section.contactPanel.title}</h4>
-                    )}
-                    {section.contactPanel.email && (
-                      <p className="font-label-nav text-label-nav text-tertiary mb-6 uppercase">
-                        {section.contactPanel.email}
-                      </p>
-                    )}
-                    {section.contactPanel.buttonLabel && (
-                      <button className="px-10 py-3.5 bg-primary text-on-primary rounded-full font-label-nav text-label-nav uppercase tracking-widest hover:bg-tertiary transition-all duration-300">
-                        {section.contactPanel.buttonLabel}
-                      </button>
-                    )}
-                  </div>
-                )}
+                {section.contactPanel &&
+                  (section.contactPanel.title ||
+                    section.contactPanel.email ||
+                    section.contactPanel.buttonLabel) && (
+                    <ContactPanel panel={section.contactPanel} />
+                  )}
               </section>
             </React.Fragment>
           ))}

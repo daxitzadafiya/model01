@@ -1,3 +1,26 @@
+const LOCAL_MEDIA_PATH_PREFIXES = ['/api/media/', '/media/']
+
+/**
+ * Payload may persist absolute media URLs (e.g. from dev/staging). Strip the origin
+ * for local media paths so production serves files from the current host.
+ */
+export function toRelativeMediaPath(url: string): string {
+  if (!url || url.startsWith('/')) return url
+
+  try {
+    const parsed = new URL(url)
+    const path = `${parsed.pathname}${parsed.search}`
+
+    if (LOCAL_MEDIA_PATH_PREFIXES.some((prefix) => parsed.pathname.startsWith(prefix))) {
+      return path
+    }
+
+    return url
+  } catch {
+    return url
+  }
+}
+
 /**
  * Processes media resource URL to ensure proper formatting
  * @param url The original URL from the resource
@@ -11,9 +34,11 @@
 export const getMediaUrl = (url: string | null | undefined, cacheTag?: string | null): string => {
   if (!url) return ''
 
+  const relativePath = toRelativeMediaPath(url)
+
   if (cacheTag && cacheTag !== '') {
     cacheTag = encodeURIComponent(cacheTag)
   }
 
-  return cacheTag ? `${url}?${cacheTag}` : url
+  return cacheTag ? `${relativePath}?${cacheTag}` : relativePath
 }
