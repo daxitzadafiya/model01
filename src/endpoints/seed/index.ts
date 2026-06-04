@@ -242,9 +242,9 @@ export const seed = async ({
         tagline:
           'Elevating the Greek real estate experience through heritage, transparency, and architectural excellence.',
         socialLinks: [
-          { icon: 'public', url: 'https://roumpos.com', newTab: true },
-          { icon: 'share', url: 'https://roumpos.com', newTab: true },
-          { icon: 'language', url: 'https://roumpos.com', newTab: true },
+          { icon: 'public', url: '#', newTab: true },
+          { icon: 'share', url: '#', newTab: true },
+          { icon: 'language', url: '#', newTab: true },
         ],
         quickLinksTitle: 'QUICK LINKS',
         navItems: [

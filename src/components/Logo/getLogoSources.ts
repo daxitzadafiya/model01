@@ -3,7 +3,7 @@ import { getMediaUrl } from '@/utilities/getMediaUrl'
 
 export const DEFAULT_LIGHT_LOGO = '/logo.png'
 export const DEFAULT_DARK_LOGO = '/logow.png'
-export const DEFAULT_LOGO_ALT = 'Roumpos'
+export const DEFAULT_LOGO_ALT = 'Horizon Estates'
 export const DEFAULT_FAVICON = '/favicon.ico'
 
 export type LogoSources = {

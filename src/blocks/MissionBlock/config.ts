@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { link } from '@/fields/link'
+
 export const MissionBlock: Block = {
   slug: 'missionBlock',
   interfaceName: 'MissionBlock',
@@ -25,7 +27,17 @@ export const MissionBlock: Block = {
       name: 'buttonText',
       type: 'text',
       localized: true,
+      admin: {
+        description: 'Text displayed on the call-to-action button',
+      },
     },
+    link({
+      appearances: false,
+      overrides: {
+        name: 'ctaLink',
+        label: 'Button Link',
+      },
+    }),
     {
       name: 'image',
       type: 'upload',

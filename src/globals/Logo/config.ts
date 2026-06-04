@@ -15,7 +15,7 @@ export const SiteLogo: GlobalConfig = {
     {
       name: 'alt',
       type: 'text',
-      defaultValue: 'Roumpos',
+      defaultValue: 'Horizon Estates',
       required: true,
       admin: {
         description: 'Alternative text for accessibility.',

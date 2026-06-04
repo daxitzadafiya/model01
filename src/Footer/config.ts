@@ -162,7 +162,7 @@ export const Footer: GlobalConfig = {
               name: 'copyrightText',
               type: 'text',
               localized: true,
-              defaultValue: '© {year} ROUMPOS REAL ESTATE. ALL RIGHTS RESERVED.',
+              defaultValue: '© {year} HORIZON ESTATES. ALL RIGHTS RESERVED.',
               admin: {
                 description: 'Use {year} as a placeholder for the current year.',
               },

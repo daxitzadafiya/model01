@@ -877,7 +877,25 @@ export interface MissionBlock {
   subtitle?: string | null;
   title: string;
   content: string;
+  /**
+   * Text displayed on the call-to-action button
+   */
   buttonText?: string | null;
+  ctaLink: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+    label: string;
+  };
   image: number | Media;
   establishedYear?: string | null;
   id?: string | null;
@@ -2007,6 +2025,15 @@ export interface MissionBlockSelect<T extends boolean = true> {
   title?: T;
   content?: T;
   buttonText?: T;
+  ctaLink?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
+      };
   image?: T;
   establishedYear?: T;
   id?: T;

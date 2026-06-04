@@ -29,6 +29,7 @@ import { CertificationRowLabel as CertificationRowLabel_6f419d2a29ab0c968cc0b28e
 import { LegalRowLabel as LegalRowLabel_06a46d974082a28d7949f6a827bd56a1 } from '@/Footer/LegalRowLabel'
 import { default as default_c8f97ec34ecb4c45dad678c6203d9cb0 } from '@/components/Icon/Icon'
 import { default as default_a0bd5f2fa532ef2166f77171a2b9828a } from '@/components/Logo/Logo'
+import { default as default_3a0d2675453b772f02c1de6555319ff1 } from '@/components/ForgotPasswordView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -64,5 +65,6 @@ export const importMap = {
   "@/Footer/LegalRowLabel#LegalRowLabel": LegalRowLabel_06a46d974082a28d7949f6a827bd56a1,
   "@/components/Icon/Icon#default": default_c8f97ec34ecb4c45dad678c6203d9cb0,
   "@/components/Logo/Logo#default": default_a0bd5f2fa532ef2166f77171a2b9828a,
+  "@/components/ForgotPasswordView#default": default_3a0d2675453b772f02c1de6555319ff1,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

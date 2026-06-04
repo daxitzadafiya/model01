@@ -85,7 +85,7 @@ export async function Footer() {
               {navItems.map(({ link }, i) => (
                 <li key={i}>
                   <CMSLink
-                    className="hover:text-surface-bright transition-colors text-white"
+                    className="hover:text-tertiary transition-colors text-white"
                     {...link}
                   />
                 </li>

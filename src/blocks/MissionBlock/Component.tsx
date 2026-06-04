@@ -4,10 +4,19 @@ import React from 'react'
 import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
 import { Media } from '@/components/Media'
+import { CMSLink } from '@/components/Link'
 
 type Props = Extract<Page['layout'][0], { blockType: 'missionBlock' }>
 
-export const MissionBlock: React.FC<Props> = ({ subtitle, title, content, buttonText, image, establishedYear }) => {
+export const MissionBlock: React.FC<Props> = ({
+  subtitle,
+  title,
+  content,
+  buttonText,
+  ctaLink,
+  image,
+  establishedYear,
+}) => {
   const ref = useReveal()
 
   return (
@@ -40,11 +49,14 @@ export const MissionBlock: React.FC<Props> = ({ subtitle, title, content, button
           <p className="font-body-lg text-body-lg text-secondary leading-relaxed">
             {content}
           </p>
-          {buttonText && (
+          {ctaLink && (
             <div className="flex gap-8 mt-4">
-              <button className="font-label-nav text-label-nav text-primary border-b cursor-pointer border-primary pb-1 hover:text-tertiary hover:border-tertiary transition-all">
-                {buttonText}
-              </button>
+              <CMSLink
+                {...ctaLink}
+                label={buttonText || ctaLink.label || undefined}
+                appearance="inline"
+                className="font-label-nav text-label-nav text-primary border-b border-primary pb-1 hover:text-tertiary hover:border-tertiary transition-all"
+              />
             </div>
           )}
         </div>

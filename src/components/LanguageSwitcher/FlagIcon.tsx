@@ -13,7 +13,7 @@ type Props = {
   title?: string
 }
 
-/** Circular country flag (SVG) — matches Roumpos gold/cream theme */
+/** Circular country flag (SVG) — matches horizon estates gold/cream theme */
 export const FlagIcon: React.FC<Props> = ({ country, className, title }) => {
   const clipId = useId()
 
