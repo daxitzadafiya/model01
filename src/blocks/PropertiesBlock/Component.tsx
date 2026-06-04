@@ -7,7 +7,11 @@ import { PropertyCard, resolvePropertyCardStatusBadge } from '@/components/Prope
 import { useReveal, activateRevealElements } from '@/utilities/useReveal'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
 import { postToCRM } from '@/utilities/crmApi'
-import { parseCRMCustomQuery, normalizeCRMProperty as normalizeSharedCRMProperty } from '@/utilities/crmProperties'
+import {
+  parseCRMCustomQuery,
+  normalizeCRMProperty as normalizeSharedCRMProperty,
+} from '@/utilities/crmProperties'
+import { cn } from '@/utilities/ui'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 type Props = Extract<Page['layout'][0], { blockType: 'propertiesBlock' }>
@@ -35,7 +39,10 @@ type NormalizedProperty = {
 type CRMQueryPreset = 'featured' | 'seaView' | 'custom'
 
 function useCardsPerView() {
-  const [cardsPerView, setCardsPerView] = useState(CARDS_PER_VIEW_MOBILE)
+  const [cardsPerView, setCardsPerView] = useState(() => {
+    if (typeof window === 'undefined') return CARDS_PER_VIEW_DESKTOP
+    return window.matchMedia(DESKTOP_MEDIA).matches ? CARDS_PER_VIEW_DESKTOP : CARDS_PER_VIEW_MOBILE
+  })
 
   useEffect(() => {
     const mq = window.matchMedia(DESKTOP_MEDIA)
@@ -48,6 +55,16 @@ function useCardsPerView() {
 
   return cardsPerView
 }
+
+const SKELETON_CARD_COUNT = CARDS_PER_VIEW_DESKTOP
+
+const PropertyCardSkeleton: React.FC<{ className?: string }> = ({ className }) => (
+  <div className={cn('space-y-4 animate-pulse', className)}>
+    <div className="rounded-xl h-[280px] md:h-[400px] bg-surface-container-high" />
+    <div className="h-4 w-2/3 rounded bg-surface-container-high" />
+    <div className="h-6 w-full rounded bg-surface-container-high" />
+  </div>
+)
 
 export const PropertiesBlock: React.FC<Props> = ({
   subtitle,
@@ -67,6 +84,7 @@ export const PropertiesBlock: React.FC<Props> = ({
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [crmRawProperties, setCrmRawProperties] = useState<Record<string, unknown>[]>([])
+  const [crmLoading, setCrmLoading] = useState(() => (dataSource ?? 'cms') === 'crm')
   const activeLocale = useSiteLocale()
   const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -209,12 +227,14 @@ export const PropertiesBlock: React.FC<Props> = ({
   useEffect(() => {
     if (source !== 'crm') {
       setCrmRawProperties([])
+      setCrmLoading(false)
       return
     }
 
     const controller = new AbortController()
 
     const fetchProperties = async () => {
+      setCrmLoading(true)
       try {
         const response = await postToCRM('commercial_properties', buildCRMQuery(), {
           signal: controller.signal,
@@ -231,6 +251,8 @@ export const PropertiesBlock: React.FC<Props> = ({
           console.error('Failed to fetch CRM properties.', error)
           setCrmRawProperties([])
         }
+      } finally {
+        if (!controller.signal.aborted) setCrmLoading(false)
       }
     }
 
@@ -281,12 +303,13 @@ export const PropertiesBlock: React.FC<Props> = ({
   const translateX = `calc(-${currentIndex} * (100cqw + ${GAP_PX}px) / ${cardsPerView})`
 
   const hasProperties = total > 0
+  const showCrmLoading = source === 'crm' && crmLoading
 
   useLayoutEffect(() => {
-    if (!hasProperties) return
+    if (!hasProperties || showCrmLoading) return
     activateRevealElements(carouselRef.current)
     activateRevealElements(sectionRef.current)
-  }, [hasProperties, crmRawProperties.length])
+  }, [hasProperties, showCrmLoading, crmRawProperties.length])
 
   return (
     <section ref={sectionRef} className={`py-16 md:py-24 ${bgClass}`}>
@@ -302,7 +325,7 @@ export const PropertiesBlock: React.FC<Props> = ({
             {title}
           </h2>
         </div>
-        {hasProperties && (
+        {hasProperties && !showCrmLoading && (
           <div className="flex gap-3 md:gap-4 shrink-0">
             <button
               onClick={handlePrev}
@@ -320,7 +343,15 @@ export const PropertiesBlock: React.FC<Props> = ({
         )}
       </div>
 
-      {hasProperties ? (
+      {showCrmLoading ? (
+        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array.from({ length: SKELETON_CARD_COUNT }).map((_, i) => (
+              <PropertyCardSkeleton key={i} className={cn(i > 0 && 'hidden md:block')} />
+            ))}
+          </div>
+        </div>
+      ) : hasProperties ? (
         /* Carousel viewport — @container so 100cqw = visible width (exactly N cards, no peek) */
         <div
           ref={carouselRef}

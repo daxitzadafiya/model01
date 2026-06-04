@@ -33,6 +33,33 @@ type Props = {
   style?: React.CSSProperties
 }
 
+/** Display property area as a whole number (e.g. 90.6m² → 90m²). */
+export function formatPropertyAreaDisplay(sqft?: number | string): string {
+  if (sqft === undefined || sqft === null || sqft === '') return '0'
+
+  const toInteger = (value: number) =>
+    `${Math.floor(value).toLocaleString('en-US')}`
+
+  if (typeof sqft === 'number') {
+    if (!Number.isFinite(sqft) || sqft <= 0) return '0'
+    return `${toInteger(sqft)}m²`
+  }
+
+  const raw = String(sqft).trim()
+  const match = raw.match(/^([\d.,]+)\s*(m²|m2|ft²|ft2)?$/i)
+
+  if (match) {
+    const value = parseFloat(match[1].replace(/,/g, ''))
+    if (!Number.isFinite(value) || value <= 0) return '0'
+
+    const unitToken = match[2]?.toLowerCase()
+    const unit = unitToken?.startsWith('ft') ? 'ft²' : 'm²'
+    return `${toInteger(value)}${unit}`
+  }
+
+  return raw
+}
+
 /** Matches Properties block: `showSoldBadge` on CMS or `forceSoldBadge` on list sold page. */
 export function resolvePropertyCardStatusBadge({
   statusBadgeLabel,
@@ -129,11 +156,7 @@ export const PropertyCard: React.FC<Props> = ({
             </span>
             <span className="flex items-center gap-1">
               <Ruler size={16} />
-              {property.sqft
-                ? typeof property.sqft === 'number'
-                  ? `${property.sqft}m²`
-                  : String(property.sqft)
-                : 0}
+              {formatPropertyAreaDisplay(property.sqft)}
             </span>
           </div>
           <span className="font-body-md text-body-md font-bold text-primary">{property.price}</span>

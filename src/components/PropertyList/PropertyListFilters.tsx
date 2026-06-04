@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Banknote, Home, MapPin, Search, SlidersHorizontal, Tag } from 'lucide-react'
+import { Banknote, Home, MapPin, RotateCcw, Search, SlidersHorizontal, Tag } from 'lucide-react'
 
 import { FilterSelect } from '@/components/FilterSelect'
 import type { FilterSelectOption } from '@/components/FilterSelect'
@@ -11,6 +11,7 @@ import type { PropertyListFilters as Filters } from '@/utilities/crmProperties'
 import {
   applyPriceRangeValue,
   EMPTY_PROPERTY_FILTERS,
+  hasActivePropertyFilters,
   PRICE_RANGE_OPTIONS,
   parsePropertyTypeFilter,
   resolvePriceRangeValue,
@@ -19,6 +20,7 @@ import { PropertyListMoreFiltersModal } from './PropertyListMoreFiltersModal'
 
 type Props = {
   filters: Filters
+  appliedFilters: Filters
   onChange: (key: keyof Filters, value: Filters[keyof Filters]) => void
   onApply: (nextFilters: Filters) => void
   mapSearchUrl?: string | null
@@ -32,6 +34,7 @@ const fieldLabelClass = 'font-label-sm text-label-sm uppercase text-on-surface-v
 
 export const PropertyListFilters: React.FC<Props> = ({
   filters,
+  appliedFilters,
   onChange,
   onApply,
   mapSearchUrl,
@@ -42,6 +45,7 @@ export const PropertyListFilters: React.FC<Props> = ({
 }) => {
   const [modalOpen, setModalOpen] = useState(false)
   const priceRange = resolvePriceRangeValue(filters.minPrice, filters.maxPrice)
+  const showClearFilters = hasActivePropertyFilters(appliedFilters)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,12 +64,8 @@ export const PropertyListFilters: React.FC<Props> = ({
   }
 
   const handleClear = () => {
-    const cleared = { ...EMPTY_PROPERTY_FILTERS }
-    ;(Object.entries(cleared) as [keyof Filters, Filters[keyof Filters]][]).forEach(
-      ([key, value]) => {
-        onChange(key, value)
-      },
-    )
+    onApply({ ...EMPTY_PROPERTY_FILTERS })
+    setModalOpen(false)
   }
 
   return (
@@ -126,6 +126,16 @@ export const PropertyListFilters: React.FC<Props> = ({
             >
               <SlidersHorizontal size={20} />
             </button>
+            {showClearFilters && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="px-4 py-3 border border-outline-variant text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:border-tertiary hover:text-tertiary transition-colors duration-300"
+              >
+                <RotateCcw size={18} />
+                <span>Clear</span>
+              </button>
+            )}
             <button
               type="submit"
               className="flex-1 md:flex-none px-8 md:px-12 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors duration-300"

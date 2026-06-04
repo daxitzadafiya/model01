@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
@@ -56,18 +56,20 @@ export const PropertyListView: React.FC<Props> = ({
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const activeLocale = useSiteLocale()
-  const {
-    options: propertyTypeOptions,
-    loading: propertyTypeLoading,
-  } = useCRMPropertyTypeOptions(listingPreset)
+  const { options: propertyTypeOptions, loading: propertyTypeLoading } =
+    useCRMPropertyTypeOptions(listingPreset)
   const { tree: locationTree, loading: locationLoading } = useCRMLocationTree(listingPreset)
+
+  const pendingPageScrollRef = useRef(false)
+
+  const scrollToPageTop = useCallback(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+  }, [])
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   const properties = useMemo(() => {
-    const normalized = rawProperties.map((raw) =>
-      normalizeCRMListProperty(raw, activeLocale),
-    )
+    const normalized = rawProperties.map((raw) => normalizeCRMListProperty(raw, activeLocale))
     return sortProperties(normalized, sort)
   }, [activeLocale, rawProperties, sort])
 
@@ -103,6 +105,12 @@ export const PropertyListView: React.FC<Props> = ({
     return () => controller.abort()
   }, [appliedFilters, crmQueryJson, listingPreset, page, pageSize])
 
+  useEffect(() => {
+    if (loading || !pendingPageScrollRef.current) return
+    pendingPageScrollRef.current = false
+    scrollToPageTop()
+  }, [loading, page, scrollToPageTop])
+
   const handleFilterChange = (
     key: keyof PropertyListFilters,
     value: PropertyListFilters[keyof PropertyListFilters],
@@ -122,8 +130,10 @@ export const PropertyListView: React.FC<Props> = ({
   }
 
   const handlePageChange = (nextPage: number) => {
+    if (nextPage === page) return
+    pendingPageScrollRef.current = true
     setPage(nextPage)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollToPageTop()
   }
 
   const resultsText = useMemo(() => {
@@ -140,6 +150,7 @@ export const PropertyListView: React.FC<Props> = ({
       {showFilters !== false && (
         <FiltersBar
           filters={filters}
+          appliedFilters={appliedFilters}
           onChange={handleFilterChange}
           onApply={handleApply}
           mapSearchUrl={mapSearchUrl}

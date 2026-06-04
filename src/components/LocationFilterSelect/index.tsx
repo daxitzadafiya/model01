@@ -24,12 +24,13 @@ type Props = {
   disabled?: boolean
   loading?: boolean
   menuPlacement?: FloatingMenuPlacement
+  icon?: React.ReactNode
 }
 
 const fieldLabelClass = 'font-label-sm text-label-sm uppercase text-on-surface-variant ml-1'
 
 const defaultTriggerClass =
-  'w-full pl-4 pr-10 py-3 bg-surface-container-low border border-transparent focus:border-tertiary focus:ring-0 rounded-lg font-body-md text-body-md text-on-surface text-left'
+  'w-full pr-10 py-3 bg-surface-container-low border border-transparent focus:border-tertiary focus:ring-0 rounded-lg font-body-md text-body-md text-on-surface text-left'
 
 const areaKey = (key: number) => String(key)
 
@@ -46,6 +47,7 @@ export const LocationFilterSelect: React.FC<Props> = ({
   disabled = false,
   loading = false,
   menuPlacement = 'auto',
+  icon,
 }) => {
   const generatedId = useId()
   const triggerId = idProp ?? generatedId
@@ -245,6 +247,7 @@ export const LocationFilterSelect: React.FC<Props> = ({
         aria-controls={listboxId}
         className={cn(
           defaultTriggerClass,
+          icon ? 'pl-10' : 'pl-4',
           'relative transition-colors duration-200',
           (disabled || loading) && 'cursor-not-allowed opacity-60',
           open && 'border-tertiary',
@@ -252,6 +255,11 @@ export const LocationFilterSelect: React.FC<Props> = ({
         )}
         onClick={() => setOpen((current) => !current)}
       >
+        {icon && (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-tertiary flex items-center justify-center">
+            {icon}
+          </span>
+        )}
         <span className="block truncate">{displayLabel}</span>
         <ChevronDown
           size={20}

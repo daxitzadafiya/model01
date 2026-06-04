@@ -26,21 +26,21 @@ export const PropertyListBlock: React.FC<Props> = ({
   const preset = (listingPreset ?? 'forSale') as CRMListingPreset
 
   return (
-    <section className="bg-surface py-12 md:py-16">
+    <section className="bg-surface pt-24 pb-12 md:pt-28 md:pb-16">
       {(showBreadcrumb !== false || pageTitle) && (
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-12">
           {showBreadcrumb !== false && (
             <nav
-              className="flex items-center space-x-2 text-on-surface-variant font-label-sm text-label-sm mb-4 uppercase tracking-widest"
+              className="flex items-center gap-2 text-secondary font-label-sm text-label-sm mb-4 uppercase tracking-widest"
               aria-label="Breadcrumb"
             >
               <Link
                 href={breadcrumbParentHref || '/'}
-                className="hover:text-tertiary transition-colors"
+                className="text-tertiary hover:text-primary transition-colors"
               >
                 {breadcrumbParentLabel || 'Home'}
               </Link>
-              <ChevronRight size={14} />
+              <ChevronRight size={14} className="shrink-0 text-on-surface-variant" aria-hidden />
               <span className="text-on-surface">{pageTitle || 'Collections'}</span>
             </nav>
           )}

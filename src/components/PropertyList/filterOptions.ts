@@ -143,3 +143,33 @@ export const EMPTY_PROPERTY_FILTERS = {
   deliveryDate: '',
   distanceToSea: '',
 } as const
+
+type PropertyFiltersShape = {
+  reference?: string
+  propertyType?: string | string[]
+  location?: string | string[]
+  minPrice?: string
+  maxPrice?: string
+  bedrooms?: string
+  status?: string | string[]
+  features?: string | string[]
+  deliveryDate?: string
+  distanceToSea?: string
+}
+
+export const hasActivePropertyFilters = (filters: PropertyFiltersShape): boolean => {
+  if (filters.reference?.trim()) return true
+  if (parsePropertyTypeFilter(filters.propertyType).length > 0) return true
+  if (parseLocationFilter(filters.location).length > 0) return true
+  if (filters.minPrice && filters.minPrice !== 'any') return true
+  if (filters.maxPrice && filters.maxPrice !== 'any') return true
+  if (filters.bedrooms && filters.bedrooms !== 'any') return true
+  if (parseStatusFilter(filters.status).length > 0) return true
+  if (parseFeaturesFilter(filters.features).length > 0) return true
+  if (filters.deliveryDate?.trim()) return true
+
+  const distance = filters.distanceToSea?.trim()
+  if (distance && distance !== '1000000') return true
+
+  return false
+}
