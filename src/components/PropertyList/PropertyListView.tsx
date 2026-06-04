@@ -307,6 +307,7 @@ export const PropertyListView: React.FC<Props> = ({
               propertyId={property.id}
               property={{
                 imageUrl: property.imageUrl,
+                imageUrls: property.imageUrls,
                 location: property.location,
                 reference: property.reference,
                 title: property.title,

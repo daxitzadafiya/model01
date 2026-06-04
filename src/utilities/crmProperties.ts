@@ -1,5 +1,10 @@
 import { postToCRM } from '@/utilities/crmApi'
-import { getPublishedPropertyAttachmentImage } from '@/utilities/optimaImage'
+import {
+  getPublishedPropertyAttachmentImage,
+  getPublishedPropertyAttachmentImages,
+  PROPERTY_CARD_IMAGE_SIZE,
+  PROPERTY_DETAIL_IMAGE_SIZE,
+} from '@/utilities/optimaImage'
 import { resolveCRMPropertyLocalizedTexts } from '@/utilities/localizedValue'
 
 export type CRMListingPreset =
@@ -31,6 +36,8 @@ export type PropertyListFilters = {
 export type NormalizedListProperty = {
   id?: string
   imageUrl?: string
+  /** All CRM attachment image URLs (ordered); used for card image slider */
+  imageUrls?: string[]
   isNewListing?: boolean
   statusBadgeLabel?: 'SOLD' | 'RESERVED'
   location: string
@@ -638,6 +645,10 @@ export type NormalizeCRMPropertyOptions = {
   currencySymbolAfter?: boolean
   /** When true, leaves price empty if CRM has no price (Properties carousel). */
   emptyPriceWhenMissing?: boolean
+  /** Optima resize segment in attachment URLs (cards: 500, detail: 1000). */
+  attachmentImageSize?: number
+  /** Optional cap on gallery URLs for list/card views (detail pages omit this). */
+  maxGalleryImages?: number
 }
 
 export type NormalizedCRMProperty = NormalizedListProperty & {
@@ -656,18 +667,43 @@ export function normalizeCRMProperty(
     ? property.property_attachments
     : []
   const images = Array.isArray(property.images) ? property.images : []
-  const firstImage = images.find(
-    (image): image is Record<string, unknown> => !!image && typeof image === 'object',
-  )
+
+  const imageSize = options.attachmentImageSize ?? PROPERTY_DETAIL_IMAGE_SIZE
+  const attachmentImageUrls = getPublishedPropertyAttachmentImages(propertyAttachments, imageSize)
+
+  const legacyImageUrls = images
+    .filter((image): image is Record<string, unknown> => !!image && typeof image === 'object')
+    .map(
+      (image) =>
+        pickString(image.url) ||
+        pickString(image.full) ||
+        pickString(image.large) ||
+        pickString(image.medium) ||
+        pickString(image.small),
+    )
+    .filter((url) => Boolean(url))
+
+  const fallbackImageUrl =
+    pickString(property.main_image) || pickString(property.image)
+
+  let imageUrls =
+    attachmentImageUrls.length > 0
+      ? attachmentImageUrls
+      : legacyImageUrls.length > 0
+        ? legacyImageUrls
+        : fallbackImageUrl
+          ? [fallbackImageUrl]
+          : []
+
+  if (options.maxGalleryImages && options.maxGalleryImages > 0) {
+    imageUrls = imageUrls.slice(0, options.maxGalleryImages)
+  }
+
   const imageUrl =
-    getPublishedPropertyAttachmentImage(propertyAttachments, 1000) ||
-    pickString(firstImage?.url) ||
-    pickString(firstImage?.full) ||
-    pickString(firstImage?.large) ||
-    pickString(firstImage?.medium) ||
-    pickString(firstImage?.small) ||
-    pickString(property.main_image) ||
-    pickString(property.image)
+    imageUrls[0] ||
+    getPublishedPropertyAttachmentImage(propertyAttachments, imageSize) ||
+    legacyImageUrls[0] ||
+    fallbackImageUrl
 
   const localized = resolveCRMPropertyLocalizedTexts(property, locale)
 
@@ -720,6 +756,7 @@ export function normalizeCRMProperty(
   return {
     id,
     imageUrl,
+    imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
     isNewListing: Boolean(property.featured),
     statusBadgeLabel,
     location: localized.location || 'Greece',
@@ -742,7 +779,12 @@ export function normalizeCRMProperty(
 export const normalizeCRMListProperty = (
   property: Record<string, unknown>,
   locale: string,
-): NormalizedListProperty => normalizeCRMProperty(property, locale)
+  options: NormalizeCRMPropertyOptions = {},
+): NormalizedListProperty =>
+  normalizeCRMProperty(property, locale, {
+    attachmentImageSize: PROPERTY_CARD_IMAGE_SIZE,
+    ...options,
+  })
 
 export const sortProperties = (
   properties: NormalizedListProperty[],

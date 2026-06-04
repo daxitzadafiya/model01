@@ -1,5 +1,10 @@
 import { OPTIMA_CONFIG } from '@/constants/optima'
 
+/** Card / list carousels — fits ~400px wide slots without loading 1000px assets */
+export const PROPERTY_CARD_IMAGE_SIZE = 500
+/** Property detail / lightbox — full quality */
+export const PROPERTY_DETAIL_IMAGE_SIZE = 1000
+
 type ResizeType = 'user' | 'property' | 'cms_medias'
 
 export type PropertyAttachment = {
@@ -175,21 +180,29 @@ export const getOptimaPropertyAttachmentImage = (attachment: unknown, size = 100
   return buildPropertyAttachmentImageUrl(record, size)
 }
 
-export const getPublishedPropertyAttachmentImage = (attachments: unknown, size = 1000): string => {
-  if (!Array.isArray(attachments)) return ''
+const getSortedPublishedPropertyImageAttachments = (
+  attachments: unknown,
+): PropertyAttachment[] => {
+  if (!Array.isArray(attachments)) return []
 
-  const publishedImages = (attachments as PropertyAttachment[])
+  return (attachments as PropertyAttachment[])
     .filter(isPublishedPropertyAttachment)
     .filter(isPropertyImageAttachment)
     .sort(
       (a, b) =>
         asNumber(a.order, Number.MAX_SAFE_INTEGER) - asNumber(b.order, Number.MAX_SAFE_INTEGER),
     )
+}
 
-  for (const attachment of publishedImages) {
-    const url = buildPropertyAttachmentImageUrl(attachment, size)
-    if (url) return url
-  }
+export const getPublishedPropertyAttachmentImages = (
+  attachments: unknown,
+  size = 1000,
+): string[] => {
+  return getSortedPublishedPropertyImageAttachments(attachments)
+    .map((attachment) => buildPropertyAttachmentImageUrl(attachment, size))
+    .filter((url) => Boolean(url))
+}
 
-  return ''
+export const getPublishedPropertyAttachmentImage = (attachments: unknown, size = 1000): string => {
+  return getPublishedPropertyAttachmentImages(attachments, size)[0] || ''
 }

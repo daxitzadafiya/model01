@@ -4,14 +4,15 @@ import React from 'react'
 import { ArrowRight, Bath, Bed, Heart, Ruler } from 'lucide-react'
 import type { Media as PayloadMedia } from '@/payload-types'
 
-import { Media } from '@/components/Media'
-import { PropertyImagePlaceholder } from '@/components/PropertyImagePlaceholder'
+import { PropertyCardImageGallery } from '@/components/PropertyCard/PropertyCardImageGallery'
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import type { FavoritePropertyId } from '@/utilities/propertyFavorites'
 
 export type PropertyCardData = {
   imageResource?: PayloadMedia
   imageUrl?: string
+  /** Multiple CRM images for in-card slider */
+  imageUrls?: string[]
   location: string
   reference?: string
   title: string
@@ -35,6 +36,9 @@ type Props = {
   variant?: 'surface' | 'surface-container-low'
   className?: string
   style?: React.CSSProperties
+  /** When set (e.g. Properties block), pauses parent carousel auto-play while engaging this card */
+  onCardEngage?: () => void
+  onCardRelease?: () => void
 }
 
 /** Display property area as a whole number (e.g. 90.6m² → 90m²). */
@@ -89,6 +93,8 @@ export const PropertyCard: React.FC<Props> = ({
   variant = 'surface',
   className = '',
   style,
+  onCardEngage,
+  onCardRelease,
 }) => {
   const { isFavorite, toggleFavorite } = usePropertyFavorites()
   const favorited = propertyId != null && propertyId !== '' && isFavorite(propertyId)
@@ -117,25 +123,20 @@ export const PropertyCard: React.FC<Props> = ({
   const cardInfoClass = variant === 'surface-container-low' ? 'p-4 md:p-6' : 'mt-4 md:mt-2'
 
   return (
-    <article className={`group cursor-pointer ${cardBase} ${className}`.trim()} style={style}>
+    <article
+      className={`group cursor-pointer ${cardBase} ${className}`.trim()}
+      style={style}
+      onMouseEnter={onCardEngage}
+      onMouseLeave={onCardRelease}
+    >
       <div className={imageWrapperClass}>
-        {property.imageResource && (
-          <Media
-            resource={property.imageResource}
-            fill
-            imgClassName="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-          />
-        )}
-        {!property.imageResource && property.imageUrl && (
-          <img
-            src={property.imageUrl}
-            alt={property.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-          />
-        )}
-        {!property.imageResource && !property.imageUrl && (
-          <PropertyImagePlaceholder className="group-hover:scale-[1.02] transition-transform duration-700" />
-        )}
+        <PropertyCardImageGallery
+          title={property.title}
+          imageResource={property.imageResource}
+          imageUrl={property.imageUrl}
+          imageUrls={property.imageUrls}
+          onInteract={onCardEngage}
+        />
         {propertyId != null && propertyId !== '' && (
           <button
             type="button"

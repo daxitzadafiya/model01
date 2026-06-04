@@ -11,6 +11,7 @@ import {
   parseCRMCustomQuery,
   normalizeCRMProperty as normalizeSharedCRMProperty,
 } from '@/utilities/crmProperties'
+import { PROPERTY_CARD_IMAGE_SIZE } from '@/utilities/optimaImage'
 import { cn } from '@/utilities/ui'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
@@ -26,6 +27,7 @@ type NormalizedProperty = {
   id?: string
   imageResource?: PayloadMedia
   imageUrl?: string
+  imageUrls?: string[]
   isNewListing?: boolean
   statusBadgeLabel?: 'SOLD' | 'RESERVED'
   location: string
@@ -84,6 +86,9 @@ export const PropertiesBlock: React.FC<Props> = ({
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
+  /** Pauses block auto-play while the user hovers or uses a card image gallery */
+  const [isCardEngaged, setIsCardEngaged] = useState(false)
+  const engagedCardsRef = useRef(new Set<string>())
   const [crmRawProperties, setCrmRawProperties] = useState<Record<string, unknown>[]>([])
   const [crmLoading, setCrmLoading] = useState(() => (dataSource ?? 'cms') === 'crm')
   const activeLocale = useSiteLocale()
@@ -98,11 +103,13 @@ export const PropertiesBlock: React.FC<Props> = ({
       const normalized = normalizeSharedCRMProperty(property, activeLocale, {
         currencySymbolAfter: true,
         emptyPriceWhenMissing: true,
+        attachmentImageSize: PROPERTY_CARD_IMAGE_SIZE,
       })
 
       return {
         id: normalized.id,
         imageUrl: normalized.imageUrl,
+        imageUrls: normalized.imageUrls,
         isNewListing: normalized.isNewListing,
         statusBadgeLabel: normalized.statusBadgeLabel,
         location: normalized.location,
@@ -286,9 +293,19 @@ export const PropertiesBlock: React.FC<Props> = ({
     goTo(currentIndex >= maxIndex ? 0 : currentIndex + 1)
   }, [currentIndex, maxIndex, goTo])
 
-  // Auto-play
+  const pauseAutoPlay = useCallback((cardKey: string) => {
+    engagedCardsRef.current.add(cardKey)
+    setIsCardEngaged(true)
+  }, [])
+
+  const resumeAutoPlay = useCallback((cardKey: string) => {
+    engagedCardsRef.current.delete(cardKey)
+    setIsCardEngaged(engagedCardsRef.current.size > 0)
+  }, [])
+
+  // Auto-play — paused when hovering the track or any property card / gallery
   useEffect(() => {
-    if (isPaused || total <= cardsPerView) return
+    if (isPaused || isCardEngaged || total <= cardsPerView) return
 
     autoPlayRef.current = setInterval(() => {
       handleNext()
@@ -297,7 +314,7 @@ export const PropertiesBlock: React.FC<Props> = ({
     return () => {
       if (autoPlayRef.current) clearInterval(autoPlayRef.current)
     }
-  }, [isPaused, handleNext, total, cardsPerView])
+  }, [isPaused, isCardEngaged, handleNext, total, cardsPerView])
 
   // Size and slide distance must use the viewport (container), not the flex track.
   // Plain % resolves against the track width (all cards), which causes partial 4th-card peeks.
@@ -370,23 +387,28 @@ export const PropertiesBlock: React.FC<Props> = ({
               transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
             }}
           >
-            {displayProperties.map((property, idx) => (
-              <PropertyCard
-                key={property.id ?? property.reference ?? idx}
-                propertyId={property.id}
-                property={property}
-                statusBadgeLabel={resolvePropertyCardStatusBadge({
-                  statusBadgeLabel: property.statusBadgeLabel,
-                  showSoldBadge: Boolean(showSoldBadge),
-                  useCrmStatus: source === 'crm',
-                })}
-                variant={
-                  backgroundColor === 'surface-container-low' ? 'surface-container-low' : 'surface'
-                }
-                className="shrink-0"
-                style={{ width: cardWidth }}
-              />
-            ))}
+            {displayProperties.map((property, idx) => {
+              const cardKey = property.id ?? property.reference ?? String(idx)
+              return (
+                <PropertyCard
+                  key={cardKey}
+                  propertyId={property.id}
+                  property={property}
+                  statusBadgeLabel={resolvePropertyCardStatusBadge({
+                    statusBadgeLabel: property.statusBadgeLabel,
+                    showSoldBadge: Boolean(showSoldBadge),
+                    useCrmStatus: source === 'crm',
+                  })}
+                  variant={
+                    backgroundColor === 'surface-container-low' ? 'surface-container-low' : 'surface'
+                  }
+                  className="shrink-0"
+                  style={{ width: cardWidth }}
+                  onCardEngage={() => pauseAutoPlay(cardKey)}
+                  onCardRelease={() => resumeAutoPlay(cardKey)}
+                />
+              )
+            })}
           </div>
         </div>
       ) : (
