@@ -54,6 +54,7 @@ export const PropertyListBlock: Block = {
       defaultValue: 'forSale',
       options: [
         { label: 'Property for Sale', value: 'forSale' },
+        { label: 'Favorites', value: 'favorites' },
         { label: 'Sold Properties', value: 'sold' },
         { label: 'Featured Properties', value: 'featured' },
         { label: 'Sea View Properties', value: 'seaView' },
@@ -100,6 +101,48 @@ export const PropertyListBlock: Block = {
       defaultValue: false,
       admin: {
         condition: (_, siblingData) => siblingData?.listingPreset === 'sold',
+      },
+    },
+    {
+      name: 'emptyStateNoFavoritesTitle',
+      type: 'text',
+      label: 'Empty state title (no saved favorites)',
+      defaultValue: 'No favorites yet',
+      localized: true,
+      admin: {
+        condition: (_, siblingData) => siblingData?.listingPreset === 'favorites',
+      },
+    },
+    {
+      name: 'emptyStateNoFavoritesDescription',
+      type: 'textarea',
+      label: 'Empty state description (no saved favorites)',
+      defaultValue:
+        "You haven't favorited any properties yet. Browse our listings and tap the heart on any property to save it here.",
+      localized: true,
+      admin: {
+        condition: (_, siblingData) => siblingData?.listingPreset === 'favorites',
+      },
+    },
+    {
+      name: 'emptyStateNoResultsTitle',
+      type: 'text',
+      label: 'Empty state title (filters match nothing)',
+      defaultValue: 'No matching favorites',
+      localized: true,
+      admin: {
+        condition: (_, siblingData) => siblingData?.listingPreset === 'favorites',
+      },
+    },
+    {
+      name: 'emptyStateNoResultsDescription',
+      type: 'textarea',
+      label: 'Empty state description (filters match nothing)',
+      defaultValue:
+        'None of your saved properties match these filters. Try adjusting your search or add more favorites from our listings.',
+      localized: true,
+      admin: {
+        condition: (_, siblingData) => siblingData?.listingPreset === 'favorites',
       },
     },
   ],

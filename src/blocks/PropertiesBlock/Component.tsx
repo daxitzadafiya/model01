@@ -23,6 +23,7 @@ const AUTO_PLAY_DELAY = 5000 // 5 seconds
 const GAP_PX = 24 // matches gap-6 (1.5rem = 24px)
 
 type NormalizedProperty = {
+  id?: string
   imageResource?: PayloadMedia
   imageUrl?: string
   isNewListing?: boolean
@@ -100,6 +101,7 @@ export const PropertiesBlock: React.FC<Props> = ({
       })
 
       return {
+        id: normalized.id,
         imageUrl: normalized.imageUrl,
         isNewListing: normalized.isNewListing,
         statusBadgeLabel: normalized.statusBadgeLabel,
@@ -370,7 +372,8 @@ export const PropertiesBlock: React.FC<Props> = ({
           >
             {displayProperties.map((property, idx) => (
               <PropertyCard
-                key={idx}
+                key={property.id ?? property.reference ?? idx}
+                propertyId={property.id}
                 property={property}
                 statusBadgeLabel={resolvePropertyCardStatusBadge({
                   statusBadgeLabel: property.statusBadgeLabel,

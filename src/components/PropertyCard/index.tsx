@@ -6,6 +6,8 @@ import type { Media as PayloadMedia } from '@/payload-types'
 
 import { Media } from '@/components/Media'
 import { PropertyImagePlaceholder } from '@/components/PropertyImagePlaceholder'
+import { usePropertyFavorites } from '@/providers/PropertyFavorites'
+import type { FavoritePropertyId } from '@/utilities/propertyFavorites'
 
 export type PropertyCardData = {
   imageResource?: PayloadMedia
@@ -22,6 +24,8 @@ export type PropertyCardData = {
 
 type Props = {
   property: PropertyCardData
+  /** CRM property id — enables favorite toggle when set */
+  propertyId?: FavoritePropertyId | null
   /**
    * Same logic as Properties block carousel:
    * - CRM: pass `property.statusBadgeLabel` (SOLD / RESERVED from API status)
@@ -80,11 +84,26 @@ export function resolvePropertyCardStatusBadge({
 
 export const PropertyCard: React.FC<Props> = ({
   property,
+  propertyId,
   statusBadgeLabel,
   variant = 'surface',
   className = '',
   style,
 }) => {
+  const { isFavorite, toggleFavorite } = usePropertyFavorites()
+  const favorited = propertyId != null && propertyId !== '' && isFavorite(propertyId)
+
+  const handleFavoritePointer = (event: React.SyntheticEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  const handleFavoriteClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    handleFavoritePointer(event)
+    if (propertyId == null || propertyId === '') return
+    toggleFavorite(propertyId)
+  }
+
   const cardBase =
     variant === 'surface-container-low'
       ? 'bg-surface rounded-xl overflow-hidden hover:-translate-y-2 hover:shadow-2xl transition-all duration-500'
@@ -117,13 +136,18 @@ export const PropertyCard: React.FC<Props> = ({
         {!property.imageResource && !property.imageUrl && (
           <PropertyImagePlaceholder className="group-hover:scale-[1.02] transition-transform duration-700" />
         )}
-        <button
-          type="button"
-          aria-label="Add to wishlist"
-          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/35 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/55 transition-colors"
-        >
-          <Heart size={20} />
-        </button>
+        {propertyId != null && propertyId !== '' && (
+          <button
+            type="button"
+            aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
+            aria-pressed={favorited}
+            onMouseDown={handleFavoritePointer}
+            onClick={handleFavoriteClick}
+            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/35 backdrop-blur-md text-white flex items-center justify-center cursor-pointer hover:bg-black/55 transition-colors z-10"
+          >
+            <Heart size={20} className={favorited ? 'fill-current text-tertiary-container' : 'fill-none'} />
+          </button>
+        )}
         {statusBadgeLabel && (
           <div className="absolute top-4 right-4 bg-red-600/90 backdrop-blur-md px-4 py-1 text-white font-label-sm text-label-sm tracking-widest">
             {statusBadgeLabel}

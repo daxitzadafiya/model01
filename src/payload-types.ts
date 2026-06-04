@@ -927,7 +927,7 @@ export interface PropertyListBlock {
   breadcrumbParentHref?: string | null;
   pageTitle?: string | null;
   resultsLabel?: string | null;
-  listingPreset: 'forSale' | 'sold' | 'featured' | 'seaView' | 'custom';
+  listingPreset: 'forSale' | 'favorites' | 'sold' | 'featured' | 'seaView' | 'custom';
   /**
    * Used when "Property collection" is Custom Query JSON. Paste the query object or full payload. MongoDB operators must be valid JSON, e.g. "archived": {"$ne": true}. You can also paste {$ne: true} — it will be auto-fixed.
    */
@@ -939,6 +939,10 @@ export interface PropertyListBlock {
    */
   mapSearchUrl?: string | null;
   forceSoldBadge?: boolean | null;
+  emptyStateNoFavoritesTitle?: string | null;
+  emptyStateNoFavoritesDescription?: string | null;
+  emptyStateNoResultsTitle?: string | null;
+  emptyStateNoResultsDescription?: string | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'propertyListBlock';
@@ -2053,6 +2057,10 @@ export interface PropertyListBlockSelect<T extends boolean = true> {
   showFilters?: T;
   mapSearchUrl?: T;
   forceSoldBadge?: T;
+  emptyStateNoFavoritesTitle?: T;
+  emptyStateNoFavoritesDescription?: T;
+  emptyStateNoResultsTitle?: T;
+  emptyStateNoResultsDescription?: T;
   id?: T;
   blockName?: T;
 }
@@ -2900,6 +2908,24 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 export interface Header {
   id: number;
   /**
+   * Destination for the header heart icon. Link to your Favorites page (internal page reference or custom URL).
+   */
+  favoritesLink: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+    label: string;
+  };
+  /**
    * Navigation links for the current locale (switch locale in the admin bar to edit each language).
    */
   navItems?:
@@ -3184,6 +3210,15 @@ export interface CookieConsent {
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
+  favoritesLink?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
+      };
   navItems?:
     | T
     | {

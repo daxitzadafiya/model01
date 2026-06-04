@@ -10,6 +10,7 @@ import { useCRMLocationTree } from '@/hooks/useCRMLocationTree'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
 import { PropertyCard, resolvePropertyCardStatusBadge } from '@/components/PropertyCard'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
+import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import {
   buildCRMListingQuery,
   fetchCRMProperties,
@@ -19,7 +20,11 @@ import {
   type PropertyListFilters,
   type PropertyListSort,
 } from '@/utilities/crmProperties'
-import { EMPTY_PROPERTY_FILTERS, SORT_OPTIONS } from './filterOptions'
+import {
+  EMPTY_PROPERTY_FILTERS,
+  hasAppliedPropertyFilters,
+  SORT_OPTIONS,
+} from './filterOptions'
 import { PropertyListFilters as FiltersBar } from './PropertyListFilters'
 import { PropertyListPagination } from './PropertyListPagination'
 
@@ -31,6 +36,10 @@ type Props = {
   mapSearchUrl?: string | null
   forceSoldBadge?: boolean | null
   resultsLabel?: string | null
+  emptyStateNoFavoritesTitle?: string | null
+  emptyStateNoFavoritesDescription?: string | null
+  emptyStateNoResultsTitle?: string | null
+  emptyStateNoResultsDescription?: string | null
 }
 
 const DEFAULT_PAGE_SIZE = 9
@@ -43,6 +52,10 @@ export const PropertyListView: React.FC<Props> = ({
   mapSearchUrl,
   forceSoldBadge,
   resultsLabel,
+  emptyStateNoFavoritesTitle,
+  emptyStateNoFavoritesDescription,
+  emptyStateNoResultsTitle,
+  emptyStateNoResultsDescription,
 }) => {
   const pageSize = Math.max(1, pageSizeProp ?? DEFAULT_PAGE_SIZE)
 
@@ -56,28 +69,53 @@ export const PropertyListView: React.FC<Props> = ({
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const activeLocale = useSiteLocale()
-  const { options: propertyTypeOptions, loading: propertyTypeLoading } =
-    useCRMPropertyTypeOptions(listingPreset)
-  const { tree: locationTree, loading: locationLoading } = useCRMLocationTree(listingPreset)
-
   const pendingPageScrollRef = useRef(false)
 
   const scrollToPageTop = useCallback(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
   }, [])
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  // const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const { favoriteIds } = usePropertyFavorites()
+  const isFavoritesList = listingPreset === 'favorites'
+  const filterPreset = isFavoritesList ? 'forSale' : listingPreset
+  const { options: propertyTypeOptions, loading: propertyTypeLoading } =
+    useCRMPropertyTypeOptions(filterPreset)
+  const { tree: locationTree, loading: locationLoading } = useCRMLocationTree(filterPreset)
+  const hasFavoriteIds = favoriteIds.length > 0
+  const favoriteIdsKey = JSON.stringify(favoriteIds)
+  const favoritesSyncReadyRef = useRef(false)
+  const pageAdjustedByFavoritesSyncRef = useRef(false)
+  const fetchGenerationRef = useRef(0)
+
+  const filtersAreApplied = hasAppliedPropertyFilters(appliedFilters)
+  const displayTotal =
+    isFavoritesList && hasFavoriteIds && !filtersAreApplied ? favoriteIds.length : total
+  const totalPages = Math.max(1, Math.ceil(displayTotal / pageSize))
 
   const properties = useMemo(() => {
     const normalized = rawProperties.map((raw) => normalizeCRMListProperty(raw, activeLocale))
+    // const normalized = rawProperties.map((raw) => normalizeCRMListProperty(raw, activeLocale))
     return sortProperties(normalized, sort)
   }, [activeLocale, rawProperties, sort])
 
+  /** CRM fetch for filters/pagination — not when toggling hearts on for-sale. */
   useEffect(() => {
+    if (isFavoritesList && favoriteIds.length === 0) {
+      setRawProperties([])
+      setTotal(0)
+      setLoading(false)
+      return
+    }
+
     const controller = new AbortController()
+    const generation = ++fetchGenerationRef.current
 
     const load = async () => {
-      setLoading(true)
+      const showSkeleton = !(isFavoritesList && pageAdjustedByFavoritesSyncRef.current)
+      pageAdjustedByFavoritesSyncRef.current = false
+      if (showSkeleton) setLoading(true)
+
       try {
         const body = buildCRMListingQuery({
           preset: listingPreset,
@@ -85,25 +123,89 @@ export const PropertyListView: React.FC<Props> = ({
           page,
           pageSize,
           filters: appliedFilters,
+          restrictToFavoriteIds: isFavoritesList ? favoriteIds : undefined,
         })
 
         const result = await fetchCRMProperties({ body, signal: controller.signal })
+        if (controller.signal.aborted || generation !== fetchGenerationRef.current) return
+
         setRawProperties(result.properties as Record<string, unknown>[])
         setTotal(result.total)
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
           console.error('Failed to load property list', error)
-          setRawProperties([])
-          setTotal(0)
+          if (generation === fetchGenerationRef.current) {
+            setRawProperties([])
+            setTotal(0)
+          }
         }
       } finally {
-        if (!controller.signal.aborted) setLoading(false)
+        if (generation === fetchGenerationRef.current) setLoading(false)
       }
     }
 
     void load()
     return () => controller.abort()
-  }, [appliedFilters, crmQueryJson, listingPreset, page, pageSize])
+    // favoriteIds intentionally omitted — toggling hearts must not refetch for-sale lists
+  }, [appliedFilters, crmQueryJson, isFavoritesList, listingPreset, page, pageSize])
+
+  /** Favorites page: after unfavoriting, move to a valid page and refetch (no full-page skeleton). */
+  useEffect(() => {
+    if (!isFavoritesList) {
+      favoritesSyncReadyRef.current = false
+      return
+    }
+
+    if (!favoritesSyncReadyRef.current) {
+      favoritesSyncReadyRef.current = true
+      return
+    }
+
+    if (favoriteIds.length === 0) {
+      setRawProperties([])
+      setTotal(0)
+      setLoading(false)
+      return
+    }
+
+    const lastValidPage = Math.max(1, Math.ceil(favoriteIds.length / pageSize))
+    const targetPage = Math.min(page, lastValidPage)
+
+    if (targetPage !== page) {
+      pageAdjustedByFavoritesSyncRef.current = true
+      setPage(targetPage)
+      return
+    }
+
+    const controller = new AbortController()
+
+    const load = async () => {
+      try {
+        const body = buildCRMListingQuery({
+          preset: listingPreset,
+          crmQueryJson,
+          page: targetPage,
+          pageSize,
+          filters: appliedFilters,
+          restrictToFavoriteIds: favoriteIds,
+        })
+
+        const result = await fetchCRMProperties({ body, signal: controller.signal })
+        if (controller.signal.aborted) return
+
+        setRawProperties(result.properties as Record<string, unknown>[])
+        setTotal(result.total)
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Failed to refresh favorites page', error)
+        }
+      }
+    }
+
+    void load()
+    return () => controller.abort()
+    // Only re-run when saved favorites change — not when filters/pagination change
+  }, [favoriteIdsKey, isFavoritesList, listingPreset, pageSize])
 
   useEffect(() => {
     if (loading || !pendingPageScrollRef.current) return
@@ -140,10 +242,11 @@ export const PropertyListView: React.FC<Props> = ({
     const label = resultsLabel || 'extraordinary properties'
     return (
       <>
-        Showing <span className="font-bold text-on-surface">{loading ? '…' : total}</span> {label}
+        Showing <span className="font-bold text-on-surface">{loading ? '…' : displayTotal}</span>{' '}
+        {label}
       </>
     )
-  }, [loading, resultsLabel, total])
+  }, [displayTotal, loading, resultsLabel])
 
   return (
     <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12">
@@ -174,7 +277,19 @@ export const PropertyListView: React.FC<Props> = ({
         />
       </section>
 
-      {loading ? (
+      {isFavoritesList && !hasFavoriteIds ? (
+        <div className="mb-20">
+          <SectionEmptyState
+            eyebrow="Favorites"
+            title={emptyStateNoFavoritesTitle || 'No favorites yet'}
+            description={
+              emptyStateNoFavoritesDescription ||
+              "You haven't favorited any properties yet. Browse our listings and tap the heart on any property to save it here."
+            }
+            tone="surface"
+          />
+        </div>
+      ) : loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {Array.from({ length: pageSize }).map((_, i) => (
             <div key={i} className="space-y-4 animate-pulse">
@@ -189,6 +304,7 @@ export const PropertyListView: React.FC<Props> = ({
           {properties.map((property) => (
             <PropertyCard
               key={property.id ?? property.reference ?? property.title}
+              propertyId={property.id}
               property={{
                 imageUrl: property.imageUrl,
                 location: property.location,
@@ -212,9 +328,18 @@ export const PropertyListView: React.FC<Props> = ({
       ) : (
         <div className="mb-20">
           <SectionEmptyState
-            eyebrow="Collections"
-            title="No properties found"
-            description="We could not find any listings for this selection. Try adjusting your filters or check again soon."
+            eyebrow={isFavoritesList ? 'Favorites' : 'Collections'}
+            title={
+              isFavoritesList
+                ? emptyStateNoResultsTitle || 'No matching favorites'
+                : 'No properties found'
+            }
+            description={
+              isFavoritesList
+                ? emptyStateNoResultsDescription ||
+                  'None of your saved properties match these filters. Try adjusting your search or add more favorites from our listings.'
+                : 'We could not find any listings for this selection. Try adjusting your filters or check again soon.'
+            }
             tone="surface"
           />
         </div>

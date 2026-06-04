@@ -22,6 +22,10 @@ export const PropertyListBlock: React.FC<Props> = ({
   showFilters,
   mapSearchUrl,
   forceSoldBadge,
+  emptyStateNoFavoritesTitle,
+  emptyStateNoFavoritesDescription,
+  emptyStateNoResultsTitle,
+  emptyStateNoResultsDescription,
 }) => {
   const preset = (listingPreset ?? 'forSale') as CRMListingPreset
 
@@ -60,6 +64,10 @@ export const PropertyListBlock: React.FC<Props> = ({
         mapSearchUrl={mapSearchUrl}
         forceSoldBadge={forceSoldBadge}
         resultsLabel={resultsLabel}
+        emptyStateNoFavoritesTitle={emptyStateNoFavoritesTitle}
+        emptyStateNoFavoritesDescription={emptyStateNoFavoritesDescription}
+        emptyStateNoResultsTitle={emptyStateNoResultsTitle}
+        emptyStateNoResultsDescription={emptyStateNoResultsDescription}
       />
     </section>
   )

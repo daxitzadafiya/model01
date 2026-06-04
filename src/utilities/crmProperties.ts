@@ -2,7 +2,13 @@ import { postToCRM } from '@/utilities/crmApi'
 import { getPublishedPropertyAttachmentImage } from '@/utilities/optimaImage'
 import { resolveCRMPropertyLocalizedTexts } from '@/utilities/localizedValue'
 
-export type CRMListingPreset = 'forSale' | 'sold' | 'featured' | 'seaView' | 'custom'
+export type CRMListingPreset =
+  | 'forSale'
+  | 'sold'
+  | 'featured'
+  | 'seaView'
+  | 'custom'
+  | 'favorites'
 
 export type PropertyListSort = 'newest' | 'priceDesc' | 'priceAsc'
 
@@ -496,18 +502,44 @@ export const buildCRMPageOptions = (page: number, limit: number): Record<string,
   limit: Math.max(1, limit),
 })
 
+/** Restrict listing to favorited property IDs (supports CRM `_id` and numeric `id`). */
+export const buildFavoriteIdsClause = (
+  ids: (string | number)[],
+): Record<string, unknown> | null => {
+  if (!ids.length) return null
+
+  const stringIds = [...new Set(ids.map((id) => String(id).trim()).filter(Boolean))]
+  const numericIds = [
+    ...new Set(
+      ids
+        .map((id) => (typeof id === 'number' ? id : Number(id)))
+        .filter((n) => Number.isFinite(n)),
+    ),
+  ]
+
+  const orClauses: Record<string, unknown>[] = []
+  if (stringIds.length) orClauses.push({ _id: { $in: stringIds } })
+  if (numericIds.length) orClauses.push({ id: { $in: numericIds } })
+
+  if (!orClauses.length) return null
+  if (orClauses.length === 1) return orClauses[0]
+  return { $or: orClauses }
+}
+
 export const buildCRMListingQuery = ({
   preset,
   crmQueryJson,
   page,
   pageSize,
   filters = {},
+  restrictToFavoriteIds,
 }: {
   preset: CRMListingPreset
   crmQueryJson?: string | null
   page: number
   pageSize: number
   filters?: PropertyListFilters
+  restrictToFavoriteIds?: (string | number)[]
 }): Record<string, unknown> => {
   const paginationOptions = buildCRMPageOptions(page, pageSize)
   const filterQuery = buildFilterQuery(filters)
@@ -580,9 +612,20 @@ export const buildCRMListingQuery = ({
       featured: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
+  } else if (preset === 'favorites') {
+    baseQuery = {
+      similar_commercials: 'include_similar',
+    }
   }
 
-  const mergedQuery = mergeCRMQueryObjects(baseQuery, filterQuery)
+  let mergedQuery = mergeCRMQueryObjects(baseQuery, filterQuery)
+
+  if (preset === 'favorites' && restrictToFavoriteIds?.length) {
+    const favoriteClause = buildFavoriteIdsClause(restrictToFavoriteIds)
+    if (favoriteClause) {
+      mergedQuery = mergeCRMQueryObjects(mergedQuery, favoriteClause)
+    }
+  }
 
   return {
     options: paginationOptions,

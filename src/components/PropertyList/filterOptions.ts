@@ -1,3 +1,5 @@
+import type { PropertyListFilters } from '@/utilities/crmProperties'
+
 export const PRICE_RANGE_OPTIONS = [
   { value: 'any', label: 'Any Price', min: 'any', max: 'any' },
   { value: '500k-1m', label: '€500k - €1M', min: '500000', max: '1000000' },
@@ -129,6 +131,21 @@ export const applyPriceRangeValue = (range: string): { minPrice: string; maxPric
   const match = PRICE_RANGE_OPTIONS.find((opt) => opt.value === range)
   if (!match) return { minPrice: 'any', maxPrice: 'any' }
   return { minPrice: match.min, maxPrice: match.max }
+}
+
+export const hasAppliedPropertyFilters = (filters: PropertyListFilters): boolean => {
+  return Boolean(
+    filters.reference?.trim() ||
+      filters.propertyType?.length ||
+      filters.location?.length ||
+      (filters.minPrice && filters.minPrice !== 'any') ||
+      (filters.maxPrice && filters.maxPrice !== 'any') ||
+      (filters.bedrooms && filters.bedrooms !== 'any') ||
+      filters.status?.length ||
+      filters.features?.length ||
+      (filters.deliveryDate && filters.deliveryDate !== 'any') ||
+      (filters.distanceToSea && filters.distanceToSea !== 'any'),
+  )
 }
 
 export const EMPTY_PROPERTY_FILTERS = {

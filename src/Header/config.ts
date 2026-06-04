@@ -9,6 +9,17 @@ export const Header: GlobalConfig = {
     read: () => true,
   },
   fields: [
+    link({
+      appearances: false,
+      overrides: {
+        name: 'favoritesLink',
+        label: 'Favorites link',
+        admin: {
+          description:
+            'Destination for the header heart icon. Link to your Favorites page (internal page reference or custom URL).',
+        },
+      },
+    }),
     {
       name: 'navItems',
       type: 'array',

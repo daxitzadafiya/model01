@@ -5,10 +5,12 @@ import React, { useEffect, useState } from 'react'
 import { Heart, Menu, X } from 'lucide-react'
 
 import type { Header } from '@/payload-types'
+import { getCMSLinkHref } from '@/components/Link'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import Logo from '@/components/Logo/Logo'
 import type { LogoSources } from '@/components/Logo/getLogoSources'
 import type { LanguageMenuItem, Locale } from '@/i18n/config'
+import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import { HeaderNav } from './Nav'
 
 interface HeaderClientProps {
@@ -27,6 +29,12 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({
   const [isScrolled, setIsScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { count: favoritesCount } = usePropertyFavorites()
+  const favoritesLink = data.favoritesLink
+  const favoritesHref = getCMSLinkHref(favoritesLink ?? {}) ?? '/favorites'
+  const favoritesAriaLabel =
+    favoritesLink?.label ||
+    (favoritesCount > 0 ? `Favorites, ${favoritesCount} saved` : 'Favorites')
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,10 +77,24 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({
         <HeaderNav data={data} mobileOpen={menuOpen} onClose={() => setMenuOpen(false)} />
 
         <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-          <Heart
-            className="text-primary cursor-pointer hover:scale-110 transition-transform p-1"
-            size={30}
-          />
+          <Link
+            href={favoritesHref}
+            {...(favoritesLink?.newTab
+              ? { rel: 'noopener noreferrer', target: '_blank' }
+              : {})}
+            aria-label={
+              favoritesCount > 0 && !favoritesLink?.label
+                ? `${favoritesAriaLabel}, ${favoritesCount} saved`
+                : favoritesAriaLabel
+            }
+            className="relative text-primary hover:scale-110 transition-transform p-1"
+          >
+            <Heart size={30} />
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-tertiary text-white text-[10px] font-bold flex items-center justify-center leading-none">
+              {favoritesCount > 99 ? '99+' : favoritesCount || '0'}
+            </span>
+
+          </Link>
           <LanguageSwitcher items={languageMenu} currentLocale={locale} />
           <button
             type="button"
