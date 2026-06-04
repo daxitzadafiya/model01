@@ -165,7 +165,7 @@ export const PropertiesBlock: React.FC<Props> = ({
           limit: resolvedLimit,
         },
         query: {
-          similar_commercials: 'include_similar',
+          similar_commercials: 'exclude_similar',
           $and: [{ 'views.sea': true }],
           sale: true,
           status: { $in: ['Available', 'Under Offer'] },
@@ -179,7 +179,7 @@ export const PropertiesBlock: React.FC<Props> = ({
         limit: resolvedLimit,
       },
       query: {
-        similar_commercials: 'include_similar',
+        similar_commercials: 'exclude_similar',
         sale: true,
         featured: true,
         status: { $in: ['Available', 'Under Offer'] },
@@ -400,7 +400,9 @@ export const PropertiesBlock: React.FC<Props> = ({
                     useCrmStatus: source === 'crm',
                   })}
                   variant={
-                    backgroundColor === 'surface-container-low' ? 'surface-container-low' : 'surface'
+                    backgroundColor === 'surface-container-low'
+                      ? 'surface-container-low'
+                      : 'surface'
                   }
                   className="shrink-0"
                   style={{ width: cardWidth }}

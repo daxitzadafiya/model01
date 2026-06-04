@@ -7,13 +7,7 @@ import {
 } from '@/utilities/optimaImage'
 import { resolveCRMPropertyLocalizedTexts } from '@/utilities/localizedValue'
 
-export type CRMListingPreset =
-  | 'forSale'
-  | 'sold'
-  | 'featured'
-  | 'seaView'
-  | 'custom'
-  | 'favorites'
+export type CRMListingPreset = 'forSale' | 'sold' | 'featured' | 'seaView' | 'custom' | 'favorites'
 
 export type PropertyListSort = 'newest' | 'priceDesc' | 'priceAsc'
 
@@ -79,9 +73,7 @@ const isPriceOnDemandEnabled = (value: unknown) => {
   return false
 }
 
-export const resolveCRMStatusBadgeLabel = (
-  status: unknown,
-): 'SOLD' | 'RESERVED' | undefined => {
+export const resolveCRMStatusBadgeLabel = (status: unknown): 'SOLD' | 'RESERVED' | undefined => {
   const normalizedStatus = pickString(status).toLowerCase()
   if (normalizedStatus === 'sold') return 'SOLD'
   if (normalizedStatus === 'under offer') return 'RESERVED'
@@ -237,9 +229,7 @@ export const mergeCRMQueryObjects = (
   return merged
 }
 
-const buildSinglePropertyListingStatusQuery = (
-  status: string,
-): Record<string, unknown> | null => {
+const buildSinglePropertyListingStatusQuery = (status: string): Record<string, unknown> | null => {
   if (status === 'project') {
     return {
       $or: [{ project: true }, { 'categories.new_construction': true }],
@@ -390,9 +380,7 @@ export const buildPropertyListingFeatureQuery = (
         : features && features !== 'any'
           ? [features]
           : []
-      ).filter((item) =>
-        (PROPERTY_LISTING_FEATURE_VALUES as readonly string[]).includes(item),
-      ),
+      ).filter((item) => (PROPERTY_LISTING_FEATURE_VALUES as readonly string[]).includes(item)),
     ),
   )
 
@@ -417,9 +405,7 @@ export const buildPropertyListingStatusQuery = (
         : status && status !== 'any'
           ? [status]
           : []
-      ).filter((item) =>
-        (PROPERTY_LISTING_STATUS_VALUES as readonly string[]).includes(item),
-      ),
+      ).filter((item) => (PROPERTY_LISTING_STATUS_VALUES as readonly string[]).includes(item)),
     ),
   )
 
@@ -518,9 +504,7 @@ export const buildFavoriteIdsClause = (
   const stringIds = [...new Set(ids.map((id) => String(id).trim()).filter(Boolean))]
   const numericIds = [
     ...new Set(
-      ids
-        .map((id) => (typeof id === 'number' ? id : Number(id)))
-        .filter((n) => Number.isFinite(n)),
+      ids.map((id) => (typeof id === 'number' ? id : Number(id))).filter((n) => Number.isFinite(n)),
     ),
   ]
 
@@ -589,39 +573,39 @@ export const buildCRMListingQuery = ({
   }
 
   let baseQuery: Record<string, unknown> = {
-    similar_commercials: 'include_similar',
+    similar_commercials: 'exclude_similar',
     sale: true,
   }
 
   if (preset === 'sold') {
     baseQuery = {
-      similar_commercials: 'include_similar',
+      similar_commercials: 'exclude_similar',
       sale: true,
       status: { $in: ['Sold'] },
     }
   } else if (preset === 'forSale') {
     baseQuery = {
-      similar_commercials: 'include_similar',
+      similar_commercials: 'exclude_similar',
       sale: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'seaView') {
     baseQuery = {
-      similar_commercials: 'include_similar',
+      similar_commercials: 'exclude_similar',
       sale: true,
       status: { $in: ['Available', 'Under Offer'] },
       'views.sea': true,
     }
   } else if (preset === 'featured') {
     baseQuery = {
-      similar_commercials: 'include_similar',
+      similar_commercials: 'exclude_similar',
       sale: true,
       featured: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'favorites') {
     baseQuery = {
-      similar_commercials: 'include_similar',
+      similar_commercials: 'exclude_similar',
     }
   }
 
@@ -683,8 +667,7 @@ export function normalizeCRMProperty(
     )
     .filter((url) => Boolean(url))
 
-  const fallbackImageUrl =
-    pickString(property.main_image) || pickString(property.image)
+  const fallbackImageUrl = pickString(property.main_image) || pickString(property.image)
 
   let imageUrls =
     attachmentImageUrls.length > 0
@@ -742,9 +725,7 @@ export function normalizeCRMProperty(
   if (hasPriceOnDemand) {
     resolvedPrice = 'Price on demand'
   } else if (formattedRawPrice) {
-    resolvedPrice = options.currencySymbolAfter
-      ? `${formattedRawPrice} €`
-      : `€${formattedRawPrice}`
+    resolvedPrice = options.currencySymbolAfter ? `${formattedRawPrice} €` : `€${formattedRawPrice}`
   }
 
   const referenceRaw = property.reference
