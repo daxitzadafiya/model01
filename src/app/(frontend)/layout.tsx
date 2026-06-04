@@ -23,7 +23,6 @@ import { CookieConsent } from '@/components/CookieConsent'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
-import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 import { getPayload } from 'payload'
@@ -40,7 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html className={cn(GeistSans.variable, GeistMono.variable, outfit.variable, ebGaramond.variable)} lang={locale} suppressHydrationWarning>
       <head>
-        <InitTheme />
+        <meta content="light" name="color-scheme" />
         <link href="/site-favicon" rel="icon" sizes="any" />
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"

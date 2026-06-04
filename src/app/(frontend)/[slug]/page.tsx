@@ -12,7 +12,6 @@ import { RenderHero } from '@/heros/RenderHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import type { Locale } from '@/i18n/config'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
-import PageClient from './page.client'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 
 export async function generateStaticParams() {
@@ -72,7 +71,6 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   return (
     <article className="">
-      <PageClient />
       {/* Allows redirects for valid pages too */}
       <PayloadRedirects disableNotFound url={url} />
 
