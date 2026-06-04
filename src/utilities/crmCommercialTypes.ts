@@ -21,8 +21,7 @@ const pickNumber = (candidate: unknown): number | undefined => {
 export const buildCommercialTypesRequest = (
   preset: CRMListingPreset = 'forSale',
 ): Record<string, unknown> => {
-  const propStatus =
-    preset === 'sold' ? ['Sold'] : (['Available', 'Under Offer'] as const)
+  const propStatus = preset === 'sold' ? ['Sold'] : (['Available', 'Under Offer'] as const)
 
   return {
     query: {
@@ -54,18 +53,14 @@ export const normalizeCRMCommercialType = (
   return { key, label }
 }
 
-export const toPropertyTypeFilterOptions = (
-  types: CRMCommercialType[],
-): FilterSelectOption[] =>
+export const toPropertyTypeFilterOptions = (types: CRMCommercialType[]): FilterSelectOption[] =>
   types.map((type) => ({
     value: String(type.key),
     label: type.label,
   }))
 
 export const parsePropertyTypeKeys = (values?: string[]): number[] =>
-  (values ?? [])
-    .map((value) => Number(value))
-    .filter((key) => Number.isFinite(key))
+  (values ?? []).map((value) => Number(value)).filter((key) => Number.isFinite(key))
 
 export async function fetchCRMCommercialTypes(
   locale: string,
