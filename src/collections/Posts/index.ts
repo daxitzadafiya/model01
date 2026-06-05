@@ -41,7 +41,10 @@ export const Posts: CollectionConfig<'posts'> = {
   defaultPopulate: {
     title: true,
     slug: true,
+    subtitle: true,
     categories: true,
+    publishedAt: true,
+    heroImage: true,
     meta: {
       image: true,
       description: true,
@@ -76,6 +79,15 @@ export const Posts: CollectionConfig<'posts'> = {
       tabs: [
         {
           fields: [
+            {
+              name: 'subtitle',
+              type: 'textarea',
+              label: 'Subtitle',
+              admin: {
+                description:
+                  'Short summary shown on knowledge base cards. If empty, the SEO meta description is used instead.',
+              },
+            },
             {
               name: 'heroImage',
               type: 'upload',

@@ -25,6 +25,7 @@ import { MapBlock } from '@/blocks/MapBlock/Component'
 import { ContactSectionBlock } from '@/blocks/ContactSectionBlock/Component'
 import { PrivacyPolicyBlock } from '@/blocks/PrivacyPolicyBlock/Component'
 import { CertificatesBlock } from '@/blocks/CertificatesBlock/Component'
+import { BlogPostsBlock } from '@/blocks/BlogPostsBlock/Component'
 
 const blockComponents = {
   archive: ArchiveBlock,
@@ -50,6 +51,7 @@ const blockComponents = {
   contactSectionBlock: ContactSectionBlock,
   privacyPolicyBlock: PrivacyPolicyBlock,
   certificatesBlock: CertificatesBlock,
+  blogPostsBlock: BlogPostsBlock,
 }
 
 export const RenderBlocks: React.FC<{

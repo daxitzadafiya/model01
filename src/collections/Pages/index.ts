@@ -25,6 +25,7 @@ import { MapBlock } from '../../blocks/MapBlock/config'
 import { ContactSectionBlock } from '../../blocks/ContactSectionBlock/config'
 import { PrivacyPolicyBlock } from '../../blocks/PrivacyPolicyBlock/config'
 import { CertificatesBlock } from '../../blocks/CertificatesBlock/config'
+import { BlogPostsBlock } from '../../blocks/BlogPostsBlock/config'
 import { hero } from '@/heros/config'
 import { slugField } from 'payload'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
@@ -114,6 +115,7 @@ export const Pages: CollectionConfig<'pages'> = {
                 ContactSectionBlock,
                 PrivacyPolicyBlock,
                 CertificatesBlock,
+                BlogPostsBlock,
               ],
               required: true,
               admin: {

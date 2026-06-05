@@ -3,13 +3,24 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 
+import { formatPublishedDate } from '@/utilities/formatDateTime'
+
+import { getCMSLinkHref } from '@/components/Link'
+
 import {
   KnowledgeBaseBlockClient,
   type KnowledgeArticleItem,
 } from './Component.client'
 
+const defaultViewAllLink = {
+  type: 'custom' as const,
+  url: '/',
+  label: 'View All',
+}
+
 export const KnowledgeBaseBlock: React.FC<KnowledgeBaseBlockProps> = async (props) => {
-  const { subtitle, title, populateBy, limit: limitFromProps, selectedPosts, articles } = props
+  const { subtitle, title, populateBy, limit: limitFromProps, selectedPosts, articles, viewAllLink } =
+    props
   const limit = limitFromProps || 3
 
   let resolved: KnowledgeArticleItem[] = []
@@ -20,18 +31,36 @@ export const KnowledgeBaseBlock: React.FC<KnowledgeBaseBlockProps> = async (prop
       image: article.image,
       category: article.category,
       title: article.title,
+      subtitle: article.subtitle?.replace(/\s/g, ' ') ?? null,
+      excerpt: article.excerpt?.replace(/\s/g, ' ') ?? null,
+      date: article.publishedAt ? formatPublishedDate(article.publishedAt) : null,
+      dateTime: article.publishedAt ?? null,
       link: {
         type: 'custom' as const,
         url: article.url,
         newTab: article.newTab ?? false,
-        label: 'READ MORE',
+        label: 'Read More',
       },
     }))
   } else if (populateBy === 'selection' && selectedPosts?.length) {
-    const posts = selectedPosts
-      .map((post) => (typeof post === 'object' ? post : null))
-      .filter(Boolean) as Post[]
-    resolved = posts.map(postToArticle)
+    const postIds = selectedPosts
+      .map((post) => (typeof post === 'object' ? post.id : post))
+      .filter((id): id is number => typeof id === 'number')
+
+    if (postIds.length) {
+      const payload = await getPayload({ config: configPromise })
+      const fetched = await payload.find({
+        collection: 'posts',
+        depth: 1,
+        limit: postIds.length,
+        sort: '-publishedAt',
+        where: {
+          id: { in: postIds },
+          _status: { equals: 'published' },
+        },
+      })
+      resolved = fetched.docs.map(postToArticle)
+    }
   } else {
     const payload = await getPayload({ config: configPromise })
     const fetched = await payload.find({
@@ -50,8 +79,16 @@ export const KnowledgeBaseBlock: React.FC<KnowledgeBaseBlockProps> = async (prop
 
   if (!resolved.length) return null
 
+  const resolvedViewAllLink =
+    viewAllLink && getCMSLinkHref(viewAllLink) ? viewAllLink : defaultViewAllLink
+
   return (
-    <KnowledgeBaseBlockClient subtitle={subtitle} title={title} articles={resolved} />
+    <KnowledgeBaseBlockClient
+      subtitle={subtitle}
+      title={title}
+      articles={resolved}
+      viewAllLink={resolvedViewAllLink}
+    />
   )
 }
 
@@ -59,13 +96,7 @@ function postToArticle(post: Post): KnowledgeArticleItem {
   const category =
     post.categories && typeof post.categories[0] === 'object'
       ? post.categories[0].title
-      : post.publishedAt
-        ? new Date(post.publishedAt).toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-          })
-        : 'News'
+      : 'News'
 
   const image =
     (typeof post.meta?.image === 'object' ? post.meta.image : null) ||
@@ -76,13 +107,17 @@ function postToArticle(post: Post): KnowledgeArticleItem {
     image,
     category: category || 'News',
     title: post.title,
+    subtitle: post.subtitle?.replace(/\s/g, ' ') ?? null,
+    excerpt: post.meta?.description?.replace(/\s/g, ' ') ?? null,
+    date: post.publishedAt ? formatPublishedDate(post.publishedAt) : null,
+    dateTime: post.publishedAt ?? null,
     link: {
       type: 'reference',
       reference: {
         relationTo: 'posts',
         value: post as Post,
       },
-      label: 'READ MORE',
+      label: 'Read More',
     },
   }
 }

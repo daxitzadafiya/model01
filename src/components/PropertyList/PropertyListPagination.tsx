@@ -24,7 +24,7 @@ export const PropertyListPagination: React.FC<Props> = ({ page, totalPages, onPa
           type="button"
           disabled={!canPrev}
           onClick={() => onPageChange(page - 1)}
-          className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center hover:border-tertiary hover:text-tertiary transition-all duration-300 disabled:opacity-40 disabled:pointer-events-none"
+          className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center hover:border-tertiary hover:text-tertiary transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
           aria-label="Previous page"
         >
           <ChevronLeft size={22} />
@@ -43,7 +43,7 @@ export const PropertyListPagination: React.FC<Props> = ({ page, totalPages, onPa
           type="button"
           disabled={!canNext}
           onClick={() => onPageChange(page + 1)}
-          className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center hover:border-tertiary hover:text-tertiary transition-all duration-300 disabled:opacity-40 disabled:pointer-events-none"
+          className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center hover:border-tertiary hover:text-tertiary transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
           aria-label="Next page"
         >
           <ChevronRight size={22} />

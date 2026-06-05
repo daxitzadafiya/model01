@@ -259,6 +259,7 @@ export interface Page {
     | ContactSectionBlock
     | PrivacyPolicyBlock
     | CertificatesBlock
+    | BlogPostsBlock
   )[];
   meta?: {
     title?: string | null;
@@ -285,6 +286,10 @@ export interface Page {
 export interface Post {
   id: number;
   title: string;
+  /**
+   * Short summary shown on knowledge base cards. If empty, the SEO meta description is used instead.
+   */
+  subtitle?: string | null;
   heroImage?: (number | null) | Media;
   content: {
     root: {
@@ -1094,6 +1099,9 @@ export interface KnowledgeBaseBlock {
         image: number | Media;
         category: string;
         title: string;
+        subtitle?: string | null;
+        excerpt?: string | null;
+        publishedAt?: string | null;
         /**
          * Path (e.g. /posts/my-article) or full URL
          */
@@ -1102,6 +1110,24 @@ export interface KnowledgeBaseBlock {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Centered button below the cards. Defaults to /posts when not set.
+   */
+  viewAllLink: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+    label: string;
+  };
   id?: string | null;
   blockName?: string | null;
   blockType: 'knowledgeBaseBlock';
@@ -1451,6 +1477,42 @@ export interface CertificatesBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'certificatesBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlogPostsBlock".
+ */
+export interface BlogPostsBlock {
+  /**
+   * Optional label above the heading.
+   */
+  subtitle?: string | null;
+  title: string;
+  postsPerPage?: number | null;
+  emptyStateEyebrow?: string | null;
+  emptyStateTitle?: string | null;
+  emptyStateDescription?: string | null;
+  /**
+   * Optional button below the empty state message.
+   */
+  emptyStateLink: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+    label: string;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'blogPostsBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1890,6 +1952,7 @@ export interface PagesSelect<T extends boolean = true> {
         contactSectionBlock?: T | ContactSectionBlockSelect<T>;
         privacyPolicyBlock?: T | PrivacyPolicyBlockSelect<T>;
         certificatesBlock?: T | CertificatesBlockSelect<T>;
+        blogPostsBlock?: T | BlogPostsBlockSelect<T>;
       };
   meta?:
     | T
@@ -2196,9 +2259,21 @@ export interface KnowledgeBaseBlockSelect<T extends boolean = true> {
         image?: T;
         category?: T;
         title?: T;
+        subtitle?: T;
+        excerpt?: T;
+        publishedAt?: T;
         url?: T;
         newTab?: T;
         id?: T;
+      };
+  viewAllLink?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
       };
   id?: T;
   blockName?: T;
@@ -2431,10 +2506,34 @@ export interface CertificatesBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlogPostsBlock_select".
+ */
+export interface BlogPostsBlockSelect<T extends boolean = true> {
+  subtitle?: T;
+  title?: T;
+  postsPerPage?: T;
+  emptyStateEyebrow?: T;
+  emptyStateTitle?: T;
+  emptyStateDescription?: T;
+  emptyStateLink?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts_select".
  */
 export interface PostsSelect<T extends boolean = true> {
   title?: T;
+  subtitle?: T;
   heroImage?: T;
   content?: T;
   relatedPosts?: T;

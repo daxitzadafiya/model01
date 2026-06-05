@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useReveal } from '@/utilities/useReveal'
 import { Media } from '@/components/Media'
 import { CMSLink, type CMSLinkType } from '@/components/Link'
@@ -13,6 +13,10 @@ export type KnowledgeArticleItem = {
   image?: MediaType | number | null
   category: string
   title: string
+  subtitle?: string | null
+  excerpt?: string | null
+  date?: string | null
+  dateTime?: string | null
   link: CMSLinkType & { label: string }
 }
 
@@ -20,6 +24,7 @@ type ClientProps = {
   subtitle?: string | null
   title: string
   articles: KnowledgeArticleItem[]
+  viewAllLink: CMSLinkType
 }
 
 const DESKTOP_CARDS = 3
@@ -29,6 +34,7 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
   subtitle,
   title,
   articles,
+  viewAllLink,
 }) => {
   const sectionRef = useReveal()
   const cardsPerView = useCardsPerView(DESKTOP_CARDS, MOBILE_CARDS)
@@ -106,10 +112,10 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
           {articles.map((article) => (
             <article
               key={article.id}
-              className="group shrink-0 flex flex-col"
+              className="group shrink-0 flex flex-col bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
               style={isCarousel ? { width: cardWidth } : undefined}
             >
-              <div className="relative overflow-hidden rounded-lg aspect-[4/3] mb-4 md:mb-6">
+              <div className="relative overflow-hidden aspect-[4/3]">
                 {typeof article.image === 'object' && article.image !== null && (
                   <Media
                     resource={article.image}
@@ -118,17 +124,38 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
                   />
                 )}
               </div>
-              <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest mb-2">
-                {article.category}
-              </span>
-              <h3 className="font-headline-sm text-headline-sm text-primary mb-4 md:mb-6 leading-snug flex-grow">
-                {article.title}
-              </h3>
-              <CMSLink
-                {...article.link}
-                appearance="inline"
-                className="inline-flex items-center gap-2 font-label-nav text-label-nav text-primary border-b border-primary pb-1 hover:text-tertiary hover:border-tertiary transition-all w-fit"
-              />
+              <div className="flex flex-col flex-grow p-6 md:p-8">
+                <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest mb-2">
+                  {article.category}
+                </span>
+                <h3 className="font-headline-sm text-headline-sm text-primary mb-3 leading-snug">
+                  {article.title}
+                </h3>
+                {(article.subtitle || article.excerpt) && (
+                  <p className="font-body-sm text-body-sm text-secondary line-clamp-3">
+                    {article.subtitle ?? article.excerpt}
+                  </p>
+                )}
+                <div className="grow min-h-6" />
+                <div className="flex items-center justify-between gap-4 pt-4">
+                  {article.date && (
+                    <time
+                      dateTime={article.dateTime ?? undefined}
+                      className="inline-flex items-center gap-2 font-label-sm text-label-sm text-secondary shrink-0"
+                    >
+                      <Calendar size={14} className="text-secondary/70" aria-hidden />
+                      {article.date}
+                    </time>
+                  )}
+                  <CMSLink
+                    {...article.link}
+                    appearance="inline"
+                    className="inline-flex items-center gap-1.5 font-label-sm text-label-sm text-tertiary hover:text-primary transition-colors ml-auto shrink-0"
+                  >
+                    <ArrowRight size={14} aria-hidden />
+                  </CMSLink>
+                </div>
+              </div>
             </article>
           ))}
         </div>
@@ -149,6 +176,16 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
           ))}
         </div>
       )}
+
+      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex justify-center mt-10 md:mt-12 reveal">
+        <CMSLink
+          {...viewAllLink}
+          appearance="inline"
+          className="inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-8 py-3.5 font-label-nav text-label-nav uppercase tracking-widest text-white transition-all duration-300 hover:bg-tertiary hover:border-tertiary hover:shadow-md"
+        >
+          <ArrowRight size={16} aria-hidden />
+        </CMSLink>
+      </div>
     </section>
   )
 }

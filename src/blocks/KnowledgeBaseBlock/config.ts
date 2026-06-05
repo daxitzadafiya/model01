@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { link } from '@/fields/link'
+
 export const KnowledgeBaseBlock: Block = {
   slug: 'knowledgeBaseBlock',
   dbName: 'kb',
@@ -77,6 +79,25 @@ export const KnowledgeBaseBlock: Block = {
           localized: true,
         },
         {
+          name: 'subtitle',
+          type: 'textarea',
+          localized: true,
+        },
+        {
+          name: 'excerpt',
+          type: 'textarea',
+          localized: true,
+        },
+        {
+          name: 'publishedAt',
+          type: 'date',
+          admin: {
+            date: {
+              pickerAppearance: 'dayOnly',
+            },
+          },
+        },
+        {
           name: 'url',
           type: 'text',
           required: true,
@@ -93,5 +114,16 @@ export const KnowledgeBaseBlock: Block = {
         },
       ],
     },
+    link({
+      appearances: false,
+      overrides: {
+        name: 'viewAllLink',
+        label: 'View All Button',
+        dbName: 'va_lnk',
+        admin: {
+          description: 'Centered button below the cards. Defaults to /posts when not set.',
+        },
+      },
+    }),
   ],
 }

@@ -21,6 +21,7 @@ import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { hasAdminCredentials } from './constants/adminUser'
 import { ensureAdminUser } from './utilities/ensureAdminUser'
+import { migrations } from './migrations'
 
 // Import locales Languages
 import { de } from '@payloadcms/translations/languages/de'
@@ -110,6 +111,7 @@ export default buildConfig({
     client: {
       url: process.env.DATABASE_URL || '',
     },
+    prodMigrations: migrations,
   }),
   collections: [Pages, Posts, Media, Categories, Users],
   cors: [getServerSideURL()].filter(Boolean),
