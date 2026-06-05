@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
@@ -11,7 +11,6 @@ type Props = Extract<Page['layout'][0], { blockType: 'advisorsBlock' }>
 
 const DESKTOP_CARDS = 3
 const MOBILE_CARDS = 1
-const AUTO_PLAY_DELAY = 6000
 
 export const AdvisorsBlock: React.FC<Props> = ({ subtitle, title, advisors }) => {
   const sectionRef = useReveal()
@@ -19,16 +18,6 @@ export const AdvisorsBlock: React.FC<Props> = ({ subtitle, title, advisors }) =>
   const total = advisors?.length ?? 0
   const { currentIndex, maxIndex, goTo, handlePrev, handleNext, cardWidth, translateX } =
     useCarouselIndex(total, cardsPerView)
-  const [isPaused, setIsPaused] = useState(false)
-  const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  useEffect(() => {
-    if (isPaused || total <= cardsPerView) return
-    autoPlayRef.current = setInterval(handleNext, AUTO_PLAY_DELAY)
-    return () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current)
-    }
-  }, [isPaused, handleNext, total, cardsPerView])
 
   return (
     <section ref={sectionRef} className="py-16 md:py-24 bg-surface">
@@ -65,11 +54,7 @@ export const AdvisorsBlock: React.FC<Props> = ({ subtitle, title, advisors }) =>
         )}
       </div>
 
-      <div
-        className="@container max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-8 md:pb-12 reveal overflow-hidden"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
+      <div className="@container max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-8 md:pb-12 reveal overflow-hidden">
         <div
           className="flex transition-transform ease-in-out"
           style={{

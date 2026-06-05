@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React from 'react'
 import { ArrowRight, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useReveal } from '@/utilities/useReveal'
 import { Media } from '@/components/Media'
@@ -41,17 +41,7 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
   const total = articles.length
   const { currentIndex, maxIndex, goTo, handlePrev, handleNext, cardWidth, translateX } =
     useCarouselIndex(total, cardsPerView)
-  const [isPaused, setIsPaused] = useState(false)
-  const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const isCarousel = cardsPerView < DESKTOP_CARDS
-
-  useEffect(() => {
-    if (!isCarousel || isPaused || total <= cardsPerView) return
-    autoPlayRef.current = setInterval(handleNext, 6000)
-    return () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current)
-    }
-  }, [isCarousel, isPaused, handleNext, total, cardsPerView])
 
   return (
     <section ref={sectionRef} className="py-16 md:py-24 bg-surface">
@@ -87,11 +77,7 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
         </div>
       )}
 
-      <div
-        className="@container max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop overflow-hidden reveal"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
+      <div className="@container max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop overflow-hidden reveal">
         <div
           className={
             isCarousel

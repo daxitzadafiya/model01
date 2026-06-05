@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { Media } from '@/components/Media'
 import { useReveal } from '@/utilities/useReveal'
@@ -21,7 +21,6 @@ type Props = {
 const CARDS_PER_VIEW_DESKTOP = 3
 const CARDS_PER_VIEW_MOBILE = 1
 const DESKTOP_MEDIA = '(min-width: 48rem)'
-const AUTO_PLAY_DELAY = 5000
 const GAP_PX = 24
 
 function useCardsPerView() {
@@ -44,8 +43,6 @@ export const CertificatesBlock: React.FC<Props> = ({ subtitle, title, certificat
   const cardsPerView = useCardsPerView()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
-  const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const total = certificates?.length ?? 0
   const maxIndex = Math.max(0, total - cardsPerView)
@@ -71,18 +68,6 @@ export const CertificatesBlock: React.FC<Props> = ({ subtitle, title, certificat
   const handleNext = useCallback(() => {
     goTo(currentIndex >= maxIndex ? 0 : currentIndex + 1)
   }, [currentIndex, maxIndex, goTo])
-
-  useEffect(() => {
-    if (isPaused || total <= cardsPerView) return
-
-    autoPlayRef.current = setInterval(() => {
-      handleNext()
-    }, AUTO_PLAY_DELAY)
-
-    return () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current)
-    }
-  }, [isPaused, handleNext, total, cardsPerView])
 
   const cardWidth = `calc((100cqw - ${GAP_PX * (cardsPerView - 1)}px) / ${cardsPerView})`
   const translateX = `calc(-${currentIndex} * (100cqw + ${GAP_PX}px) / ${cardsPerView})`
@@ -116,11 +101,7 @@ export const CertificatesBlock: React.FC<Props> = ({ subtitle, title, certificat
         </div>
       </div>
 
-      <div
-        className="@container max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12 reveal overflow-hidden"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
+      <div className="@container max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12 reveal overflow-hidden">
         <div
           className="flex transition-transform duration-600 ease-in-out"
           style={{

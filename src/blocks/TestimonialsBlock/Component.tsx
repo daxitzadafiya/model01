@@ -8,7 +8,6 @@ import { cn } from '@/utilities/ui'
 
 type Props = Extract<Page['layout'][0], { blockType: 'testimonialsBlock' }>
 
-const AUTO_PLAY_DELAY = 7000
 const FADE_MS = 600
 
 export const TestimonialsBlock: React.FC<Props> = ({ testimonials }) => {
@@ -16,11 +15,9 @@ export const TestimonialsBlock: React.FC<Props> = ({ testimonials }) => {
   const total = testimonials?.length ?? 0
   const [activeIndex, setActiveIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
-  const [isPaused, setIsPaused] = useState(false)
   const activeIndexRef = useRef(0)
   const isTransitioningRef = useRef(false)
   const fadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   activeIndexRef.current = activeIndex
 
@@ -46,36 +43,16 @@ export const TestimonialsBlock: React.FC<Props> = ({ testimonials }) => {
     [total],
   )
 
-  const goToNext = useCallback(() => {
-    goToIndex(activeIndexRef.current + 1)
-  }, [goToIndex])
-
   useEffect(() => {
     return () => {
       if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current)
     }
   }, [])
 
-  useEffect(() => {
-    if (isPaused || total <= 1) return
-
-    autoPlayRef.current = setInterval(goToNext, AUTO_PLAY_DELAY)
-    return () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current)
-    }
-  }, [isPaused, total, goToNext])
-
   const current = testimonials?.[activeIndex]
 
   return (
-    <section
-      ref={sectionRef}
-      className="py-16 md:py-24 bg-surface-container-low reveal"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onFocus={() => setIsPaused(true)}
-      onBlur={() => setIsPaused(false)}
-    >
+    <section ref={sectionRef} className="py-16 md:py-24 bg-surface-container-low reveal">
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop text-center">
         <Quote
           size={60}

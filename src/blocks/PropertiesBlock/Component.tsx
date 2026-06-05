@@ -20,7 +20,6 @@ type Props = Extract<Page['layout'][0], { blockType: 'propertiesBlock' }>
 const CARDS_PER_VIEW_DESKTOP = 3
 const CARDS_PER_VIEW_MOBILE = 1
 const DESKTOP_MEDIA = '(min-width: 48rem)' // matches --breakpoint-md
-const AUTO_PLAY_DELAY = 5000 // 5 seconds
 const GAP_PX = 24 // matches gap-6 (1.5rem = 24px)
 
 type NormalizedProperty = {
@@ -86,14 +85,9 @@ export const PropertiesBlock: React.FC<Props> = ({
   const cardsPerView = useCardsPerView()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
-  /** Pauses block auto-play while the user hovers or uses a card image gallery */
-  const [isCardEngaged, setIsCardEngaged] = useState(false)
-  const engagedCardsRef = useRef(new Set<string>())
   const [crmRawProperties, setCrmRawProperties] = useState<Record<string, unknown>[]>([])
   const [crmLoading, setCrmLoading] = useState(() => (dataSource ?? 'cms') === 'crm')
   const activeLocale = useSiteLocale()
-  const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const source = dataSource ?? 'cms'
   const crmQueryType = (crmPreset ?? 'featured') as CRMQueryPreset
@@ -296,29 +290,6 @@ export const PropertiesBlock: React.FC<Props> = ({
     goTo(currentIndex >= maxIndex ? 0 : currentIndex + 1)
   }, [currentIndex, maxIndex, goTo])
 
-  const pauseAutoPlay = useCallback((cardKey: string) => {
-    engagedCardsRef.current.add(cardKey)
-    setIsCardEngaged(true)
-  }, [])
-
-  const resumeAutoPlay = useCallback((cardKey: string) => {
-    engagedCardsRef.current.delete(cardKey)
-    setIsCardEngaged(engagedCardsRef.current.size > 0)
-  }, [])
-
-  // Auto-play — paused when hovering the track or any property card / gallery
-  useEffect(() => {
-    if (isPaused || isCardEngaged || total <= cardsPerView) return
-
-    autoPlayRef.current = setInterval(() => {
-      handleNext()
-    }, AUTO_PLAY_DELAY)
-
-    return () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current)
-    }
-  }, [isPaused, isCardEngaged, handleNext, total, cardsPerView])
-
   // Size and slide distance must use the viewport (container), not the flex track.
   // Plain % resolves against the track width (all cards), which causes partial 4th-card peeks.
   const cardWidth = `calc((100cqw - ${GAP_PX * (cardsPerView - 1)}px) / ${cardsPerView})`
@@ -378,8 +349,6 @@ export const PropertiesBlock: React.FC<Props> = ({
         <div
           ref={carouselRef}
           className="@container max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12 reveal active overflow-hidden"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
         >
           <div
             className="flex transition-transform duration-600 ease-in-out"
@@ -410,8 +379,6 @@ export const PropertiesBlock: React.FC<Props> = ({
                   }
                   className="shrink-0"
                   style={{ width: cardWidth }}
-                  onCardEngage={() => pauseAutoPlay(cardKey)}
-                  onCardRelease={() => resumeAutoPlay(cardKey)}
                 />
               )
             })}
