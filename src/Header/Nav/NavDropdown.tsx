@@ -1,0 +1,169 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
+import React, { useEffect, useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+
+import type { Header } from '@/payload-types'
+import { CMSLink, getCMSLinkHref, isCMSLinkActive } from '@/components/Link'
+import { cn } from '@/utilities/ui'
+
+type NavItem = NonNullable<Header['navItems']>[number]
+type NavLink = NavItem['link']
+type SubLink = NonNullable<NavItem['subLinks']>[number]['link']
+
+type Props = {
+  link: NavLink
+  subLinks: NonNullable<NavItem['subLinks']>
+  variant?: 'desktop' | 'mobile'
+  onNavigate?: () => void
+}
+
+const navLinkClass = (isActive: boolean) =>
+  `font-label-nav text-label-nav font-medium transition-colors duration-300 ${
+    isActive ? 'text-tertiary' : 'text-secondary hover:text-tertiary'
+  }`
+
+const linkIsActive = (pathname: string, link: NavLink | SubLink) => {
+  const href = getCMSLinkHref(link)
+  return href ? isCMSLinkActive(pathname, href) : false
+}
+
+export const NavDropdown: React.FC<Props> = ({
+  link,
+  subLinks,
+  variant = 'desktop',
+  onNavigate,
+}) => {
+  const pathname = usePathname()
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const label = link.label || 'Menu'
+  const isActive = subLinks.some(({ link: subLink }) => linkIsActive(pathname, subLink))
+
+  const clearCloseTimer = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }
+
+  const openMenu = () => {
+    clearCloseTimer()
+    setOpen(true)
+  }
+
+  const scheduleClose = () => {
+    clearCloseTimer()
+    closeTimerRef.current = setTimeout(() => setOpen(false), 120)
+  }
+
+  useEffect(() => {
+    return () => clearCloseTimer()
+  }, [])
+
+  useEffect(() => {
+    if (variant !== 'desktop' || !open) return
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onEscape)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onEscape)
+    }
+  }, [open, variant])
+
+  if (variant === 'mobile') {
+    return (
+      <div className="border-b border-outline-variant/20 last:border-b-0">
+        <button
+          type="button"
+          aria-expanded={open}
+          className={cn('flex w-full items-center justify-between py-3', navLinkClass(isActive))}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span>{label}</span>
+          <ChevronDown
+            size={18}
+            className={cn('text-secondary transition-transform duration-200', open && 'rotate-180')}
+          />
+        </button>
+        {open && (
+          <div className="flex flex-col gap-1 pb-3 pl-4">
+            {subLinks.map(({ link: subLink }, i) => (
+              <div key={i} onClick={onNavigate} role="presentation">
+                <CMSLink
+                  {...subLink}
+                  className={`block py-2 ${navLinkClass(linkIsActive(pathname, subLink))}`}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      ref={rootRef}
+      className="relative"
+      onMouseEnter={openMenu}
+      onMouseLeave={scheduleClose}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={cn('inline-flex items-center gap-1 cursor-pointer', navLinkClass(isActive))}
+        onClick={() => (open ? scheduleClose() : openMenu())}
+      >
+        <span>{label}</span>
+        <ChevronDown
+          size={16}
+          className={cn('transition-transform duration-200', open && 'rotate-180')}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 top-full z-60 min-w-44 pt-2"
+          onMouseEnter={openMenu}
+          onMouseLeave={scheduleClose}
+        >
+          <ul
+            role="menu"
+            aria-label={label}
+            className={cn(
+              'overflow-hidden rounded-lg border border-outline-variant/40',
+              'bg-surface/98 py-1 shadow-md backdrop-blur-sm',
+            )}
+          >
+            {subLinks.map(({ link: subLink }, i) => (
+              <li key={i} role="none" className="cursor-pointer">
+                <CMSLink
+                  {...subLink}
+                  className={cn(
+                    'block px-4 py-2.5 transition-colors duration-150',
+                    navLinkClass(linkIsActive(pathname, subLink)),
+                  )}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}

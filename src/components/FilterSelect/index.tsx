@@ -92,6 +92,11 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
         .map((value) => options.find((opt) => opt.value === value)?.label)
         .filter(Boolean) as string[]
 
+      // Options may still be loading when selections come from URL params.
+      if (labels.length === 0) {
+        return multiProps.emptyLabel ?? `${selectedValues.length} selected`
+      }
+
       const maxVisible = multiProps.maxVisibleLabels ?? 2
       if (labels.length <= maxVisible) return labels.join(', ')
       return `${labels.length} selected`
@@ -237,7 +242,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
   ) : null
 
   return (
-    <div ref={rootRef} className={cn('relative flex flex-col gap-2', className)}>
+    <div ref={rootRef} className={cn('relative flex w-full min-w-0 flex-col gap-2', className)}>
       <label className={fieldLabelClass} htmlFor={triggerId}>
         {label}
       </label>
@@ -251,7 +256,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
         aria-controls={listboxId}
         className={cn(
           defaultTriggerClass,
-          'relative transition-colors duration-200',
+          'relative transition-colors cursor-pointer duration-200',
           disabled && 'cursor-not-allowed opacity-60',
           open && 'border-tertiary',
           triggerClassName,

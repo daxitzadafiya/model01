@@ -28,6 +28,25 @@ export const Header: GlobalConfig = {
         link({
           appearances: false,
         }),
+        {
+          name: 'subLinks',
+          type: 'array',
+          dbName: 'sub_nav',
+          fields: [
+            link({
+              appearances: false,
+              overrides: {
+                dbName: 'sub_lnk',
+              },
+            }),
+          ],
+          maxRows: 6,
+          admin: {
+            description:
+              'Optional sub-links (e.g. For Sale, Sold). When added, this item renders as a dropdown — only the parent Label is shown in the header.',
+            initCollapsed: true,
+          },
+        },
       ],
       maxRows: 6,
       admin: {

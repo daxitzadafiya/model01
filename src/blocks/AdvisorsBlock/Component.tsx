@@ -93,7 +93,7 @@ export const AdvisorsBlock: React.FC<Props> = ({ subtitle, title, advisors }) =>
                 </p>
               )}
               {advisor.description && (
-                <p className="font-body-md text-body-md text-secondary max-w-sm mx-auto leading-relaxed">
+                <p className="font-body-md text-body-md text-secondary max-w-sm mx-auto leading-relaxed line-clamp-3">
                   {advisor.description}
                 </p>
               )}

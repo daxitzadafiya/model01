@@ -6,7 +6,14 @@ import { toRelativeMediaPath } from '@/utilities/getMediaUrl'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+function redirectToFavicon(path: string): Response {
+  return new Response(null, {
+    status: 302,
+    headers: { Location: path },
+  })
+}
+
+export async function GET() {
   const payload = await getPayload({ config: configPromise })
 
   try {
@@ -16,8 +23,8 @@ export async function GET(request: Request) {
     })
 
     const favicon = toRelativeMediaPath(getFaviconSource(logo))
-    return Response.redirect(new URL(favicon, request.url), 302)
+    return redirectToFavicon(favicon)
   } catch {
-    return Response.redirect(new URL('/favicon.ico', request.url), 302)
+    return redirectToFavicon('/favicon.ico')
   }
 }

@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { link } from '@/fields/link'
+
 export const HeroBlock: Block = {
   slug: 'heroBlock',
   interfaceName: 'HeroBlock',
@@ -18,6 +20,16 @@ export const HeroBlock: Block = {
       defaultValue: 'View All Properties',
       localized: true,
     },
+    link({
+      appearances: false,
+      overrides: {
+        name: 'ctaLink',
+        label: 'Button Link',
+        admin: {
+          description: 'Where the hero button navigates to (e.g. Property for Sale page).',
+        },
+      },
+    }),
     {
       name: 'backgroundImage',
       type: 'upload',

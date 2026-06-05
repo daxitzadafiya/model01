@@ -29,18 +29,22 @@ import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
 import './globals.css'
-import { getServerSideURL } from '@/utilities/getURL'
+import { getFaviconSource } from '@/components/Logo/getLogoSources'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
+import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getServerSideURL } from '@/utilities/getURL'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
   const { locale } = await getActiveLocale()
+  const logoData = await getCachedGlobal('logo', 1)()
+  const favicon = getFaviconSource(logoData)
 
   return (
     <html className={cn(GeistSans.variable, GeistMono.variable, outfit.variable, ebGaramond.variable)} lang={locale} suppressHydrationWarning>
       <head>
         <meta content="light" name="color-scheme" />
-        <link href="/site-favicon" rel="icon" sizes="any" />
+        <link href={favicon} rel="icon" sizes="any" />
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"

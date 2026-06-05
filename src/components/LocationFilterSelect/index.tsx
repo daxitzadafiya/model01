@@ -248,7 +248,7 @@ export const LocationFilterSelect: React.FC<Props> = ({
         className={cn(
           defaultTriggerClass,
           icon ? 'pl-10' : 'pl-4',
-          'relative transition-colors duration-200',
+          'relative transition-colors cursor-pointer duration-200',
           (disabled || loading) && 'cursor-not-allowed opacity-60',
           open && 'border-tertiary',
           triggerClassName,

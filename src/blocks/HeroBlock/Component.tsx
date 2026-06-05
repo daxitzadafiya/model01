@@ -1,16 +1,73 @@
 'use client'
 
-import React from 'react'
-import { ChevronDown, MapPin, Search } from 'lucide-react'
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Banknote, ChevronDown, Home, MapPin, Search } from 'lucide-react'
 import type { Page } from '@/payload-types'
-import { useReveal } from '@/utilities/useReveal'
+import { FilterSelect } from '@/components/FilterSelect'
+import { LocationFilterSelect } from '@/components/LocationFilterSelect'
+import { CMSLink, getCMSLinkHref } from '@/components/Link'
 import { Media } from '@/components/Media'
+import {
+  applyPriceRangeValue,
+  EMPTY_PROPERTY_FILTERS,
+  hasActivePropertyFilters,
+  parsePropertyTypeFilter,
+  PRICE_RANGE_OPTIONS,
+  resolvePriceRangeValue,
+} from '@/components/PropertyList/filterOptions'
+import { buildPropertyListUrl } from '@/components/PropertyList/propertyFilterUrl'
+import { useCRMLocationTree } from '@/hooks/useCRMLocationTree'
+import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
+import type { PropertyListFilters } from '@/utilities/crmProperties'
+import { useReveal } from '@/utilities/useReveal'
+
+const PROPERTY_FOR_SALE_PATH = '/property-for-sale'
 
 type Props = Extract<Page['layout'][0], { blockType: 'heroBlock' }>
 
-export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage, showSearch }) => {
-  console.log(title, buttonText, backgroundImage, showSearch)
+const buttonClassName =
+  'px-8 md:px-10 py-3 md:py-4 bg-tertiary rounded-full font-label-nav text-label-nav uppercase tracking-widest hover:bg-tertiary-container transition-all shadow-xl active:scale-95 reveal cursor-pointer text-white'
+
+export const HeroBlock: React.FC<Props> = ({
+  title,
+  buttonText,
+  ctaLink,
+  backgroundImage,
+  showSearch,
+}) => {
   const ref = useReveal()
+  const router = useRouter()
+  const [searchFilters, setSearchFilters] = useState<PropertyListFilters>({
+    ...EMPTY_PROPERTY_FILTERS,
+  })
+  const { options: propertyTypeOptions, loading: propertyTypeLoading } =
+    useCRMPropertyTypeOptions('forSale')
+  const { tree: locationTree, loading: locationLoading } = useCRMLocationTree('forSale')
+  const priceRange = resolvePriceRangeValue(searchFilters.minPrice, searchFilters.maxPrice)
+
+  const handleSearchFilterChange = (
+    key: keyof PropertyListFilters,
+    value: PropertyListFilters[keyof PropertyListFilters],
+  ) => {
+    setSearchFilters((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handlePriceRangeChange = (range: string) => {
+    const { minPrice, maxPrice } = applyPriceRangeValue(range)
+    setSearchFilters((prev) => ({ ...prev, minPrice, maxPrice }))
+  }
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!hasActivePropertyFilters(searchFilters)) return
+    router.push(buildPropertyListUrl(PROPERTY_FOR_SALE_PATH, searchFilters))
+  }
+
+  const linkProps =
+    ctaLink && getCMSLinkHref(ctaLink)
+      ? { ...ctaLink, label: buttonText || ctaLink.label }
+      : { type: 'custom' as const, url: '/property-for-sale', label: buttonText }
 
   return (
     <div ref={ref}>
@@ -25,9 +82,7 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
           <h1 className="font-headline-lg-mobile md:font-display-lg text-headline-lg-mobile md:text-display-lg text-white max-w-4xl mb-6 md:mb-8 reveal">
             {title}
           </h1>
-          <button className="px-8 md:px-10 py-3 md:py-4 bg-tertiary text-white rounded-full font-label-nav text-label-nav uppercase tracking-widest hover:bg-tertiary-container transition-all shadow-xl active:scale-95 reveal">
-            {buttonText}
-          </button>
+          <CMSLink {...linkProps} appearance="inline" className={buttonClassName} />
         </div>
         {/* Scroll Indicator */}
         <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden  flex-col items-center animate-bounce text-white/70 md:hidden sm:hidden">
@@ -39,60 +94,62 @@ export const HeroBlock: React.FC<Props> = ({ title, buttonText, backgroundImage,
       {/* Floating Search */}
       {showSearch && (
         <div className="relative z-30 max-w-5xl mx-auto -mt-10 md:-mt-16 px-margin-mobile md:px-margin-desktop">
-          <div className="bg-surface-container-lowest p-2 rounded-xl md:rounded-2xl shadow-2xl">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="bg-surface-container-lowest p-2 rounded-xl md:rounded-2xl shadow-2xl"
+          >
             <div className="flex border-b border-outline-variant/30 px-4 md:px-6">
-              <button className="py-3 md:py-4 px-4 md:px-6 font-label-nav text-label-nav text-primary border-b-2 border-tertiary">
-                FOR SALE
-              </button>
-              <button className="py-3 md:py-4 px-4 md:px-6 font-label-nav text-label-nav text-secondary hover:text-primary transition-colors">
-                FOR RENT
-              </button>
+              <p className="py-3 uppercase md:py-4 px-4 md:px-6 font-label-nav text-label-nav text-primary border-b-2 border-tertiary">
+                Search Properties
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 md:p-6 items-end">
-              <div>
-                <label className="block font-label-sm text-label-sm text-secondary mb-2">
-                  LOCATION
-                </label>
-                <div className="relative">
-                  <MapPin
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-tertiary"
-                  />
-                  <input
-                    className="w-full pl-10 pr-4 py-3 bg-surface-container border border-outline-variant rounded-lg focus:border-tertiary focus:ring-0 text-body-md font-body-md"
-                    placeholder="Athens, Cyclades..."
-                    type="text"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block font-label-sm text-label-sm text-secondary mb-2">
-                  PROPERTY TYPE
-                </label>
-                <select className="w-full px-4 py-3 bg-surface-container border border-outline-variant rounded-lg focus:border-tertiary focus:ring-0 text-body-md font-body-md">
-                  <option>All Types</option>
-                  <option>Villa</option>
-                  <option>Penthouse</option>
-                  <option>Private Island</option>
-                </select>
-              </div>
-              <div>
-                <label className="block font-label-sm text-label-sm text-secondary mb-2">
-                  PRICE RANGE
-                </label>
-                <select className="w-full px-4 py-3 bg-surface-container border border-outline-variant rounded-lg focus:border-tertiary focus:ring-0 text-body-md font-body-md">
-                  <option>Any Price</option>
-                  <option>€1M - €3M</option>
-                  <option>€3M - €10M</option>
-                  <option>€10M+</option>
-                </select>
-              </div>
-              <button className="w-full h-[50px] bg-primary text-white rounded-full font-label-nav text-label-nav uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+              <LocationFilterSelect
+                label="Location"
+                id="hero-search-location"
+                icon={<MapPin size={20} strokeWidth={1.75} />}
+                tree={locationTree}
+                value={searchFilters.location ?? []}
+                onChange={(value) => handleSearchFilterChange('location', value)}
+                placeholder="Athens, Cyclades..."
+                emptyLabel="All Locations"
+                loading={locationLoading}
+                disabled={locationLoading}
+                triggerClassName="w-full pl-10 pr-10 py-3 bg-surface-container border border-outline-variant focus:border-tertiary focus:ring-0 rounded-lg font-body-md text-body-md text-on-surface text-left"
+              />
+
+              <FilterSelect
+                mode="multi"
+                label="Property Type"
+                id="hero-search-type"
+                icon={<Home size={20} strokeWidth={1.75} />}
+                options={propertyTypeOptions}
+                value={parsePropertyTypeFilter(searchFilters.propertyType)}
+                onChange={(value) => handleSearchFilterChange('propertyType', value)}
+                emptyLabel={propertyTypeLoading ? 'Loading types…' : 'All Properties'}
+                disabled={propertyTypeLoading}
+                triggerClassName="w-full pl-10 pr-10 py-3 bg-surface-container border border-outline-variant focus:border-tertiary focus:ring-0 rounded-lg font-body-md text-body-md text-on-surface text-left"
+              />
+
+              <FilterSelect
+                label="Price Range"
+                id="hero-search-price"
+                icon={<Banknote size={20} strokeWidth={1.75} />}
+                options={PRICE_RANGE_OPTIONS}
+                value={priceRange}
+                onChange={handlePriceRangeChange}
+                triggerClassName="w-full pl-10 pr-10 py-3 bg-surface-container border border-outline-variant focus:border-tertiary focus:ring-0 rounded-lg font-body-md text-body-md text-on-surface text-left"
+              />
+
+              <button
+                type="submit"
+                className="w-full h-[50px] bg-primary  hover:text-on-tertiary transition-colors duration-300 text-white rounded-lg cursor-pointer font-label-nav text-label-nav uppercase tracking-widest hover:bg-tertiary flex items-center justify-center gap-2"
+              >
                 <Search size={16} />
                 Search
               </button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>

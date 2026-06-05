@@ -67,7 +67,7 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
       </div>
 
       {isCarousel && total > cardsPerView && (
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-6 flex justify-end gap-3">
+        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-6 flex justify-center gap-3">
           <button
             type="button"
             onClick={handlePrev}

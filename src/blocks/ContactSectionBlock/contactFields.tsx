@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { countryOptions } from '@/blocks/Form/Country/options'
+import { CMSLink } from '@/components/Link'
 
 const inputClassName =
   'w-full rounded-xl border border-outline-variant/35 bg-white pl-10 pr-4 py-3.5 text-on-surface outline-none transition-colors placeholder:text-on-surface-variant/60 focus:border-tertiary focus-visible:ring-4 focus-visible:ring-tertiary/20'
@@ -188,12 +189,15 @@ function renderCheckboxLabel(label: string, required?: boolean) {
       {required && <span className="mr-1 text-tertiary">*</span>}
       {parts.map((part, index) =>
         /^Privacy Policy$/i.test(part) ? (
-          <span
-            className="font-medium text-tertiary decoration-tertiary/40 underline-offset-2"
+          <CMSLink
+            className="font-medium text-tertiary decoration-tertiary/40 underline-offset-2 cursor-pointer hover:text-tertiary/80"
             key={index}
-          >
-            {part}
-          </span>
+            appearance="inline"
+            newTab={true}
+            type="custom"
+            url="/privacy"
+            label={part}
+          />
         ) : (
           <React.Fragment key={index}>{part}</React.Fragment>
         ),

@@ -138,7 +138,7 @@ export const PropertyListFilters: React.FC<Props> = ({
             )}
             <button
               type="submit"
-              className="flex-1 md:flex-none px-8 md:px-12 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors duration-300"
+              className="flex-1 cursor-pointer md:flex-none px-8 md:px-12 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors duration-300"
             >
               <Search size={18} />
               Search

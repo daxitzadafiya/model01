@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
@@ -27,6 +28,10 @@ import {
 } from './filterOptions'
 import { PropertyListFilters as FiltersBar } from './PropertyListFilters'
 import { PropertyListPagination } from './PropertyListPagination'
+import {
+  parsePropertyFiltersFromSearchParams,
+  serializePropertyFiltersToSearchParams,
+} from './propertyFilterUrl'
 
 type Props = {
   listingPreset: CRMListingPreset
@@ -58,13 +63,18 @@ export const PropertyListView: React.FC<Props> = ({
   emptyStateNoResultsDescription,
 }) => {
   const pageSize = Math.max(1, pageSizeProp ?? DEFAULT_PAGE_SIZE)
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
+  const initialFilters = useMemo(
+    () => parsePropertyFiltersFromSearchParams(searchParams),
+    [searchParams],
+  )
 
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState<PropertyListSort>('newest')
-  const [filters, setFilters] = useState<PropertyListFilters>({ ...EMPTY_PROPERTY_FILTERS })
-  const [appliedFilters, setAppliedFilters] = useState<PropertyListFilters>({
-    ...EMPTY_PROPERTY_FILTERS,
-  })
+  const [filters, setFilters] = useState<PropertyListFilters>(initialFilters)
+  const [appliedFilters, setAppliedFilters] = useState<PropertyListFilters>(initialFilters)
   const [rawProperties, setRawProperties] = useState<Record<string, unknown>[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -220,10 +230,20 @@ export const PropertyListView: React.FC<Props> = ({
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
+  useEffect(() => {
+    setFilters(initialFilters)
+    setAppliedFilters(initialFilters)
+    setPage(1)
+  }, [initialFilters])
+
   const handleApply = (nextFilters: PropertyListFilters) => {
     setFilters(nextFilters)
     setAppliedFilters(nextFilters)
     setPage(1)
+
+    const params = serializePropertyFiltersToSearchParams(nextFilters)
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
 
   const handleSortChange = (nextSort: PropertyListSort) => {

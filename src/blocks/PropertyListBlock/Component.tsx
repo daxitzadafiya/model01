@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import type { Page } from '@/payload-types'
@@ -56,19 +56,21 @@ export const PropertyListBlock: React.FC<Props> = ({
         </div>
       )}
 
-      <PropertyListView
-        listingPreset={preset}
-        crmQueryJson={crmQueryJson}
-        pageSize={pageSize}
-        showFilters={showFilters}
-        mapSearchUrl={mapSearchUrl}
-        forceSoldBadge={forceSoldBadge}
-        resultsLabel={resultsLabel}
-        emptyStateNoFavoritesTitle={emptyStateNoFavoritesTitle}
-        emptyStateNoFavoritesDescription={emptyStateNoFavoritesDescription}
-        emptyStateNoResultsTitle={emptyStateNoResultsTitle}
-        emptyStateNoResultsDescription={emptyStateNoResultsDescription}
-      />
+      <Suspense fallback={null}>
+        <PropertyListView
+          listingPreset={preset}
+          crmQueryJson={crmQueryJson}
+          pageSize={pageSize}
+          showFilters={showFilters}
+          mapSearchUrl={mapSearchUrl}
+          forceSoldBadge={forceSoldBadge}
+          resultsLabel={resultsLabel}
+          emptyStateNoFavoritesTitle={emptyStateNoFavoritesTitle}
+          emptyStateNoFavoritesDescription={emptyStateNoFavoritesDescription}
+          emptyStateNoResultsTitle={emptyStateNoResultsTitle}
+          emptyStateNoResultsDescription={emptyStateNoResultsDescription}
+        />
+      </Suspense>
     </section>
   )
 }

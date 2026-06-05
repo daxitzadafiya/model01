@@ -852,6 +852,24 @@ export interface Form {
 export interface HeroBlock {
   title: string;
   buttonText: string;
+  /**
+   * Where the hero button navigates to (e.g. Property for Sale page).
+   */
+  ctaLink: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+    label: string;
+  };
   backgroundImage: number | Media;
   showSearch?: boolean | null;
   id?: string | null;
@@ -2059,6 +2077,15 @@ export interface FormBlockSelect<T extends boolean = true> {
 export interface HeroBlockSelect<T extends boolean = true> {
   title?: T;
   buttonText?: T;
+  ctaLink?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+        label?: T;
+      };
   backgroundImage?: T;
   showSearch?: T;
   id?: T;
@@ -3071,6 +3098,29 @@ export interface Header {
           url?: string | null;
           label: string;
         };
+        /**
+         * Optional sub-links (e.g. For Sale, Sold). When added, this item renders as a dropdown — only the parent Label is shown in the header.
+         */
+        subLinks?:
+          | {
+              link: {
+                type?: ('reference' | 'custom') | null;
+                newTab?: boolean | null;
+                reference?:
+                  | ({
+                      relationTo: 'pages';
+                      value: number | Page;
+                    } | null)
+                  | ({
+                      relationTo: 'posts';
+                      value: number | Post;
+                    } | null);
+                url?: string | null;
+                label: string;
+              };
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -3356,6 +3406,20 @@ export interface HeaderSelect<T extends boolean = true> {
               reference?: T;
               url?: T;
               label?: T;
+            };
+        subLinks?:
+          | T
+          | {
+              link?:
+                | T
+                | {
+                    type?: T;
+                    newTab?: T;
+                    reference?: T;
+                    url?: T;
+                    label?: T;
+                  };
+              id?: T;
             };
         id?: T;
       };
