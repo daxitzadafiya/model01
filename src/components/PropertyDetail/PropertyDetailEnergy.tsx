@@ -1,0 +1,195 @@
+import React from 'react'
+
+import { PropertyDetailIcon } from '@/components/PropertyDetail/PropertyDetailIcon'
+import {
+  ENERGY_GRADE_STYLES,
+  ENERGY_GRADES,
+  type CRMPropertyEnergy,
+  type EnergyGrade,
+  type EnergyGradeStyle,
+} from '@/utilities/crmPropertyEnergy'
+
+type Props = {
+  energy: CRMPropertyEnergy
+}
+
+const formatMetric = (value: number | string | undefined): string | undefined => {
+  if (value == null || value === '') return undefined
+  return String(value)
+}
+
+type EnergyGradeBarProps = {
+  grade: EnergyGrade
+  style: EnergyGradeStyle
+  isActive: boolean
+}
+
+const EPC_BAR_CLIP = 'polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%)'
+
+/** European EPC-style bar: coloured shaft + arrow tip, widening A → G. */
+const EnergyGradeBar: React.FC<EnergyGradeBarProps> = ({ grade, style, isActive }) => {
+  const barWidth = isActive ? style.widthPercent + 4 : style.widthPercent
+
+  return (
+    <div
+      className={`flex items-center ${isActive ? 'h-11 py-0.5' : 'h-9 opacity-40 saturate-[0.35]'}`}
+      aria-current={isActive ? 'true' : undefined}
+    >
+      <div
+        className={`relative flex items-center pl-3 font-bold ${
+          isActive
+            ? 'epc-active-bar h-10 min-w-11 text-base shadow-md brightness-110 saturate-150'
+            : 'h-9 min-w-11 text-sm'
+        }`}
+        style={{
+          width: `${barWidth}%`,
+          backgroundColor: style.color,
+          color: style.textColor,
+          clipPath: EPC_BAR_CLIP,
+        }}
+      >
+        {grade}
+      </div>
+
+      {isActive && (
+        <span
+          className="epc-active-pointer ml-1.5 block h-0 w-0 border-y-[9px] border-y-transparent border-l-[11px] border-l-tertiary"
+          aria-hidden
+        />
+      )}
+    </div>
+  )
+}
+
+export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
+  const consumption = formatMetric(energy.consumption)
+  const emissions = formatMetric(energy.emissions)
+
+  return (
+    <div className="mt-24 border-t border-outline-variant/30 pt-12">
+      <h2 className="text-headline-lg font-headline-lg text-primary mb-12">Energy Efficiency</h2>
+
+      <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-8 md:p-10">
+        {energy.isEmpty ? (
+          <div className="py-10 text-center">
+            <p className="text-label-sm font-label-sm uppercase tracking-[0.2em] text-on-surface-variant">
+              {energy.statusMessage || energy.certificate || 'Pending'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-6">
+            {/* A–G scale */}
+            <div className="lg:col-span-5">
+              <p className="mb-5 text-[10px] font-label-sm uppercase tracking-[0.18em] text-on-surface-variant">
+                Energy Rating Scale
+              </p>
+
+              <div className="w-full max-w-sm space-y-1">
+                {ENERGY_GRADES.map((grade) => (
+                  <EnergyGradeBar
+                    key={grade}
+                    grade={grade}
+                    style={ENERGY_GRADE_STYLES[grade]}
+                    isActive={energy.activeGrade === grade}
+                  />
+                ))}
+              </div>
+
+              <p className="mt-5 text-[10px] uppercase leading-relaxed tracking-widest text-on-surface-variant">
+                Energy consumption kWh/m² year | Emissions kg CO2/m² year
+              </p>
+            </div>
+
+            {/* Status + values */}
+            <div className="flex flex-col items-center justify-center px-2 text-center lg:col-span-3 lg:items-start lg:text-left">
+              {energy.activeGrade && (
+                <div className="epc-status-reveal mb-8">
+                  <p className="text-label-sm font-label-sm uppercase tracking-widest text-on-surface-variant">
+                    Status:
+                  </p>
+                  <p className="mt-1 font-headline-lg text-[40px] leading-none text-accent-gold md:text-[48px]">
+                    Class {energy.activeGrade}
+                  </p>
+                </div>
+              )}
+
+              {(consumption != null || emissions != null) && (
+                <div className="w-full max-w-xs">
+                  <div className="grid grid-cols-2 gap-3">
+                    {consumption != null && (
+                      <div className="min-w-0">
+                        <p className="mb-2 border-b border-outline-variant/30 pb-2 text-[10px] font-label-sm uppercase tracking-widest text-on-surface-variant">
+                          Consumption
+                        </p>
+                        <div className="flex min-h-[4.5rem] items-center justify-center rounded-lg bg-primary px-3 py-2">
+                          <span
+                            className={`font-semibold leading-none tabular-nums text-white text-xl`}
+                          >
+                            {consumption}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {emissions != null && (
+                      <div className="min-w-0">
+                        <p className="mb-2 border-b border-outline-variant/30 pb-2 text-[10px] font-label-sm uppercase tracking-widest text-on-surface-variant">
+                          Emissions
+                        </p>
+                        <div className="flex min-h-[4.5rem] items-center justify-center rounded-lg bg-primary px-3 py-2">
+                          <span
+                            className={`font-semibold leading-none tabular-nums text-white text-xl`}
+                          >
+                            {emissions}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Side metrics */}
+            <div className="space-y-10 lg:col-span-4 lg:border-l lg:border-outline-variant/30 lg:pl-8">
+              {consumption != null && (
+                <div className="flex items-center space-x-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-gold/10">
+                    <PropertyDetailIcon
+                      name="energy_savings_leaf"
+                      className="text-accent-gold"
+                      size={20}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-label-sm font-label-sm uppercase text-on-surface-variant">
+                      Annual Energy
+                    </p>
+                    <p className="text-headline-sm font-headline-sm text-primary">
+                      {consumption} <span className="text-xs">kWh/m²</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {emissions != null && (
+                <div className="flex items-center space-x-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-gold/10">
+                    <PropertyDetailIcon name="co2" className="text-accent-gold" size={20} />
+                  </div>
+                  <div>
+                    <p className="text-label-sm font-label-sm uppercase text-on-surface-variant">
+                      CO2 Footprint
+                    </p>
+                    <p className="text-headline-sm font-headline-sm text-primary">
+                      {emissions} <span className="text-xs">kg/m²</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

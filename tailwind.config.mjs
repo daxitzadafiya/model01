@@ -12,7 +12,10 @@ const config = {
   theme: {
     extend: {
       colors: {
+        "accent-gold": "var(--color-tertiary, #755b00)",
         "surface-bright": "#fef9f1",
+        "surface-sand": "#f2ede6",
+        "surface-cream": "#fef9f1",
         "on-secondary": "#ffffff",
         surface: "var(--color-surface, #fef9f1)",
         "on-secondary-fixed-variant": "#474745",

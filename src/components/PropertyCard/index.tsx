@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { ArrowRight, Bath, Bed, Heart, Ruler } from 'lucide-react'
 import type { Media as PayloadMedia } from '@/payload-types'
 
@@ -27,6 +28,8 @@ type Props = {
   property: PropertyCardData
   /** CRM property id — enables favorite toggle when set */
   propertyId?: FavoritePropertyId | null
+  /** When set, card navigates to property detail page */
+  href?: string
   /**
    * Same logic as Properties block carousel:
    * - CRM: pass `property.statusBadgeLabel` (SOLD / RESERVED from API status)
@@ -89,6 +92,7 @@ export function resolvePropertyCardStatusBadge({
 export const PropertyCard: React.FC<Props> = ({
   property,
   propertyId,
+  href,
   statusBadgeLabel,
   variant = 'surface',
   className = '',
@@ -122,13 +126,29 @@ export const PropertyCard: React.FC<Props> = ({
 
   const cardInfoClass = variant === 'surface-container-low' ? 'p-4 md:p-6' : 'mt-4 md:mt-2'
 
-  return (
-    <article
-      className={`group cursor-pointer ${cardBase} ${className}`.trim()}
-      style={style}
-      onMouseEnter={onCardEngage}
-      onMouseLeave={onCardRelease}
+  const viewButton = href ? (
+    <span className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-surface py-3 font-label-nav text-label-nav text-primary group-hover:bg-primary group-hover:text-white group-hover:border-primary group-hover:shadow-md transition-all duration-300">
+      View Property
+      <ArrowRight
+        size={16}
+        className="group-hover:translate-x-1 transition-transform duration-300"
+      />
+    </span>
+  ) : (
+    <button
+      type="button"
+      className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-surface py-3 font-label-nav text-label-nav text-primary hover:bg-primary hover:text-white hover:border-primary hover:shadow-md transition-all duration-300 cursor-pointer"
     >
+      View Property
+      <ArrowRight
+        size={16}
+        className="group-hover:translate-x-1 transition-transform duration-300"
+      />
+    </button>
+  )
+
+  const cardBody = (
+    <>
       <div className={imageWrapperClass}>
         <PropertyCardImageGallery
           title={property.title}
@@ -186,17 +206,33 @@ export const PropertyCard: React.FC<Props> = ({
           </div>
           <span className="font-body-md text-body-md font-bold text-primary">{property.price}</span>
         </div>
-        <button
-          type="button"
-          className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-surface py-3 font-label-nav text-label-nav text-primary hover:bg-primary hover:text-white hover:border-primary hover:shadow-md transition-all duration-300 cursor-pointer"
-        >
-          View Property
-          <ArrowRight
-            size={16}
-            className="group-hover:translate-x-1 transition-transform duration-300"
-          />
-        </button>
+        {viewButton}
       </div>
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={`group block cursor-pointer ${cardBase} ${className}`.trim()}
+        style={style}
+        onMouseEnter={onCardEngage}
+        onMouseLeave={onCardRelease}
+      >
+        {cardBody}
+      </Link>
+    )
+  }
+
+  return (
+    <article
+      className={`group cursor-pointer ${cardBase} ${className}`.trim()}
+      style={style}
+      onMouseEnter={onCardEngage}
+      onMouseLeave={onCardRelease}
+    >
+      {cardBody}
     </article>
   )
 }

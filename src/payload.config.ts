@@ -111,6 +111,9 @@ export default buildConfig({
     client: {
       url: process.env.DATABASE_URL || '',
     },
+    // Use migrations in production; dev schema push leaves a batch=-1 marker that
+    // blocks non-interactive `next build` with an interactive migrate prompt.
+    push: false,
     prodMigrations: migrations,
   }),
   collections: [Pages, Posts, Media, Categories, Users],

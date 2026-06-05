@@ -104,8 +104,9 @@ export const PropertyListView: React.FC<Props> = ({
   const totalPages = Math.max(1, Math.ceil(displayTotal / pageSize))
 
   const properties = useMemo(() => {
-    const normalized = rawProperties.map((raw) => normalizeCRMListProperty(raw, activeLocale))
-    // const normalized = rawProperties.map((raw) => normalizeCRMListProperty(raw, activeLocale))
+    const normalized = rawProperties.map((raw) =>
+      normalizeCRMListProperty(raw, activeLocale, { listingMode: 'sale' }),
+    )
     return sortProperties(normalized, sort)
   }, [activeLocale, rawProperties, sort])
 
@@ -325,6 +326,7 @@ export const PropertyListView: React.FC<Props> = ({
             <PropertyCard
               key={property.id ?? property.reference ?? property.title}
               propertyId={property.id}
+              href={property.detailHref}
               property={{
                 imageUrl: property.imageUrl,
                 imageUrls: property.imageUrls,

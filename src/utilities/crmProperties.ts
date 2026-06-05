@@ -6,6 +6,11 @@ import {
   PROPERTY_DETAIL_IMAGE_SIZE,
 } from '@/utilities/optimaImage'
 import { resolveCRMPropertyLocalizedTexts } from '@/utilities/localizedValue'
+import {
+  resolvePropertyDetailHref,
+  resolvePropertyListingMode,
+  type PropertyListingMode,
+} from '@/utilities/propertyUrl'
 
 export type CRMListingPreset = 'forSale' | 'sold' | 'featured' | 'seaView' | 'custom' | 'favorites'
 
@@ -36,6 +41,8 @@ export type NormalizedListProperty = {
   statusBadgeLabel?: 'SOLD' | 'RESERVED'
   location: string
   reference?: string
+  /** Site path e.g. `/property-details/luxury-villa-in-calpe_618268` */
+  detailHref?: string
   title: string
   propertyType?: string
   beds?: number
@@ -633,6 +640,8 @@ export type NormalizeCRMPropertyOptions = {
   attachmentImageSize?: number
   /** Optional cap on gallery URLs for list/card views (detail pages omit this). */
   maxGalleryImages?: number
+  /** Sale vs rent URL map — defaults from CRM `sale` / `rent` flags. */
+  listingMode?: PropertyListingMode
 }
 
 export type NormalizedCRMProperty = NormalizedListProperty & {
@@ -744,6 +753,9 @@ export function normalizeCRMProperty(
     city: localized.city || undefined,
     region: localized.region || undefined,
     reference,
+    detailHref: resolvePropertyDetailHref(property, locale, {
+      listingMode: options.listingMode ?? resolvePropertyListingMode(property),
+    }),
     title: propertyTitle,
     description: localized.description || undefined,
     propertyType: localized.propertyType || undefined,

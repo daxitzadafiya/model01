@@ -15,6 +15,13 @@ const CRM_LOCALE_KEY_ALIASES: Record<string, string[]> = {
   ca: ['ca', 'CA'],
   ro: ['ro', 'RO'],
   tr: ['tr', 'TR'],
+  pl: ['po', 'pl', 'PO', 'PL'],
+  da: ['da', 'dk', 'DA', 'DK'],
+  no: ['no', 'NO'],
+  sv: ['sv', 'SV'],
+  fi: ['fi', 'FI'],
+  cz: ['cz', 'CZ'],
+  ru: ['ru', 'RU'],
 }
 
 export const buildCRMLocaleCandidates = (locale: string): string[] => {
@@ -126,6 +133,69 @@ export type CRMPropertyLocalizedTexts = {
   propertySubtype: string
 }
 
+/** CRM booleans may arrive as true, 1, or "true". */
+export const isCRMTruthy = (value: unknown): boolean => {
+  if (value === true || value === 1) return true
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    return normalized === 'true' || normalized === '1'
+  }
+  return false
+}
+
+const resolveCRMPropertyDescription = (
+  property: Record<string, unknown>,
+  locale: string,
+): string => {
+  const isSale = isCRMTruthy(property.sale)
+  const isRent = isCRMTruthy(property.rent)
+
+  if (isSale) {
+    return (
+      pickFirstLocalized(property, ['sale_description', 'description', 'shared_data.description'], locale) ||
+      pickFirstLocalized(property, ['rental_description', 'rent_description'], locale)
+    )
+  }
+
+  if (isRent) {
+    return (
+      pickFirstLocalized(property, ['rent_description', 'rental_description', 'description'], locale) ||
+      pickFirstLocalized(property, ['sale_description', 'shared_data.description'], locale)
+    )
+  }
+
+  return pickFirstLocalized(
+    property,
+    ['description', 'sale_description', 'rent_description', 'rental_description', 'shared_data.description'],
+    locale,
+  )
+}
+
+const resolveCRMPropertyTitle = (property: Record<string, unknown>, locale: string): string => {
+  const isSale = isCRMTruthy(property.sale)
+  const isRent = isCRMTruthy(property.rent)
+
+  if (isSale) {
+    return (
+      pickFirstLocalized(property, ['sale_title', 'title', 'shared_data.title'], locale) ||
+      pickFirstLocalized(property, ['rental_title'], locale)
+    )
+  }
+
+  if (isRent) {
+    return (
+      pickFirstLocalized(property, ['rental_title', 'rent_title', 'title'], locale) ||
+      pickFirstLocalized(property, ['sale_title', 'shared_data.title'], locale)
+    )
+  }
+
+  return pickFirstLocalized(
+    property,
+    ['sale_title', 'title', 'shared_data.title', 'rental_title'],
+    locale,
+  )
+}
+
 /**
  * Resolve common multi-language CRM property fields for the active site locale.
  */
@@ -133,14 +203,8 @@ export const resolveCRMPropertyLocalizedTexts = (
   property: Record<string, unknown>,
   locale: string,
 ): CRMPropertyLocalizedTexts => {
-  const title =
-    pickFirstLocalized(property, ['sale_title', 'title', 'shared_data.title', 'rental_title'], locale)
-
-  const description = pickFirstLocalized(
-    property,
-    ['description', 'shared_data.description', 'rental_description'],
-    locale,
-  )
+  const title = resolveCRMPropertyTitle(property, locale)
+  const description = resolveCRMPropertyDescription(property, locale)
 
   const city =
     pickFirstLocalized(

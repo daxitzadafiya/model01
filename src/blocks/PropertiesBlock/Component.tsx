@@ -32,6 +32,7 @@ type NormalizedProperty = {
   statusBadgeLabel?: 'SOLD' | 'RESERVED'
   location: string
   reference?: string
+  detailHref?: string
   title: string
   beds?: number
   baths?: number
@@ -104,6 +105,7 @@ export const PropertiesBlock: React.FC<Props> = ({
         currencySymbolAfter: true,
         emptyPriceWhenMissing: true,
         attachmentImageSize: PROPERTY_CARD_IMAGE_SIZE,
+        listingMode: 'sale',
       })
 
       return {
@@ -114,6 +116,7 @@ export const PropertiesBlock: React.FC<Props> = ({
         statusBadgeLabel: normalized.statusBadgeLabel,
         location: normalized.location,
         reference: normalized.reference,
+        detailHref: normalized.detailHref,
         title: normalized.title,
         beds: normalized.beds,
         baths: normalized.baths,
@@ -393,6 +396,7 @@ export const PropertiesBlock: React.FC<Props> = ({
                 <PropertyCard
                   key={cardKey}
                   propertyId={property.id}
+                  href={property.detailHref}
                   property={property}
                   statusBadgeLabel={resolvePropertyCardStatusBadge({
                     statusBadgeLabel: property.statusBadgeLabel,
