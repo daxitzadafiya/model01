@@ -1,3 +1,5 @@
+import { crmServerFetch } from '@/utilities/crmServerFetch'
+
 type SubmissionField = {
   field: string
   value: string | boolean
@@ -38,7 +40,9 @@ function toBoolean(value: unknown): boolean {
   if (typeof value === 'boolean') return value
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase()
-    return normalized === 'true' || normalized === '1' || normalized === 'on' || normalized === 'yes'
+    return (
+      normalized === 'true' || normalized === '1' || normalized === 'on' || normalized === 'yes'
+    )
   }
   return Boolean(value)
 }
@@ -63,9 +67,7 @@ function submissionDataToCrmPayload(
 function formatOptimaMessage(value: unknown): string | null {
   if (typeof value === 'string' && value.trim()) return value.trim()
   if (Array.isArray(value)) {
-    const parts = value.filter(
-      (v): v is string => typeof v === 'string' && v.trim().length > 0,
-    )
+    const parts = value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
     if (parts.length) return parts.join(' ')
   }
   return null
@@ -144,12 +146,42 @@ export async function submitContactToOptimaCrm(
     source: CONTACT_SOURCE,
     scp: CONTACT_SCP,
   }
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  })
+
+  console.log('payload', payload)
+  let response: Response
+
+  try {
+    console.log('endpoint', endpoint)
+    console.log('::::::: OPTIMA CRM REQUEST :::::::', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+    response = await crmServerFetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+  } catch (error) {
+    const causeMessage =
+      error instanceof Error && error.cause instanceof Error ? error.cause.message : ''
+    const message = error instanceof Error ? error.message : 'CRM request failed'
+
+    if (
+      message.includes('unable to verify the first certificate') ||
+      causeMessage.includes('unable to verify the first certificate')
+    ) {
+      throw new Error(
+        'Could not connect to CRM due to an SSL certificate issue. For local development, restart the dev server after setting CRM_ALLOW_INSECURE_TLS=true in .env if the problem persists.',
+      )
+    }
+
+    throw new Error(message)
+  }
+
   await assertOptimaCrmSuccess(response)
 }

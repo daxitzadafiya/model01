@@ -1,11 +1,15 @@
 'use client'
 
-import type { CheckboxField, CountryField, SelectField } from '@payloadcms/plugin-form-builder/types'
+import type {
+  CheckboxField,
+  CountryField,
+  SelectField,
+} from '@payloadcms/plugin-form-builder/types'
 import type { Control, FieldErrorsImpl } from 'react-hook-form'
 import type { UseFormRegister } from 'react-hook-form'
 import { Controller } from 'react-hook-form'
+import { AlertCircle, Globe, Mail, MessageSquare, Phone, Tag, User } from 'lucide-react'
 import React from 'react'
-
 import { Error } from '@/blocks/Form/Error'
 import { Checkbox as CheckboxUi } from '@/components/ui/checkbox'
 import { cn } from '@/utilities/ui'
@@ -26,10 +30,9 @@ const labelClassName =
   'mb-2 block font-label-sm text-label-sm uppercase tracking-[0.18em] text-tertiary'
 
 const iconClassName =
-  'material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]'
+  'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant'
 
-const textareaIconClassName =
-  'material-symbols-outlined pointer-events-none absolute left-3 top-4 text-on-surface-variant text-[18px]'
+const textareaIconClassName = 'pointer-events-none absolute left-3 top-4 text-on-surface-variant'
 
 type BaseFieldProps = {
   name: string
@@ -40,6 +43,14 @@ type BaseFieldProps = {
   defaultValue?: string
 }
 
+function fieldHint(name: string, label?: string): string {
+  return `${name} ${label ?? ''}`.toLowerCase()
+}
+
+function isPhoneField(name: string, label?: string): boolean {
+  return /phone|mobile|tel|cell|cellphone/.test(fieldHint(name, label))
+}
+
 function ContactFieldWrapper({
   name,
   label,
@@ -48,7 +59,7 @@ function ContactFieldWrapper({
   icon,
   textareaIcon,
   children,
-}: BaseFieldProps & { children: React.ReactNode; icon?: string; textareaIcon?: boolean }) {
+}: BaseFieldProps & { children: React.ReactNode; icon?: React.ReactNode; textareaIcon?: boolean }) {
   return (
     <div>
       {label && (
@@ -58,8 +69,10 @@ function ContactFieldWrapper({
         </label>
       )}
       <div className="relative">
-        {icon && <span className={textareaIcon ? textareaIconClassName : iconClassName}>{icon}</span>}
-      {children}
+        {icon && (
+          <span className={textareaIcon ? textareaIconClassName : iconClassName}>{icon}</span>
+        )}
+        {children}
       </div>
       {errors[name] && <Error name={name} />}
     </div>
@@ -73,25 +86,35 @@ export const ContactTextField: React.FC<BaseFieldProps> = ({
   errors,
   register,
   defaultValue,
-}) => (
-  <ContactFieldWrapper
-    errors={errors}
-    label={label}
-    name={name}
-    register={register}
-    required={required}
-    icon="person"
-  >
-    <input
-      className={inputClassName}
-      defaultValue={defaultValue}
-      id={name}
-      placeholder={label}
-      type="text"
-      {...register(name, { required })}
-    />
-  </ContactFieldWrapper>
-)
+}) => {
+  const phoneField = isPhoneField(name, label)
+
+  return (
+    <ContactFieldWrapper
+      errors={errors}
+      icon={
+        phoneField ? (
+          <Phone size={18} strokeWidth={2} />
+        ) : (
+          <User size={18} strokeWidth={2} />
+        )
+      }
+      label={label}
+      name={name}
+      register={register}
+      required={required}
+    >
+      <input
+        className={inputClassName}
+        defaultValue={defaultValue}
+        id={name}
+        placeholder={label}
+        type={phoneField ? 'tel' : 'text'}
+        {...register(name, { required })}
+      />
+    </ContactFieldWrapper>
+  )
+}
 
 export const ContactEmailField: React.FC<BaseFieldProps> = ({
   name,
@@ -103,11 +126,11 @@ export const ContactEmailField: React.FC<BaseFieldProps> = ({
 }) => (
   <ContactFieldWrapper
     errors={errors}
+    icon={<Mail size={18} strokeWidth={2} />}
     label={label}
     name={name}
     register={register}
     required={required}
-    icon="mail"
   >
     <input
       className={inputClassName}
@@ -130,11 +153,11 @@ export const ContactNumberField: React.FC<BaseFieldProps> = ({
 }) => (
   <ContactFieldWrapper
     errors={errors}
+    icon={<Phone size={18} strokeWidth={2} />}
     label={label}
     name={name}
     register={register}
     required={required}
-    icon="call"
   >
     <input
       className={inputClassName}
@@ -158,11 +181,11 @@ export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> 
 }) => (
   <ContactFieldWrapper
     errors={errors}
+    icon={<MessageSquare size={18} strokeWidth={2} />}
     label={label}
     name={name}
     register={register}
     required={required}
-    icon="chat"
     textareaIcon
   >
     <textarea
@@ -240,7 +263,7 @@ export const ContactCheckboxField: React.FC<
     />
     {errors[name] && (
       <p className="mt-2 flex items-start gap-1.5 font-body-sm text-body-sm text-error">
-        <span className="material-symbols-outlined shrink-0 text-[16px]">error</span>
+        <AlertCircle className="shrink-0" size={16} strokeWidth={2} />
         <span>{(errors[name]?.message as string) || ACCEPTANCE_ERROR}</span>
       </p>
     )}
@@ -257,7 +280,9 @@ export const contactFields = {
   checkbox: ContactCheckboxField,
 }
 
-function ContactSelectField(props: SelectField & { control: Control; errors: Partial<FieldErrorsImpl> }) {
+function ContactSelectField(
+  props: SelectField & { control: Control; errors: Partial<FieldErrorsImpl> },
+) {
   const { name, control, errors, label, options, required, defaultValue } = props
 
   return (
@@ -282,7 +307,7 @@ function ContactSelectField(props: SelectField & { control: Control; errors: Par
                 className="w-full rounded-xl bg-white border-outline-variant/35 pl-10 pr-4 py-3.5 h-auto min-h-[52px] focus-visible:ring-4 focus-visible:ring-tertiary/20"
                 id={name}
               >
-                <span className={iconClassName}>sell</span>
+                <Tag className={iconClassName} size={18} strokeWidth={2} />
                 <SelectValue placeholder={label} />
               </SelectTrigger>
               <SelectContent>
@@ -301,7 +326,9 @@ function ContactSelectField(props: SelectField & { control: Control; errors: Par
   )
 }
 
-function ContactCountryField(props: CountryField & { control: Control; errors: Partial<FieldErrorsImpl> }) {
+function ContactCountryField(
+  props: CountryField & { control: Control; errors: Partial<FieldErrorsImpl> },
+) {
   const { name, control, errors, label, required } = props
 
   return (
@@ -326,7 +353,7 @@ function ContactCountryField(props: CountryField & { control: Control; errors: P
                 className="w-full rounded-xl bg-white border-outline-variant/35 pl-10 pr-4 py-3.5 h-auto min-h-[52px] focus-visible:ring-4 focus-visible:ring-tertiary/20"
                 id={name}
               >
-                <span className={iconClassName}>public</span>
+                <Globe className={iconClassName} size={18} strokeWidth={2} />
                 <SelectValue placeholder={label} />
               </SelectTrigger>
               <SelectContent>

@@ -48,8 +48,7 @@ type Props = {
 export function formatPropertyAreaDisplay(sqft?: number | string): string {
   if (sqft === undefined || sqft === null || sqft === '') return '0'
 
-  const toInteger = (value: number) =>
-    `${Math.floor(value).toLocaleString('en-US')}`
+  const toInteger = (value: number) => `${Math.floor(value).toLocaleString('en-US')}`
 
   if (typeof sqft === 'number') {
     if (!Number.isFinite(sqft) || sqft <= 0) return '0'
@@ -147,8 +146,51 @@ export const PropertyCard: React.FC<Props> = ({
     </button>
   )
 
-  const cardBody = (
-    <>
+  const cardInfo = (
+    <div className={cardInfoClass}>
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <p className="font-label-sm text-label-sm text-tertiary uppercase truncate">
+          {property.location}
+        </p>
+        {property.reference && (
+          <span className="font-label-sm text-label-sm text-secondary uppercase whitespace-nowrap">
+            Ref: {property.reference}
+          </span>
+        )}
+      </div>
+      <h3 className="font-headline-sm text-headline-sm text-primary mb-1 truncate">
+        {property.title}
+      </h3>
+      <div className="flex justify-between items-center mt-2">
+        <div className="flex gap-4 text-secondary font-label-sm text-label-sm">
+          <span className="flex items-center gap-1">
+            <Bed size={16} />
+            {property.beds ?? 0}
+          </span>
+          <span className="flex items-center gap-1">
+            <Bath size={16} />
+            {property.baths ?? 0}
+          </span>
+          <span className="flex items-center gap-1">
+            <Ruler size={16} />
+            {formatPropertyAreaDisplay(property.sqft)}
+          </span>
+        </div>
+        <span className="font-body-md text-body-md font-bold text-primary">{property.price}</span>
+      </div>
+      {viewButton}
+    </div>
+  )
+
+  const cardShellClass = `group ${cardBase} ${className}`.trim()
+
+  return (
+    <article
+      className={cardShellClass}
+      style={style}
+      onMouseEnter={onCardEngage}
+      onMouseLeave={onCardRelease}
+    >
       <div className={imageWrapperClass}>
         <PropertyCardImageGallery
           title={property.title}
@@ -166,73 +208,25 @@ export const PropertyCard: React.FC<Props> = ({
             onClick={handleFavoriteClick}
             className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/35 backdrop-blur-md text-white flex items-center justify-center cursor-pointer hover:bg-black/55 transition-colors z-10"
           >
-            <Heart size={20} className={favorited ? 'fill-current text-tertiary-container' : 'fill-none'} />
+            <Heart
+              size={20}
+              className={favorited ? 'fill-current text-tertiary-container' : 'fill-none'}
+            />
           </button>
         )}
         {statusBadgeLabel && (
-          <div className="absolute top-4 right-4 bg-red-600/90 backdrop-blur-md px-4 py-1 text-white font-label-sm text-label-sm tracking-widest">
+          <div className="absolute top-4 right-4 bg-red-600/90 backdrop-blur-md px-4 py-1 text-white font-label-sm text-label-sm tracking-widest rounded-xl">
             {statusBadgeLabel}
           </div>
         )}
       </div>
-      <div className={cardInfoClass}>
-        <div className="flex items-center justify-between gap-3 mb-1">
-          <p className="font-label-sm text-label-sm text-tertiary uppercase truncate">
-            {property.location}
-          </p>
-          {property.reference && (
-            <span className="font-label-sm text-label-sm text-secondary uppercase whitespace-nowrap">
-              Ref: {property.reference}
-            </span>
-          )}
-        </div>
-        <h3 className="font-headline-sm text-headline-sm text-primary mb-1 truncate">
-          {property.title}
-        </h3>
-        <div className="flex justify-between items-center mt-2">
-          <div className="flex gap-4 text-secondary font-label-sm text-label-sm">
-            <span className="flex items-center gap-1">
-              <Bed size={16} />
-              {property.beds ?? 0}
-            </span>
-            <span className="flex items-center gap-1">
-              <Bath size={16} />
-              {property.baths ?? 0}
-            </span>
-            <span className="flex items-center gap-1">
-              <Ruler size={16} />
-              {formatPropertyAreaDisplay(property.sqft)}
-            </span>
-          </div>
-          <span className="font-body-md text-body-md font-bold text-primary">{property.price}</span>
-        </div>
-        {viewButton}
-      </div>
-    </>
-  )
-
-  if (href) {
-    return (
-      <Link
-        href={href}
-        className={`group block cursor-pointer ${cardBase} ${className}`.trim()}
-        style={style}
-        onMouseEnter={onCardEngage}
-        onMouseLeave={onCardRelease}
-      >
-        {cardBody}
-      </Link>
-    )
-  }
-
-  return (
-    <article
-      className={`group cursor-pointer ${cardBase} ${className}`.trim()}
-      style={style}
-      onMouseEnter={onCardEngage}
-      onMouseLeave={onCardRelease}
-    >
-      {cardBody}
+      {href ? (
+        <Link href={href} className="block no-underline text-inherit cursor-pointer relative z-10">
+          {cardInfo}
+        </Link>
+      ) : (
+        cardInfo
+      )}
     </article>
   )
 }

@@ -15,6 +15,11 @@ type FormSubmissionState = {
   resetSubmission: () => void
 }
 
+type SubmissionField = {
+  field: string
+  value: string | boolean
+}
+
 type UseFormSubmissionOptions = {
   /**
    * When enabled, we send reCAPTCHA data along with the submission and the
@@ -24,6 +29,8 @@ type UseFormSubmissionOptions = {
   recaptchaToken?: string
   /** Contact section: forward submission to Optima CRM (see `src/plugins/index.ts`). */
   syncToOptimaCrm?: boolean
+  /** Extra CRM fields (e.g. property inquiry hidden inputs). */
+  extraSubmissionFields?: SubmissionField[]
 }
 
 export function useFormSubmission(
@@ -45,20 +52,17 @@ export function useFormSubmission(
     (data: FormFieldBlock[]) => {
       if (!formID) return
 
-      let loadingTimerID: ReturnType<typeof setTimeout>
       const submitForm = async () => {
         setError(undefined)
+        setIsLoading(true)
 
-        const dataToSend = Object.entries(data as unknown as Record<string, unknown>).map(
-          ([name, value]) => ({
-          field: name,
-          value,
-          }),
-        )
-
-        loadingTimerID = setTimeout(() => {
-          setIsLoading(true)
-        }, 1000)
+        const dataToSend = [
+          ...Object.entries(data as unknown as Record<string, unknown>).map(([name, value]) => ({
+            field: name,
+            value,
+          })),
+          ...(options.extraSubmissionFields ?? []),
+        ]
 
         try {
           const req = await fetch(`${getClientSideURL()}/api/form-submissions`, {
@@ -80,8 +84,6 @@ export function useFormSubmission(
           })
 
           const res = await req.json()
-
-          clearTimeout(loadingTimerID)
 
           if (req.status >= 400) {
             setIsLoading(false)
@@ -118,6 +120,7 @@ export function useFormSubmission(
       options.recaptchaRequired,
       options.recaptchaToken,
       options.syncToOptimaCrm,
+      options.extraSubmissionFields,
     ],
   )
 

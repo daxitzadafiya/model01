@@ -1,6 +1,7 @@
 'use client'
 
 import type { Form as FormType } from '@payloadcms/plugin-form-builder/types'
+import { AlertCircle, Check, CircleArrowRight, Loader2, Lock } from 'lucide-react'
 import React from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { useEffect, useRef, useState } from 'react'
@@ -10,6 +11,8 @@ import { fields as defaultFields } from '@/blocks/Form/fields'
 import { useFormSubmission } from '@/blocks/Form/useFormSubmission'
 
 import { contactFields } from './contactFields'
+
+type HiddenFieldValue = string | boolean
 
 type Props = {
   form: FormType
@@ -22,6 +25,12 @@ type Props = {
   resubmitButtonLabel?: string | null
   successTitle?: string | null
   successSubtitle?: string | null
+  /** Merged into the submission payload (e.g. property inquiry CRM fields). */
+  hiddenFields?: Record<string, HiddenFieldValue>
+  /** Overrides default values for visible form fields by field name. */
+  defaultFieldValues?: Record<string, string>
+  /** Stack all fields in a single column (property detail sidebar). */
+  singleColumn?: boolean
 }
 
 declare global {
@@ -41,6 +50,9 @@ export const ContactForm: React.FC<Props> = ({
   resubmitButtonLabel,
   successTitle,
   successSubtitle,
+  hiddenFields,
+  defaultFieldValues,
+  singleColumn = false,
 }) => {
   const {
     id: formID,
@@ -81,12 +93,17 @@ export const ContactForm: React.FC<Props> = ({
     register,
   } = formMethods
 
+  const extraSubmissionFields = hiddenFields
+    ? Object.entries(hiddenFields).map(([field, value]) => ({ field, value }))
+    : undefined
+
   const { isLoading, hasSubmitted, error, onSubmit, resetSubmission } = useFormSubmission(
     formFromProps,
     {
       syncToOptimaCrm: true,
       recaptchaRequired: recaptchaConfigured,
       recaptchaToken,
+      extraSubmissionFields,
     },
   )
 
@@ -199,10 +216,13 @@ export const ContactForm: React.FC<Props> = ({
     setRecaptchaValidationError(null)
     clearRecaptchaWidget()
     setRecaptchaMountKey((key) => key + 1)
+    formMethods.reset(defaultFieldValues ?? {})
     resetSubmission()
   }
 
   const handleContactSubmit = (data: any) => {
+    if (isLoading) return
+
     if (recaptchaConfigured && !recaptchaToken) {
       setRecaptchaValidationError('This field is required')
       return
@@ -222,12 +242,7 @@ export const ContactForm: React.FC<Props> = ({
 
           <div className="relative z-10 text-center">
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-tertiary text-white shadow-sm">
-              <span
-                className="material-symbols-outlined text-[30px]"
-                style={{ fontVariationSettings: '"FILL" 1' }}
-              >
-                check
-              </span>
+              <Check size={30} strokeWidth={2.5} />
             </div>
 
             {(successTitle || successSubtitle) && (
@@ -260,9 +275,7 @@ export const ContactForm: React.FC<Props> = ({
                     type="button"
                     onClick={resetSubmissionWithRecaptcha}
                   >
-                    <span className="material-symbols-outlined text-[16px]">
-                      arrow_circle_right
-                    </span>
+                    <CircleArrowRight size={16} strokeWidth={2} />
                     {resubmitButtonLabel || 'Submit another response'}
                   </button>
                 </div>
@@ -271,18 +284,19 @@ export const ContactForm: React.FC<Props> = ({
           </div>
         </div>
       )}
-      {isLoading && !hasSubmitted && (
-        <p className="font-body-md text-body-md text-on-surface-variant">Loading, please wait...</p>
-      )}
       {!hasSubmitted && (
-        <form className="space-y-5" id={String(formID)} onSubmit={handleSubmit(handleContactSubmit)}>
+        <form
+          className="space-y-5"
+          id={String(formID)}
+          onSubmit={handleSubmit(handleContactSubmit)}
+        >
           {eyebrow && (
             <p className="font-label-nav text-label-nav uppercase tracking-[0.2em] text-tertiary">
               {eyebrow}
             </p>
           )}
           {(heading || formTitle) && (
-            <h3 className="font-headline-md text-headline-md text-primary">
+            <h3 className="font-headline-md text-headline-md text-primary text-center">
               {heading || formTitle}
             </h3>
           )}
@@ -296,32 +310,40 @@ export const ContactForm: React.FC<Props> = ({
           )}
 
           {error && (
-            <div
-              className="rounded-xl border border-error/30 bg-error/5 px-4 py-3"
-              role="alert"
-            >
+            <div className="rounded-xl border border-error/30 bg-error/5 px-4 py-3" role="alert">
               <p className="flex items-start gap-2 font-body-md text-body-md text-error">
-                <span className="material-symbols-outlined mt-0.5 shrink-0 text-[20px]">error</span>
+                <AlertCircle className="mt-0.5 shrink-0" size={20} strokeWidth={2} />
                 <span>{error.message}</span>
               </p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <fieldset
+            className={`m-0 min-w-0 border-0 p-0 ${
+              singleColumn ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-1 gap-4 md:grid-cols-2'
+            }`}
+            disabled={isLoading}
+          >
             {formFields?.map((field, index) => {
-              const blockType = field.blockType as string
+              const fieldName = 'name' in field ? field.name : undefined
+              const fieldDefaultValue =
+                fieldName && defaultFieldValues ? defaultFieldValues[fieldName] : undefined
+              const resolvedField =
+                fieldDefaultValue != null ? { ...field, defaultValue: fieldDefaultValue } : field
+              const blockType = resolvedField.blockType as string
               const ContactField: React.FC<any> | undefined = (contactFields as any)[blockType]
               const isWideField =
                 blockType === 'textarea' ||
                 blockType === 'message' ||
                 blockType === 'country' ||
                 blockType === 'checkbox'
+              const fieldWrapperClass = !singleColumn && isWideField ? 'md:col-span-2' : ''
 
               if (ContactField) {
                 return (
-                  <div className={isWideField ? 'md:col-span-2' : ''} key={index}>
+                  <div className={fieldWrapperClass} key={index}>
                     <ContactField
-                      {...field}
+                      {...resolvedField}
                       errors={errors}
                       control={control}
                       register={register}
@@ -334,10 +356,10 @@ export const ContactForm: React.FC<Props> = ({
               const DefaultField: React.FC<any> | undefined = (defaultFields as any)[blockType]
               if (DefaultField) {
                 return (
-                  <div className={isWideField ? 'md:col-span-2' : ''} key={index}>
+                  <div className={fieldWrapperClass} key={index}>
                     <DefaultField
                       form={formFromProps}
-                      {...field}
+                      {...resolvedField}
                       control={control}
                       errors={errors}
                       register={register}
@@ -348,10 +370,10 @@ export const ContactForm: React.FC<Props> = ({
 
               return null
             })}
-          </div>
+          </fieldset>
 
           {recaptchaEnabled && (
-            <div className="space-y-2">
+            <div className={`space-y-2 mt-4 ${isLoading ? 'pointer-events-none opacity-60' : ''}`}>
               <div key={`recaptcha-${recaptchaMountKey}`} ref={recaptchaContainerRef} />
               {recaptchaLoadError && (
                 <p className="font-body-sm text-body-sm text-error">{recaptchaLoadError}</p>
@@ -361,24 +383,30 @@ export const ContactForm: React.FC<Props> = ({
                   Please verify you are not a robot.
                 </p>
               )}
-              {recaptchaValidationError && <p className="mt-2 text-red-500 text-sm">{recaptchaValidationError}</p>}
+              {recaptchaValidationError && (
+                <p className="mt-2 text-red-500 text-sm">{recaptchaValidationError}</p>
+              )}
             </div>
           )}
 
           <button
+            aria-busy={isLoading}
             disabled={isLoading}
-            className={`w-full rounded-xl bg-tertiary px-8 py-4 font-label-nav text-label-nav cursor-pointer text-white transition active:scale-95 hover:opacity-90 ${
-              isLoading ? 'cursor-not-allowed opacity-70' : ''
+            className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-tertiary px-8 py-4 font-label-nav text-label-nav text-white transition ${
+              isLoading
+                ? 'cursor-not-allowed opacity-80'
+                : 'cursor-pointer active:scale-95 hover:opacity-90'
             }`}
             form={String(formID)}
             type="submit"
           >
-            {submitLabelOverride || submitButtonLabel}
+            {isLoading && <Loader2 className="animate-spin" size={18} strokeWidth={2} />}
+            {isLoading ? 'Submitting…' : submitLabelOverride || submitButtonLabel}
           </button>
 
           {trustNote && (
             <p className="flex items-center justify-center gap-2 text-center font-label-sm text-label-sm text-on-surface-variant">
-              <span className="material-symbols-outlined text-[16px]">lock</span>
+              <Lock size={16} strokeWidth={2} />
               {trustNote}
             </p>
           )}

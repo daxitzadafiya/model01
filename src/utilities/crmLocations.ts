@@ -28,8 +28,7 @@ export const buildGeoDataRequest = (
   preset: CRMListingPreset = 'forSale',
   mode: 'cities' | 'locations',
 ): Record<string, unknown> => {
-  const propStatus =
-    preset === 'sold' ? ['Sold'] : (['Available', 'Under Offer'] as const)
+  const propStatus = preset === 'sold' ? ['Sold'] : (['Available', 'Under Offer'] as const)
 
   return {
     query: {
@@ -57,10 +56,7 @@ const normalizeCity = (
   return { key, label }
 }
 
-const normalizeArea = (
-  doc: Record<string, unknown>,
-  locale: string,
-): CRMLocationArea | null => {
+const normalizeArea = (doc: Record<string, unknown>, locale: string): CRMLocationArea | null => {
   const key = pickNumber(doc.key)
   const cityKey = pickNumber(doc.city)
   if (key === undefined || cityKey === undefined) return null
@@ -91,9 +87,7 @@ export const buildLocationTree = (
 
   for (const [cityKey, cityAreas] of areasByCity) {
     const city = cityByKey.get(cityKey)
-    const sortedAreas = [...cityAreas].sort((a, b) =>
-      a.label.localeCompare(b.label, locale),
-    )
+    const sortedAreas = [...cityAreas].sort((a, b) => a.label.localeCompare(b.label, locale))
 
     tree.push({
       key: cityKey,
@@ -106,9 +100,7 @@ export const buildLocationTree = (
 }
 
 export const parseLocationKeys = (values?: string[]): number[] =>
-  (values ?? [])
-    .map((value) => Number(value))
-    .filter((key) => Number.isFinite(key))
+  (values ?? []).map((value) => Number(value)).filter((key) => Number.isFinite(key))
 
 export async function fetchCRMGeoData(
   locale: string,

@@ -16,9 +16,17 @@ import { PropertyDetailSpecs } from '@/components/PropertyDetail/PropertyDetailS
 import { PropertyDetailVideo } from '@/components/PropertyDetail/PropertyDetailVideo'
 import type { CRMAmenity, CRMPropertyEnergy } from '@/utilities/crmAmenities'
 import type { CRMPropertyVideoItem } from '@/utilities/crmPropertyVideo'
-import type { NormalizedCRMProperty, NormalizedListProperty } from '@/utilities/crmProperties'
+import type { Form } from '@/payload-types'
+import {
+  resolveCRMStatusBadgeLabel,
+  type NormalizedCRMProperty,
+  type NormalizedListProperty,
+} from '@/utilities/crmProperties'
+import type { PropertyInquiryContext } from '@/utilities/propertyInquiry'
 
 type Props = {
+  contactForm?: Form | null
+  inquiry: PropertyInquiryContext
   property: NormalizedCRMProperty
   amenities: CRMAmenity[]
   energy: CRMPropertyEnergy | null
@@ -51,7 +59,7 @@ const renderDescription = (description?: string) => {
     .filter(Boolean)
 
   return (
-    <div className="space-y-6 text-body-lg font-body-lg text-on-surface-variant border-l-2 border-surface-dim pl-8 py-2">
+    <div className="space-y-6 text-body-lg font-body-lg text-on-surface-variant description-container">
       {paragraphs.map((paragraph, index) => (
         <p key={index}>{paragraph}</p>
       ))}
@@ -60,6 +68,8 @@ const renderDescription = (description?: string) => {
 }
 
 export const PropertyDetailView: React.FC<Props> = ({
+  contactForm,
+  inquiry,
   property,
   amenities,
   energy,
@@ -99,16 +109,16 @@ export const PropertyDetailView: React.FC<Props> = ({
 
   return (
     <main className="pt-28 bg-surface-bright text-on-surface">
-      <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start mb-16 md:mb-24">
-        <div className="lg:sticky lg:top-32 lg:self-start">
+      <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-start mb-16 md:mb-24">
+        <div className="lg:col-span-7 xl:col-span-8 lg:sticky lg:top-32 lg:self-start">
           <PropertyDetailGallery
             images={property.imageUrls ?? (property.imageUrl ? [property.imageUrl] : [])}
             title={property.title}
-            badgeLabel={badgeLabel}
+            badgeLabel={resolveCRMStatusBadgeLabel(property.statusBadgeLabel)}
           />
         </div>
 
-        <div className="flex flex-col h-full py-2">
+        <div className="lg:col-span-5 xl:col-span-4 flex flex-col h-full py-2">
           <nav className="flex flex-wrap gap-x-2 text-label-sm font-label-sm text-on-surface-variant uppercase mb-4">
             <Link className="hover:text-tertiary transition-colors" href="/">
               Home
@@ -159,8 +169,9 @@ export const PropertyDetailView: React.FC<Props> = ({
 
         <div className="lg:col-span-1" id="property-inquiry">
           <PropertyDetailInquiryForm
+            contactForm={contactForm}
+            inquiry={inquiry}
             propertyTitle={property.title}
-            propertyReference={property.reference}
           />
         </div>
       </section>

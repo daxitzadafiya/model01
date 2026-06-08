@@ -581,6 +581,7 @@ export const buildCRMListingQuery = ({
 
   let baseQuery: Record<string, unknown> = {
     similar_commercials: 'exclude_similar',
+    archived: { $ne: true },
     sale: true,
   }
 
@@ -588,18 +589,21 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       similar_commercials: 'exclude_similar',
       sale: true,
+      archived: { $ne: true },
       status: { $in: ['Sold'] },
     }
   } else if (preset === 'forSale') {
     baseQuery = {
       similar_commercials: 'exclude_similar',
       sale: true,
+      archived: { $ne: true },
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'seaView') {
     baseQuery = {
       similar_commercials: 'exclude_similar',
       sale: true,
+      archived: { $ne: true },
       status: { $in: ['Available', 'Under Offer'] },
       'views.sea': true,
     }
@@ -608,11 +612,13 @@ export const buildCRMListingQuery = ({
       similar_commercials: 'exclude_similar',
       sale: true,
       featured: true,
+      archived: { $ne: true },
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'favorites') {
     baseQuery = {
       similar_commercials: 'exclude_similar',
+      archived: { $ne: true },
     }
   }
 

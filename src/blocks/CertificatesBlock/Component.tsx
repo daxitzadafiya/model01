@@ -1,5 +1,6 @@
 'use client'
 
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { Media } from '@/components/Media'
@@ -90,13 +91,13 @@ export const CertificatesBlock: React.FC<Props> = ({ subtitle, title, certificat
             onClick={handlePrev}
             className="w-11 h-11 md:w-12 md:h-12 rounded-full border border-outline-variant flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer"
           >
-            <span className="material-symbols-outlined">chevron_left</span>
+            <ChevronLeft size={20} strokeWidth={2} />
           </button>
           <button
             onClick={handleNext}
             className="w-11 h-11 md:w-12 md:h-12 rounded-full border border-outline-variant flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer"
           >
-            <span className="material-symbols-outlined">chevron_right</span>
+            <ChevronRight size={20} strokeWidth={2} />
           </button>
         </div>
       </div>

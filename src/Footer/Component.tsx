@@ -2,18 +2,9 @@ import { getCachedGlobal } from '@/utilities/getGlobals'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import Link from 'next/link'
 import React from 'react'
-import {
-  Award,
-  BadgeCheck,
-  Globe,
-  Languages,
-  Mail,
-  MapPin,
-  Phone,
-  ShieldCheck,
-  Share2,
-} from 'lucide-react'
+import { Mail, MapPin, Phone } from 'lucide-react'
 
+import { CmsIcon } from '@/components/CmsIcon'
 import { CMSLink } from '@/components/Link'
 import { Logo } from '@/components/Logo/Logo'
 import { getLogoSources } from '@/components/Logo/getLogoSources'
@@ -63,12 +54,12 @@ export async function Footer() {
               {socialLinks.map(({ icon, url, newTab, id }, i) => (
                 <a
                   key={id || i}
-                  className="material-symbols-outlined cursor-pointer text-tertiary transition-colors hover:text-surface-bright"
+                  className="cursor-pointer text-tertiary transition-colors hover:text-surface-bright"
                   href={url}
                   rel={newTab ? 'noopener noreferrer' : undefined}
                   target={newTab ? '_blank' : undefined}
                 >
-                  {icon}
+                  <CmsIcon className="text-tertiary" name={icon} size={22} />
                 </a>
               ))}
             </div>
@@ -103,7 +94,7 @@ export async function Footer() {
             <ul className="space-y-3 md:space-y-4 font-body-md text-body-md">
               {contact?.phone && (
                 <li className="flex items-center gap-3 text-white">
-                  <span className="material-symbols-outlined text-tertiary shrink-0">call</span>
+                  <Phone className="text-tertiary shrink-0" size={18} strokeWidth={2} />
                   <a
                     className="hover:text-surface-bright transition-colors"
                     href={`tel:${contact.phone.replace(/\s/g, '')}`}
@@ -114,7 +105,7 @@ export async function Footer() {
               )}
               {contact?.email && (
                 <li className="flex items-center gap-3 text-white">
-                  <span className="material-symbols-outlined text-tertiary shrink-0">mail</span>
+                  <Mail className="text-tertiary shrink-0" size={18} strokeWidth={2} />
                   <a
                     className="hover:text-surface-bright transition-colors"
                     href={`mailto:${contact.email}`}
@@ -125,9 +116,7 @@ export async function Footer() {
               )}
               {contact?.address && (
                 <li className="flex items-start gap-3 text-white">
-                  <span className="material-symbols-outlined text-tertiary shrink-0">
-                    location_on
-                  </span>
+                  <MapPin className="text-tertiary shrink-0" size={18} strokeWidth={2} />
                   {contact.address}
                 </li>
               )}
@@ -147,7 +136,7 @@ export async function Footer() {
                   key={id || i}
                   className="bg-white/10 w-14 h-14 md:w-16 md:h-16 rounded flex items-center justify-center opacity-50 grayscale text-white"
                 >
-                  <span className="material-symbols-outlined">{icon}</span>
+                  <CmsIcon name={icon} size={24} />
                 </div>
               ))}
             </div>

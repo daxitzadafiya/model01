@@ -165,7 +165,15 @@ export const plugins: Plugin[] = [
               if (!ok) throw new Error('reCAPTCHA verification failed. Please try again.')
             }
 
-            await submitContactToOptimaCrm(data?.submissionData)
+            try {
+              await submitContactToOptimaCrm(data?.submissionData)
+            } catch (error) {
+              const message =
+                error instanceof Error && error.message.trim()
+                  ? error.message
+                  : 'CRM submission failed. Please try again later.'
+              throw new Error(message)
+            }
 
             return data
           },

@@ -1,5 +1,6 @@
 'use client'
 
+import { Mail, MapPin, Phone } from 'lucide-react'
 import React from 'react'
 
 import type { Form as FormType } from '@payloadcms/plugin-form-builder/types'
@@ -60,9 +61,7 @@ export const ContactSectionBlock: React.FC<Props> = ({
                     {office.label}
                   </p>
                 )}
-                <span className="material-symbols-outlined text-tertiary text-[18px] leading-none">
-                  location_on
-                </span>
+                <MapPin className="text-tertiary" size={18} strokeWidth={2} />
               </div>
 
               {office.city && (
@@ -84,7 +83,7 @@ export const ContactSectionBlock: React.FC<Props> = ({
                       className="flex items-center gap-2 font-label-sm text-label-sm text-primary hover:text-tertiary transition-colors"
                       href={`tel:${office.phone.replace(/\s/g, '')}`}
                     >
-                      <span className="material-symbols-outlined text-[15px]">call</span>
+                      <Phone size={15} strokeWidth={2} />
                       {office.phone}
                     </a>
                   )}
@@ -93,7 +92,7 @@ export const ContactSectionBlock: React.FC<Props> = ({
                       className="flex items-center gap-2 font-label-sm text-label-sm text-primary hover:text-tertiary transition-colors"
                       href={`mailto:${office.email}`}
                     >
-                      <span className="material-symbols-outlined text-[15px]">mail</span>
+                      <Mail size={15} strokeWidth={2} />
                       {office.email}
                     </a>
                   )}

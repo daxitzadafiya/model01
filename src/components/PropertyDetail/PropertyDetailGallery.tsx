@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Expand } from 'lucide-react'
+
+import { PropertyDetailLightbox } from '@/components/PropertyDetail/PropertyDetailLightbox'
 
 type Props = {
   images: string[]
@@ -11,8 +13,11 @@ type Props = {
 
 const TRANSITION_MS = 600
 const TRANSITION_EASING = 'cubic-bezier(0.25, 0.1, 0.25, 1)'
-const THUMBNAILS_VISIBLE = 5
+const THUMBNAILS_VISIBLE = 7
 const THUMB_GAP_PX = 12
+const DRAG_THRESHOLD_RATIO = 0.15
+const DRAG_CLICK_THRESHOLD = 5
+const EDGE_DRAG_RESISTANCE = 0.35
 
 const transitionStyle = {
   transitionDuration: `${TRANSITION_MS}ms`,
@@ -58,12 +63,22 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
   )
 
   const thumbViewportRef = useRef<HTMLDivElement>(null)
+  const mainViewportRef = useRef<HTMLDivElement>(null)
+  const dragStartXRef = useRef<number | null>(null)
+  const dragOffsetRef = useRef(0)
+  const activePointerIdRef = useRef<number | null>(null)
+  const didDragRef = useRef(false)
+
   const [thumbWidth, setThumbWidth] = useState(0)
   const [viewportWidth, setViewportWidth] = useState(0)
 
   const [activeIndex, setActiveIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragOffsetPx, setDragOffsetPx] = useState(0)
   const [loadedSlideIndices, setLoadedSlideIndices] = useState<Set<number>>(() => new Set([0]))
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0)
 
   const hasMultiple = slides.length > 1
   const slideCount = slides.length
@@ -103,7 +118,14 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
   useEffect(() => {
     setActiveIndex(0)
     setIsTransitioning(false)
+    setIsDragging(false)
+    setDragOffsetPx(0)
+    dragOffsetRef.current = 0
+    dragStartXRef.current = null
+    activePointerIdRef.current = null
+    didDragRef.current = false
     setLoadedSlideIndices(new Set([0]))
+    setLightboxOpen(false)
   }, [slides])
 
   const ensureSlidesLoaded = useCallback(
@@ -154,27 +176,131 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
       setActiveIndex(nextIndex)
       window.setTimeout(() => setIsTransitioning(false), TRANSITION_MS)
     },
-    [
-      activeIndex,
-      ensureSlidesLoaded,
-      hasMultiple,
-      isTransitioning,
-      prefetchSlideUrls,
-      slideCount,
-    ],
+    [activeIndex, ensureSlidesLoaded, hasMultiple, isTransitioning, prefetchSlideUrls, slideCount],
   )
 
-  const mainTranslateX = `translateX(-${activeIndex * 100}%)`
+  const resetDrag = useCallback(() => {
+    dragStartXRef.current = null
+    activePointerIdRef.current = null
+    dragOffsetRef.current = 0
+    setDragOffsetPx(0)
+    setIsDragging(false)
+  }, [])
+
+  const openLightbox = useCallback((index: number) => {
+    setLightboxInitialIndex(index)
+    setLightboxOpen(true)
+  }, [])
+
+  const handleMainPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!hasMultiple || isTransitioning) return
+      if (event.pointerType === 'mouse' && event.button !== 0) return
+      if ((event.target as HTMLElement).closest('button')) return
+
+      didDragRef.current = false
+      dragStartXRef.current = event.clientX
+      activePointerIdRef.current = event.pointerId
+      dragOffsetRef.current = 0
+      setDragOffsetPx(0)
+      setIsDragging(true)
+      event.currentTarget.setPointerCapture(event.pointerId)
+    },
+    [hasMultiple, isTransitioning],
+  )
+
+  const handleMainPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (
+        !isDragging ||
+        dragStartXRef.current === null ||
+        activePointerIdRef.current !== event.pointerId
+      ) {
+        return
+      }
+
+      let delta = event.clientX - dragStartXRef.current
+
+      if (Math.abs(delta) > DRAG_CLICK_THRESHOLD) {
+        didDragRef.current = true
+      }
+
+      if (activeIndex === 0 && delta > 0) {
+        delta *= EDGE_DRAG_RESISTANCE
+      } else if (activeIndex === slideCount - 1 && delta < 0) {
+        delta *= EDGE_DRAG_RESISTANCE
+      }
+
+      dragOffsetRef.current = delta
+      setDragOffsetPx(delta)
+    },
+    [activeIndex, isDragging, slideCount],
+  )
+
+  const handleMainPointerEnd = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (activePointerIdRef.current !== event.pointerId) return
+
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId)
+      }
+
+      const width = mainViewportRef.current?.clientWidth ?? 0
+      const offset = dragOffsetRef.current
+      const threshold = width * DRAG_THRESHOLD_RATIO
+
+      resetDrag()
+
+      if (width <= 0) return
+
+      if (offset < -threshold) {
+        goTo(activeIndex + 1)
+      } else if (offset > threshold) {
+        goTo(activeIndex - 1)
+      }
+    },
+    [activeIndex, goTo, resetDrag],
+  )
+
+  const handleMainClick = useCallback(() => {
+    if (didDragRef.current) {
+      didDragRef.current = false
+      return
+    }
+    openLightbox(activeIndex)
+  }, [activeIndex, openLightbox])
+
+  const mainTranslateX = `translateX(calc(-${activeIndex * 100}% + ${dragOffsetPx}px))`
 
   return (
     <div className="space-y-6">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-lg shadow-xl bg-surface-container-high">
+      <div
+        ref={mainViewportRef}
+        className={`group/main relative aspect-[4/3] overflow-hidden rounded-lg shadow-xl bg-surface-container-high ${
+          hasMultiple ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'cursor-pointer'
+        }`}
+        style={hasMultiple ? { touchAction: 'none' } : undefined}
+        onPointerDown={hasMultiple ? handleMainPointerDown : undefined}
+        onPointerMove={hasMultiple ? handleMainPointerMove : undefined}
+        onPointerUp={hasMultiple ? handleMainPointerEnd : undefined}
+        onPointerCancel={hasMultiple ? handleMainPointerEnd : undefined}
+        onClick={hasMultiple ? handleMainClick : () => openLightbox(0)}
+        role="button"
+        tabIndex={0}
+        aria-label="Open full screen gallery"
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            openLightbox(activeIndex)
+          }
+        }}
+      >
         {hasMultiple ? (
           <div
-            className="flex h-full w-full transition-transform ease-in-out"
+            className={`flex h-full w-full ease-in-out ${isDragging ? '' : 'transition-transform'}`}
             style={{
               transform: mainTranslateX,
-              ...transitionStyle,
+              ...(isDragging ? {} : transitionStyle),
             }}
           >
             {slides.map((src, index) => (
@@ -184,13 +310,17 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
                   <img
                     src={src}
                     alt={`${title} — image ${index + 1} of ${slides.length}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover pointer-events-none"
+                    draggable={false}
                     loading={index === 0 ? 'eager' : 'lazy'}
                     decoding="async"
                     fetchPriority={index === 0 && activeIndex === 0 ? 'high' : 'low'}
                   />
                 ) : (
-                  <div className="h-full w-full bg-surface-container-high animate-pulse" aria-hidden />
+                  <div
+                    className="h-full w-full bg-surface-container-high animate-pulse"
+                    aria-hidden
+                  />
                 )}
               </div>
             ))}
@@ -212,6 +342,7 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
               type="button"
               aria-label="Previous image"
               disabled={isTransitioning}
+              onPointerDown={(event) => event.stopPropagation()}
               onClick={() => goTo(activeIndex - 1)}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 transition-all cursor-pointer disabled:opacity-60"
             >
@@ -221,6 +352,7 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
               type="button"
               aria-label="Next image"
               disabled={isTransitioning}
+              onPointerDown={(event) => event.stopPropagation()}
               onClick={() => goTo(activeIndex + 1)}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 transition-all cursor-pointer disabled:opacity-60"
             >
@@ -229,21 +361,44 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
           </>
         )}
 
+        <button
+          type="button"
+          aria-label="Open full screen gallery"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation()
+            openLightbox(activeIndex)
+          }}
+          className="absolute bottom-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md opacity-100 transition-all hover:bg-black/60 md:opacity-0 md:group-hover/main:opacity-100 focus:opacity-100"
+        >
+          <Expand size={18} />
+        </button>
+
         {badgeLabel && (
-          <div className="absolute bottom-4 left-4 z-20">
-            <span className="bg-primary/80 backdrop-blur-sm text-white px-3 py-1 text-label-sm font-label-sm rounded uppercase">
+          <div className="absolute top-4 right-4 z-20">
+            <span className="bg-red-600/90 backdrop-blur-md px-4 py-1 text-white font-label-sm text-label-sm tracking-widest rounded-xl">
               {badgeLabel}
             </span>
           </div>
         )}
       </div>
 
+      <PropertyDetailLightbox
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        images={slides}
+        title={title}
+        initialIndex={lightboxInitialIndex}
+      />
+
       {hasMultiple && (
-        <div ref={thumbViewportRef} className="overflow-hidden" aria-label="Property image thumbnails">
+        <div
+          ref={thumbViewportRef}
+          className="overflow-hidden"
+          aria-label="Property image thumbnails"
+        >
           <div
-            className={`flex gap-3 ease-in-out ${
-              needsThumbSlider ? 'transition-transform' : ''
-            }`}
+            className={`flex gap-3 ease-in-out ${needsThumbSlider ? 'transition-transform' : ''}`}
             style={
               needsThumbSlider
                 ? {

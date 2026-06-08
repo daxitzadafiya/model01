@@ -42,7 +42,9 @@ export async function fetchCRMPropertyDetail(
   })
 
   if (!response.ok) {
-    console.error(`CRM property detail failed (${response.status}) for reference ${trimmedReference}`)
+    console.error(
+      `CRM property detail failed (${response.status}) for reference ${trimmedReference}`,
+    )
     return null
   }
 

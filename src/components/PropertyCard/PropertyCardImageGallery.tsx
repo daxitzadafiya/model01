@@ -20,6 +20,15 @@ type Props = {
 const TRANSITION_MS = 600
 const TRANSITION_EASING = 'cubic-bezier(0.25, 0.1, 0.25, 1)'
 const VIEWPORT_ROOT_MARGIN = '120px'
+const DRAG_THRESHOLD_RATIO = 0.15
+const EDGE_DRAG_RESISTANCE = 0.35
+const FLICK_VELOCITY_THRESHOLD = 0.45
+const DRAG_CLICK_THRESHOLD = 5
+
+const transitionStyle = {
+  transitionDuration: `${TRANSITION_MS}ms`,
+  transitionTimingFunction: TRANSITION_EASING,
+} as const
 
 /** Matches original `gap-1.5` + `w-1.5` / `w-4` dot sizes (6px gap, 6px / 16px dots) */
 const DOT_GAP_PX = 6
@@ -123,7 +132,10 @@ const stopCardPointer = (event: React.SyntheticEvent) => {
 }
 
 const GalleryPlaceholder: React.FC<{ className?: string }> = ({ className }) => (
-  <div className={`h-full w-full bg-surface-container-high ${className ?? ''}`.trim()} aria-hidden />
+  <div
+    className={`h-full w-full bg-surface-container-high ${className ?? ''}`.trim()}
+    aria-hidden
+  />
 )
 
 export const PropertyCardImageGallery: React.FC<Props> = ({
@@ -135,7 +147,17 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
   onInteract,
 }) => {
   const rootRef = useRef<HTMLDivElement>(null)
+  const dragStartXRef = useRef<number | null>(null)
+  const dragOffsetRef = useRef(0)
+  const activePointerIdRef = useRef<number | null>(null)
+  const lastPointerMoveRef = useRef({ x: 0, time: 0 })
+  const pointerVelocityRef = useRef(0)
+  const pendingIndexRef = useRef<number | null>(null)
+  const transitionTimeoutRef = useRef<number | null>(null)
+  const didDragRef = useRef(false)
+
   const [isInView, setIsInView] = useState(false)
+  const [slideWidth, setSlideWidth] = useState(0)
 
   const slides = useMemo(
     () => (imageUrls?.length ? imageUrls : imageUrl ? [imageUrl] : []),
@@ -144,6 +166,8 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
 
   const [activeIndex, setActiveIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragOffsetPx, setDragOffsetPx] = useState(0)
   const [loadedSlideIndices, setLoadedSlideIndices] = useState<Set<number>>(() => new Set())
 
   const hasMultiple = slides.length > 1
@@ -165,8 +189,43 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
   }, [])
 
   useEffect(() => {
+    const element = rootRef.current
+    if (!element) return
+
+    const updateWidth = () => {
+      setSlideWidth(element.clientWidth)
+    }
+
+    updateWidth()
+
+    const observer = new ResizeObserver(updateWidth)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [slideCount])
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimeoutRef.current !== null) {
+        window.clearTimeout(transitionTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     setActiveIndex(0)
     setIsTransitioning(false)
+    setIsDragging(false)
+    setDragOffsetPx(0)
+    dragOffsetRef.current = 0
+    dragStartXRef.current = null
+    activePointerIdRef.current = null
+    pointerVelocityRef.current = 0
+    pendingIndexRef.current = null
+    didDragRef.current = false
+    if (transitionTimeoutRef.current !== null) {
+      window.clearTimeout(transitionTimeoutRef.current)
+      transitionTimeoutRef.current = null
+    }
     setLoadedSlideIndices(new Set())
   }, [slides])
 
@@ -214,6 +273,44 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
     prefetchSlideUrls(indices)
   }, [activeIndex, ensureSlidesLoaded, hasMultiple, isInView, prefetchSlideUrls, slideCount])
 
+  const finishTransition = useCallback(() => {
+    if (transitionTimeoutRef.current !== null) {
+      window.clearTimeout(transitionTimeoutRef.current)
+      transitionTimeoutRef.current = null
+    }
+
+    const pendingIndex = pendingIndexRef.current
+    if (pendingIndex !== null) {
+      setActiveIndex(pendingIndex)
+      pendingIndexRef.current = null
+    }
+
+    dragOffsetRef.current = 0
+    setDragOffsetPx(0)
+    setIsTransitioning(false)
+  }, [])
+
+  const startTransition = useCallback(() => {
+    setIsTransitioning(true)
+
+    if (transitionTimeoutRef.current !== null) {
+      window.clearTimeout(transitionTimeoutRef.current)
+    }
+
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      finishTransition()
+    }, TRANSITION_MS + 50)
+  }, [finishTransition])
+
+  const prepareSlide = useCallback(
+    (nextIndex: number) => {
+      const indices = getAdjacentIndices(nextIndex, slideCount)
+      ensureSlidesLoaded(indices)
+      prefetchSlideUrls(indices)
+    },
+    [ensureSlidesLoaded, prefetchSlideUrls, slideCount],
+  )
+
   const goTo = useCallback(
     (index: number, event?: React.MouseEvent<HTMLButtonElement>) => {
       if (event) stopCardPointer(event)
@@ -224,28 +321,183 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
       const nextIndex = ((index % slideCount) + slideCount) % slideCount
       if (nextIndex === activeIndex) return
 
-      const indices = getAdjacentIndices(nextIndex, slideCount)
-      ensureSlidesLoaded(indices)
-      prefetchSlideUrls(indices)
-      setIsTransitioning(true)
+      prepareSlide(nextIndex)
+      pendingIndexRef.current = null
+      startTransition()
       setActiveIndex(nextIndex)
-      window.setTimeout(() => setIsTransitioning(false), TRANSITION_MS)
     },
     [
       activeIndex,
-      ensureSlidesLoaded,
       hasMultiple,
       isInView,
       isTransitioning,
       onInteract,
-      prefetchSlideUrls,
+      prepareSlide,
       slideCount,
+      startTransition,
     ],
   )
 
-  const handleGalleryPointerDown = () => {
-    onInteract?.()
-  }
+  const resetDrag = useCallback(() => {
+    dragStartXRef.current = null
+    activePointerIdRef.current = null
+    pointerVelocityRef.current = 0
+    dragOffsetRef.current = 0
+    setDragOffsetPx(0)
+    setIsDragging(false)
+  }, [])
+
+  const resolveDragTargetIndex = useCallback(
+    (offset: number, velocity: number) => {
+      if (slideWidth <= 0) return activeIndex
+
+      const threshold = slideWidth * DRAG_THRESHOLD_RATIO
+      let targetIndex = activeIndex
+
+      if (offset < -threshold || velocity < -FLICK_VELOCITY_THRESHOLD) {
+        targetIndex = activeIndex + 1
+      } else if (offset > threshold || velocity > FLICK_VELOCITY_THRESHOLD) {
+        targetIndex = activeIndex - 1
+      }
+
+      return ((targetIndex % slideCount) + slideCount) % slideCount
+    },
+    [activeIndex, slideCount, slideWidth],
+  )
+
+  const animateDragRelease = useCallback(
+    (targetIndex: number, currentOffset: number) => {
+      if (slideWidth <= 0) {
+        resetDrag()
+        return
+      }
+
+      if (targetIndex === activeIndex && Math.abs(currentOffset) < 1) {
+        resetDrag()
+        return
+      }
+
+      if (targetIndex !== activeIndex) {
+        onInteract?.()
+      }
+
+      prepareSlide(targetIndex)
+
+      pendingIndexRef.current = targetIndex
+      const targetOffset = (activeIndex - targetIndex) * slideWidth
+
+      dragStartXRef.current = null
+      activePointerIdRef.current = null
+      pointerVelocityRef.current = 0
+      setIsDragging(false)
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          startTransition()
+          dragOffsetRef.current = targetOffset
+          setDragOffsetPx(targetOffset)
+        })
+      })
+    },
+    [activeIndex, onInteract, prepareSlide, resetDrag, slideWidth, startTransition],
+  )
+
+  const handleGalleryPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!hasMultiple || isTransitioning || !isInView) return
+      if (event.pointerType === 'mouse' && event.button !== 0) return
+      if ((event.target as HTMLElement).closest('button')) return
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      onInteract?.()
+      didDragRef.current = false
+
+      dragStartXRef.current = event.clientX
+      activePointerIdRef.current = event.pointerId
+      pointerVelocityRef.current = 0
+      lastPointerMoveRef.current = { x: event.clientX, time: performance.now() }
+      dragOffsetRef.current = 0
+      setDragOffsetPx(0)
+      setIsDragging(true)
+      event.currentTarget.setPointerCapture(event.pointerId)
+    },
+    [hasMultiple, isInView, isTransitioning, onInteract],
+  )
+
+  const handleGalleryPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (dragStartXRef.current === null || activePointerIdRef.current !== event.pointerId) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      let delta = event.clientX - dragStartXRef.current
+
+      if (Math.abs(delta) > DRAG_CLICK_THRESHOLD) {
+        didDragRef.current = true
+      }
+
+      if (activeIndex === 0 && delta > 0) {
+        delta *= EDGE_DRAG_RESISTANCE
+      } else if (activeIndex === slideCount - 1 && delta < 0) {
+        delta *= EDGE_DRAG_RESISTANCE
+      }
+
+      const now = performance.now()
+      const elapsed = now - lastPointerMoveRef.current.time
+      if (elapsed > 0) {
+        pointerVelocityRef.current = (event.clientX - lastPointerMoveRef.current.x) / elapsed
+      }
+      lastPointerMoveRef.current = { x: event.clientX, time: now }
+
+      dragOffsetRef.current = delta
+      setDragOffsetPx(delta)
+    },
+    [activeIndex, slideCount],
+  )
+
+  const handleGalleryPointerEnd = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (activePointerIdRef.current !== event.pointerId) return
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId)
+      }
+
+      const offset = dragOffsetRef.current
+      const velocity = pointerVelocityRef.current
+      const targetIndex = resolveDragTargetIndex(offset, velocity)
+
+      animateDragRelease(targetIndex, offset)
+    },
+    [animateDragRelease, resolveDragTargetIndex],
+  )
+
+  const handleGalleryClickCapture = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!didDragRef.current) return
+
+      event.preventDefault()
+      event.stopPropagation()
+      didDragRef.current = false
+    },
+    [],
+  )
+
+  const handleTrackTransitionEnd = useCallback(
+    (event: React.TransitionEvent<HTMLDivElement>) => {
+      if (event.propertyName !== 'transform') return
+      finishTransition()
+    },
+    [finishTransition],
+  )
 
   const goToPrevious = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -305,31 +557,40 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
     )
   }
 
-  const translateX = `translateX(-${activeIndex * 100}%)`
+  // Percentage translate matches each slide's `w-full`; pixel offsets are only for drag/release.
+  const translateX = `translateX(calc(-${activeIndex * 100}% + ${dragOffsetPx}px))`
 
   return (
     <div
       ref={rootRef}
-      className={`${wrapperClass} overflow-hidden`}
+      className={`${wrapperClass} overflow-hidden isolate ${
+        isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
+      }`}
+      style={{ touchAction: 'none' }}
       onPointerDown={handleGalleryPointerDown}
+      onPointerMove={handleGalleryPointerMove}
+      onPointerUp={handleGalleryPointerEnd}
+      onPointerCancel={handleGalleryPointerEnd}
+      onClickCapture={handleGalleryClickCapture}
     >
       <div
-        className="flex h-full w-full transition-transform ease-in-out"
+        className={`flex h-full w-full ease-in-out ${isDragging ? '' : 'transition-transform'}`}
         style={{
           transform: translateX,
-          transitionDuration: `${TRANSITION_MS}ms`,
-          transitionTimingFunction: TRANSITION_EASING,
+          ...(isDragging ? {} : transitionStyle),
         }}
+        onTransitionEnd={handleTrackTransitionEnd}
       >
         {slides.map((src, index) => {
           const shouldRenderImage = isInView && loadedSlideIndices.has(index)
           return (
-            <div key={`${src}-${index}`} className="relative h-full w-full shrink-0">
+            <div key={`${src}-${index}`} className="relative h-full w-full shrink-0 overflow-hidden">
               {shouldRenderImage ? (
                 <img
                   src={src}
                   alt={`${title} — image ${index + 1} of ${slides.length}`}
-                  className={imgClassName}
+                  className={`${imgClassName} pointer-events-none min-w-full min-h-full`}
+                  draggable={false}
                   loading={index === 0 ? 'eager' : 'lazy'}
                   decoding="async"
                   fetchPriority={index === 0 && activeIndex === 0 ? 'high' : 'low'}
@@ -347,6 +608,7 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
         aria-label="Previous image"
         disabled={isTransitioning || !isInView}
         onMouseDown={stopCardPointer}
+        onPointerDown={(event) => event.stopPropagation()}
         onClick={goToPrevious}
         className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 md:w-10 md:h-10 rounded-full bg-black/35 backdrop-blur-md text-white flex items-center justify-center cursor-pointer hover:bg-black/55 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 disabled:opacity-60"
       >
@@ -357,6 +619,7 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
         aria-label="Next image"
         disabled={isTransitioning || !isInView}
         onMouseDown={stopCardPointer}
+        onPointerDown={(event) => event.stopPropagation()}
         onClick={goToNext}
         className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 md:w-10 md:h-10 rounded-full bg-black/35 backdrop-blur-md text-white flex items-center justify-center cursor-pointer hover:bg-black/55 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 disabled:opacity-60"
       >

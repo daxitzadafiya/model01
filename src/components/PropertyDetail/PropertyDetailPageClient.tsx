@@ -7,7 +7,12 @@ import React, { useEffect, useState } from 'react'
 import { PropertyDetailView } from '@/components/PropertyDetail/PropertyDetailView'
 import { normalizeCRMAmenities, normalizeCRMPropertyEnergy } from '@/utilities/crmAmenities'
 import { fetchCRMPropertyDetail, fetchCRMRelatedProperties } from '@/utilities/crmPropertyDetail'
+import type { Form } from '@/payload-types'
 import { normalizeCRMListProperty, normalizeCRMProperty } from '@/utilities/crmProperties'
+import {
+  extractPropertyInquiryContext,
+  type PropertyInquiryContext,
+} from '@/utilities/propertyInquiry'
 import { PROPERTY_DETAIL_IMAGE_SIZE } from '@/utilities/optimaImage'
 import { resolveCRMPropertyVideos } from '@/utilities/crmPropertyVideo'
 import { buildPropertyBrochurePdfUrl } from '@/utilities/propertyBrochure'
@@ -27,9 +32,9 @@ function PropertyDetailSkeleton() {
   return (
     <main className="pt-28 bg-surface-bright">
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop animate-pulse">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24">
-          <div className="aspect-[4/3] rounded-lg bg-surface-container-high" />
-          <div className="space-y-6 py-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-24">
+          <div className="lg:col-span-7 xl:col-span-8 aspect-[4/3] rounded-lg bg-surface-container-high" />
+          <div className="lg:col-span-5 xl:col-span-4 space-y-6 py-2">
             <div className="h-4 w-48 rounded bg-surface-container-high" />
             <div className="h-16 w-full rounded bg-surface-container-high" />
             <div className="h-8 w-40 rounded bg-surface-container-high" />
@@ -46,7 +51,11 @@ function PropertyDetailSkeleton() {
   )
 }
 
-export const PropertyDetailPageClient: React.FC = () => {
+type Props = {
+  contactForm?: Form | null
+}
+
+export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
   const params = useParams<{ slug: string }>()
   const activeLocale = useSiteLocale()
   const [loading, setLoading] = useState(true)
@@ -62,6 +71,7 @@ export const PropertyDetailPageClient: React.FC = () => {
   >([])
   const [brochureUrl, setBrochureUrl] = useState<string | undefined>()
   const [videos, setVideos] = useState<ReturnType<typeof resolveCRMPropertyVideos>>([])
+  const [inquiry, setInquiry] = useState<PropertyInquiryContext>({})
 
   const slug = decodeURIComponent(params.slug ?? '')
 
@@ -99,6 +109,7 @@ export const PropertyDetailPageClient: React.FC = () => {
         })
 
         setProperty(normalized)
+        setInquiry(extractPropertyInquiryContext(raw, normalized))
         setBrochureUrl(buildPropertyBrochurePdfUrl(raw, activeLocale))
         setVideos(resolveCRMPropertyVideos(raw, activeLocale))
         setAmenities(normalizeCRMAmenities(raw))
@@ -146,6 +157,8 @@ export const PropertyDetailPageClient: React.FC = () => {
 
   return (
     <PropertyDetailView
+      contactForm={contactForm}
+      inquiry={inquiry}
       property={property}
       amenities={amenities}
       energy={energy}
