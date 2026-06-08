@@ -132,7 +132,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-on-surface-variant hover:text-primary transition-colors"
+            className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
             aria-label="Close"
           >
             <X size={22} />
@@ -275,14 +275,14 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
             onClick={() => {
               onClear()
             }}
-            className="text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 hover:text-primary transition-colors"
+            className="text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 hover:text-primary transition-colors cursor-pointer"
           >
             <RotateCcw size={18} />
             Clear Filters
           </button>
           <button
             type="submit"
-            className="px-10 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors"
+            className="px-10 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors cursor-pointer"
           >
             <Search size={18} />
             Search

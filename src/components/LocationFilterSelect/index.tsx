@@ -198,7 +198,7 @@ export const LocationFilterSelect: React.FC<Props> = ({
                 type="button"
                 role="option"
                 aria-selected={cityState === 'all'}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left font-body-md text-body-md text-on-surface hover:bg-surface-container-low transition-colors"
+                className="flex w-full items-center gap-2 px-4 py-2 cursor-pointer text-left font-body-md text-body-md text-on-surface hover:bg-surface-container-low transition-colors"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => toggleCity(city)}
               >
@@ -216,7 +216,7 @@ export const LocationFilterSelect: React.FC<Props> = ({
                     type="button"
                     role="option"
                     aria-selected={selected}
-                    className="flex w-full items-center gap-2 py-2 pl-10 pr-4 text-left font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"
+                    className="flex w-full items-center cursor-pointer gap-2 py-2 pl-10 pr-4 text-left font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => toggleArea(key)}
                   >

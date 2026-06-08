@@ -1,10 +1,8 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
-import { ArrowRight, Calendar } from 'lucide-react'
 
-import { Media } from '@/components/Media'
+import { ArticleCard } from '@/components/ArticleCard'
 import { PageRange } from '@/components/PageRange'
 import { PropertyListPagination } from '@/components/PropertyList/PropertyListPagination'
 import type { CMSLinkType } from '@/components/Link'
@@ -156,60 +154,18 @@ export const BlogPostsBlockClient: React.FC<ClientProps> = ({
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
               {posts.map((post) => (
-                <article
+                <ArticleCard
                   key={post.id}
-                  className="group flex flex-col bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
-                >
-                  <Link
-                    href={`/posts/${post.slug}`}
-                    className="relative overflow-hidden aspect-[4/3]"
-                  >
-                    {typeof post.image === 'object' && post.image !== null && (
-                      <Media
-                        resource={post.image}
-                        fill
-                        imgClassName="object-cover group-hover:scale-105 transition-transform duration-700"
-                      />
-                    )}
-                  </Link>
-                  <div className="flex flex-col flex-grow p-6 md:p-8">
-                    <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest mb-2">
-                      {post.category}
-                    </span>
-                    <h3 className="font-headline-sm text-headline-sm text-primary mb-3 leading-snug">
-                      <Link
-                        href={`/posts/${post.slug}`}
-                        className="hover:text-tertiary transition-colors"
-                      >
-                        {post.title}
-                      </Link>
-                    </h3>
-                    {(post.subtitle || post.excerpt) && (
-                      <p className="font-body-sm text-body-sm text-secondary line-clamp-3">
-                        {post.subtitle ?? post.excerpt}
-                      </p>
-                    )}
-                    <div className="grow min-h-6" />
-                    <div className="flex items-center justify-between gap-4 pt-4">
-                      {post.date && (
-                        <time
-                          dateTime={post.dateTime ?? undefined}
-                          className="inline-flex items-center gap-2 font-label-sm text-label-sm text-secondary shrink-0"
-                        >
-                          <Calendar size={14} className="text-secondary/70" aria-hidden />
-                          {post.date}
-                        </time>
-                      )}
-                      <Link
-                        href={`/posts/${post.slug}`}
-                        className="inline-flex items-center gap-1.5 font-label-sm text-tertiary hover:text-primary transition-colors ml-auto shrink-0"
-                      >
-                        Read More
-                        <ArrowRight size={14} aria-hidden />
-                      </Link>
-                    </div>
-                  </div>
-                </article>
+                  image={post.image}
+                  category={post.category}
+                  title={post.title}
+                  subtitle={post.subtitle}
+                  excerpt={post.excerpt}
+                  date={post.date}
+                  dateTime={post.dateTime}
+                  href={`/posts/${post.slug}`}
+                  readMoreLabel="Read More"
+                />
               ))}
             </div>
           </div>

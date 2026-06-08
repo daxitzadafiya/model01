@@ -121,7 +121,7 @@ export const PropertyListFilters: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setModalOpen(true)}
-              className="px-4 py-3 border border-outline-variant hover:border-tertiary hover:text-tertiary transition-colors duration-300 rounded-lg flex items-center justify-center"
+              className="px-4 py-3 border cursor-pointer border-outline-variant hover:border-tertiary hover:text-tertiary transition-colors duration-300 rounded-lg flex items-center justify-center"
               aria-label="More filters"
             >
               <SlidersHorizontal size={20} />
@@ -130,7 +130,7 @@ export const PropertyListFilters: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleClear}
-                className="px-4 py-3 border border-outline-variant text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:border-tertiary hover:text-tertiary transition-colors duration-300"
+                className="px-4 py-3 border cursor-pointer border-outline-variant text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:border-tertiary hover:text-tertiary transition-colors duration-300"
               >
                 <RotateCcw size={18} />
                 <span>Clear</span>

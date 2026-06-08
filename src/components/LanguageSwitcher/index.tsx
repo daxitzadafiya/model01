@@ -66,7 +66,7 @@ export const LanguageSwitcher: React.FC<Props> = ({ items, currentLocale }) => {
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1 rounded-full border border-outline-variant/50 px-1.5 py-1.5 sm:px-2 sm:py-2 shadow-sm',
+          'inline-flex items-center gap-1 rounded-full border border-outline-variant/50 cursor-pointer  px-1.5 py-1.5 sm:px-2 sm:py-2 shadow-sm',
           'text-primary',
         )}
         aria-label={`Language: ${active.label}`}
@@ -87,7 +87,7 @@ export const LanguageSwitcher: React.FC<Props> = ({ items, currentLocale }) => {
         aria-haspopup="listbox"
         aria-label={`Language: ${active.label}`}
         className={cn(
-          'inline-flex items-center gap-1 rounded-full border border-outline-variant/50 px-1.5 py-1.5 sm:px-2 sm:py-2 shadow-sm',
+          'inline-flex items-center gap-1 rounded-full border border-outline-variant/50 cursor-pointer px-1.5 py-1.5 sm:px-2 sm:py-2 shadow-sm',
           'text-primary transition-colors duration-200',
           'hover:border-outline-variant hover:bg-surface-container-low/60',
           'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-outline-variant',
@@ -127,7 +127,7 @@ export const LanguageSwitcher: React.FC<Props> = ({ items, currentLocale }) => {
                   role="option"
                   aria-selected={isActive}
                   className={cn(
-                    'flex w-full items-center gap-2 px-2 py-1.5 text-left transition-colors duration-150',
+                    'flex w-full items-center gap-2 px-2 py-1.5 text-left transition-colors duration-150 cursor-pointer',
                     isActive
                       ? 'bg-surface-container-low text-primary'
                       : 'text-secondary hover:bg-surface-container-low/80 hover:text-primary',

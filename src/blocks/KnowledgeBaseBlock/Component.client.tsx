@@ -1,9 +1,9 @@
 'use client'
 
 import React from 'react'
-import { ArrowRight, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useReveal } from '@/utilities/useReveal'
-import { Media } from '@/components/Media'
+import { ArticleCard } from '@/components/ArticleCard'
 import { CMSLink, type CMSLinkType } from '@/components/Link'
 import type { Media as MediaType } from '@/payload-types'
 import { CAROUSEL_GAP_PX, useCardsPerView, useCarouselIndex } from '@/utilities/useCarousel'
@@ -96,53 +96,21 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
           }
         >
           {articles.map((article) => (
-            <article
+            <ArticleCard
               key={article.id}
-              className="group shrink-0 flex flex-col bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
+              className="shrink-0"
               style={isCarousel ? { width: cardWidth } : undefined}
-            >
-              <div className="relative overflow-hidden aspect-[4/3]">
-                {typeof article.image === 'object' && article.image !== null && (
-                  <Media
-                    resource={article.image}
-                    fill
-                    imgClassName="object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                )}
-              </div>
-              <div className="flex flex-col flex-grow p-6 md:p-8">
-                <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest mb-2">
-                  {article.category}
-                </span>
-                <h3 className="font-headline-sm text-headline-sm text-primary mb-3 leading-snug">
-                  {article.title}
-                </h3>
-                {(article.subtitle || article.excerpt) && (
-                  <p className="font-body-sm text-body-sm text-secondary line-clamp-3">
-                    {article.subtitle ?? article.excerpt}
-                  </p>
-                )}
-                <div className="grow min-h-6" />
-                <div className="flex items-center justify-between gap-4 pt-4">
-                  {article.date && (
-                    <time
-                      dateTime={article.dateTime ?? undefined}
-                      className="inline-flex items-center gap-2 font-label-sm text-label-sm text-secondary shrink-0"
-                    >
-                      <Calendar size={14} className="text-secondary/70" aria-hidden />
-                      {article.date}
-                    </time>
-                  )}
-                  <CMSLink
-                    {...article.link}
-                    appearance="inline"
-                    className="inline-flex items-center gap-1.5 font-label-sm text-label-sm text-tertiary hover:text-primary transition-colors ml-auto shrink-0"
-                  >
-                    <ArrowRight size={14} aria-hidden />
-                  </CMSLink>
-                </div>
-              </div>
-            </article>
+              image={article.image}
+              category={article.category}
+              title={article.title}
+              subtitle={article.subtitle}
+              excerpt={article.excerpt}
+              date={article.date}
+              dateTime={article.dateTime}
+              ctaLink={article.link}
+              linkImage={false}
+              linkTitle={false}
+            />
           ))}
         </div>
       </div>

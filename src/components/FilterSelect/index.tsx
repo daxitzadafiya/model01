@@ -193,7 +193,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
       aria-label={label}
       style={menuStyle}
       className={cn(
-        'overflow-y-auto overscroll-contain rounded-lg border border-outline-variant/40',
+        'overflow-y-auto overscroll-contain cursor-pointer rounded-lg border border-outline-variant/40',
         'bg-surface py-1 shadow-lg',
       )}
     >
@@ -208,7 +208,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
               aria-selected={selected}
               disabled={option.disabled}
               className={cn(
-                'flex w-full items-center gap-2 px-4 py-2.5 text-left font-body-md text-body-md transition-colors duration-150',
+                'flex w-full items-center gap-2 px-4 py-2.5 text-left font-body-md text-body-md transition-colors duration-150 cursor-pointer',
                 selected
                   ? 'bg-primary text-on-primary'
                   : 'text-on-surface hover:bg-surface-container-low',
