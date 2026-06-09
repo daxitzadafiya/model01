@@ -14,6 +14,7 @@ import { beforeSyncWithSearch } from '@/search/beforeSync'
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 import { isContactFormTitle } from '@/utilities/isContactFormSubmission'
+import { sendFormSubmissionNotificationEmail } from '@/email/sendNotificationEmail'
 import { submitContactToOptimaCrm } from '@/utilities/submitContactToOptimaCrm'
 import { verifyRecaptchaToken } from '@/utilities/verifyRecaptcha'
 
@@ -117,6 +118,17 @@ export const plugins: Plugin[] = [
               readOnly: true,
             },
           },
+          {
+            name: 'submissionLocale',
+            type: 'text',
+            required: false,
+            admin: {
+              hidden: true,
+              readOnly: true,
+              description:
+                'Site locale when the visitor submitted the form (for localized emails).',
+            },
+          },
         ]
       },
       hooks: {
@@ -144,7 +156,7 @@ export const plugins: Plugin[] = [
             }
 
             const syncToOptima =
-              data?.syncToOptimaCrm === true || isContactFormTitle(formTitle)
+             data?.syncToOptimaCrm === true || isContactFormTitle(formTitle)
 
             if (!syncToOptima) return data
 
@@ -176,6 +188,23 @@ export const plugins: Plugin[] = [
             }
 
             return data
+          },
+        ],
+        afterChange: [
+          async ({ doc, operation, req }) => {
+            if (operation !== 'create') return
+
+            try {
+              await sendFormSubmissionNotificationEmail({
+                payload: req.payload,
+                doc,
+              })
+            } catch (error) {
+              req.payload.logger.error({
+                err: error,
+                msg: 'Failed to send form submission notification email',
+              })
+            }
           },
         ],
       },

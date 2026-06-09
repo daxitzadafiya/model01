@@ -128,6 +128,7 @@ export interface Config {
     cookieConsent: CookieConsent;
     propertyMap: PropertyMap;
     propertyFilters: PropertyFilter;
+    emailSettings: EmailSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -138,6 +139,7 @@ export interface Config {
     cookieConsent: CookieConsentSelect<false> | CookieConsentSelect<true>;
     propertyMap: PropertyMapSelect<false> | PropertyMapSelect<true>;
     propertyFilters: PropertyFiltersSelect<false> | PropertyFiltersSelect<true>;
+    emailSettings: EmailSettingsSelect<false> | EmailSettingsSelect<true>;
   };
   locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   widgets: {
@@ -1608,6 +1610,10 @@ export interface FormSubmission {
   recaptchaRequired?: boolean | null;
   recaptchaToken?: string | null;
   syncToOptimaCrm?: boolean | null;
+  /**
+   * Site locale when the visitor submitted the form (for localized emails).
+   */
+  submissionLocale?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2936,6 +2942,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
   recaptchaRequired?: T;
   recaptchaToken?: T;
   syncToOptimaCrm?: T;
+  submissionLocale?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3574,6 +3581,53 @@ export interface PropertyFilter {
   createdAt?: string | null;
 }
 /**
+ * SMTP credentials and notification recipient for form submissions and other site emails. Credentials are stored in the database — not in environment variables.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "emailSettings".
+ */
+export interface EmailSetting {
+  id: number;
+  enabled?: boolean | null;
+  smtp?: {
+    /**
+     * SMTP server hostname (e.g. smtp.gmail.com).
+     */
+    host: string;
+    port: number;
+    /**
+     * Enable for implicit TLS on port 465. Leave off for STARTTLS on port 587.
+     */
+    secure?: boolean | null;
+    /**
+     * SMTP username (e.g. your email address for Gmail).
+     */
+    user: string;
+    /**
+     * SMTP password or app-specific password.
+     */
+    password: string;
+  };
+  sender?: {
+    /**
+     * From address shown on outgoing emails.
+     */
+    fromAddress: string;
+    /**
+     * From name shown on outgoing emails.
+     */
+    fromName: string;
+  };
+  notifications?: {
+    /**
+     * Where contact and property inquiry notifications are delivered (your team inbox).
+     */
+    recipientAddress: string;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -3850,6 +3904,36 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
         value?: T;
         label?: T;
         id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "emailSettings_select".
+ */
+export interface EmailSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  smtp?:
+    | T
+    | {
+        host?: T;
+        port?: T;
+        secure?: T;
+        user?: T;
+        password?: T;
+      };
+  sender?:
+    | T
+    | {
+        fromAddress?: T;
+        fromName?: T;
+      };
+  notifications?:
+    | T
+    | {
+        recipientAddress?: T;
       };
   updatedAt?: T;
   createdAt?: T;

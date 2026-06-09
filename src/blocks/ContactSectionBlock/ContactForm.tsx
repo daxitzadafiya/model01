@@ -271,7 +271,7 @@ export const ContactForm: React.FC<Props> = ({
                 <div className="mx-auto mt-6 h-px w-full max-w-md bg-outline-variant/50" />
                 <div className="mt-6 flex justify-center">
                   <button
-                    className="inline-flex items-center gap-2 rounded-full border border-tertiary/50 px-8 py-3 font-label-nav text-label-nav uppercase tracking-[0.14em] text-tertiary transition hover:bg-tertiary hover:text-white"
+                    className="inline-flex items-center gap-2 rounded-full cursor-pointer border border-tertiary/50 px-8 py-3 font-label-nav text-label-nav uppercase tracking-[0.14em] text-tertiary transition hover:bg-tertiary hover:text-white"
                     type="button"
                     onClick={resetSubmissionWithRecaptcha}
                   >

@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react'
 
 import { getClientSideURL } from '@/utilities/getURL'
 import { parseFormSubmissionError } from '@/utilities/parseFormSubmissionError'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 type FormSubmissionState = {
   isLoading: boolean
@@ -47,6 +48,7 @@ export function useFormSubmission(
   const [hasSubmitted, setHasSubmitted] = useState<boolean>()
   const [error, setError] = useState<{ message: string; status?: string } | undefined>()
   const router = useRouter()
+  const submissionLocale = useSiteLocale()
 
   const onSubmit = useCallback(
     (data: FormFieldBlock[]) => {
@@ -69,6 +71,7 @@ export function useFormSubmission(
             body: JSON.stringify({
               form: formID,
               submissionData: dataToSend,
+              submissionLocale,
               ...(options.syncToOptimaCrm ? { syncToOptimaCrm: true } : {}),
               ...(options.recaptchaRequired
                 ? {
@@ -121,6 +124,7 @@ export function useFormSubmission(
       options.recaptchaToken,
       options.syncToOptimaCrm,
       options.extraSubmissionFields,
+      submissionLocale,
     ],
   )
 

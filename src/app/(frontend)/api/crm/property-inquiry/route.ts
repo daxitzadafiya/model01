@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
+import { getPayload } from 'payload'
 
+import config from '@payload-config'
+import { sendPropertyInquiryNotificationEmail } from '@/email/sendNotificationEmail'
 import { submitContactToOptimaCrm } from '@/utilities/submitContactToOptimaCrm'
 
 type InquiryBody = {
@@ -9,6 +12,7 @@ type InquiryBody = {
   message?: string
   propertyTitle?: string
   propertyReference?: string
+  locale?: string
 }
 
 export async function POST(request: Request) {
@@ -45,10 +49,26 @@ export async function POST(request: Request) {
       { field: 'source', value: 'property-detail' },
       { field: 'gdpr_status', value: true },
     ])
-
-    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Property inquiry error:', error)
     return NextResponse.json({ error: 'Failed to submit inquiry' }, { status: 502 })
   }
+
+  try {
+    const payload = await getPayload({ config })
+    await sendPropertyInquiryNotificationEmail({
+      payload,
+      locale: body.locale ?? request.headers.get('x-site-locale') ?? 'en',
+      name,
+      email,
+      phone: body.phone,
+      message,
+      propertyReference: body.propertyReference,
+      propertyTitle: body.propertyTitle,
+    })
+  } catch (error) {
+    console.error('Property inquiry notification email error:', error)
+  }
+
+  return NextResponse.json({ success: true })
 }

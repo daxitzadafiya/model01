@@ -13,10 +13,13 @@ import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { CookieConsent } from './globals/CookieConsent/config'
+import { EmailSettings } from './globals/EmailSettings/config'
 import { Localization } from './globals/Localization/config'
 import { SiteLogo } from './globals/Logo/config'
 import { PropertyFilters } from './globals/PropertyFilters/config'
 import { PropertyMap } from './globals/PropertyMap/config'
+import { bindPayloadForEmailTransport } from './email/dynamicEmailTransport'
+import { emailAdapter } from './email/configureEmailAdapter'
 import { Theme } from './globals/Theme/config'
 import { payloadLocalization } from './i18n/locales'
 import { plugins } from './plugins'
@@ -46,7 +49,10 @@ export default buildConfig({
   // localization (content locales — see src/i18n/locales.ts to add codes)
   localization: payloadLocalization,
 
+  email: emailAdapter,
   onInit: async (payload) => {
+    bindPayloadForEmailTransport(payload)
+
     // Skip during `next build` — workers initialize Payload in parallel and SQLite locks
     if (process.env.NEXT_PHASE === 'phase-production-build') return
 
@@ -121,7 +127,7 @@ export default buildConfig({
   }),
   collections: [Pages, Posts, Media, Categories, Users, Translations],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, Theme, Localization, SiteLogo, CookieConsent, PropertyMap, PropertyFilters],
+  globals: [Header, Footer, Theme, Localization, SiteLogo, CookieConsent, PropertyMap, PropertyFilters, EmailSettings],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,
