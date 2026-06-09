@@ -23,18 +23,21 @@ import type { CRMLocationCity } from '@/utilities/crmLocations'
 import type { PropertyListFilters as Filters } from '@/utilities/crmProperties'
 import type { FloatingMenuPlacement } from '@/utilities/floatingMenuPosition'
 import {
-  BEDROOM_OPTIONS,
-  DELIVERY_OPTIONS,
-  DISTANCE_OPTIONS,
-  FEATURE_FILTER_OPTIONS,
   parseFeaturesFilter,
-  MAX_PRICE_OPTIONS,
-  MIN_PRICE_OPTIONS,
-  STATUS_FILTER_OPTIONS,
   parseLocationFilter,
   parsePropertyTypeFilter,
   parseStatusFilter,
 } from './filterOptions'
+import {
+  useBedroomOptions,
+  useDeliveryOptions,
+  useDistanceOptions,
+  useFeatureFilterOptions,
+  useMaxPriceOptions,
+  useMinPriceOptions,
+  useStatusFilterOptions,
+} from './useFilterOptionLabels'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   open: boolean
@@ -86,6 +89,45 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   locationTree,
   locationLoading = false,
 }) => {
+  const moreFiltersLabel = useTranslation('propertyList.filters.moreFilters', 'More Filters')
+  const referenceLabel = useTranslation('propertyList.filters.reference', 'Reference')
+  const referencePlaceholder = useTranslation(
+    'propertyList.filters.reference.placeholder',
+    'Reference...',
+  )
+  const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
+  const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
+  const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
+  const locationLabel = useTranslation('propertyList.filters.location', 'Location')
+  const locationPlaceholder = useTranslation('propertyList.filters.location.placeholder', 'Location')
+  const locationEmptyLabel = useTranslation('propertyList.filters.location.emptyLabel', 'Location')
+  const bedroomsLabel = useTranslation('propertyList.filters.bedrooms', 'Bedrooms')
+  const minPriceLabel = useTranslation('propertyList.filters.minPrice', 'Min Price')
+  const maxPriceLabel = useTranslation('propertyList.filters.maxPrice', 'Max Price')
+  const statusLabel = useTranslation('propertyList.filters.status', 'Status')
+  const statusEmptyLabel = useTranslation('propertyList.filters.status.emptyLabel', 'Status')
+  const featuresLabel = useTranslation('propertyList.filters.features', 'Features')
+  const featuresEmptyLabel = useTranslation('propertyList.filters.features.emptyLabel', 'Features')
+  const deliveryDateLabel = useTranslation('propertyList.filters.deliveryDate', 'Delivery Date')
+  const distanceToSeaLabel = useTranslation(
+    'propertyList.filters.distanceToSea',
+    'Distance to the Sea',
+  )
+  const clearFiltersLabel = useTranslation('propertyList.filters.clearFilters', 'Clear Filters')
+  const searchLabel = useTranslation('propertyList.filters.search', 'Search')
+  const closeFiltersAriaLabel = useTranslation(
+    'propertyList.filters.closeFiltersAria',
+    'Close filters',
+  )
+  const closeAriaLabel = useTranslation('propertyList.filters.closeAria', 'Close')
+  const bedroomOptions = useBedroomOptions()
+  const minPriceOptions = useMinPriceOptions()
+  const maxPriceOptions = useMaxPriceOptions()
+  const statusFilterOptions = useStatusFilterOptions()
+  const featureFilterOptions = useFeatureFilterOptions()
+  const deliveryOptions = useDeliveryOptions()
+  const distanceOptions = useDistanceOptions()
+
   useEffect(() => {
     if (!open) return
     const onKeyDown = (e: KeyboardEvent) => {
@@ -116,7 +158,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
     >
       <button
         type="button"
-        aria-label="Close filters"
+        aria-label={closeFiltersAriaLabel}
         className="fixed inset-0 bg-primary/40 backdrop-blur-sm"
         onClick={onClose}
       />
@@ -127,13 +169,13 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
       >
         <div className="flex items-center justify-between border-b border-outline-variant/30 px-6 md:px-8 py-5">
           <h2 id="more-filters-title" className="font-headline-sm text-headline-sm text-on-surface">
-            More Filters
+            {moreFiltersLabel}
           </h2>
           <button
             type="button"
             onClick={onClose}
             className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
-            aria-label="Close"
+            aria-label={closeAriaLabel}
           >
             <X size={22} />
           </button>
@@ -143,7 +185,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex min-w-0 flex-col gap-2">
               <label className={labelClass} htmlFor="filter-reference">
-                Reference
+                {referenceLabel}
               </label>
               <div className="relative">
                 <Tag
@@ -154,7 +196,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                 <input
                   id="filter-reference"
                   type="text"
-                  placeholder="Reference..."
+                  placeholder={referencePlaceholder}
                   value={filters.reference ?? ''}
                   onChange={(e) => onChange('reference', e.target.value)}
                   className={modalInputClass}
@@ -165,11 +207,11 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
             <div className="min-w-0">
               <FilterSelect
                 mode="multi"
-                label="Property Type"
+                label={propertyTypeLabel}
                 options={propertyTypeOptions}
                 value={parsePropertyTypeFilter(filters.propertyType)}
                 onChange={(value) => onChange('propertyType', value)}
-                emptyLabel={propertyTypeLoading ? 'Loading types…' : 'All Properties'}
+                emptyLabel={propertyTypeLoading ? loadingTypesLabel : allPropertiesLabel}
                 disabled={propertyTypeLoading}
                 icon={<Home {...filterFieldIcon} />}
               />
@@ -177,12 +219,12 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
 
             <div className="min-w-0">
               <LocationFilterSelect
-                label="Location"
+                label={locationLabel}
                 tree={locationTree}
                 value={parseLocationFilter(filters.location)}
                 onChange={(value) => onChange('location', value)}
-                placeholder="Location"
-                emptyLabel="Location"
+                placeholder={locationPlaceholder}
+                emptyLabel={locationEmptyLabel}
                 loading={locationLoading}
                 disabled={locationLoading}
                 icon={<MapPin {...filterFieldIcon} />}
@@ -191,9 +233,9 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
 
             <div className="min-w-0">
               <ModalFieldSelect
-                label="Bedrooms"
+                label={bedroomsLabel}
                 value={filters.bedrooms ?? 'any'}
-                options={BEDROOM_OPTIONS}
+                options={bedroomOptions}
                 onChange={(v) => onChange('bedrooms', v)}
                 icon={<Bed {...filterFieldIcon} />}
               />
@@ -201,9 +243,9 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
 
             <div className="min-w-0">
               <ModalFieldSelect
-                label="Min Price"
+                label={minPriceLabel}
                 value={filters.minPrice ?? 'any'}
-                options={MIN_PRICE_OPTIONS}
+                options={minPriceOptions}
                 onChange={(v) => onChange('minPrice', v)}
                 icon={<Banknote {...filterFieldIcon} />}
               />
@@ -211,9 +253,9 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
 
             <div className="min-w-0">
               <ModalFieldSelect
-                label="Max Price"
+                label={maxPriceLabel}
                 value={filters.maxPrice ?? 'any'}
-                options={MAX_PRICE_OPTIONS}
+                options={maxPriceOptions}
                 onChange={(v) => onChange('maxPrice', v)}
                 icon={<Banknote {...filterFieldIcon} />}
               />
@@ -222,12 +264,12 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
             <div className="min-w-0">
               <FilterSelect
                 mode="multi"
-                label="Status"
+                label={statusLabel}
                 id="filter-status"
-                options={STATUS_FILTER_OPTIONS}
+                options={statusFilterOptions}
                 value={parseStatusFilter(filters.status)}
                 onChange={(value) => onChange('status', value)}
-                emptyLabel="Status"
+                emptyLabel={statusEmptyLabel}
                 icon={<ListFilter {...filterFieldIcon} />}
               />
             </div>
@@ -235,21 +277,21 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
             <div className="min-w-0">
               <FilterSelect
                 mode="multi"
-                label="Features"
+                label={featuresLabel}
                 id="filter-features"
-                options={FEATURE_FILTER_OPTIONS}
+                options={featureFilterOptions}
                 value={parseFeaturesFilter(filters.features)}
                 onChange={(value) => onChange('features', value)}
-                emptyLabel="Features"
+                emptyLabel={featuresEmptyLabel}
                 icon={<Sparkles {...filterFieldIcon} />}
               />
             </div>
 
             <div className="min-w-0">
               <ModalFieldSelect
-                label="Delivery Date"
+                label={deliveryDateLabel}
                 value={filters.deliveryDate ?? ''}
-                options={DELIVERY_OPTIONS}
+                options={deliveryOptions}
                 onChange={(v) => onChange('deliveryDate', v)}
                 menuPlacement="top"
                 icon={<Calendar {...filterFieldIcon} />}
@@ -258,9 +300,9 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
 
             <div className="min-w-0">
               <ModalFieldSelect
-                label="Distance to the Sea"
+                label={distanceToSeaLabel}
                 value={filters.distanceToSea ?? ''}
-                options={DISTANCE_OPTIONS}
+                options={distanceOptions}
                 onChange={(v) => onChange('distanceToSea', v)}
                 menuPlacement="top"
                 icon={<Waves {...filterFieldIcon} />}
@@ -278,14 +320,14 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
             className="text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 hover:text-primary transition-colors cursor-pointer"
           >
             <RotateCcw size={18} />
-            Clear Filters
+            {clearFiltersLabel}
           </button>
           <button
             type="submit"
             className="px-10 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors cursor-pointer"
           >
             <Search size={18} />
-            Search
+            {searchLabel}
           </button>
         </div>
       </form>

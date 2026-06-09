@@ -1,7 +1,9 @@
 'use client'
 
 import { Mail, MessageCircle, Share2 } from 'lucide-react'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+import { useTranslation } from '@/utilities/translateClient'
 
 type ShareChannel = 'facebook' | 'whatsapp' | 'email'
 
@@ -16,23 +18,26 @@ function getPageUrl(): string {
   return window.location.href
 }
 
-function buildShareLinks(pageUrl: string): ShareLink[] {
+function buildShareLinks(
+  pageUrl: string,
+  labels: Record<ShareChannel, string>,
+): ShareLink[] {
   const encodedUrl = encodeURIComponent(pageUrl)
 
   return [
     {
       id: 'facebook',
-      label: 'Facebook',
+      label: labels.facebook,
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
     },
     {
       id: 'whatsapp',
-      label: 'WhatsApp',
+      label: labels.whatsapp,
       href: `https://api.whatsapp.com/send?text=${encodeURIComponent(`\n${pageUrl}`)}`,
     },
     {
       id: 'email',
-      label: 'Email',
+      label: labels.email,
       href: `mailto:?body=${encodedUrl}`,
     },
   ]
@@ -41,9 +46,23 @@ function buildShareLinks(pageUrl: string): ShareLink[] {
 export const PropertyDetailShareMenu: React.FC = () => {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+  const sharePropertyAria = useTranslation('propertyDetail.share.aria', 'Share property')
+  const shareToYourLabel = useTranslation('propertyDetail.share.shareToYour', 'Share to your')
+  const facebookLabel = useTranslation('propertyDetail.share.facebook', 'Facebook')
+  const whatsappLabel = useTranslation('propertyDetail.share.whatsapp', 'WhatsApp')
+  const emailLabel = useTranslation('propertyDetail.share.email', 'Email')
+
+  const channelLabels = useMemo(
+    () => ({
+      facebook: facebookLabel,
+      whatsapp: whatsappLabel,
+      email: emailLabel,
+    }),
+    [emailLabel, facebookLabel, whatsappLabel],
+  )
 
   const pageUrl = open ? getPageUrl() : ''
-  const shareLinks = pageUrl ? buildShareLinks(pageUrl) : []
+  const shareLinks = pageUrl ? buildShareLinks(pageUrl, channelLabels) : []
 
   const closeMenu = useCallback(() => setOpen(false), [])
 
@@ -70,7 +89,7 @@ export const PropertyDetailShareMenu: React.FC = () => {
     <div ref={rootRef} className="relative shrink-0">
       <button
         type="button"
-        aria-label="Share property"
+        aria-label={sharePropertyAria}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
@@ -82,11 +101,11 @@ export const PropertyDetailShareMenu: React.FC = () => {
       {open && shareLinks.length > 0 && (
         <div
           role="menu"
-          aria-label="Share property"
+          aria-label={sharePropertyAria}
           className="absolute bottom-full right-0 z-30 mb-3 w-56 overflow-hidden rounded-lg bg-primary text-on-primary shadow-2xl border border-outline-variant/20"
         >
           <p className="px-4 pt-4 pb-3 font-label-sm text-label-sm uppercase tracking-[0.12em] text-on-primary/90">
-            Share to your
+            {shareToYourLabel}
           </p>
           <div className="mx-4 border-t border-on-primary/25" />
           <ul className="py-2">

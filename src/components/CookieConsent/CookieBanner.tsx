@@ -39,7 +39,7 @@ export type CookieBannerProps = {
 }
 
 const buttonClass = cn(
-  'rounded-full font-label-nav text-[11px] uppercase tracking-[0.12em]',
+  'rounded-full font-label-nav text-[11px] uppercase tracking-[0.12em] cursor-pointer',
   'px-4 py-2 sm:px-5 sm:py-2.5',
 )
 

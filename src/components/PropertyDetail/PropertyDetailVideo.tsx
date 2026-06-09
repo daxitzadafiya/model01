@@ -1,6 +1,9 @@
+'use client'
+
 import React from 'react'
 
 import type { CRMPropertyVideoItem } from '@/utilities/crmPropertyVideo'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   videos: CRMPropertyVideoItem[]
@@ -24,6 +27,8 @@ const aspectClassByKind = (kind: CRMPropertyVideoItem['kind']): string => {
 }
 
 export const PropertyDetailVideo: React.FC<Props> = ({ videos, propertyTitle }) => {
+  const tourLabel = useTranslation('propertyDetail.video.tour', 'Tour')
+
   if (videos.length === 0) return null
 
   return (
@@ -34,7 +39,7 @@ export const PropertyDetailVideo: React.FC<Props> = ({ videos, propertyTitle }) 
             <div key={`${video.kind}-${video.embedUrl}-${index}`}>
               {videos.length > 1 && (
                 <h2 className="text-headline-md font-headline-md text-primary mb-4 text-center uppercase tracking-widest">
-                  {video.label === 'Tour' ? '360° Tour' : video.label}
+                  {video.label === 'Tour' ? `360° ${tourLabel}` : video.label}
                 </h2>
               )}
 

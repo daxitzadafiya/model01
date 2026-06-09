@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 
 import { PropertyDetailIcon } from '@/components/PropertyDetail/PropertyDetailIcon'
@@ -8,6 +10,7 @@ import {
   type EnergyGrade,
   type EnergyGradeStyle,
 } from '@/utilities/crmPropertyEnergy'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   energy: CRMPropertyEnergy
@@ -62,26 +65,43 @@ const EnergyGradeBar: React.FC<EnergyGradeBarProps> = ({ grade, style, isActive 
 }
 
 export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
+  const heading = useTranslation('propertyDetail.energy.heading', 'Energy Efficiency')
+  const pendingLabel = useTranslation('propertyDetail.energy.pending', 'Pending')
+  const ratingScaleLabel = useTranslation(
+    'propertyDetail.energy.ratingScale',
+    'Energy Rating Scale',
+  )
+  const energyConsumptionNote = useTranslation(
+    'propertyDetail.energy.energyConsumptionNote',
+    'Energy consumption',
+  )
+  const emissionsNote = useTranslation('propertyDetail.energy.emissionsNote', 'Emissions')
+  const statusLabel = useTranslation('propertyDetail.energy.status', 'Status:')
+  const classPrefix = useTranslation('propertyDetail.energy.classPrefix', 'Class')
+  const consumptionLabel = useTranslation('propertyDetail.energy.consumption', 'Consumption')
+  const emissionsLabel = useTranslation('propertyDetail.energy.emissions', 'Emissions')
+  const annualEnergyLabel = useTranslation('propertyDetail.energy.annualEnergy', 'Annual Energy')
+  const co2FootprintLabel = useTranslation('propertyDetail.energy.co2Footprint', 'CO2 Footprint')
+
   const consumption = formatMetric(energy.consumption)
   const emissions = formatMetric(energy.emissions)
 
   return (
     <div className="mt-24 border-t border-outline-variant/30 pt-12">
-      <h2 className="text-headline-lg font-headline-lg text-primary mb-12">Energy Efficiency</h2>
+      <h2 className="text-headline-lg font-headline-lg text-primary mb-12">{heading}</h2>
 
       <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-8 md:p-10">
         {energy.isEmpty ? (
           <div className="py-10 text-center">
             <p className="text-label-sm font-label-sm uppercase tracking-[0.2em] text-on-surface-variant">
-              {energy.statusMessage || energy.certificate || 'Pending'}
+              {energy.statusMessage || energy.certificate || pendingLabel}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-6">
-            {/* A–G scale */}
             <div className="lg:col-span-5">
               <p className="mb-5 text-[10px] font-label-sm uppercase tracking-[0.18em] text-on-surface-variant">
-                Energy Rating Scale
+                {ratingScaleLabel}
               </p>
 
               <div className="w-full max-w-sm space-y-1">
@@ -96,19 +116,18 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
               </div>
 
               <p className="mt-5 text-[10px] uppercase leading-relaxed tracking-widest text-on-surface-variant">
-                Energy consumption kWh/m² year | Emissions kg CO2/m² year
+                {energyConsumptionNote} kWh/m² year | {emissionsNote} kg CO2/m² year
               </p>
             </div>
 
-            {/* Status + values */}
             <div className="flex flex-col items-center justify-center px-2 text-center lg:col-span-3 lg:items-start lg:text-left">
               {energy.activeGrade && (
                 <div className="epc-status-reveal mb-8">
                   <p className="text-label-sm font-label-sm uppercase tracking-widest text-on-surface-variant">
-                    Status:
+                    {statusLabel}
                   </p>
                   <p className="mt-1 font-headline-lg text-[40px] leading-none text-accent-gold md:text-[48px]">
-                    Class {energy.activeGrade}
+                    {classPrefix} {energy.activeGrade}
                   </p>
                 </div>
               )}
@@ -119,7 +138,7 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
                     {consumption != null && (
                       <div className="min-w-0">
                         <p className="mb-2 border-b border-outline-variant/30 pb-2 text-[10px] font-label-sm uppercase tracking-widest text-on-surface-variant">
-                          Consumption
+                          {consumptionLabel}
                         </p>
                         <div className="flex min-h-[4.5rem] items-center justify-center rounded-lg bg-primary px-3 py-2">
                           <span
@@ -133,7 +152,7 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
                     {emissions != null && (
                       <div className="min-w-0">
                         <p className="mb-2 border-b border-outline-variant/30 pb-2 text-[10px] font-label-sm uppercase tracking-widest text-on-surface-variant">
-                          Emissions
+                          {emissionsLabel}
                         </p>
                         <div className="flex min-h-[4.5rem] items-center justify-center rounded-lg bg-primary px-3 py-2">
                           <span
@@ -149,7 +168,6 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
               )}
             </div>
 
-            {/* Side metrics */}
             <div className="space-y-10 lg:col-span-4 lg:border-l lg:border-outline-variant/30 lg:pl-8">
               {consumption != null && (
                 <div className="flex items-center space-x-4">
@@ -162,7 +180,7 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
                   </div>
                   <div>
                     <p className="text-label-sm font-label-sm uppercase text-on-surface-variant">
-                      Annual Energy
+                      {annualEnergyLabel}
                     </p>
                     <p className="text-headline-sm font-headline-sm text-primary">
                       {consumption} <span className="text-xs">kWh/m²</span>
@@ -178,7 +196,7 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
                   </div>
                   <div>
                     <p className="text-label-sm font-label-sm uppercase text-on-surface-variant">
-                      CO2 Footprint
+                      {co2FootprintLabel}
                     </p>
                     <p className="text-headline-sm font-headline-sm text-primary">
                       {emissions} <span className="text-xs">kg/m²</span>

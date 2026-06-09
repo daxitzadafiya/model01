@@ -1,6 +1,9 @@
+'use client'
+
 import React from 'react'
 
 import { PropertyDetailIcon } from '@/components/PropertyDetail/PropertyDetailIcon'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   latitude: number
@@ -17,15 +20,19 @@ export const PropertyDetailMap: React.FC<Props> = ({
   locationLabel,
   description,
 }) => {
+  const heading = useTranslation('propertyDetail.map.heading', 'Prime Location')
+  const openInMapsLabel = useTranslation('propertyDetail.map.openInMaps', 'Open in Maps')
+  const mapTitlePrefix = useTranslation('propertyDetail.map.mapTitlePrefix', 'Map for')
+
   const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`
   const embedUrl = `https://maps.google.com/maps?q=${latitude},${longitude}&z=14&output=embed`
 
   return (
     <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-24">
-      <h2 className="text-headline-lg font-headline-lg text-primary mb-12">Prime Location</h2>
+      <h2 className="text-headline-lg font-headline-lg text-primary mb-12">{heading}</h2>
       <div className="relative h-[500px] w-full rounded-2xl overflow-hidden shadow-lg group">
         <iframe
-          title={`Map for ${title}`}
+          title={`${mapTitlePrefix} ${title}`}
           src={embedUrl}
           className="w-full h-full border-0"
           loading="lazy"
@@ -45,7 +52,7 @@ export const PropertyDetailMap: React.FC<Props> = ({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 mt-4 text-label-sm font-label-sm text-accent-gold uppercase hover:underline"
           >
-            Open in Maps
+            {openInMapsLabel}
             <PropertyDetailIcon name="open_in_new" className="text-accent-gold" size={14} />
           </a>
         </div>

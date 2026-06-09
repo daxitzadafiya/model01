@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from '@/utilities/ui'
+import { useTranslation } from '@/utilities/translateClient'
 
 type PropertyImagePlaceholderProps = {
   className?: string
@@ -30,7 +31,7 @@ export const PropertyImagePlaceholder: React.FC<PropertyImagePlaceholderProps> =
           className="h-full w-full object-contain"
         />
         <p className="mt-4 absolute bottom-10 left-1/2 -translate-x-1/2 text-center text-tertiary/90 font-label-nav text-label-nav tracking-[0.16em] uppercase">
-          No Image Found
+          {useTranslation('propertyImagePlaceholder.noImageFound', 'No Image Found')}
         </p>
       </div>
     </div>

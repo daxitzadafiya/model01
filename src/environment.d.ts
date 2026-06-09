@@ -19,6 +19,8 @@ declare global {
       ADMIN_PASSWORD: string
       NEXT_PUBLIC_RECAPTCHA_SITE_KEY: string
       NEXT_PUBLIC_RECAPTCHA_SECRET_KEY: string
+      DEEPL_API_KEY: string
+      DEEPL_API_URL: string
     }
   }
 }

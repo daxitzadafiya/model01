@@ -9,6 +9,7 @@ import {
   buildPropertyInquiryHiddenFields,
   type PropertyInquiryContext,
 } from '@/utilities/propertyInquiry'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   contactForm?: Form | null
@@ -16,7 +17,8 @@ type Props = {
   propertyTitle: string
 }
 
-const DEFAULT_MESSAGE =
+const DEFAULT_MESSAGE_KEY = 'propertyDetail.inquiry.defaultMessage'
+const DEFAULT_MESSAGE_FALLBACK =
   "Hello, I'm interested in this property and would like to visit it.\nThank you."
 
 function resolveMessageFieldName(form: Form): string | undefined {
@@ -41,6 +43,27 @@ export const PropertyDetailInquiryForm: React.FC<Props> = ({
   inquiry,
   propertyTitle,
 }) => {
+  const defaultMessage = useTranslation(DEFAULT_MESSAGE_KEY, DEFAULT_MESSAGE_FALLBACK)
+  const formNotConfigured = useTranslation(
+    'propertyDetail.inquiry.formNotConfigured',
+    'Contact form is not configured. Add a form titled "Contact Form" in the admin panel.',
+  )
+  const heading = useTranslation('propertyDetail.inquiry.heading', 'Contact Us')
+  const resubmitButtonLabel = useTranslation(
+    'propertyDetail.inquiry.resubmitButton',
+    'Send another inquiry',
+  )
+  const submitLabel = useTranslation('propertyDetail.inquiry.submit', 'Submit Request')
+  const successTitle = useTranslation('propertyDetail.inquiry.successTitle', 'Request Received')
+  const successSubtitlePrefix = useTranslation(
+    'propertyDetail.inquiry.successSubtitlePrefix',
+    'Our team will contact you shortly about',
+  )
+  const trustNote = useTranslation(
+    'propertyDetail.inquiry.trustNote',
+    'By clicking submit, you agree to our privacy policy and terms.',
+  )
+
   const hiddenFields = useMemo(() => {
     const entries = buildPropertyInquiryHiddenFields(inquiry)
     return Object.fromEntries(entries.map(({ field, value }) => [field, value]))
@@ -52,16 +75,13 @@ export const PropertyDetailInquiryForm: React.FC<Props> = ({
     const messageFieldName = resolveMessageFieldName(contactForm)
     if (!messageFieldName) return undefined
 
-    return { [messageFieldName]: DEFAULT_MESSAGE }
-  }, [contactForm])
+    return { [messageFieldName]: defaultMessage }
+  }, [contactForm, defaultMessage])
 
   if (!contactForm) {
     return (
       <div className="sticky top-32 bg-white p-8 rounded-xl shadow-2xl border border-outline-variant/20">
-        <p className="text-body-md text-on-surface-variant">
-          Contact form is not configured. Add a form titled &quot;Contact Form&quot; in the admin
-          panel.
-        </p>
+        <p className="text-body-md text-on-surface-variant">{formNotConfigured}</p>
       </div>
     )
   }
@@ -75,14 +95,14 @@ export const PropertyDetailInquiryForm: React.FC<Props> = ({
         defaultFieldValues={defaultFieldValues}
         enableResubmit
         form={contactForm as unknown as FormType}
-        heading="Contact Us"
+        heading={heading}
         hiddenFields={hiddenFields}
-        resubmitButtonLabel="Send another inquiry"
+        resubmitButtonLabel={resubmitButtonLabel}
         singleColumn
-        submitLabelOverride="Submit Request"
-        successSubtitle={`Our team will contact you shortly about ${propertyTitle}.`}
-        successTitle="Request Received"
-        trustNote="By clicking submit, you agree to our privacy policy and terms."
+        submitLabelOverride={submitLabel}
+        successSubtitle={`${successSubtitlePrefix} ${propertyTitle}.`}
+        successTitle={successTitle}
+        trustNote={trustNote}
       />
     </div>
   )

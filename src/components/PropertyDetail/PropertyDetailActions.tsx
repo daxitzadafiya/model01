@@ -7,6 +7,7 @@ import React from 'react'
 import { PropertyDetailShareMenu } from '@/components/PropertyDetail/PropertyDetailShareMenu'
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import type { FavoritePropertyId } from '@/utilities/propertyFavorites'
+import { useTranslation } from '@/utilities/translateClient'
 
 type FavoriteButtonProps = {
   propertyId?: FavoritePropertyId | null
@@ -21,6 +22,14 @@ export const PropertyDetailFavoriteButton: React.FC<FavoriteButtonProps> = ({
 }) => {
   const { isFavorite, toggleFavorite } = usePropertyFavorites()
   const favorited = propertyId != null && propertyId !== '' && isFavorite(propertyId)
+  const addToFavoritesLabel = useTranslation(
+    'propertyList.card.addToFavorites',
+    'Add to favorites',
+  )
+  const removeFromFavoritesLabel = useTranslation(
+    'propertyList.card.removeFromFavorites',
+    'Remove from favorites',
+  )
 
   if (propertyId == null || propertyId === '') return null
 
@@ -41,7 +50,7 @@ export const PropertyDetailFavoriteButton: React.FC<FavoriteButtonProps> = ({
   return (
     <button
       type="button"
-      aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
+      aria-label={favorited ? removeFromFavoritesLabel : addToFavoritesLabel}
       aria-pressed={favorited}
       onClick={() => toggleFavorite(propertyId)}
       className={`${buttonSizeClass} rounded-full border border-outline-variant flex items-center justify-center text-primary hover:border-tertiary hover:text-tertiary transition-all cursor-pointer shrink-0 ${className}`.trim()}
@@ -59,6 +68,12 @@ type FooterActionsProps = {
 }
 
 export const PropertyDetailFooterActions: React.FC<FooterActionsProps> = ({ brochureUrl }) => {
+  const printPdfLabel = useTranslation('propertyDetail.actions.printPdf', 'Print PDF')
+  const requestViewingLabel = useTranslation(
+    'propertyDetail.actions.requestViewing',
+    'Request Viewing',
+  )
+
   return (
     <div className="pt-12 flex items-center gap-4">
       {brochureUrl ? (
@@ -71,7 +86,7 @@ export const PropertyDetailFooterActions: React.FC<FooterActionsProps> = ({ broc
           <div className="flex items-center justify-center">
             {/* add icon */}
             <Printer size={20} className="mr-2" />
-            <span>Print PDF</span>
+            <span>{printPdfLabel}</span>
           </div>
         </a>
       ) : (
@@ -79,7 +94,7 @@ export const PropertyDetailFooterActions: React.FC<FooterActionsProps> = ({ broc
           href="#property-inquiry"
           className="flex-1 border border-primary text-primary py-4 rounded-full text-label-nav font-label-nav uppercase text-center hover:bg-primary hover:text-on-primary transition-all duration-300"
         >
-          Request Viewing
+          {requestViewingLabel}
         </Link>
       )}
       <PropertyDetailShareMenu />

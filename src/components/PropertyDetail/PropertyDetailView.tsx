@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import React from 'react'
 import { MapPin } from 'lucide-react'
@@ -23,6 +25,7 @@ import {
   type NormalizedListProperty,
 } from '@/utilities/crmProperties'
 import type { PropertyInquiryContext } from '@/utilities/propertyInquiry'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   contactForm?: Form | null
@@ -81,29 +84,37 @@ export const PropertyDetailView: React.FC<Props> = ({
   portfolioHref,
 }) => {
   const locationSubtitle = [property.city, property.region].filter(Boolean).join(', ')
-  const badgeLabel = property.isNewListing ? 'New Listing' : property.statusBadgeLabel
+  const bedroomSingular = useTranslation('propertyDetail.specs.bedroomSingular', 'Bedroom')
+  const bedroomPlural = useTranslation('propertyDetail.specs.bedroomPlural', 'Bedrooms')
+  const bathSingular = useTranslation('propertyDetail.specs.bathSingular', 'Bath')
+  const bathPlural = useTranslation('propertyDetail.specs.bathPlural', 'Baths')
+  const refPrefixLabel = useTranslation('propertyDetail.map.refPrefix', 'Ref:')
+  const livingAreaLabel = useTranslation('propertyDetail.specs.livingArea', 'Living Area')
+  const bedroomsLabel = useTranslation('propertyDetail.specs.bedrooms', 'Bedrooms')
+  const bathroomsLabel = useTranslation('propertyDetail.specs.bathrooms', 'Bathrooms')
+  const propertyTypeLabel = useTranslation('propertyDetail.specs.propertyType', 'Property Type')
   const listHref = portfolioHref || '/'
 
   const specItems = [
     property.sqft
-      ? { icon: 'straighten', label: 'Living Area', value: String(property.sqft) }
+      ? { icon: 'straighten', label: livingAreaLabel, value: String(property.sqft) }
       : null,
     property.beds != null
       ? {
           icon: 'bed',
-          label: 'Bedrooms',
-          value: `${property.beds} ${property.beds === 1 ? 'Bedroom' : 'Bedrooms'}`,
+          label: bedroomsLabel,
+          value: `${property.beds} ${property.beds === 1 ? bedroomSingular : bedroomPlural}`,
         }
       : null,
     property.baths != null
       ? {
           icon: 'bathtub',
-          label: 'Bathrooms',
-          value: `${property.baths} ${property.baths === 1 ? 'Bath' : 'Baths'}`,
+          label: bathroomsLabel,
+          value: `${property.baths} ${property.baths === 1 ? bathSingular : bathPlural}`,
         }
       : null,
     property.propertyType
-      ? { icon: 'villa', label: 'Property Type', value: property.propertyType }
+      ? { icon: 'villa', label: propertyTypeLabel, value: property.propertyType }
       : null,
   ].filter((item): item is { icon: string; label: string; value: string } => Boolean(item))
 
@@ -185,7 +196,9 @@ export const PropertyDetailView: React.FC<Props> = ({
           longitude={longitude}
           title={property.title}
           locationLabel={locationSubtitle || property.location}
-          description={property.reference ? `Ref: ${property.reference}` : undefined}
+          description={
+            property.reference ? `${refPrefixLabel} ${property.reference}` : undefined
+          }
         />
       )}
 

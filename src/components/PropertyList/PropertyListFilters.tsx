@@ -12,11 +12,12 @@ import {
   applyPriceRangeValue,
   EMPTY_PROPERTY_FILTERS,
   hasActivePropertyFilters,
-  PRICE_RANGE_OPTIONS,
   parsePropertyTypeFilter,
   resolvePriceRangeValue,
 } from './filterOptions'
+import { usePriceRangeOptions } from './useFilterOptionLabels'
 import { PropertyListMoreFiltersModal } from './PropertyListMoreFiltersModal'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   filters: Filters
@@ -47,6 +48,21 @@ export const PropertyListFilters: React.FC<Props> = ({
   const priceRange = resolvePriceRangeValue(filters.minPrice, filters.maxPrice)
   const showClearFilters = hasActivePropertyFilters(appliedFilters)
 
+  const referenceLabel = useTranslation('propertyList.filters.reference', 'Reference')
+  const referencePlaceholder = useTranslation('propertyList.filters.reference.placeholder', 'Reference...')
+  const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
+  const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
+  const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
+  const priceRangeLabel = useTranslation('propertyList.filters.priceRange', 'Price Range')
+  const clearFiltersLabel = useTranslation('propertyList.filters.clearFilters', 'Clear Filters')
+  const searchLabel = useTranslation('propertyList.filters.search', 'Search')
+  const moreFiltersAriaLabel = useTranslation(
+    'propertyList.filters.moreFiltersAria',
+    'More filters',
+  )
+  const searchByMapLabel = useTranslation('propertyList.filters.searchByMap', 'Search By Map')
+  const priceRangeOptions = usePriceRangeOptions()
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onApply({ ...filters })
@@ -75,7 +91,7 @@ export const PropertyListFilters: React.FC<Props> = ({
           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
             <div className="flex flex-col gap-2">
               <label className={fieldLabelClass} htmlFor="filter-bar-reference">
-                Reference
+                {referenceLabel}
               </label>
               <div className="relative">
                 <Tag
@@ -87,7 +103,7 @@ export const PropertyListFilters: React.FC<Props> = ({
                 <input
                   id="filter-bar-reference"
                   type="text"
-                  placeholder="Enter reference"
+                  placeholder={referencePlaceholder}
                   value={filters.reference ?? ''}
                   onChange={(e) => onChange('reference', e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-surface-container-low border-transparent focus:border-tertiary focus:ring-0 rounded-lg font-body-md text-body-md text-on-surface"
@@ -97,21 +113,21 @@ export const PropertyListFilters: React.FC<Props> = ({
 
             <FilterSelect
               mode="multi"
-              label="Property Type"
+              label={propertyTypeLabel}
               id="filter-bar-type"
               icon={<Home size={20} strokeWidth={1.75} />}
               options={propertyTypeOptions}
               value={parsePropertyTypeFilter(filters.propertyType)}
               onChange={(value) => onChange('propertyType', value)}
-              emptyLabel={propertyTypeLoading ? 'Loading types…' : 'All Properties'}
+              emptyLabel={propertyTypeLoading ? loadingTypesLabel : allPropertiesLabel}
               disabled={propertyTypeLoading}
             />
 
             <FilterSelect
-              label="Price Range"
+              label={priceRangeLabel}
               id="filter-bar-price"
               icon={<Banknote size={20} strokeWidth={1.75} />}
-              options={PRICE_RANGE_OPTIONS}
+              options={priceRangeOptions}
               value={priceRange}
               onChange={handlePriceRangeChange}
             />
@@ -122,7 +138,7 @@ export const PropertyListFilters: React.FC<Props> = ({
               type="button"
               onClick={() => setModalOpen(true)}
               className="px-4 py-3 border cursor-pointer border-outline-variant hover:border-tertiary hover:text-tertiary transition-colors duration-300 rounded-lg flex items-center justify-center"
-              aria-label="More filters"
+              aria-label={moreFiltersAriaLabel}
             >
               <SlidersHorizontal size={20} />
             </button>
@@ -133,7 +149,7 @@ export const PropertyListFilters: React.FC<Props> = ({
                 className="px-4 py-3 border cursor-pointer border-outline-variant text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:border-tertiary hover:text-tertiary transition-colors duration-300"
               >
                 <RotateCcw size={18} />
-                <span>Clear</span>
+                <span>{clearFiltersLabel}</span>
               </button>
             )}
             <button
@@ -141,7 +157,7 @@ export const PropertyListFilters: React.FC<Props> = ({
               className="flex-1 cursor-pointer md:flex-none px-8 md:px-12 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors duration-300"
             >
               <Search size={18} />
-              Search
+              {searchLabel}
             </button>
           </div>
         </div>
@@ -152,7 +168,7 @@ export const PropertyListFilters: React.FC<Props> = ({
             className="mt-4 flex w-full items-center justify-center gap-2 rounded border border-deep-navy bg-surface-container-lowest py-2.5 font-body-md text-body-md text-deep-navy hover:bg-surface-container-high transition-colors"
           >
             <MapPin size={18} className="shrink-0" />
-            Search By Map
+            {searchByMapLabel}
           </Link>
         )}
       </form>

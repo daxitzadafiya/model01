@@ -3,6 +3,8 @@
 import React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+import { useTranslation } from '@/utilities/translateClient'
+
 type Props = {
   page: number
   totalPages: number
@@ -12,6 +14,13 @@ type Props = {
 const formatPage = (n: number) => String(n).padStart(2, '0')
 
 export const PropertyListPagination: React.FC<Props> = ({ page, totalPages, onPageChange }) => {
+  const pageLabel = useTranslation('propertyList.pagination.page', 'Page')
+  const previousPageAria = useTranslation(
+    'propertyList.pagination.previousPageAria',
+    'Previous page',
+  )
+  const nextPageAria = useTranslation('propertyList.pagination.nextPageAria', 'Next page')
+
   if (totalPages <= 1) return null
 
   const canPrev = page > 1
@@ -25,13 +34,13 @@ export const PropertyListPagination: React.FC<Props> = ({ page, totalPages, onPa
           disabled={!canPrev}
           onClick={() => onPageChange(page - 1)}
           className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center hover:border-tertiary hover:text-tertiary transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
-          aria-label="Previous page"
+          aria-label={previousPageAria}
         >
           <ChevronLeft size={22} />
         </button>
         <div className="font-body-md text-body-md flex items-center gap-3">
           <span className="text-on-surface-variant uppercase tracking-widest font-label-sm text-label-sm">
-            Page
+            {pageLabel}
           </span>
           <span className="font-bold text-tertiary underline underline-offset-8">
             {formatPage(page)}
@@ -44,7 +53,7 @@ export const PropertyListPagination: React.FC<Props> = ({ page, totalPages, onPa
           disabled={!canNext}
           onClick={() => onPageChange(page + 1)}
           className="w-12 h-12 rounded-full border border-outline-variant flex items-center justify-center hover:border-tertiary hover:text-tertiary transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
-          aria-label="Next page"
+          aria-label={nextPageAria}
         >
           <ChevronRight size={22} />
         </button>

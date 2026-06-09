@@ -1,18 +1,23 @@
+'use client'
+
 import React from 'react'
 
 import { PropertyDetailIcon } from '@/components/PropertyDetail/PropertyDetailIcon'
 import type { CRMAmenity } from '@/utilities/crmAmenities'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   amenities: CRMAmenity[]
 }
 
 export const PropertyDetailAmenities: React.FC<Props> = ({ amenities }) => {
+  const heading = useTranslation('propertyDetail.amenities.heading', 'Exclusive Amenities')
+
   if (amenities.length === 0) return null
 
   return (
     <div>
-      <h2 className="text-headline-lg font-headline-lg text-primary mb-12">Exclusive Amenities</h2>
+      <h2 className="text-headline-lg font-headline-lg text-primary mb-12">{heading}</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-10">
         {amenities.map((amenity) => (
           <div key={amenity.key} className="flex flex-col items-start space-y-4">

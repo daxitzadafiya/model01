@@ -8,6 +8,7 @@ import type { Media as PayloadMedia } from '@/payload-types'
 import { PropertyCardImageGallery } from '@/components/PropertyCard/PropertyCardImageGallery'
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import type { FavoritePropertyId } from '@/utilities/propertyFavorites'
+import { useTranslation } from '@/utilities/translateClient'
 
 export type PropertyCardData = {
   imageResource?: PayloadMedia
@@ -101,7 +102,16 @@ export const PropertyCard: React.FC<Props> = ({
 }) => {
   const { isFavorite, toggleFavorite } = usePropertyFavorites()
   const favorited = propertyId != null && propertyId !== '' && isFavorite(propertyId)
-
+  const viewPropertyLabel = useTranslation('propertyList.filters.viewProperty', 'View Property')
+  const refPrefixLabel = useTranslation('propertyList.card.refPrefix', 'Ref:')
+  const addToFavoritesLabel = useTranslation(
+    'propertyList.card.addToFavorites',
+    'Add to favorites',
+  )
+  const removeFromFavoritesLabel = useTranslation(
+    'propertyList.card.removeFromFavorites',
+    'Remove from favorites',
+  )
   const handleFavoritePointer = (event: React.SyntheticEvent<HTMLButtonElement>) => {
     event.preventDefault()
     event.stopPropagation()
@@ -127,7 +137,7 @@ export const PropertyCard: React.FC<Props> = ({
 
   const viewButton = href ? (
     <span className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-surface py-3 font-label-nav text-label-nav text-primary group-hover:bg-primary group-hover:text-white group-hover:border-primary group-hover:shadow-md transition-all duration-300">
-      View Property
+      {viewPropertyLabel}
       <ArrowRight
         size={16}
         className="group-hover:translate-x-1 transition-transform duration-300"
@@ -138,7 +148,7 @@ export const PropertyCard: React.FC<Props> = ({
       type="button"
       className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-surface py-3 font-label-nav text-label-nav text-primary hover:bg-primary hover:text-white hover:border-primary hover:shadow-md transition-all duration-300 cursor-pointer"
     >
-      View Property
+      {viewPropertyLabel}
       <ArrowRight
         size={16}
         className="group-hover:translate-x-1 transition-transform duration-300"
@@ -154,7 +164,7 @@ export const PropertyCard: React.FC<Props> = ({
         </p>
         {property.reference && (
           <span className="font-label-sm text-label-sm text-secondary uppercase whitespace-nowrap">
-            Ref: {property.reference}
+            {refPrefixLabel} {property.reference}
           </span>
         )}
       </div>
@@ -202,7 +212,7 @@ export const PropertyCard: React.FC<Props> = ({
         {propertyId != null && propertyId !== '' && (
           <button
             type="button"
-            aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
+            aria-label={favorited ? removeFromFavoritesLabel : addToFavoritesLabel}
             aria-pressed={favorited}
             onMouseDown={handleFavoritePointer}
             onClick={handleFavoriteClick}

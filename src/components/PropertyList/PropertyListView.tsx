@@ -21,17 +21,15 @@ import {
   type PropertyListFilters,
   type PropertyListSort,
 } from '@/utilities/crmProperties'
-import {
-  EMPTY_PROPERTY_FILTERS,
-  hasAppliedPropertyFilters,
-  SORT_OPTIONS,
-} from './filterOptions'
+import { EMPTY_PROPERTY_FILTERS, hasAppliedPropertyFilters } from './filterOptions'
+import { useSortOptions } from './useFilterOptionLabels'
 import { PropertyListFilters as FiltersBar } from './PropertyListFilters'
 import { PropertyListPagination } from './PropertyListPagination'
 import {
   parsePropertyFiltersFromSearchParams,
   serializePropertyFiltersToSearchParams,
 } from './propertyFilterUrl'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   listingPreset: CRMListingPreset
@@ -102,7 +100,42 @@ export const PropertyListView: React.FC<Props> = ({
   const displayTotal =
     isFavoritesList && hasFavoriteIds && !filtersAreApplied ? favoriteIds.length : total
   const totalPages = Math.max(1, Math.ceil(displayTotal / pageSize))
-
+  const sortByLabel = useTranslation('propertyList.filters.sortBy', 'Sort by')
+  const sortOptions = useSortOptions()
+  const showingLabel = useTranslation('propertyList.results.showing', 'Showing')
+  const defaultResultsLabel = useTranslation(
+    'propertyList.results.extraordinaryProperties',
+    'extraordinary properties',
+  )
+  const favoritesEyebrow = useTranslation('propertyList.emptyState.favoritesEyebrow', 'Favorites')
+  const collectionsEyebrow = useTranslation(
+    'propertyList.emptyState.collectionsEyebrow',
+    'Collections',
+  )
+  const noFavoritesTitle = useTranslation(
+    'propertyList.emptyState.noFavoritesTitle',
+    'No favorites yet',
+  )
+  const noFavoritesDescription = useTranslation(
+    'propertyList.emptyState.noFavoritesDescription',
+    "You haven't favorited any properties yet. Browse our listings and tap the heart on any property to save it here.",
+  )
+  const noMatchingFavoritesTitle = useTranslation(
+    'propertyList.emptyState.noMatchingFavoritesTitle',
+    'No matching favorites',
+  )
+  const noMatchingFavoritesDescription = useTranslation(
+    'propertyList.emptyState.noMatchingFavoritesDescription',
+    'None of your saved properties match these filters. Try adjusting your search or add more favorites from our listings.',
+  )
+  const noPropertiesTitle = useTranslation(
+    'propertyList.emptyState.noPropertiesTitle',
+    'No properties found',
+  )
+  const noPropertiesDescription = useTranslation(
+    'propertyList.emptyState.noPropertiesDescription',
+    'We could not find any listings for this selection. Try adjusting your filters or check again soon.',
+  )
   const properties = useMemo(() => {
     const normalized = rawProperties.map((raw) =>
       normalizeCRMListProperty(raw, activeLocale, { listingMode: 'sale' }),
@@ -260,14 +293,14 @@ export const PropertyListView: React.FC<Props> = ({
   }
 
   const resultsText = useMemo(() => {
-    const label = resultsLabel || 'extraordinary properties'
+    const label = resultsLabel || defaultResultsLabel
     return (
       <>
-        Showing <span className="font-bold text-on-surface">{loading ? '…' : displayTotal}</span>{' '}
-        {label}
+        {showingLabel}{' '}
+        <span className="font-bold text-on-surface">{loading ? '…' : displayTotal}</span> {label}
       </>
     )
-  }, [displayTotal, loading, resultsLabel])
+  }, [displayTotal, loading, resultsLabel, showingLabel, defaultResultsLabel])
 
   return (
     <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12">
@@ -288,10 +321,10 @@ export const PropertyListView: React.FC<Props> = ({
       <section className="flex flex-col md:flex-row justify-between items-end md:items-center mb-10 gap-4">
         <div className="font-body-lg text-body-lg text-on-surface-variant">{resultsText}</div>
         <FilterSelect
-          label="Sort by"
+          label={sortByLabel}
           id="property-list-sort"
           icon={<ArrowUpDown size={20} strokeWidth={1.75} />}
-          options={SORT_OPTIONS}
+          options={sortOptions}
           value={sort}
           onChange={(value) => handleSortChange(value as PropertyListSort)}
           className="w-full md:w-auto md:min-w-[220px]"
@@ -301,12 +334,9 @@ export const PropertyListView: React.FC<Props> = ({
       {isFavoritesList && !hasFavoriteIds ? (
         <div className="mb-20">
           <SectionEmptyState
-            eyebrow="Favorites"
-            title={emptyStateNoFavoritesTitle || 'No favorites yet'}
-            description={
-              emptyStateNoFavoritesDescription ||
-              "You haven't favorited any properties yet. Browse our listings and tap the heart on any property to save it here."
-            }
+            eyebrow={favoritesEyebrow}
+            title={emptyStateNoFavoritesTitle || noFavoritesTitle}
+            description={emptyStateNoFavoritesDescription || noFavoritesDescription}
             tone="surface"
           />
         </div>
@@ -351,17 +381,16 @@ export const PropertyListView: React.FC<Props> = ({
       ) : (
         <div className="mb-20">
           <SectionEmptyState
-            eyebrow={isFavoritesList ? 'Favorites' : 'Collections'}
+            eyebrow={isFavoritesList ? favoritesEyebrow : collectionsEyebrow}
             title={
               isFavoritesList
-                ? emptyStateNoResultsTitle || 'No matching favorites'
-                : 'No properties found'
+                ? emptyStateNoResultsTitle || noMatchingFavoritesTitle
+                : noPropertiesTitle
             }
             description={
               isFavoritesList
-                ? emptyStateNoResultsDescription ||
-                  'None of your saved properties match these filters. Try adjusting your search or add more favorites from our listings.'
-                : 'We could not find any listings for this selection. Try adjusting your filters or check again soon.'
+                ? emptyStateNoResultsDescription || noMatchingFavoritesDescription
+                : noPropertiesDescription
             }
             tone="surface"
           />
