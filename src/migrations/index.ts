@@ -5,6 +5,7 @@ import * as migration_20260608_161200_translations_collection from './20260608_1
 import * as migration_20260608_161500_translations_rels from './20260608_161500_translations_rels'
 import * as migration_20260609_095300_property_map_global from './20260609_095300_property_map_global'
 import * as migration_20260609_120000_property_list_block_show_map_version from './20260609_120000_property_list_block_show_map_version'
+import * as migration_20260609_150000_property_filters_global from './20260609_150000_property_filters_global'
 
 export const migrations = [
   {
@@ -41,5 +42,10 @@ export const migrations = [
     up: migration_20260609_120000_property_list_block_show_map_version.up,
     down: migration_20260609_120000_property_list_block_show_map_version.down,
     name: '20260609_120000_property_list_block_show_map_version',
+  },
+  {
+    up: migration_20260609_150000_property_filters_global.up,
+    down: migration_20260609_150000_property_filters_global.down,
+    name: '20260609_150000_property_filters_global',
   },
 ]

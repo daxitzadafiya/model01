@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 
 import {
   getTranslationSnapshot,
@@ -9,6 +9,29 @@ import {
   subscribe,
 } from '@/utilities/translationStore'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
+
+/** Stable translation keys for CMS filter option values (matches existing Translations collection keys). */
+export function filterOptionTranslationKey(keyPrefix: string, value: string): string {
+  if (value === '') {
+    if (keyPrefix === 'propertyList.filters.deliveryDate') {
+      return `${keyPrefix}.empty`
+    }
+    if (keyPrefix === 'propertyList.filters.distanceToSea') {
+      return `${keyPrefix}.empty`
+    }
+    return `${keyPrefix}.empty`
+  }
+
+  if (keyPrefix === 'propertyList.filters.deliveryDate' && value === '1') {
+    return `${keyPrefix}.handover`
+  }
+
+  if (keyPrefix === 'propertyList.filters.distanceToSea' && value === '1000000') {
+    return `${keyPrefix}.indifferent`
+  }
+
+  return `${keyPrefix}.${value}`
+}
 
 export async function tClient(
   key: string,
@@ -48,4 +71,44 @@ export function useTranslation(key: string, fallbackValue: string): string {
     () => getTranslationSnapshot(key, locale, fallbackValue),
     () => fallbackValue,
   )
+}
+
+function mapTranslatedOptions<T extends { value: string; label: string }>(
+  options: readonly T[],
+  keyPrefix: string,
+  locale: string,
+): T[] {
+  return options.map((opt) => ({
+    ...opt,
+    label: getTranslationSnapshot(
+      filterOptionTranslationKey(keyPrefix, opt.value),
+      locale,
+      opt.label,
+    ),
+  })) as T[]
+}
+
+/** Translate a list of CMS filter options using the same store as useTranslation. */
+export function useTranslatedOptions<T extends { value: string; label: string }>(
+  options: readonly T[],
+  keyPrefix: string,
+): T[] {
+  const locale = useSiteLocale()
+  const [translated, setTranslated] = useState<T[]>(() =>
+    mapTranslatedOptions(options, keyPrefix, locale),
+  )
+
+  useEffect(() => {
+    setTranslated(mapTranslatedOptions(options, keyPrefix, locale))
+
+    for (const opt of options) {
+      requestTranslation(filterOptionTranslationKey(keyPrefix, opt.value), locale, opt.label)
+    }
+
+    return subscribe(() => {
+      setTranslated(mapTranslatedOptions(options, keyPrefix, locale))
+    })
+  }, [options, keyPrefix, locale])
+
+  return translated
 }

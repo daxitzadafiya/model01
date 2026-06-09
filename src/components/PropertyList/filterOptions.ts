@@ -120,15 +120,24 @@ export const SORT_OPTIONS = [
 
 export type FilterOption = { value: string; label: string }
 
-export const resolvePriceRangeValue = (minPrice?: string, maxPrice?: string): string => {
+export type PriceRangeOption = { value: string; label: string; min: string; max: string }
+
+export const resolvePriceRangeValue = (
+  minPrice?: string,
+  maxPrice?: string,
+  options: readonly PriceRangeOption[] = PRICE_RANGE_OPTIONS,
+): string => {
   const min = minPrice ?? 'any'
   const max = maxPrice ?? 'any'
-  const match = PRICE_RANGE_OPTIONS.find((opt) => opt.min === min && opt.max === max)
+  const match = options.find((opt) => opt.min === min && opt.max === max)
   return match?.value ?? 'any'
 }
 
-export const applyPriceRangeValue = (range: string): { minPrice: string; maxPrice: string } => {
-  const match = PRICE_RANGE_OPTIONS.find((opt) => opt.value === range)
+export const applyPriceRangeValue = (
+  range: string,
+  options: readonly PriceRangeOption[] = PRICE_RANGE_OPTIONS,
+): { minPrice: string; maxPrice: string } => {
+  const match = options.find((opt) => opt.value === range)
   if (!match) return { minPrice: 'any', maxPrice: 'any' }
   return { minPrice: match.min, maxPrice: match.max }
 }

@@ -9,6 +9,7 @@ import { PropertyMapModal } from '@/components/PropertyMap/PropertyMapModal'
 import { ArrowUpDown } from 'lucide-react'
 import { useCRMLocationTree } from '@/hooks/useCRMLocationTree'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
+import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
 import { PropertyCard, resolvePropertyCardStatusBadge } from '@/components/PropertyCard'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
@@ -310,6 +311,7 @@ export const PropertyListView: React.FC<Props> = ({
   }, [displayTotal, loading, resultsLabel, showingLabel, defaultResultsLabel])
 
   return (
+    <PropertyFilterOptionsProvider>
     <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12">
       {showFilters !== false && (
         <FiltersBar
@@ -419,5 +421,6 @@ export const PropertyListView: React.FC<Props> = ({
         />
       )}
     </div>
+    </PropertyFilterOptionsProvider>
   )
 }

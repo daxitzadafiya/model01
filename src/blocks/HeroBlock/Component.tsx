@@ -19,6 +19,7 @@ import { usePriceRangeOptions } from '@/components/PropertyList/useFilterOptionL
 import { savePendingPropertyListFilters } from '@/components/PropertyList/propertyFilterUrl'
 import { useCRMLocationTree } from '@/hooks/useCRMLocationTree'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
+import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
 import type { PropertyListFilters } from '@/utilities/crmProperties'
 import { useTranslation } from '@/utilities/translateClient'
 import { useReveal } from '@/utilities/useReveal'
@@ -30,7 +31,7 @@ type Props = Extract<Page['layout'][0], { blockType: 'heroBlock' }>
 const buttonClassName =
   'px-8 md:px-10 py-3 md:py-4 bg-tertiary rounded-full font-label-nav text-label-nav uppercase tracking-widest hover:bg-tertiary-container transition-all shadow-xl active:scale-95 reveal cursor-pointer text-white'
 
-export const HeroBlock: React.FC<Props> = ({
+const HeroBlockContent: React.FC<Props> = ({
   title,
   buttonText,
   ctaLink,
@@ -44,8 +45,14 @@ export const HeroBlock: React.FC<Props> = ({
     'Search Properties',
   )
   const locationLabel = useTranslation('propertyList.filters.location', 'Location')
-  const locationPlaceholder = useTranslation('propertyList.filters.location.placeholder', 'Athens, Cyclades...')
-  const locationEmptyLabel = useTranslation('propertyList.filters.location.emptyLabel', 'All Locations')
+  const locationPlaceholder = useTranslation(
+    'propertyList.filters.location.placeholder',
+    'Athens, Cyclades...',
+  )
+  const locationEmptyLabel = useTranslation(
+    'propertyList.filters.location.emptyLabel',
+    'All Locations',
+  )
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
@@ -59,7 +66,11 @@ export const HeroBlock: React.FC<Props> = ({
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions('forSale')
   const { tree: locationTree, loading: locationLoading } = useCRMLocationTree('forSale')
-  const priceRange = resolvePriceRangeValue(searchFilters.minPrice, searchFilters.maxPrice)
+  const priceRange = resolvePriceRangeValue(
+    searchFilters.minPrice,
+    searchFilters.maxPrice,
+    priceRangeOptions,
+  )
 
   const handleSearchFilterChange = (
     key: keyof PropertyListFilters,
@@ -69,7 +80,7 @@ export const HeroBlock: React.FC<Props> = ({
   }
 
   const handlePriceRangeChange = (range: string) => {
-    const { minPrice, maxPrice } = applyPriceRangeValue(range)
+    const { minPrice, maxPrice } = applyPriceRangeValue(range, priceRangeOptions)
     setSearchFilters((prev) => ({ ...prev, minPrice, maxPrice }))
   }
 
@@ -100,14 +111,12 @@ export const HeroBlock: React.FC<Props> = ({
           </h1>
           <CMSLink {...linkProps} appearance="inline" className={buttonClassName} />
         </div>
-        {/* Scroll Indicator */}
         <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden  flex-col items-center animate-bounce text-white/70 md:hidden sm:hidden">
           <span className="font-label-sm text-label-sm mb-2">{scrollLabel}</span>
           <ChevronDown size={20} />
         </div>
       </section>
 
-      {/* Floating Search */}
       {showSearch && (
         <div className="relative z-30 max-w-5xl mx-auto -mt-10 md:-mt-16 px-margin-mobile md:px-margin-desktop">
           <form
@@ -171,3 +180,9 @@ export const HeroBlock: React.FC<Props> = ({
     </div>
   )
 }
+
+export const HeroBlock: React.FC<Props> = (props) => (
+  <PropertyFilterOptionsProvider>
+    <HeroBlockContent {...props} />
+  </PropertyFilterOptionsProvider>
+)

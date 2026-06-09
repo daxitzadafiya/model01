@@ -127,6 +127,7 @@ export interface Config {
     logo: Logo;
     cookieConsent: CookieConsent;
     propertyMap: PropertyMap;
+    propertyFilters: PropertyFilter;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -136,6 +137,7 @@ export interface Config {
     logo: LogoSelect<false> | LogoSelect<true>;
     cookieConsent: CookieConsentSelect<false> | CookieConsentSelect<true>;
     propertyMap: PropertyMapSelect<false> | PropertyMapSelect<true>;
+    propertyFilters: PropertyFiltersSelect<false> | PropertyFiltersSelect<true>;
   };
   locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   widgets: {
@@ -3458,6 +3460,120 @@ export interface PropertyMap {
   createdAt?: string | null;
 }
 /**
+ * Dropdown options for property search filters. Property type and location still come from the CRM API.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "propertyFilters".
+ */
+export interface PropertyFilter {
+  id: number;
+  /**
+   * Used in the main filter bar and hero search.
+   */
+  priceRanges?:
+    | {
+        /**
+         * Unique key (e.g. 500k-1m).
+         */
+        value: string;
+        label: string;
+        /**
+         * CRM value or "any".
+         */
+        min: string;
+        /**
+         * CRM value or "any".
+         */
+        max: string;
+        id?: string | null;
+      }[]
+    | null;
+  bedrooms?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  minPrices?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  maxPrices?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Values must be "project" (new development) or "resale".
+   */
+  statuses?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Values must be "sea views", "mountain", or "golf".
+   */
+  features?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Empty value = placeholder. Other values are months (1 = handover, 3, 6, 12, 18, 60).
+   */
+  deliveryDates?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Empty value = placeholder. Distances in meters. Use 1000000 for "indifferent".
+   */
+  distanceToSea?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -3668,6 +3784,73 @@ export interface PropertyMapSelect<T extends boolean = true> {
         large?: T;
       };
   mapFetchLimit?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "propertyFilters_select".
+ */
+export interface PropertyFiltersSelect<T extends boolean = true> {
+  priceRanges?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        min?: T;
+        max?: T;
+        id?: T;
+      };
+  bedrooms?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  minPrices?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  maxPrices?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  statuses?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  features?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  deliveryDates?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  distanceToSea?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

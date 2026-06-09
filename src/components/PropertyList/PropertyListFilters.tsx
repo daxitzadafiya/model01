@@ -46,7 +46,8 @@ export const PropertyListFilters: React.FC<Props> = ({
   locationLoading = false,
 }) => {
   const [modalOpen, setModalOpen] = useState(false)
-  const priceRange = resolvePriceRangeValue(filters.minPrice, filters.maxPrice)
+  const priceRangeOptions = usePriceRangeOptions()
+  const priceRange = resolvePriceRangeValue(filters.minPrice, filters.maxPrice, priceRangeOptions)
   const showClearFilters = hasActivePropertyFilters(appliedFilters)
 
   const referenceLabel = useTranslation('propertyList.filters.reference', 'Reference')
@@ -65,15 +66,13 @@ export const PropertyListFilters: React.FC<Props> = ({
     'More filters',
   )
   const searchByMapLabel = useTranslation('propertyList.filters.searchByMap', 'Search By Map')
-  const priceRangeOptions = usePriceRangeOptions()
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onApply({ ...filters })
   }
 
   const handlePriceRangeChange = (range: string) => {
-    const { minPrice, maxPrice } = applyPriceRangeValue(range)
+    const { minPrice, maxPrice } = applyPriceRangeValue(range, priceRangeOptions)
     onChange('minPrice', minPrice)
     onChange('maxPrice', maxPrice)
   }
