@@ -20,7 +20,7 @@ export const PropertyListBlock: React.FC<Props> = ({
   crmQueryJson,
   pageSize,
   showFilters,
-  mapSearchUrl,
+  showMap,
   forceSoldBadge,
   emptyStateNoFavoritesTitle,
   emptyStateNoFavoritesDescription,
@@ -62,7 +62,7 @@ export const PropertyListBlock: React.FC<Props> = ({
           crmQueryJson={crmQueryJson}
           pageSize={pageSize}
           showFilters={showFilters}
-          mapSearchUrl={mapSearchUrl}
+          showMap={showMap}
           forceSoldBadge={forceSoldBadge}
           resultsLabel={resultsLabel}
           emptyStateNoFavoritesTitle={emptyStateNoFavoritesTitle}

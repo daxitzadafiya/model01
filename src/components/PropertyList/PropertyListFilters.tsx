@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
 import { Banknote, Home, MapPin, RotateCcw, Search, SlidersHorizontal, Tag } from 'lucide-react'
 
 import { FilterSelect } from '@/components/FilterSelect'
@@ -24,7 +23,8 @@ type Props = {
   appliedFilters: Filters
   onChange: (key: keyof Filters, value: Filters[keyof Filters]) => void
   onApply: (nextFilters: Filters) => void
-  mapSearchUrl?: string | null
+  showMap?: boolean | null
+  onOpenMap?: () => void
   propertyTypeOptions: FilterSelectOption[]
   propertyTypeLoading?: boolean
   locationTree: CRMLocationCity[]
@@ -38,7 +38,8 @@ export const PropertyListFilters: React.FC<Props> = ({
   appliedFilters,
   onChange,
   onApply,
-  mapSearchUrl,
+  showMap,
+  onOpenMap,
   propertyTypeOptions,
   propertyTypeLoading = false,
   locationTree,
@@ -49,7 +50,10 @@ export const PropertyListFilters: React.FC<Props> = ({
   const showClearFilters = hasActivePropertyFilters(appliedFilters)
 
   const referenceLabel = useTranslation('propertyList.filters.reference', 'Reference')
-  const referencePlaceholder = useTranslation('propertyList.filters.reference.placeholder', 'Reference...')
+  const referencePlaceholder = useTranslation(
+    'propertyList.filters.reference.placeholder',
+    'Reference...',
+  )
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
@@ -142,6 +146,16 @@ export const PropertyListFilters: React.FC<Props> = ({
             >
               <SlidersHorizontal size={20} />
             </button>
+            {showMap && onOpenMap && (
+              <button
+                type="button"
+                onClick={onOpenMap}
+                className="px-4 py-3 border cursor-pointer border-outline-variant hover:border-tertiary hover:text-tertiary transition-colors duration-300 rounded-lg flex items-center justify-center"
+                aria-label="Search on map"
+              >
+                <MapPin size={20} />
+              </button>
+            )}
             {showClearFilters && (
               <button
                 type="button"
@@ -161,16 +175,6 @@ export const PropertyListFilters: React.FC<Props> = ({
             </button>
           </div>
         </div>
-
-        {mapSearchUrl && (
-          <Link
-            href={mapSearchUrl}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded border border-deep-navy bg-surface-container-lowest py-2.5 font-body-md text-body-md text-deep-navy hover:bg-surface-container-high transition-colors"
-          >
-            <MapPin size={18} className="shrink-0" />
-            {searchByMapLabel}
-          </Link>
-        )}
       </form>
 
       <PropertyListMoreFiltersModal

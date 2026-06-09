@@ -144,7 +144,8 @@ export const hasAppliedPropertyFilters = (filters: PropertyListFilters): boolean
       filters.status?.length ||
       filters.features?.length ||
       (filters.deliveryDate && filters.deliveryDate !== 'any') ||
-      (filters.distanceToSea && filters.distanceToSea !== 'any'),
+      (filters.distanceToSea && filters.distanceToSea !== 'any') ||
+      filters.mapReferences?.length,
   )
 }
 
@@ -159,6 +160,7 @@ export const EMPTY_PROPERTY_FILTERS = {
   features: [] as string[],
   deliveryDate: '',
   distanceToSea: '',
+  mapReferences: [] as string[],
 } as const
 
 type PropertyFiltersShape = {
@@ -172,6 +174,7 @@ type PropertyFiltersShape = {
   features?: string | string[]
   deliveryDate?: string
   distanceToSea?: string
+  mapReferences?: string[]
 }
 
 export const hasActivePropertyFilters = (filters: PropertyFiltersShape): boolean => {
@@ -187,6 +190,7 @@ export const hasActivePropertyFilters = (filters: PropertyFiltersShape): boolean
 
   const distance = filters.distanceToSea?.trim()
   if (distance && distance !== '1000000') return true
+  if (filters.mapReferences?.length) return true
 
   return false
 }

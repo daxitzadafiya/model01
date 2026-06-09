@@ -126,6 +126,7 @@ export interface Config {
     localization: Localization;
     logo: Logo;
     cookieConsent: CookieConsent;
+    propertyMap: PropertyMap;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -134,6 +135,7 @@ export interface Config {
     localization: LocalizationSelect<false> | LocalizationSelect<true>;
     logo: LogoSelect<false> | LogoSelect<true>;
     cookieConsent: CookieConsentSelect<false> | CookieConsentSelect<true>;
+    propertyMap: PropertyMapSelect<false> | PropertyMapSelect<true>;
   };
   locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   widgets: {
@@ -978,9 +980,9 @@ export interface PropertyListBlock {
   pageSize?: number | null;
   showFilters?: boolean | null;
   /**
-   * Link for the full-width "Search By Map" button.
+   * Adds a map icon in the filter bar that opens the property map modal.
    */
-  mapSearchUrl?: string | null;
+  showMap?: boolean | null;
   forceSoldBadge?: boolean | null;
   emptyStateNoFavoritesTitle?: string | null;
   emptyStateNoFavoritesDescription?: string | null;
@@ -2205,7 +2207,7 @@ export interface PropertyListBlockSelect<T extends boolean = true> {
   crmQueryJson?: T;
   pageSize?: T;
   showFilters?: T;
-  mapSearchUrl?: T;
+  showMap?: T;
   forceSoldBadge?: T;
   emptyStateNoFavoritesTitle?: T;
   emptyStateNoFavoritesDescription?: T;
@@ -3425,6 +3427,37 @@ export interface CookieConsent {
   createdAt?: string | null;
 }
 /**
+ * Default map center, zoom, and cluster styling for the property search map modal.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "propertyMap".
+ */
+export interface PropertyMap {
+  id: number;
+  modalTitle?: string | null;
+  defaultCenter: {
+    lat: number;
+    lng: number;
+  };
+  defaultZoom: number;
+  minZoom?: number | null;
+  maxZoom?: number | null;
+  enableDrawSearch?: boolean | null;
+  drawInstructionText?: string | null;
+  drawButtonLabel?: string | null;
+  clusterColors?: {
+    small?: string | null;
+    medium?: string | null;
+    large?: string | null;
+  };
+  /**
+   * Number of properties requested per CRM page when loading map markers.
+   */
+  mapFetchLimit?: number | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -3605,6 +3638,36 @@ export interface CookieConsentSelect<T extends boolean = true> {
       };
   storageKey?: T;
   expiryDays?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "propertyMap_select".
+ */
+export interface PropertyMapSelect<T extends boolean = true> {
+  modalTitle?: T;
+  defaultCenter?:
+    | T
+    | {
+        lat?: T;
+        lng?: T;
+      };
+  defaultZoom?: T;
+  minZoom?: T;
+  maxZoom?: T;
+  enableDrawSearch?: T;
+  drawInstructionText?: T;
+  drawButtonLabel?: T;
+  clusterColors?:
+    | T
+    | {
+        small?: T;
+        medium?: T;
+        large?: T;
+      };
+  mapFetchLimit?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

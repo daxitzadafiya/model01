@@ -16,7 +16,7 @@ import {
   resolvePriceRangeValue,
 } from '@/components/PropertyList/filterOptions'
 import { usePriceRangeOptions } from '@/components/PropertyList/useFilterOptionLabels'
-import { buildPropertyListUrl } from '@/components/PropertyList/propertyFilterUrl'
+import { savePendingPropertyListFilters } from '@/components/PropertyList/propertyFilterUrl'
 import { useCRMLocationTree } from '@/hooks/useCRMLocationTree'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
 import type { PropertyListFilters } from '@/utilities/crmProperties'
@@ -76,7 +76,8 @@ export const HeroBlock: React.FC<Props> = ({
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!hasActivePropertyFilters(searchFilters)) return
-    router.push(buildPropertyListUrl(PROPERTY_FOR_SALE_PATH, searchFilters))
+    savePendingPropertyListFilters(searchFilters)
+    router.push(PROPERTY_FOR_SALE_PATH)
   }
 
   const linkProps =

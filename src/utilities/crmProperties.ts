@@ -30,6 +30,8 @@ export type PropertyListFilters = {
   features?: string[]
   deliveryDate?: string
   distanceToSea?: string
+  /** Property references selected via map polygon draw */
+  mapReferences?: string[]
 }
 
 export type NormalizedListProperty = {
@@ -432,7 +434,23 @@ export const buildFilterQuery = (filters: PropertyListFilters): Record<string, u
   const andClauses: Record<string, unknown>[] = []
   const orGroups: Record<string, unknown>[][] = []
 
-  if (filters.reference?.trim()) {
+  if (filters.mapReferences?.length) {
+    const refs = [...new Set(filters.mapReferences.map((ref) => ref.trim()).filter(Boolean))]
+    const numericRefs = refs
+      .map((ref) => Number(ref))
+      .filter((value) => Number.isFinite(value))
+    const stringRefs = refs.filter((ref) => !Number.isFinite(Number(ref)))
+
+    const orClauses: Record<string, unknown>[] = []
+    if (numericRefs.length) orClauses.push({ reference: { $in: numericRefs } })
+    if (stringRefs.length) orClauses.push({ reference: { $in: stringRefs } })
+
+    if (orClauses.length === 1) {
+      Object.assign(query, orClauses[0])
+    } else if (orClauses.length > 1) {
+      andClauses.push({ $or: orClauses })
+    }
+  } else if (filters.reference?.trim()) {
     orGroups.push(buildReferenceOrQuery(filters.reference))
   }
 

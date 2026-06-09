@@ -2,6 +2,33 @@ import type { PropertyListFilters } from '@/utilities/crmProperties'
 
 import { EMPTY_PROPERTY_FILTERS } from './filterOptions'
 
+const PENDING_FILTERS_STORAGE_KEY = 'propertyList.pendingFilters'
+
+export const savePendingPropertyListFilters = (filters: PropertyListFilters): void => {
+  if (typeof window === 'undefined') return
+  sessionStorage.setItem(PENDING_FILTERS_STORAGE_KEY, JSON.stringify(filters))
+}
+
+export const consumePendingPropertyListFilters = (): PropertyListFilters | null => {
+  if (typeof window === 'undefined') return null
+
+  const raw = sessionStorage.getItem(PENDING_FILTERS_STORAGE_KEY)
+  if (!raw) return null
+
+  sessionStorage.removeItem(PENDING_FILTERS_STORAGE_KEY)
+
+  try {
+    return JSON.parse(raw) as PropertyListFilters
+  } catch {
+    return null
+  }
+}
+
+export const stripPropertyFilterSearchParams = (): void => {
+  if (typeof window === 'undefined' || !window.location.search) return
+  window.history.replaceState(null, '', window.location.pathname)
+}
+
 const splitCsv = (value: string | null): string[] =>
   value
     ? value

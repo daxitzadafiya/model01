@@ -86,11 +86,12 @@ export const PropertyListBlock: Block = {
       defaultValue: true,
     },
     {
-      name: 'mapSearchUrl',
-      type: 'text',
-      label: 'Search By Map URL',
+      name: 'showMap',
+      type: 'checkbox',
+      label: 'Show map search',
+      defaultValue: false,
       admin: {
-        description: 'Link for the full-width "Search By Map" button.',
+        description: 'Adds a map icon in the filter bar that opens the property map modal.',
         condition: (_, siblingData) => siblingData?.showFilters !== false,
       },
     },

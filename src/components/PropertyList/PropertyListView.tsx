@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 import { FilterSelect } from '@/components/FilterSelect'
+import { PropertyMapModal } from '@/components/PropertyMap/PropertyMapModal'
 import { ArrowUpDown } from 'lucide-react'
 import { useCRMLocationTree } from '@/hooks/useCRMLocationTree'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
@@ -26,8 +26,8 @@ import { useSortOptions } from './useFilterOptionLabels'
 import { PropertyListFilters as FiltersBar } from './PropertyListFilters'
 import { PropertyListPagination } from './PropertyListPagination'
 import {
-  parsePropertyFiltersFromSearchParams,
-  serializePropertyFiltersToSearchParams,
+  consumePendingPropertyListFilters,
+  stripPropertyFilterSearchParams,
 } from './propertyFilterUrl'
 import { useTranslation } from '@/utilities/translateClient'
 
@@ -36,7 +36,7 @@ type Props = {
   crmQueryJson?: string | null
   pageSize?: number | null
   showFilters?: boolean | null
-  mapSearchUrl?: string | null
+  showMap?: boolean | null
   forceSoldBadge?: boolean | null
   resultsLabel?: string | null
   emptyStateNoFavoritesTitle?: string | null
@@ -52,7 +52,7 @@ export const PropertyListView: React.FC<Props> = ({
   crmQueryJson,
   pageSize: pageSizeProp,
   showFilters = true,
-  mapSearchUrl,
+  showMap = false,
   forceSoldBadge,
   resultsLabel,
   emptyStateNoFavoritesTitle,
@@ -61,22 +61,18 @@ export const PropertyListView: React.FC<Props> = ({
   emptyStateNoResultsDescription,
 }) => {
   const pageSize = Math.max(1, pageSizeProp ?? DEFAULT_PAGE_SIZE)
-  const searchParams = useSearchParams()
-  const pathname = usePathname()
-  const router = useRouter()
-  const initialFilters = useMemo(
-    () => parsePropertyFiltersFromSearchParams(searchParams),
-    [searchParams],
-  )
 
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState<PropertyListSort>('newest')
-  const [filters, setFilters] = useState<PropertyListFilters>(initialFilters)
-  const [appliedFilters, setAppliedFilters] = useState<PropertyListFilters>(initialFilters)
+  const [filters, setFilters] = useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
+  const [appliedFilters, setAppliedFilters] =
+    useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
   const [rawProperties, setRawProperties] = useState<Record<string, unknown>[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [mapModalOpen, setMapModalOpen] = useState(false)
   const activeLocale = useSiteLocale()
+  const mapEnabled = showMap === true
   const pendingPageScrollRef = useRef(false)
 
   const scrollToPageTop = useCallback(() => {
@@ -265,19 +261,19 @@ export const PropertyListView: React.FC<Props> = ({
   }
 
   useEffect(() => {
-    setFilters(initialFilters)
-    setAppliedFilters(initialFilters)
-    setPage(1)
-  }, [initialFilters])
+    const pending = consumePendingPropertyListFilters()
+    if (pending) {
+      setFilters(pending)
+      setAppliedFilters(pending)
+      setPage(1)
+    }
+    stripPropertyFilterSearchParams()
+  }, [])
 
   const handleApply = (nextFilters: PropertyListFilters) => {
     setFilters(nextFilters)
     setAppliedFilters(nextFilters)
     setPage(1)
-
-    const params = serializePropertyFiltersToSearchParams(nextFilters)
-    const qs = params.toString()
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
 
   const handleSortChange = (nextSort: PropertyListSort) => {
@@ -290,6 +286,17 @@ export const PropertyListView: React.FC<Props> = ({
     pendingPageScrollRef.current = true
     setPage(nextPage)
     scrollToPageTop()
+  }
+
+  const handleMapDrawApply = (references: string[]) => {
+    const nextFilters: PropertyListFilters = {
+      ...appliedFilters,
+      mapReferences: references,
+      reference: '',
+    }
+    setFilters(nextFilters)
+    setAppliedFilters(nextFilters)
+    setPage(1)
   }
 
   const resultsText = useMemo(() => {
@@ -310,7 +317,8 @@ export const PropertyListView: React.FC<Props> = ({
           appliedFilters={appliedFilters}
           onChange={handleFilterChange}
           onApply={handleApply}
-          mapSearchUrl={mapSearchUrl}
+          showMap={mapEnabled}
+          onOpenMap={() => setMapModalOpen(true)}
           propertyTypeOptions={propertyTypeOptions}
           propertyTypeLoading={propertyTypeLoading}
           locationTree={locationTree}
@@ -398,6 +406,18 @@ export const PropertyListView: React.FC<Props> = ({
       )}
 
       <PropertyListPagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+
+      {mapEnabled && (
+        <PropertyMapModal
+          open={mapModalOpen}
+          onClose={() => setMapModalOpen(false)}
+          listingPreset={listingPreset}
+          crmQueryJson={crmQueryJson}
+          appliedFilters={appliedFilters}
+          favoriteIds={isFavoritesList ? favoriteIds : undefined}
+          onDrawApply={handleMapDrawApply}
+        />
+      )}
     </div>
   )
 }

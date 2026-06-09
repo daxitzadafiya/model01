@@ -15,6 +15,7 @@ import { Header } from './Header/config'
 import { CookieConsent } from './globals/CookieConsent/config'
 import { Localization } from './globals/Localization/config'
 import { SiteLogo } from './globals/Logo/config'
+import { PropertyMap } from './globals/PropertyMap/config'
 import { Theme } from './globals/Theme/config'
 import { payloadLocalization } from './i18n/locales'
 import { plugins } from './plugins'
@@ -119,7 +120,7 @@ export default buildConfig({
   }),
   collections: [Pages, Posts, Media, Categories, Users, Translations],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, Theme, Localization, SiteLogo, CookieConsent],
+  globals: [Header, Footer, Theme, Localization, SiteLogo, CookieConsent, PropertyMap],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

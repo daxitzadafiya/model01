@@ -21,6 +21,7 @@ declare global {
       NEXT_PUBLIC_RECAPTCHA_SECRET_KEY: string
       DEEPL_API_KEY: string
       DEEPL_API_URL: string
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: string
     }
   }
 }
