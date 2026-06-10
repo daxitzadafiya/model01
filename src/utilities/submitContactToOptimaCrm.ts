@@ -1,3 +1,4 @@
+import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { crmServerFetch } from '@/utilities/crmServerFetch'
 
 type SubmissionField = {
@@ -11,18 +12,19 @@ const CONTACT_SCP = ''
 /** Fields sent to Optima as JSON booleans (not strings). */
 const BOOLEAN_FIELDS = new Set(['gdpr_status'])
 
-export function buildAccountsIndexUrl(): string {
-  const apiKey = process.env.NEXT_PUBLIC_CRM_API_KEY
-  const contactUrl = process.env.NEXT_PUBLIC_CRM_API_URL_CONTACT?.trim()
+export async function buildAccountsIndexUrl(): Promise<string> {
+  const settings = await getOptimaCrmSettings()
+  const apiKey = settings.apiKey.trim()
+  const contactUrl = settings.contactUrl.trim()
 
   if (!apiKey) {
-    throw new Error('CRM API key is not configured. Set NEXT_PUBLIC_CRM_API_KEY.')
+    throw new Error('CRM API key is not configured. Set it under Globals → Optima CRM.')
   }
 
   const apiUrl = contactUrl
   if (!apiUrl) {
     throw new Error(
-      'CRM contact URL is not configured. Set NEXT_PUBLIC_CRM_API_URL_CONTACT (Yii) or NEXT_PUBLIC_CRM_API_URL (v3).',
+      'CRM contact URL is not configured. Set it under Globals → Optima CRM (Yii contact endpoint).',
     )
   }
 
@@ -106,7 +108,7 @@ function extractOptimaErrorMessage(data: unknown): string | null {
   return null
 }
 
-async function assertOptimaCrmSuccess(response: Response): Promise<void> {
+async function parseOptimaCrmResponse(response: Response): Promise<unknown> {
   const text = await response.text()
   let data: unknown = null
 
@@ -117,6 +119,7 @@ async function assertOptimaCrmSuccess(response: Response): Promise<void> {
       if (!response.ok) {
         throw new Error(`CRM submission failed (${response.status}). Please try again later.`)
       }
+      return text
     }
   }
 
@@ -131,6 +134,8 @@ async function assertOptimaCrmSuccess(response: Response): Promise<void> {
   if (optimaError) {
     throw new Error(optimaError)
   }
+
+  return data
 }
 
 /**
@@ -139,26 +144,18 @@ async function assertOptimaCrmSuccess(response: Response): Promise<void> {
  */
 export async function submitContactToOptimaCrm(
   submissionData?: SubmissionField[] | null,
-): Promise<void> {
-  const endpoint = buildAccountsIndexUrl()
+): Promise<unknown> {
+  const endpoint = await buildAccountsIndexUrl()
   const payload = {
     ...submissionDataToCrmPayload(submissionData),
     source: CONTACT_SOURCE,
     scp: CONTACT_SCP,
   }
-
   console.log('payload', payload)
+
   let response: Response
 
   try {
-    console.log('endpoint', endpoint)
-    console.log('::::::: OPTIMA CRM REQUEST :::::::', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
     response = await crmServerFetch(endpoint, {
       method: 'POST',
       headers: {
@@ -183,5 +180,5 @@ export async function submitContactToOptimaCrm(
     throw new Error(message)
   }
 
-  await assertOptimaCrmSuccess(response)
+  return parseOptimaCrmResponse(response)
 }

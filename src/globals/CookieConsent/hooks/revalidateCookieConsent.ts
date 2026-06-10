@@ -1,19 +1,18 @@
 import type { GlobalAfterChangeHook } from 'payload'
 
-import { revalidateTag } from 'next/cache'
-
 import { localeCodes } from '@/i18n/locales'
+import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
-export const revalidateCookieConsent: GlobalAfterChangeHook = ({
+export const revalidateCookieConsent: GlobalAfterChangeHook = async ({
   doc,
   req: { payload, context },
 }) => {
   if (!context.disableRevalidate) {
     payload.logger.info(`Revalidating cookie consent`)
 
-    revalidateTag('global_cookieConsent', 'max')
+    await revalidateCacheTag('global_cookieConsent')
     for (const locale of localeCodes) {
-      revalidateTag(`global_cookieConsent_${locale}`, 'max')
+      await revalidateCacheTag(`global_cookieConsent_${locale}`)
     }
   }
 

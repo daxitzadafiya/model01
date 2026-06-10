@@ -1,7 +1,7 @@
 import { createClient } from '@libsql/client'
 import path from 'path'
 
-import type { ResolvedEmailSettings } from '@/email/dynamicEmailTransport'
+import type { ResolvedEmailSettings } from '@/settings/email/shared'
 
 export type EmailSenderDefaults = {
   defaultFromAddress: string

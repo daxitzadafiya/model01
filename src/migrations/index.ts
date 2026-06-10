@@ -7,6 +7,7 @@ import * as migration_20260609_095300_property_map_global from './20260609_09530
 import * as migration_20260609_120000_property_list_block_show_map_version from './20260609_120000_property_list_block_show_map_version'
 import * as migration_20260609_150000_property_filters_global from './20260609_150000_property_filters_global'
 import * as migration_20260609_124500_email_settings from './20260609_124500_email_settings';
+import * as migration_20260610_120000_integration_settings_globals from './20260610_120000_integration_settings_globals';
 
 export const migrations = [
   {
@@ -53,5 +54,10 @@ export const migrations = [
     up: migration_20260609_124500_email_settings.up,
     down: migration_20260609_124500_email_settings.down,
     name: '20260609_124500_email_settings'
+  },
+  {
+    up: migration_20260610_120000_integration_settings_globals.up,
+    down: migration_20260610_120000_integration_settings_globals.down,
+    name: '20260610_120000_integration_settings_globals',
   },
 ]

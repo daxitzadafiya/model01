@@ -1,24 +1,26 @@
 import { fetchCRMProperties } from '@/utilities/crmProperties'
+import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
 
 export type CRMPropertyDetailRecord = Record<string, unknown>
 
 function getCRMViewConfig(): { apiUrl: string; userKey: string } | null {
-  const apiUrl = process.env.NEXT_PUBLIC_CRM_API_URL?.trim()
-  const userKey = process.env.NEXT_PUBLIC_OPTIMA_USER_KEY?.trim()
+  const settings = resolveOptimaCrmSettings()
+  const apiUrl = settings.apiUrl.trim()
+  const userKey = settings.userKey.trim()
 
   if (!apiUrl || !userKey) return null
 
   return { apiUrl, userKey }
 }
 
-/** POST /v3/commercial_properties/view/{reference}?user={NEXT_PUBLIC_OPTIMA_USER_KEY} */
+/** POST /v3/commercial_properties/view/{reference}?user={userKey} */
 export async function fetchCRMPropertyDetail(
   reference: string,
   init?: Omit<RequestInit, 'method' | 'body'>,
 ): Promise<CRMPropertyDetailRecord | null> {
   const config = getCRMViewConfig()
   if (!config) {
-    console.error('Missing NEXT_PUBLIC_CRM_API_URL or NEXT_PUBLIC_OPTIMA_USER_KEY')
+    console.error('Optima CRM view config is missing (apiUrl and userKey required)')
     return null
   }
 

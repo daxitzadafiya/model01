@@ -2,6 +2,7 @@ import type { GlobalConfig } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
 import { invalidateEmailTransportCache } from '@/email/dynamicEmailTransport'
+import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
 export const EmailSettings: GlobalConfig = {
   slug: 'emailSettings',
@@ -20,7 +21,7 @@ export const EmailSettings: GlobalConfig = {
       name: 'enabled',
       type: 'checkbox',
       defaultValue: false,
-      label: 'Enable outbound email',
+      label: 'Enable email sending',
     },
     {
       name: 'smtp',
@@ -141,8 +142,9 @@ export const EmailSettings: GlobalConfig = {
   ],
   hooks: {
     afterChange: [
-      () => {
+      async () => {
         invalidateEmailTransportCache()
+        await revalidateCacheTag('global_emailSettings')
       },
     ],
   },

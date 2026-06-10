@@ -186,7 +186,6 @@ export const plugins: Plugin[] = [
                   : 'CRM submission failed. Please try again later.'
               throw new Error(message)
             }
-
             return data
           },
         ],

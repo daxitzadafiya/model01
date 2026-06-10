@@ -1,17 +1,19 @@
 /**
- * Optima CRM API helpers.
- * Uses NEXT_PUBLIC_CRM_API_URL and NEXT_PUBLIC_CRM_API_KEY (same as Properties block).
- * Always sends user_apikey as a query parameter on the request URL.
+ * Optima CRM API helpers (client-safe).
+ * Credentials are loaded from Globals → Optima CRM on the server and seeded in the root layout.
  */
+
+import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
 
 export type CRMConfig = {
   apiUrl: string
   apiKey: string
 }
 
-export function getCRMConfig(): CRMConfig | null {
-  const apiUrl = process.env.NEXT_PUBLIC_CRM_API_URL?.trim()
-  const apiKey = process.env.NEXT_PUBLIC_CRM_API_KEY?.trim()
+export async function getCRMConfig(): Promise<CRMConfig | null> {
+  const settings = resolveOptimaCrmSettings()
+  const apiUrl = settings.apiUrl.trim()
+  const apiKey = settings.apiKey.trim()
 
   if (!apiUrl || !apiKey) return null
 
@@ -30,9 +32,11 @@ export async function postToCRM(
   body: Record<string, unknown>,
   init?: Omit<RequestInit, 'method' | 'body'>,
 ): Promise<Response> {
-  const config = getCRMConfig()
+  const config = await getCRMConfig()
   if (!config) {
-    throw new Error('Missing NEXT_PUBLIC_CRM_API_URL or NEXT_PUBLIC_CRM_API_KEY')
+    throw new Error(
+      'CRM API is not configured. Set credentials under Globals → Optima CRM in the admin panel.',
+    )
   }
 
   const endpoint = buildCRMEndpoint(path, config)

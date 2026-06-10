@@ -4,24 +4,11 @@ declare global {
       PAYLOAD_SECRET: string
       DATABASE_URL: string
       NEXT_PUBLIC_SERVER_URL: string
-      NEXT_PUBLIC_CRM_API_URL: string
-      NEXT_PUBLIC_CRM_API_KEY: string
-      NEXT_PUBLIC_CRM_API_URL_CONTACT: string
-      NEXT_PUBLIC_OPTIMA_IMAGE_URL_WITHOUT_RESIZE: string
-      NEXT_PUBLIC_OPTIMA_IMAGE_URL: string
-      NEXT_PUBLIC_OPTIMA_PROPERTY_RESIZE_BASE: string
-      NEXT_PUBLIC_OPTIMA_SITE_ID: string
-      NEXT_PUBLIC_OPTIMA_USER_KEY: string
-      NEXT_PUBLIC_OPTIMA_BROCHURE_TEMPLATE_ID: string
-      NEXT_PUBLIC_OPTIMA_AGENCY_ID: string
       VERCEL_PROJECT_PRODUCTION_URL: string
       ADMIN_EMAIL: string
       ADMIN_PASSWORD: string
-      NEXT_PUBLIC_RECAPTCHA_SITE_KEY: string
-      NEXT_PUBLIC_RECAPTCHA_SECRET_KEY: string
-      DEEPL_API_KEY: string
-      DEEPL_API_URL: string
-      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: string
+      CRON_SECRET: string
+      PREVIEW_SECRET: string
     }
   }
 }

@@ -2,7 +2,7 @@ import type { Form, FormSubmission } from '@/payload-types'
 import type { Payload } from 'payload'
 
 import { buildNotificationEmailHtml } from '@/email/buildNotificationEmailHtml'
-import { getEmailSettingsFromPayload, isEmailConfigured } from '@/email/dynamicEmailTransport'
+import { getEmailSettings, isEmailConfigured } from '@/settings/email/server'
 import { sendConfiguredEmail } from '@/email/sendConfiguredEmail'
 import { t } from '@/utilities/translate'
 
@@ -249,7 +249,7 @@ async function sendNotificationEmail({
   propertyReference,
   subjectSuffix,
 }: SendNotificationEmailArgs): Promise<void> {
-  const settings = await getEmailSettingsFromPayload(payload)
+  const settings = await getEmailSettings()
   if (!isEmailConfigured(settings)) return
 
   const normalizedLocale = locale.trim().toLowerCase() || 'en'
@@ -351,58 +351,5 @@ export async function sendFormSubmissionNotificationEmail({
       ? getSubmissionValue(submissionData, 'reference')
       : undefined,
     subjectSuffix: formTitle,
-  })
-}
-
-export async function sendPropertyInquiryNotificationEmail({
-  payload,
-  locale,
-  name,
-  email,
-  phone,
-  message,
-  propertyReference,
-  propertyTitle,
-}: {
-  payload: Payload
-  locale: string
-  name: string
-  email: string
-  phone?: string
-  message: string
-  propertyReference?: string
-  propertyTitle?: string
-}): Promise<void> {
-  const normalizedLocale = locale.trim().toLowerCase() || 'en'
-
-  const [fullNameLabel, emailLabel, phoneLabel, messageLabel, propertyLabel] = await Promise.all([
-    resolveFieldLabel(payload, 'forename', null, normalizedLocale),
-    resolveFieldLabel(payload, 'email', null, normalizedLocale),
-    resolveFieldLabel(payload, 'phone', null, normalizedLocale),
-    resolveFieldLabel(payload, 'message', null, normalizedLocale),
-    resolveFieldLabel(payload, 'property', null, normalizedLocale),
-  ])
-
-  const fields: NotificationField[] = [
-    { label: fullNameLabel, value: name },
-    { label: emailLabel, value: email },
-  ]
-
-  if (phone?.trim()) {
-    fields.push({ label: phoneLabel, value: phone.trim() })
-  }
-
-  fields.push({ label: messageLabel, value: message })
-
-  if (propertyTitle?.trim()) {
-    fields.push({ label: propertyLabel, value: propertyTitle.trim() })
-  }
-
-  await sendNotificationEmail({
-    payload,
-    locale: normalizedLocale,
-    template: 'propertyInquiry',
-    fields,
-    propertyReference: propertyReference?.trim() || undefined,
   })
 }

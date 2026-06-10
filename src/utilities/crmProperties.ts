@@ -823,7 +823,7 @@ export const sortProperties = (
   })
 }
 
-/** Same direct CRM call as the home page Properties block (NEXT_PUBLIC_CRM_API_URL). */
+/** Direct CRM call using credentials from Globals → Optima CRM. */
 export async function fetchCRMProperties({
   body,
   signal,

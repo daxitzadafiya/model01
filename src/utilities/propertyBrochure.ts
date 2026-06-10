@@ -1,3 +1,5 @@
+import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
+
 /** Maps site locale to Optima PDF `lang` param (e.g. EN, ES). */
 export function mapLocaleToBrochurePdfLang(locale: string): string {
   const language = (locale || 'en').trim().toLowerCase().split(/[-_]/)[0]
@@ -32,15 +34,17 @@ const pickModelId = (property: Record<string, unknown>): string | undefined => {
 
 /**
  * Optima Yii PDF brochure URL:
- * {CRM_API_URL_CONTACT}?r=pdf&user={OPTIM_USER_KEY}&template_id={TEMPLATE_ID}&modelId={_id}&lang=EN&model_name=commercial_properties
+ * {contactUrl}?r=pdf&user={userKey}&template_id={templateId}&modelId={_id}&lang=EN&model_name=commercial_properties
  */
 export function buildPropertyBrochurePdfUrl(
   property: Record<string, unknown>,
   locale: string,
 ): string | undefined {
-  const contactBase = process.env.NEXT_PUBLIC_CRM_API_URL_CONTACT?.trim()
-  const userKey = process.env.NEXT_PUBLIC_OPTIMA_USER_KEY?.trim()
-  const templateId = process.env.NEXT_PUBLIC_OPTIMA_BROCHURE_TEMPLATE_ID?.trim()
+  const settings = resolveOptimaCrmSettings()
+
+  const contactBase = settings.contactUrl.trim()
+  const userKey = settings.userKey.trim()
+  const templateId = settings.brochureTemplateId.trim()
   const modelId = pickModelId(property)
 
   if (!contactBase || !userKey || !templateId || !modelId) return undefined

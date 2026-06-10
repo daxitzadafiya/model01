@@ -6,6 +6,7 @@ import React from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { useEffect, useRef, useState } from 'react'
 
+import { useIntegrationsSettings } from '@/hooks/useIntegrationsSettings'
 import RichText from '@/components/RichText'
 import { fields as defaultFields } from '@/blocks/Form/fields'
 import { useFormSubmission } from '@/blocks/Form/useFormSubmission'
@@ -63,7 +64,8 @@ export const ContactForm: React.FC<Props> = ({
     fields: formFields,
   } = formFromProps
 
-  const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ''
+  const { settings: integrations } = useIntegrationsSettings()
+  const recaptchaSiteKey = integrations.recaptchaSiteKey
   const recaptchaConfigured = Boolean(recaptchaSiteKey)
   const [hasMounted, setHasMounted] = useState(false)
   const recaptchaEnabled = hasMounted && recaptchaConfigured

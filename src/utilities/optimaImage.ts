@@ -1,4 +1,4 @@
-import { OPTIMA_CONFIG } from '@/constants/optima'
+import { getRuntimeOptimaImageConfig } from '@/settings/optimaCrm/client'
 
 /** Card / list carousels — fits ~400px wide slots without loading 1000px assets */
 export const PROPERTY_CARD_IMAGE_SIZE = 500
@@ -126,11 +126,11 @@ export const buildPropertyAttachmentImageUrl = (
   if (!modelId || !fileName) return ''
 
   if (imageSize > 0) {
-    const resizeBase = stripTrailingSlash(OPTIMA_CONFIG.propertyResizeBase)
+    const resizeBase = stripTrailingSlash(getRuntimeOptimaImageConfig().propertyResizeBase)
     return `${resizeBase}/${modelId}/${imageSize}/${fileName}`
   }
 
-  const comImg = stripTrailingSlash(OPTIMA_CONFIG.commercialImageBase)
+  const comImg = stripTrailingSlash(getRuntimeOptimaImageConfig().commercialImageBase)
   return `${comImg}/${modelId}/${fileName}`
 }
 
@@ -160,17 +160,19 @@ export const resizeOptimaImage = (
       return `${prefix}${size}/${fileName}`.replace(`/${beforeFile}/`, `/${size}/`)
     }
 
-    return `${OPTIMA_CONFIG.propertyResizeBase}/${size}/${trimmedUrl}`
+    return `${getRuntimeOptimaImageConfig().propertyResizeBase}/${size}/${trimmedUrl}`
   }
 
   const fileName = getFileNameFromPath(trimmedUrl)
   if (!fileName) return ''
 
   if (getImageExtension(fileName) === 'svg') {
-    return `${OPTIMA_CONFIG.imageUrlWithoutResize}${OPTIMA_CONFIG.siteId}/${fileName}`
+    const config = getRuntimeOptimaImageConfig()
+    return `${config.imageUrlWithoutResize}${config.siteId}/${fileName}`
   }
 
-  return `${OPTIMA_CONFIG.imageUrl}${OPTIMA_CONFIG.siteId}/${size}/${fileName}`
+  const config = getRuntimeOptimaImageConfig()
+  return `${config.imageUrl}${config.siteId}/${size}/${fileName}`
 }
 
 export const getOptimaPropertyAttachmentImage = (attachment: unknown, size = 1000): string => {

@@ -32,6 +32,8 @@ import './globals.css'
 import { getFaviconSource } from '@/components/Logo/getLogoSources'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getPublicIntegrationsSettings } from '@/settings/integrations/server'
+import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { getServerSideURL } from '@/utilities/getURL'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +41,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { locale } = await getActiveLocale()
   const logoData = await getCachedGlobal('logo', 1)()
   const favicon = getFaviconSource(logoData)
+  const [optimaCrmSettings, integrationsSettings] = await Promise.all([
+    getOptimaCrmSettings(),
+    getPublicIntegrationsSettings(),
+  ])
 
   return (
     <html className={cn(GeistSans.variable, GeistMono.variable, outfit.variable, ebGaramond.variable)} lang={locale} suppressHydrationWarning>
@@ -53,7 +59,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeColors />
       </head>
       <body>
-        <Providers>
+        <Providers
+          optimaCrmSettings={optimaCrmSettings}
+          integrationsSettings={integrationsSettings}
+        >
           <AdminBar
             adminBarProps={{
               preview: isEnabled,

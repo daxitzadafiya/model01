@@ -1,7 +1,8 @@
 /**
  * Optima CRM map markers — calls find-all directly from the browser (same as PHP).
- * Uses NEXT_PUBLIC_CRM_API_URL + NEXT_PUBLIC_OPTIMA_USER_KEY.
+ * Credentials are loaded from Globals → Optima CRM on the server and seeded in the root layout.
  */
+import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
 import {
   buildFavoriteIdsClause,
   buildFilterQuery,
@@ -24,8 +25,9 @@ export type MapPropertyPoint = {
 }
 
 function getCRMMapConfig(): { apiUrl: string; userKey: string } | null {
-  const apiUrl = process.env.NEXT_PUBLIC_CRM_API_URL?.trim()
-  const userKey = process.env.NEXT_PUBLIC_OPTIMA_USER_KEY?.trim()
+  const settings = resolveOptimaCrmSettings()
+  const apiUrl = settings.apiUrl.trim()
+  const userKey = settings.userKey.trim()
 
   if (!apiUrl || !userKey) return null
 
@@ -225,7 +227,7 @@ export async function fetchCRMMapProperties({
 }): Promise<{ properties: MapPropertyPoint[]; total: number }> {
   const config = getCRMMapConfig()
   if (!config) {
-    throw new Error('Missing NEXT_PUBLIC_CRM_API_URL or NEXT_PUBLIC_OPTIMA_USER_KEY')
+    throw new Error('Optima CRM map config is missing (apiUrl and userKey required)')
   }
 
   const baseUrl = config.apiUrl.replace(/\/+$/, '')

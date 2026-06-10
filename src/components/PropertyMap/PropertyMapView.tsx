@@ -3,6 +3,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { APIProvider, Map } from '@vis.gl/react-google-maps'
 
+import { useIntegrationsSettings } from '@/hooks/useIntegrationsSettings'
 import type { MapPropertyPoint } from '@/utilities/crmPropertyMap'
 import type { PropertyMapSettings } from '@/utilities/getPropertyMapSettings'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
@@ -12,8 +13,6 @@ import { PropertyMapCluster } from './PropertyMapCluster'
 import { PropertyMapDrawController } from './PropertyMapDrawController'
 import { PropertyMapDrawToolbar } from './PropertyMapDrawToolbar'
 import type { DrawMode } from './types'
-
-const MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''
 
 type Props = {
   points: MapPropertyPoint[]
@@ -114,8 +113,21 @@ const MapContent: React.FC<Props> = ({
 
 export const PropertyMapView: React.FC<Props> = (props) => {
   const locale = useSiteLocale()
+  const { settings: integrations } = useIntegrationsSettings()
+  const mapsApiKey = integrations.googleMapsApiKey
+
+  if (!mapsApiKey) {
+    return (
+      <div className="flex h-full items-center justify-center p-6 text-center">
+        <p className="font-body-md text-body-md text-on-surface-variant">
+          Google Maps is not configured. Add an API key under Globals → Integrations.
+        </p>
+      </div>
+    )
+  }
+
   return (
-    <APIProvider apiKey={MAPS_API_KEY || ''} libraries={['marker', 'geometry']} language={locale}>
+    <APIProvider apiKey={mapsApiKey} libraries={['marker', 'geometry']} language={locale}>
       <MapContent {...props} />
     </APIProvider>
   )

@@ -13,12 +13,14 @@ import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { CookieConsent } from './globals/CookieConsent/config'
+import { DeepLSettings } from './globals/DeepLSettings/config'
 import { EmailSettings } from './globals/EmailSettings/config'
+import { IntegrationsSettings } from './globals/IntegrationsSettings/config'
 import { Localization } from './globals/Localization/config'
 import { SiteLogo } from './globals/Logo/config'
+import { OptimaCrmSettings } from './globals/OptimaCrmSettings/config'
 import { PropertyFilters } from './globals/PropertyFilters/config'
 import { PropertyMap } from './globals/PropertyMap/config'
-import { bindPayloadForEmailTransport } from './email/dynamicEmailTransport'
 import { emailAdapter } from './email/configureEmailAdapter'
 import { Theme } from './globals/Theme/config'
 import { payloadLocalization } from './i18n/locales'
@@ -51,8 +53,6 @@ export default buildConfig({
 
   email: emailAdapter,
   onInit: async (payload) => {
-    bindPayloadForEmailTransport(payload)
-
     // Skip during `next build` — workers initialize Payload in parallel and SQLite locks
     if (process.env.NEXT_PHASE === 'phase-production-build') return
 
@@ -127,7 +127,20 @@ export default buildConfig({
   }),
   collections: [Pages, Posts, Media, Categories, Users, Translations],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, Theme, Localization, SiteLogo, CookieConsent, PropertyMap, PropertyFilters, EmailSettings],
+  globals: [
+    Header,
+    Footer,
+    Theme,
+    Localization,
+    SiteLogo,
+    CookieConsent,
+    PropertyMap,
+    PropertyFilters,
+    EmailSettings,
+    OptimaCrmSettings,
+    DeepLSettings,
+    IntegrationsSettings,
+  ],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

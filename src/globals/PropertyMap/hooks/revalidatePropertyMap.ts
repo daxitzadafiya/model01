@@ -1,19 +1,18 @@
 import type { GlobalAfterChangeHook } from 'payload'
 
-import { revalidateTag } from 'next/cache'
-
 import { localeCodes } from '@/i18n/locales'
+import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
-export const revalidatePropertyMap: GlobalAfterChangeHook = ({
+export const revalidatePropertyMap: GlobalAfterChangeHook = async ({
   doc,
   req: { payload, context },
 }) => {
   if (!context.disableRevalidate) {
     payload.logger.info('Revalidating property map settings')
 
-    revalidateTag('global_propertyMap', 'max')
+    await revalidateCacheTag('global_propertyMap')
     for (const locale of localeCodes) {
-      revalidateTag(`global_propertyMap_${locale}`, 'max')
+      await revalidateCacheTag(`global_propertyMap_${locale}`)
     }
   }
 

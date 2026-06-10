@@ -1,20 +1,19 @@
 /**
- * Optional server-side CRM proxy. Property list & home Properties block call
- * Optima directly via postToCRM() + NEXT_PUBLIC_CRM_API_URL (same as PHP).
+ * Optional server-side CRM proxy using Globals → Optima CRM credentials.
  */
 import { NextResponse } from 'next/server'
 
-import { getCRMConfig, postToCRM } from '@/utilities/crmApi'
+import { getCRMConfig, postToCRM } from '@/utilities/crmApi.server'
 import { extractCRMList, extractCRMTotal } from '@/utilities/crmProperties'
 
 export async function POST(request: Request) {
-  const config = getCRMConfig()
+  const config = await getCRMConfig()
 
   if (!config) {
     return NextResponse.json(
       {
         error:
-          'CRM API is not configured. Set NEXT_PUBLIC_CRM_API_URL and NEXT_PUBLIC_CRM_API_KEY in .env',
+          'CRM API is not configured. Set credentials under Globals → Optima CRM in the admin panel.',
       },
       { status: 500 },
     )

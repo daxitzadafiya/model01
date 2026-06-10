@@ -1,16 +1,18 @@
 import type { GlobalAfterChangeHook } from 'payload'
 
-import { revalidateTag } from 'next/cache'
-
 import { localeCodes } from '@/i18n/locales'
+import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
-export const revalidateFooter: GlobalAfterChangeHook = ({ doc, req: { payload, context } }) => {
+export const revalidateFooter: GlobalAfterChangeHook = async ({
+  doc,
+  req: { payload, context },
+}) => {
   if (!context.disableRevalidate) {
     payload.logger.info(`Revalidating footer`)
 
-    revalidateTag('global_footer', 'max')
+    await revalidateCacheTag('global_footer')
     for (const locale of localeCodes) {
-      revalidateTag(`global_footer_${locale}`, 'max')
+      await revalidateCacheTag(`global_footer_${locale}`)
     }
   }
 

@@ -1,9 +1,9 @@
 /**
  * Minimal reCAPTCHA v2 token verification for server-side enforcement.
- *
- * Env vars:
- * - RECAPTCHA_SECRET_KEY (server-side)
+ * Secret key is loaded from Globals → Integrations.
  */
+import { getIntegrationsSettings } from '@/settings/integrations/server'
+
 export async function verifyRecaptchaToken({
   token,
   remoteip,
@@ -11,11 +11,8 @@ export async function verifyRecaptchaToken({
   token: string
   remoteip?: string
 }): Promise<boolean> {
-  const secret =
-    process.env.RECAPTCHA_SECRET_KEY ||
-    process.env.RECAPTCHA_V2_SECRET_KEY ||
-    process.env.RECAPTCHA_API_SECRET_KEY ||
-    process.env.NEXT_PUBLIC_RECAPTCHA_SECRET_KEY
+  const settings = await getIntegrationsSettings()
+  const secret = settings.recaptchaSecretKey.trim()
 
   if (!secret) {
     throw new Error('reCAPTCHA secret key is not configured on the server.')
@@ -39,4 +36,3 @@ export async function verifyRecaptchaToken({
   if (!res.ok) return false
   return Boolean(json?.success)
 }
-

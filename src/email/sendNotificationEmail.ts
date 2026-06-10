@@ -1,4 +1,1 @@
-export {
-  sendFormSubmissionNotificationEmail,
-  sendPropertyInquiryNotificationEmail,
-} from '@/email/formSubmissionEmail'
+export { sendFormSubmissionNotificationEmail } from '@/email/formSubmissionEmail'

@@ -129,6 +129,9 @@ export interface Config {
     propertyMap: PropertyMap;
     propertyFilters: PropertyFilter;
     emailSettings: EmailSetting;
+    optimaCrmSettings: OptimaCrmSetting;
+    deeplSettings: DeeplSetting;
+    integrationsSettings: IntegrationsSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -140,6 +143,9 @@ export interface Config {
     propertyMap: PropertyMapSelect<false> | PropertyMapSelect<true>;
     propertyFilters: PropertyFiltersSelect<false> | PropertyFiltersSelect<true>;
     emailSettings: EmailSettingsSelect<false> | EmailSettingsSelect<true>;
+    optimaCrmSettings: OptimaCrmSettingsSelect<false> | OptimaCrmSettingsSelect<true>;
+    deeplSettings: DeeplSettingsSelect<false> | DeeplSettingsSelect<true>;
+    integrationsSettings: IntegrationsSettingsSelect<false> | IntegrationsSettingsSelect<true>;
   };
   locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   widgets: {
@@ -3628,6 +3634,97 @@ export interface EmailSetting {
   createdAt?: string | null;
 }
 /**
+ * Optima CRM API credentials, contact endpoint, and image CDN settings. Stored in the database — not in environment variables.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "optimaCrmSettings".
+ */
+export interface OptimaCrmSetting {
+  id: number;
+  api: {
+    /**
+     * Base URL for Optima v3 API (e.g. https://your-crm.optima-crm.com/v3).
+     */
+    apiUrl: string;
+    /**
+     * Sent as user_apikey on CRM requests.
+     */
+    apiKey: string;
+    /**
+     * Yii endpoint for contact submissions and PDF brochures (?r=accounts/index or ?r=pdf).
+     */
+    contactUrl: string;
+    /**
+     * Used for property detail view and PDF brochure generation.
+     */
+    userKey: string;
+    /**
+     * Optima PDF template ID for property brochures.
+     */
+    brochureTemplateId: number;
+  };
+  /**
+   * Optima image URL bases. Defaults match the standard Optima CDN if left empty.
+   */
+  images: {
+    imageUrlWithoutResize: string;
+    imageUrl: string;
+    commercialImageBase: string;
+    /**
+     * Optima agency ID for commercial images.
+     */
+    agencyId: string;
+    propertyResizeBase: string;
+    siteId: string;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * DeepL API credentials for auto-translating missing UI strings via t(). Stored in the database — not in environment variables.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "deeplSettings".
+ */
+export interface DeeplSetting {
+  id: number;
+  enabled?: boolean | null;
+  /**
+   * Use https://api-free.deepl.com for free-tier accounts.
+   */
+  apiUrl?: string | null;
+  apiKey?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Third-party integration keys for Google Maps and reCAPTCHA. Stored in the database — not in environment variables.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "integrationsSettings".
+ */
+export interface IntegrationsSetting {
+  id: number;
+  googleMaps?: {
+    /**
+     * Used by the property search map modal.
+     */
+    apiKey?: string | null;
+  };
+  recaptcha: {
+    /**
+     * Public key shown in the contact form widget.
+     */
+    siteKey: string;
+    /**
+     * Server-side key for verifying form submissions.
+     */
+    secretKey: string;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -3934,6 +4031,66 @@ export interface EmailSettingsSelect<T extends boolean = true> {
     | T
     | {
         recipientAddress?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "optimaCrmSettings_select".
+ */
+export interface OptimaCrmSettingsSelect<T extends boolean = true> {
+  api?:
+    | T
+    | {
+        apiUrl?: T;
+        apiKey?: T;
+        contactUrl?: T;
+        userKey?: T;
+        brochureTemplateId?: T;
+      };
+  images?:
+    | T
+    | {
+        imageUrlWithoutResize?: T;
+        imageUrl?: T;
+        commercialImageBase?: T;
+        agencyId?: T;
+        propertyResizeBase?: T;
+        siteId?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "deeplSettings_select".
+ */
+export interface DeeplSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  apiUrl?: T;
+  apiKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "integrationsSettings_select".
+ */
+export interface IntegrationsSettingsSelect<T extends boolean = true> {
+  googleMaps?:
+    | T
+    | {
+        apiKey?: T;
+      };
+  recaptcha?:
+    | T
+    | {
+        siteKey?: T;
+        secretKey?: T;
       };
   updatedAt?: T;
   createdAt?: T;
