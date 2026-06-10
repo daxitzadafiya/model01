@@ -6,7 +6,12 @@ import React, { useEffect, useState } from 'react'
 
 import { PropertyDetailView } from '@/components/PropertyDetail/PropertyDetailView'
 import { normalizeCRMAmenities, normalizeCRMPropertyEnergy } from '@/utilities/crmAmenities'
-import { fetchCRMPropertyDetail, fetchCRMRelatedProperties } from '@/utilities/crmPropertyDetail'
+import { fetchCRMPropertyDetail } from '@/utilities/crmPropertyDetail'
+import {
+  fetchCRMSimilarProperties,
+  isSimilarPropertySold,
+  resolveSimilarListingContext,
+} from '@/utilities/crmSimilarProperties'
 import type { Form } from '@/payload-types'
 import { normalizeCRMListProperty, normalizeCRMProperty } from '@/utilities/crmProperties'
 import {
@@ -69,6 +74,8 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
   const [relatedProperties, setRelatedProperties] = useState<
     ReturnType<typeof normalizeCRMListProperty>[]
   >([])
+  const [similarPropertiesLoading, setSimilarPropertiesLoading] = useState(false)
+  const [showSimilarSoldBadge, setShowSimilarSoldBadge] = useState(false)
   const [brochureUrl, setBrochureUrl] = useState<string | undefined>()
   const [videos, setVideos] = useState<ReturnType<typeof resolveCRMPropertyVideos>>([])
   const [inquiry, setInquiry] = useState<PropertyInquiryContext>({})
@@ -119,22 +126,38 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
 
         document.title = `${normalized.title} | Roumpos Real Estate`
 
-        const similarRefs = Array.isArray(raw.similar_commercials)
-          ? (raw.similar_commercials as Array<string | number>)
-          : []
+        const listingContext = resolveSimilarListingContext(raw)
+        setShowSimilarSoldBadge(isSimilarPropertySold(raw))
+        setSimilarPropertiesLoading(true)
+        setRelatedProperties([])
 
-        if (similarRefs.length > 0) {
-          const relatedRaw = await fetchCRMRelatedProperties(similarRefs, 3)
-          if (!controller.signal.aborted) {
-            setRelatedProperties(
-              relatedRaw
-                .map((item) => normalizeCRMListProperty(item, activeLocale))
-                .filter((item) => item.reference !== normalized.reference),
-            )
+        void (async () => {
+          try {
+            const similarRaw = await fetchCRMSimilarProperties({
+              property: raw,
+              limit: 5,
+              listingContext,
+              signal: controller.signal,
+            })
+
+            if (!controller.signal.aborted) {
+              setRelatedProperties(
+                similarRaw.map((item) =>
+                  normalizeCRMListProperty(item, activeLocale, {
+                    listingMode: listingContext === 'rent' ? 'rent' : 'sale',
+                  }),
+                ),
+              )
+            }
+          } catch (similarError) {
+            if ((similarError as Error).name !== 'AbortError') {
+              console.error('Failed to load similar properties', similarError)
+              if (!controller.signal.aborted) setRelatedProperties([])
+            }
+          } finally {
+            if (!controller.signal.aborted) setSimilarPropertiesLoading(false)
           }
-        } else {
-          setRelatedProperties([])
-        }
+        })()
       } catch (error) {
         if ((error as Error).name === 'AbortError') return
         console.error('Failed to load property detail', error)
@@ -163,6 +186,8 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
       amenities={amenities}
       energy={energy}
       relatedProperties={relatedProperties}
+      similarPropertiesLoading={similarPropertiesLoading}
+      showSimilarSoldBadge={showSimilarSoldBadge}
       brochureUrl={brochureUrl}
       videos={videos}
       latitude={latitude}

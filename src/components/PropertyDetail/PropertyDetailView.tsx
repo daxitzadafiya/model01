@@ -34,6 +34,8 @@ type Props = {
   amenities: CRMAmenity[]
   energy: CRMPropertyEnergy | null
   relatedProperties: NormalizedListProperty[]
+  similarPropertiesLoading?: boolean
+  showSimilarSoldBadge?: boolean
   brochureUrl?: string
   videos?: CRMPropertyVideoItem[]
   latitude?: number
@@ -77,6 +79,8 @@ export const PropertyDetailView: React.FC<Props> = ({
   amenities,
   energy,
   relatedProperties,
+  similarPropertiesLoading = false,
+  showSimilarSoldBadge = false,
   brochureUrl,
   videos = [],
   latitude,
@@ -202,7 +206,11 @@ export const PropertyDetailView: React.FC<Props> = ({
         />
       )}
 
-      <PropertyDetailRelated properties={relatedProperties} portfolioHref={portfolioHref} />
+      <PropertyDetailRelated
+        properties={relatedProperties}
+        loading={similarPropertiesLoading}
+        showSoldBadge={showSimilarSoldBadge}
+      />
     </main>
   )
 }

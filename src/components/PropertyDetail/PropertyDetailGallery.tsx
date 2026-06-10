@@ -277,7 +277,11 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
       <div
         ref={mainViewportRef}
         className={`group/main relative aspect-[4/3] overflow-hidden rounded-lg shadow-xl bg-surface-container-high ${
-          hasMultiple ? (isDragging ? 'cursor-grabbing select-none' : 'cursor-grab') : 'cursor-pointer'
+          hasMultiple
+            ? isDragging
+              ? 'cursor-grabbing select-none'
+              : 'cursor-grab'
+            : 'cursor-pointer'
         }`}
         style={hasMultiple ? { touchAction: 'none' } : undefined}
         onPointerDown={hasMultiple ? handleMainPointerDown : undefined}
@@ -343,7 +347,10 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
               aria-label="Previous image"
               disabled={isTransitioning}
               onPointerDown={(event) => event.stopPropagation()}
-              onClick={() => goTo(activeIndex - 1)}
+              onClick={(event) => {
+                event.stopPropagation()
+                goTo(activeIndex - 1)
+              }}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 transition-all cursor-pointer disabled:opacity-60"
             >
               <ChevronLeft size={24} />
@@ -353,7 +360,10 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
               aria-label="Next image"
               disabled={isTransitioning}
               onPointerDown={(event) => event.stopPropagation()}
-              onClick={() => goTo(activeIndex + 1)}
+              onClick={(event) => {
+                event.stopPropagation()
+                goTo(activeIndex + 1)
+              }}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/40 transition-all cursor-pointer disabled:opacity-60"
             >
               <ChevronRight size={24} />
@@ -398,7 +408,7 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
           aria-label="Property image thumbnails"
         >
           <div
-            className={`flex gap-3 ease-in-out ${needsThumbSlider ? 'transition-transform' : ''}`}
+            className={`flex gap-3 justify-start ease-in-out ${needsThumbSlider ? 'transition-transform' : ''}`}
             style={
               needsThumbSlider
                 ? {
@@ -417,17 +427,13 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
                   aria-label={`Show image ${index + 1} of ${slides.length}`}
                   aria-current={isActive ? 'true' : undefined}
                   onClick={() => goTo(index)}
-                  className={`aspect-square rounded cursor-pointer p-0 box-border border-[3px] ease-in-out transition-all ${
-                    needsThumbSlider ? '' : 'min-w-0 flex-1'
-                  } ${
+                  className={`aspect-square shrink-0 rounded cursor-pointer p-0 box-border border-[3px] ease-in-out transition-all ${
                     isActive
                       ? 'border-tertiary opacity-100'
                       : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                   style={{
-                    ...(needsThumbSlider && thumbWidth > 0
-                      ? { width: thumbWidth, flexShrink: 0 }
-                      : {}),
+                    ...(thumbWidth > 0 ? { width: thumbWidth } : undefined),
                     ...transitionStyle,
                   }}
                 >

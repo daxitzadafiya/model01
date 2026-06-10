@@ -24,7 +24,7 @@ import type { PropertyListFilters } from '@/utilities/crmProperties'
 import { useTranslation } from '@/utilities/translateClient'
 import { useReveal } from '@/utilities/useReveal'
 
-const PROPERTY_FOR_SALE_PATH = '/property-for-sale'
+const ALL_PROPERTIES_PATH = '/all-properties'
 
 type Props = Extract<Page['layout'][0], { blockType: 'heroBlock' }>
 
@@ -88,7 +88,7 @@ const HeroBlockContent: React.FC<Props> = ({
     e.preventDefault()
     if (!hasActivePropertyFilters(searchFilters)) return
     savePendingPropertyListFilters(searchFilters)
-    router.push(PROPERTY_FOR_SALE_PATH)
+    router.push(ALL_PROPERTIES_PATH)
   }
 
   const linkProps =
@@ -97,26 +97,30 @@ const HeroBlockContent: React.FC<Props> = ({
       : { type: 'custom' as const, url: '/property-for-sale', label: buttonText }
 
   return (
-    <div ref={ref}>
-      <section className="relative min-h-dvh md:h-screen w-full overflow-hidden">
+    <div ref={ref} className="relative bg-surface">
+      <section className="relative min-h-dvh md:h-screen w-full overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 hero-gradient z-10"></div>
         {typeof backgroundImage === 'object' && backgroundImage !== null && (
           <div className="absolute inset-0 w-full h-full object-cover">
             <Media resource={backgroundImage} fill priority imgClassName="object-cover" />
           </div>
         )}
-        <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-margin-mobile md:px-margin-desktop pt-20 pb-32 md:pt-8 md:pb-0">
-          <h1 className="font-headline-lg-mobile md:font-display-lg text-headline-lg-mobile md:text-display-lg text-white max-w-4xl mb-6 md:mb-8 reveal">
-            {title}
-          </h1>
-          <CMSLink {...linkProps} appearance="inline" className={buttonClassName} />
+        <div className="relative z-20 flex w-full flex-col items-center justify-center text-center px-margin-mobile md:px-margin-desktop py-24 md:py-8">
+          <div className="flex w-full max-w-4xl flex-col items-center">
+            <h1 className="font-headline-lg-mobile md:font-display-lg text-headline-lg-mobile md:text-display-lg text-white text-center w-full mb-6 md:mb-8 reveal">
+              {title}
+            </h1>
+            <CMSLink {...linkProps} appearance="inline" className={buttonClassName} />
+          </div>
         </div>
-        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden  flex-col items-center animate-bounce text-white/70 md:hidden sm:hidden">
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden  flex-col items-center animate-bounce text-white/70">
           <span className="font-label-sm text-label-sm mb-2">{scrollLabel}</span>
           <ChevronDown size={20} />
         </div>
       </section>
 
+      {/* Floating Search */}
       {showSearch && (
         <div className="relative z-30 max-w-5xl mx-auto -mt-10 md:-mt-16 px-margin-mobile md:px-margin-desktop">
           <form

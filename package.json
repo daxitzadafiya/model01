@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@googlemaps/markerclusterer": "^2.6.2",
+    "@libsql/client": "^0.17.3",
     "@payloadcms/admin-bar": "3.85.0",
     "@payloadcms/db-sqlite": "3.85.0",
     "@payloadcms/email-nodemailer": "3.85.0",
