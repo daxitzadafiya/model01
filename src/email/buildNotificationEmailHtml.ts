@@ -12,8 +12,8 @@ export type NotificationEmailField = {
 }
 
 export type NotificationEmailContent = {
-  heading: string
-  intro: string
+  name: string
+  contentHtml?: string
   fields: NotificationEmailField[]
   propertyReference?: string
   refLabel: string
@@ -112,6 +112,19 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
           margin-bottom: 20px !important;
         }
       }
+      .email-content img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 16px 0;
+        border-radius: 6px;
+      }
+      .email-content p {
+        margin: 0 0 14px;
+      }
+      .email-content a {
+        color: ${palette.accent};
+      }
     </style>
   </head>
   <body style="margin:0;padding:0;background:${palette.pageBackground};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${palette.textPrimary};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
@@ -144,11 +157,15 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
               </td>
             </tr>
 
-            <!-- Heading & intro -->
+            <!-- Heading & content -->
             <tr>
               <td class="content-td" style="padding:32px 40px 12px;background:${palette.cardBackground};" bgcolor="${palette.cardBackground}">
-                <h1 style="margin:0 0 10px;font-size:28px;line-height:1.3;color:${palette.textPrimary};font-family:Georgia,'Times New Roman',Times,serif;font-weight:400;letter-spacing:0.3px;">${escapeHtml(content.heading)}</h1>
-                <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:${palette.textMuted};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${escapeHtml(content.intro)}</p>
+                <h1 style="margin:0 0 10px;font-size:28px;line-height:1.3;color:${palette.textPrimary};font-family:Georgia,'Times New Roman',Times,serif;font-weight:400;letter-spacing:0.3px;">${escapeHtml(content.name)}</h1>
+                ${
+                  content.contentHtml
+                    ? `<div class="email-content" style="margin:0 0 24px;font-size:14px;line-height:1.7;color:${palette.textMuted};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${content.contentHtml}</div>`
+                    : ''
+                }
               </td>
             </tr>
 
@@ -188,7 +205,6 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
             <tr>
               <td class="footer-td" style="padding:28px 40px 36px;background:${palette.footerBackground};" bgcolor="${palette.footerBackground}">
                 <p style="margin:0;font-size:12px;line-height:1.6;color:${palette.textMuted};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${escapeHtml(content.footer)}</p>
-                <p style="margin:10px 0 0;font-size:12px;line-height:1.6;color:${palette.accent};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;letter-spacing:0.8px;font-weight:600;text-transform:uppercase;">${escapeHtml(content.siteName)}</p>
               </td>
             </tr>
 

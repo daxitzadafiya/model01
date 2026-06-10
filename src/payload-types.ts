@@ -3587,7 +3587,7 @@ export interface PropertyFilter {
   createdAt?: string | null;
 }
 /**
- * SMTP credentials and notification recipient for form submissions and other site emails. Credentials are stored in the database — not in environment variables.
+ * SMTP credentials, notification recipient, and client confirmation email templates.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "emailSettings".
@@ -3595,7 +3595,7 @@ export interface PropertyFilter {
 export interface EmailSetting {
   id: number;
   enabled?: boolean | null;
-  smtp?: {
+  smtp: {
     /**
      * SMTP server hostname (e.g. smtp.gmail.com).
      */
@@ -3614,7 +3614,7 @@ export interface EmailSetting {
      */
     password: string;
   };
-  sender?: {
+  sender: {
     /**
      * From address shown on outgoing emails.
      */
@@ -3624,11 +3624,62 @@ export interface EmailSetting {
      */
     fromName: string;
   };
-  notifications?: {
+  notifications: {
     /**
      * Where contact and property inquiry notifications are delivered (your team inbox).
      */
     recipientAddress: string;
+  };
+  clientConfirmation?: {
+    enabled?: boolean | null;
+    contact?: {
+      /**
+       * Email subject line. Use {{reference}} to insert the property reference on inquiry emails. Switch locale in the admin bar to edit each language.
+       */
+      subject: string;
+      /**
+       * Design the full email like a document. Use {{reference}} anywhere in the body to insert the property reference on inquiry emails. Switch locale in the admin bar for other languages.
+       */
+      content?: {
+        root: {
+          type: string;
+          children: {
+            type: any;
+            version: number;
+            [k: string]: unknown;
+          }[];
+          direction: ('ltr' | 'rtl') | null;
+          format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+          indent: number;
+          version: number;
+        };
+        [k: string]: unknown;
+      } | null;
+    };
+    propertyInquiry?: {
+      /**
+       * Email subject line. Use {{reference}} to insert the property reference on inquiry emails. Switch locale in the admin bar to edit each language.
+       */
+      subject: string;
+      /**
+       * Design the full email like a document. Use {{reference}} anywhere in the body to insert the property reference on inquiry emails. Switch locale in the admin bar for other languages.
+       */
+      content?: {
+        root: {
+          type: string;
+          children: {
+            type: any;
+            version: number;
+            [k: string]: unknown;
+          }[];
+          direction: ('ltr' | 'rtl') | null;
+          format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+          indent: number;
+          version: number;
+        };
+        [k: string]: unknown;
+      } | null;
+    };
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -4031,6 +4082,23 @@ export interface EmailSettingsSelect<T extends boolean = true> {
     | T
     | {
         recipientAddress?: T;
+      };
+  clientConfirmation?:
+    | T
+    | {
+        enabled?: T;
+        contact?:
+          | T
+          | {
+              subject?: T;
+              content?: T;
+            };
+        propertyInquiry?:
+          | T
+          | {
+              subject?: T;
+              content?: T;
+            };
       };
   updatedAt?: T;
   createdAt?: T;

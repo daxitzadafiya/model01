@@ -29,6 +29,10 @@ import { SocialRowLabel as SocialRowLabel_7301750c868361ace60ca144eb5a30e1 } fro
 import { RowLabel as RowLabel_1f6ff6ff633e3695d348f4f3c58f1466 } from '@/Footer/RowLabel'
 import { CertificationRowLabel as CertificationRowLabel_6f419d2a29ab0c968cc0b28e4576f48a } from '@/Footer/CertificationRowLabel'
 import { LegalRowLabel as LegalRowLabel_06a46d974082a28d7949f6a827bd56a1 } from '@/Footer/LegalRowLabel'
+import { UploadFeatureClient as UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { OrderedListFeatureClient as OrderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { UnorderedListFeatureClient as UnorderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { AlignFeatureClient as AlignFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { default as default_c8f97ec34ecb4c45dad678c6203d9cb0 } from '@/components/Icon/Icon'
 import { default as default_a0bd5f2fa532ef2166f77171a2b9828a } from '@/components/Logo/Logo'
 import { default as default_3a0d2675453b772f02c1de6555319ff1 } from '@/components/ForgotPasswordView'
@@ -67,6 +71,10 @@ export const importMap = {
   "@/Footer/RowLabel#RowLabel": RowLabel_1f6ff6ff633e3695d348f4f3c58f1466,
   "@/Footer/CertificationRowLabel#CertificationRowLabel": CertificationRowLabel_6f419d2a29ab0c968cc0b28e4576f48a,
   "@/Footer/LegalRowLabel#LegalRowLabel": LegalRowLabel_06a46d974082a28d7949f6a827bd56a1,
+  "@payloadcms/richtext-lexical/client#UploadFeatureClient": UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#OrderedListFeatureClient": OrderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#UnorderedListFeatureClient": UnorderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#AlignFeatureClient": AlignFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/components/Icon/Icon#default": default_c8f97ec34ecb4c45dad678c6203d9cb0,
   "@/components/Logo/Logo#default": default_a0bd5f2fa532ef2166f77171a2b9828a,
   "@/components/ForgotPasswordView#default": default_3a0d2675453b772f02c1de6555319ff1,
