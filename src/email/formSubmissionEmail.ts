@@ -6,6 +6,7 @@ import type { Payload } from 'payload'
 import { buildClientConfirmationEmailHtml } from '@/email/buildClientConfirmationEmailHtml'
 import { buildNotificationEmailHtml } from '@/email/buildNotificationEmailHtml'
 import { lexicalToEmailHtml } from '@/email/lexicalToEmailHtml'
+import { resolveEmailLogoDataUri } from '@/email/resolveEmailLogoDataUri'
 import { getEmailSettings, isEmailConfigured } from '@/settings/email/server'
 import { sendConfiguredEmail } from '@/email/sendConfiguredEmail'
 import { getEmailFieldLabelMapping } from '@/utilities/formFieldLabels'
@@ -104,7 +105,8 @@ function isPropertyInquirySubmission(
   submissionData: SubmissionField[] | null | undefined,
 ): boolean {
   return Boolean(
-    getSubmissionValue(submissionData, 'property') || getSubmissionValue(submissionData, 'reference'),
+    getSubmissionValue(submissionData, 'property') ||
+    getSubmissionValue(submissionData, 'reference'),
   )
 }
 
@@ -336,6 +338,8 @@ async function sendNotificationEmail({
     ? await formatPropertyReferenceForEmail(payload, normalizedLocale, propertyReference)
     : undefined
 
+  const logoSrc = await resolveEmailLogoDataUri(logo)
+
   const notificationHtml = buildNotificationEmailHtml({
     name: teamName,
     contentHtml: teamContentHtml,
@@ -346,6 +350,7 @@ async function sendNotificationEmail({
     submittedAt: formatSubmittedAt(normalizedLocale),
     footer: footerText,
     logo,
+    logoSrc,
     siteName,
     theme: theme?.colors,
   })
@@ -376,6 +381,7 @@ async function sendNotificationEmail({
   const confirmationHtml = buildClientConfirmationEmailHtml({
     contentHtml: clientContentHtml || undefined,
     logo,
+    logoSrc,
     theme: theme?.colors,
   })
 
@@ -426,7 +432,7 @@ export async function sendFormSubmissionNotificationEmail({
   }
 
   const propertyReference = isPropertyInquiry
-    ? getSubmissionValue(submissionData, 'reference')
+    ? getSubmissionValue(submissionData, 'property')
     : undefined
 
   await sendNotificationEmail({

@@ -21,6 +21,8 @@ export type NotificationEmailContent = {
   submittedAt: string
   footer: string
   logo?: Logo | null
+  /** Resolved logo src (base64 data URI or absolute URL). */
+  logoSrc?: string
   siteName: string
   theme?: Partial<NotificationEmailTheme> | null
 }
@@ -44,7 +46,8 @@ function toAbsoluteUrl(path: string, serverURL: string): string {
 export function buildNotificationEmailHtml(content: NotificationEmailContent): string {
   const serverURL = getServerSideURL()
   const logoSources = getLogoSources(content.logo)
-  const logoUrl = toAbsoluteUrl(logoSources.lightSrc, serverURL)
+  const logoUrl =
+    content.logoSrc ?? toAbsoluteUrl(logoSources.lightSrc, serverURL)
   const palette = buildNotificationEmailPalette(content.theme)
 
   // Fields structured as clean, self-contained visual detail blocks with left border accents

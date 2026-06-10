@@ -9,6 +9,8 @@ import { getServerSideURL } from '@/utilities/getURL'
 export type ClientConfirmationEmailContent = {
   contentHtml?: string
   logo?: Logo | null
+  /** Resolved logo src (base64 data URI or absolute URL). */
+  logoSrc?: string
   theme?: Partial<NotificationEmailTheme> | null
 }
 
@@ -31,7 +33,8 @@ function toAbsoluteUrl(path: string, serverURL: string): string {
 export function buildClientConfirmationEmailHtml(content: ClientConfirmationEmailContent): string {
   const serverURL = getServerSideURL()
   const logoSources = getLogoSources(content.logo)
-  const logoUrl = toAbsoluteUrl(logoSources.lightSrc, serverURL)
+  const logoUrl =
+    content.logoSrc ?? toAbsoluteUrl(logoSources.lightSrc, serverURL)
   const palette = buildNotificationEmailPalette(content.theme)
 
   const bodyHtml = content.contentHtml
