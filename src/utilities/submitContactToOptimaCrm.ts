@@ -1,5 +1,6 @@
 import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { crmServerFetch } from '@/utilities/crmServerFetch'
+import { mapLocaleToBrochurePdfLang } from '@/utilities/propertyBrochure'
 
 type SubmissionField = {
   field: string
@@ -7,7 +8,20 @@ type SubmissionField = {
 }
 
 const CONTACT_SOURCE = 'web-client'
-const CONTACT_SCP = ''
+
+const FIRST_NAME_ALIASES = [
+  'forename',
+  'first_name',
+  'first-name',
+  'firstname',
+  'firstName',
+] as const
+
+const FULL_NAME_ALIASES = ['full-name', 'full_name', 'fullname', 'fullName'] as const
+
+const SURNAME_ALIASES = ['surname', 'last_name', 'last-name', 'lastname', 'lastName'] as const
+
+const PASSTHROUGH_FIELDS = ['email', 'phone', 'subject', 'p_type', 'transaction_types'] as const
 
 /** Fields sent to Optima as JSON booleans (not strings). */
 const BOOLEAN_FIELDS = new Set(['gdpr_status'])
@@ -61,6 +75,64 @@ function submissionDataToCrmPayload(
     } else {
       out[item.field] = item.value != null ? String(item.value) : ''
     }
+  }
+
+  return out
+}
+
+function pickStringField(
+  payload: Record<string, string | boolean>,
+  keys: string[],
+): string | undefined {
+  for (const key of keys) {
+    const value = payload[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return undefined
+}
+
+/**
+ * Maps contact and property-inquiry submissions to the Optima CRM accounts/index shape.
+ */
+function mapContactToOptimaPayload(
+  payload: Record<string, string | boolean>,
+  locale?: string,
+): Record<string, string | boolean> {
+  const out: Record<string, string | boolean> = {}
+
+  const forename =
+    pickStringField(payload, [...FIRST_NAME_ALIASES]) ??
+    (!pickStringField(payload, [...SURNAME_ALIASES])
+      ? pickStringField(payload, [...FULL_NAME_ALIASES])
+      : undefined)
+
+  const surname = pickStringField(payload, [...SURNAME_ALIASES])
+  const message = pickStringField(payload, ['message', 'comments'])
+  const property = pickStringField(payload, ['property', 'reference', '_id'])
+  const toEmail = pickStringField(payload, ['to_email', 'assigned_to'])
+
+  if (forename) out.forename = forename
+  if (surname) out.surname = surname
+
+  for (const key of PASSTHROUGH_FIELDS) {
+    const value = payload[key]
+    if (typeof value === 'string' && value.trim()) out[key] = value.trim()
+  }
+
+  if (payload.gdpr_status !== undefined) {
+    out.gdpr_status = toBoolean(payload.gdpr_status)
+  }
+
+  if (message) {
+    out.message = message
+    out.comments = message
+  }
+
+  if (property) out.property = property
+  if (toEmail) out.to_email = toEmail
+
+  if (locale?.trim()) {
+    out.language = mapLocaleToBrochurePdfLang(locale)
   }
 
   return out
@@ -144,14 +216,16 @@ async function parseOptimaCrmResponse(response: Response): Promise<unknown> {
  */
 export async function submitContactToOptimaCrm(
   submissionData?: SubmissionField[] | null,
+  locale?: string,
 ): Promise<unknown> {
   const endpoint = await buildAccountsIndexUrl()
+  const rawPayload = submissionDataToCrmPayload(submissionData)
   const payload = {
-    ...submissionDataToCrmPayload(submissionData),
+    ...mapContactToOptimaPayload(rawPayload, locale),
     source: CONTACT_SOURCE,
-    scp: CONTACT_SCP,
   }
-  console.log('payload', payload)
+  console.log('endpoint:::::', endpoint)
+  console.log('payload:::::', payload)
 
   let response: Response
 

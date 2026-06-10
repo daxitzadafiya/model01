@@ -11,6 +11,8 @@ import RichText from '@/components/RichText'
 import { fields as defaultFields } from '@/blocks/Form/fields'
 import { useFormSubmission } from '@/blocks/Form/useFormSubmission'
 
+import { useTranslation } from '@/utilities/translateClient'
+
 import { contactFields } from './contactFields'
 
 type HiddenFieldValue = string | boolean
@@ -67,6 +69,20 @@ export const ContactForm: React.FC<Props> = ({
   const { settings: integrations } = useIntegrationsSettings()
   const recaptchaSiteKey = integrations.recaptchaSiteKey
   const recaptchaConfigured = Boolean(recaptchaSiteKey)
+  const recaptchaRequiredMessage = useTranslation(
+    'form.validation.recaptcha.required',
+    'Please complete the reCAPTCHA verification.',
+  )
+  const recaptchaHint = useTranslation(
+    'form.validation.recaptcha.hint',
+    'Please verify you are not a robot.',
+  )
+  const submittingLabel = useTranslation('form.submit.submitting', 'Submitting…')
+  const translatedFormTitle = useTranslation('form.title.contact', formTitle || 'Contact Form')
+  const translatedSubmitLabel = useTranslation(
+    'form.submit.connectNow',
+    submitButtonLabel || 'Connect now',
+  )
   const [hasMounted, setHasMounted] = useState(false)
   const recaptchaEnabled = hasMounted && recaptchaConfigured
   const [recaptchaToken, setRecaptchaToken] = useState('')
@@ -226,7 +242,7 @@ export const ContactForm: React.FC<Props> = ({
     if (isLoading) return
 
     if (recaptchaConfigured && !recaptchaToken) {
-      setRecaptchaValidationError('This field is required')
+      setRecaptchaValidationError(recaptchaRequiredMessage)
       return
     }
 
@@ -299,7 +315,7 @@ export const ContactForm: React.FC<Props> = ({
           )}
           {(heading || formTitle) && (
             <h3 className="font-headline-md text-headline-md text-primary text-center">
-              {heading || formTitle}
+              {heading || translatedFormTitle}
             </h3>
           )}
 
@@ -381,9 +397,7 @@ export const ContactForm: React.FC<Props> = ({
                 <p className="font-body-sm text-body-sm text-error">{recaptchaLoadError}</p>
               )}
               {isRecaptchaReady && !recaptchaToken && (
-                <p className="font-body-sm text-body-sm text-on-surface-variant">
-                  Please verify you are not a robot.
-                </p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">{recaptchaHint}</p>
               )}
               {recaptchaValidationError && (
                 <p className="mt-2 text-red-500 text-sm">{recaptchaValidationError}</p>
@@ -403,7 +417,7 @@ export const ContactForm: React.FC<Props> = ({
             type="submit"
           >
             {isLoading && <Loader2 className="animate-spin" size={18} strokeWidth={2} />}
-            {isLoading ? 'Submitting…' : submitLabelOverride || submitButtonLabel}
+            {isLoading ? submittingLabel : submitLabelOverride || translatedSubmitLabel}
           </button>
 
           {trustNote && (

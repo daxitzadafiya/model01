@@ -35,7 +35,7 @@ const EnergyGradeBar: React.FC<EnergyGradeBarProps> = ({ grade, style, isActive 
 
   return (
     <div
-      className={`flex items-center ${isActive ? 'h-11 py-0.5' : 'h-9 opacity-40 saturate-[0.35]'}`}
+      className={`flex items-center ${isActive ? 'h-11 py-0.5' : 'h-9 opacity-60 saturate-[0.35]'}`}
       aria-current={isActive ? 'true' : undefined}
     >
       <div

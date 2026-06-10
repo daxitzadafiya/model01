@@ -116,12 +116,7 @@ export const NavDropdown: React.FC<Props> = ({
   }
 
   return (
-    <div
-      ref={rootRef}
-      className="relative"
-      onMouseEnter={openMenu}
-      onMouseLeave={scheduleClose}
-    >
+    <div ref={rootRef} className="relative" onMouseEnter={openMenu} onMouseLeave={scheduleClose}>
       <button
         type="button"
         aria-expanded={open}

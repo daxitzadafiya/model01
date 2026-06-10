@@ -44,13 +44,12 @@ export function buildPropertyInquiryHiddenFields(
   context: PropertyInquiryContext,
 ): Array<{ field: string; value: string }> {
   const fields: Array<{ field: string; value: string }> = [
-    { field: '_id', value: context.reference ?? '' },
-    { field: 'reference', value: context.reference ?? '' },
+    { field: 'property', value: context.reference ?? '' },
     { field: 'p_type', value: 'commercial_property' },
     { field: 'interest', value: context.interestId ?? '' },
-    { field: 'assigned_to', value: context.assignedTo ?? '' },
+    { field: 'to_email', value: context.assignedTo ?? '' },
     { field: 'transaction_types', value: 'Buy' },
-    { field: 'scp', value: '' },
+    { field: 'source', value: 'web-client' },
   ]
 
   if (context.otherReference) {

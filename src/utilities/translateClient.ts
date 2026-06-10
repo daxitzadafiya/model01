@@ -3,6 +3,11 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
 import {
+  getFieldInvalidEmailValidationMapping,
+  getFieldLabelMapping,
+  getFieldRequiredValidationMapping,
+} from '@/utilities/formFieldLabels'
+import {
   getTranslationSnapshot,
   isTranslationResolved,
   requestTranslation,
@@ -71,6 +76,21 @@ export function useTranslation(key: string, fallbackValue: string): string {
     () => getTranslationSnapshot(key, locale, fallbackValue),
     () => fallbackValue,
   )
+}
+
+export function useFormFieldLabel(fieldName: string, labelFromForm?: string): string {
+  const { key, fallback } = getFieldLabelMapping(fieldName, labelFromForm)
+  return useTranslation(key, fallback)
+}
+
+export function useFormFieldRequiredMessage(fieldName: string, labelFromForm?: string): string {
+  const { key, fallback } = getFieldRequiredValidationMapping(fieldName, labelFromForm)
+  return useTranslation(key, fallback)
+}
+
+export function useFormFieldInvalidEmailMessage(fieldName: string): string {
+  const { key, fallback } = getFieldInvalidEmailValidationMapping(fieldName)
+  return useTranslation(key, fallback)
 }
 
 function mapTranslatedOptions<T extends { value: string; label: string }>(

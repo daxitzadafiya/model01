@@ -178,7 +178,10 @@ export const plugins: Plugin[] = [
             }
 
             try {
-              await submitContactToOptimaCrm(data?.submissionData)
+              await submitContactToOptimaCrm(
+                data?.submissionData,
+                typeof data?.submissionLocale === 'string' ? data.submissionLocale : undefined,
+              )
             } catch (error) {
               const message =
                 error instanceof Error && error.message.trim()

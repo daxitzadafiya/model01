@@ -22,6 +22,12 @@ import {
 } from '@/components/ui/select'
 import { countryOptions } from '@/blocks/Form/Country/options'
 import { CMSLink } from '@/components/Link'
+import {
+  useFormFieldInvalidEmailMessage,
+  useFormFieldLabel,
+  useFormFieldRequiredMessage,
+  useTranslation,
+} from '@/utilities/translateClient'
 
 const inputClassName =
   'w-full rounded-xl border border-outline-variant/35 bg-white pl-10 pr-4 py-3.5 text-on-surface outline-none transition-colors placeholder:text-on-surface-variant/60 focus:border-tertiary focus-visible:ring-4 focus-visible:ring-tertiary/20'
@@ -88,6 +94,8 @@ export const ContactTextField: React.FC<BaseFieldProps> = ({
   defaultValue,
 }) => {
   const phoneField = isPhoneField(name, label)
+  const translatedLabel = useFormFieldLabel(name, label)
+  const requiredMessage = useFormFieldRequiredMessage(name, label)
 
   return (
     <ContactFieldWrapper
@@ -99,7 +107,7 @@ export const ContactTextField: React.FC<BaseFieldProps> = ({
           <User size={18} strokeWidth={2} />
         )
       }
-      label={label}
+      label={translatedLabel}
       name={name}
       register={register}
       required={required}
@@ -108,9 +116,9 @@ export const ContactTextField: React.FC<BaseFieldProps> = ({
         className={inputClassName}
         defaultValue={defaultValue}
         id={name}
-        placeholder={label}
+        placeholder={translatedLabel}
         type={phoneField ? 'tel' : 'text'}
-        {...register(name, { required })}
+        {...register(name, { required: required ? requiredMessage : false })}
       />
     </ContactFieldWrapper>
   )
@@ -123,25 +131,37 @@ export const ContactEmailField: React.FC<BaseFieldProps> = ({
   errors,
   register,
   defaultValue,
-}) => (
-  <ContactFieldWrapper
-    errors={errors}
-    icon={<Mail size={18} strokeWidth={2} />}
-    label={label}
-    name={name}
-    register={register}
-    required={required}
-  >
-    <input
-      className={inputClassName}
-      defaultValue={defaultValue}
-      id={name}
-      placeholder={label}
-      type="email"
-      {...register(name, { pattern: /^\S[^\s@]*@\S+$/, required })}
-    />
-  </ContactFieldWrapper>
-)
+}) => {
+  const translatedLabel = useFormFieldLabel(name, label)
+  const requiredMessage = useFormFieldRequiredMessage(name, label)
+  const invalidEmailMessage = useFormFieldInvalidEmailMessage(name)
+
+  return (
+    <ContactFieldWrapper
+      errors={errors}
+      icon={<Mail size={18} strokeWidth={2} />}
+      label={translatedLabel}
+      name={name}
+      register={register}
+      required={required}
+    >
+      <input
+        className={inputClassName}
+        defaultValue={defaultValue}
+        id={name}
+        placeholder={translatedLabel}
+        type="email"
+        {...register(name, {
+          pattern: {
+            value: /^\S[^\s@]*@\S+$/,
+            message: invalidEmailMessage,
+          },
+          required: required ? requiredMessage : false,
+        })}
+      />
+    </ContactFieldWrapper>
+  )
+}
 
 export const ContactNumberField: React.FC<BaseFieldProps> = ({
   name,
@@ -150,25 +170,30 @@ export const ContactNumberField: React.FC<BaseFieldProps> = ({
   errors,
   register,
   defaultValue,
-}) => (
-  <ContactFieldWrapper
-    errors={errors}
-    icon={<Phone size={18} strokeWidth={2} />}
-    label={label}
-    name={name}
-    register={register}
-    required={required}
-  >
-    <input
-      className={inputClassName}
-      defaultValue={defaultValue}
-      id={name}
-      placeholder={label}
-      type="tel"
-      {...register(name, { required })}
-    />
-  </ContactFieldWrapper>
-)
+}) => {
+  const translatedLabel = useFormFieldLabel(name, label)
+  const requiredMessage = useFormFieldRequiredMessage(name, label)
+
+  return (
+    <ContactFieldWrapper
+      errors={errors}
+      icon={<Phone size={18} strokeWidth={2} />}
+      label={translatedLabel}
+      name={name}
+      register={register}
+      required={required}
+    >
+      <input
+        className={inputClassName}
+        defaultValue={defaultValue}
+        id={name}
+        placeholder={translatedLabel}
+        type="tel"
+        {...register(name, { required: required ? requiredMessage : false })}
+      />
+    </ContactFieldWrapper>
+  )
+}
 
 export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> = ({
   name,
@@ -178,28 +203,35 @@ export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> 
   register,
   defaultValue,
   rows = 4,
-}) => (
-  <ContactFieldWrapper
-    errors={errors}
-    icon={<MessageSquare size={18} strokeWidth={2} />}
-    label={label}
-    name={name}
-    register={register}
-    required={required}
-    textareaIcon
-  >
-    <textarea
-      className={inputClassName}
-      defaultValue={defaultValue}
-      id={name}
-      placeholder={label}
-      rows={rows}
-      {...register(name, { required })}
-    />
-  </ContactFieldWrapper>
-)
+}) => {
+  const translatedLabel = useFormFieldLabel(name, label)
+  const requiredMessage = useFormFieldRequiredMessage(name, label)
 
-const ACCEPTANCE_ERROR = 'You must accept the Privacy Policy to continue.'
+  return (
+    <ContactFieldWrapper
+      errors={errors}
+      icon={<MessageSquare size={18} strokeWidth={2} />}
+      label={translatedLabel}
+      name={name}
+      register={register}
+      required={required}
+      textareaIcon
+    >
+      <textarea
+        className={inputClassName}
+        defaultValue={defaultValue}
+        id={name}
+        placeholder={translatedLabel}
+        rows={rows}
+        {...register(name, { required: required ? requiredMessage : false })}
+      />
+    </ContactFieldWrapper>
+  )
+}
+
+const PRIVACY_POLICY_VALIDATION_KEY = 'form.validation.privacyPolicy.required'
+const PRIVACY_POLICY_VALIDATION_FALLBACK =
+  'You must accept the Privacy Policy to continue.'
 
 const checkboxClassName =
   'mt-0.5 size-5 shrink-0 rounded-md border-outline-variant/50 shadow-none data-[state=checked]:border-tertiary data-[state=checked]:bg-tertiary data-[state=checked]:text-white focus-visible:ring-4 focus-visible:ring-tertiary/20'
@@ -235,40 +267,48 @@ export const ContactCheckboxField: React.FC<
     errors: Partial<FieldErrorsImpl>
     register: UseFormRegister<any>
   }
-> = ({ name, label, required, control, errors, defaultValue }) => (
-  <div>
-    <Controller
-      control={control}
-      defaultValue={defaultValue ?? false}
-      name={name}
-      rules={{
-        validate: (value) => value === true || ACCEPTANCE_ERROR,
-      }}
-      render={({ field: { onChange, value } }) => (
-        <label
-          className={cn(
-            'flex cursor-pointer items-start gap-3 rounded-xl border bg-white px-4 py-3.5 transition-colors border-outline-variant/35 hover:border-tertiary/40 has-focus-visible:border-tertiary has-focus-visible:ring-4 has-focus-visible:ring-tertiary/20',
-          )}
-          htmlFor={name}
-        >
-          <CheckboxUi
-            checked={Boolean(value)}
-            className={checkboxClassName}
-            id={name}
-            onCheckedChange={(checked) => onChange(checked === true)}
-          />
-          {label ? renderCheckboxLabel(label, required) : null}
-        </label>
+> = ({ name, label, required, control, errors, defaultValue }) => {
+  const translatedLabel = useFormFieldLabel(name, label)
+  const acceptanceError = useTranslation(
+    PRIVACY_POLICY_VALIDATION_KEY,
+    PRIVACY_POLICY_VALIDATION_FALLBACK,
+  )
+
+  return (
+    <div>
+      <Controller
+        control={control}
+        defaultValue={defaultValue ?? false}
+        name={name}
+        rules={{
+          validate: (value) => value === true || acceptanceError,
+        }}
+        render={({ field: { onChange, value } }) => (
+          <label
+            className={cn(
+              'flex cursor-pointer items-start gap-3 rounded-xl border bg-white px-4 py-3.5 transition-colors border-outline-variant/35 hover:border-tertiary/40 has-focus-visible:border-tertiary has-focus-visible:ring-4 has-focus-visible:ring-tertiary/20',
+            )}
+            htmlFor={name}
+          >
+            <CheckboxUi
+              checked={Boolean(value)}
+              className={checkboxClassName}
+              id={name}
+              onCheckedChange={(checked) => onChange(checked === true)}
+            />
+            {translatedLabel ? renderCheckboxLabel(translatedLabel, required) : null}
+          </label>
+        )}
+      />
+      {errors[name] && (
+        <p className="mt-2 flex items-start gap-1.5 font-body-sm text-body-sm text-error">
+          <AlertCircle className="shrink-0" size={16} strokeWidth={2} />
+          <span>{(errors[name]?.message as string) || acceptanceError}</span>
+        </p>
       )}
-    />
-    {errors[name] && (
-      <p className="mt-2 flex items-start gap-1.5 font-body-sm text-body-sm text-error">
-        <AlertCircle className="shrink-0" size={16} strokeWidth={2} />
-        <span>{(errors[name]?.message as string) || ACCEPTANCE_ERROR}</span>
-      </p>
-    )}
-  </div>
-)
+    </div>
+  )
+}
 
 export const contactFields = {
   text: ContactTextField,
@@ -284,12 +324,14 @@ function ContactSelectField(
   props: SelectField & { control: Control; errors: Partial<FieldErrorsImpl> },
 ) {
   const { name, control, errors, label, options, required, defaultValue } = props
+  const translatedLabel = useFormFieldLabel(name, label)
+  const requiredMessage = useFormFieldRequiredMessage(name, label)
 
   return (
     <div>
-      {label && (
+      {translatedLabel && (
         <label className={labelClassName} htmlFor={name}>
-          {label}
+          {translatedLabel}
           {required ? ' *' : ''}
         </label>
       )}
@@ -297,7 +339,7 @@ function ContactSelectField(
         control={control}
         defaultValue={defaultValue ?? ''}
         name={name}
-        rules={{ required }}
+        rules={{ required: required ? requiredMessage : false }}
         render={({ field: { onChange, value } }) => {
           const controlledValue = options.find((t) => t.value === value)
 
@@ -308,7 +350,7 @@ function ContactSelectField(
                 id={name}
               >
                 <Tag className={iconClassName} size={18} strokeWidth={2} />
-                <SelectValue placeholder={label} />
+                <SelectValue placeholder={translatedLabel} />
               </SelectTrigger>
               <SelectContent>
                 {options.map(({ label: optionLabel, value: optionValue }) => (
@@ -330,12 +372,14 @@ function ContactCountryField(
   props: CountryField & { control: Control; errors: Partial<FieldErrorsImpl> },
 ) {
   const { name, control, errors, label, required } = props
+  const translatedLabel = useFormFieldLabel(name, label)
+  const requiredMessage = useFormFieldRequiredMessage(name, label)
 
   return (
     <div>
-      {label && (
+      {translatedLabel && (
         <label className={labelClassName} htmlFor={name}>
-          {label}
+          {translatedLabel}
           {required ? ' *' : ''}
         </label>
       )}
@@ -343,7 +387,7 @@ function ContactCountryField(
         control={control}
         defaultValue=""
         name={name}
-        rules={{ required }}
+        rules={{ required: required ? requiredMessage : false }}
         render={({ field: { onChange, value } }) => {
           const controlledValue = countryOptions.find((t) => t.value === value)
 
@@ -354,7 +398,7 @@ function ContactCountryField(
                 id={name}
               >
                 <Globe className={iconClassName} size={18} strokeWidth={2} />
-                <SelectValue placeholder={label} />
+                <SelectValue placeholder={translatedLabel} />
               </SelectTrigger>
               <SelectContent>
                 {countryOptions.map(({ label: optionLabel, value: optionValue }) => (

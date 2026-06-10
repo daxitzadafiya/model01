@@ -4,7 +4,7 @@ import { PropertyDetailPageClient } from '@/components/PropertyDetail/PropertyDe
 import { getContactForm } from '@/utilities/getContactForm'
 
 export const metadata: Metadata = {
-  title: 'Property Details | Roumpos Real Estate',
+  title: 'Property Details | Horizon Estates',
 }
 
 export default async function PropertyDetailsPage() {

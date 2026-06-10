@@ -114,18 +114,7 @@ const MapContent: React.FC<Props> = ({
 export const PropertyMapView: React.FC<Props> = (props) => {
   const locale = useSiteLocale()
   const { settings: integrations } = useIntegrationsSettings()
-  const mapsApiKey = integrations.googleMapsApiKey
-
-  if (!mapsApiKey) {
-    return (
-      <div className="flex h-full items-center justify-center p-6 text-center">
-        <p className="font-body-md text-body-md text-on-surface-variant">
-          Google Maps is not configured. Add an API key under Globals → Integrations.
-        </p>
-      </div>
-    )
-  }
-
+  const mapsApiKey = integrations.googleMapsApiKey || ''
   return (
     <APIProvider apiKey={mapsApiKey} libraries={['marker', 'geometry']} language={locale}>
       <MapContent {...props} />

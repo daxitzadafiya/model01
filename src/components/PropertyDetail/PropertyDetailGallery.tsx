@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Expand } from 'lucide-react'
 
 import { PropertyDetailLightbox } from '@/components/PropertyDetail/PropertyDetailLightbox'
@@ -15,6 +15,13 @@ const TRANSITION_MS = 600
 const TRANSITION_EASING = 'cubic-bezier(0.25, 0.1, 0.25, 1)'
 const THUMBNAILS_VISIBLE = 7
 const THUMB_GAP_PX = 12
+const THUMB_GAPS_TOTAL_PX = THUMB_GAP_PX * (THUMBNAILS_VISIBLE - 1)
+const THUMB_SIZE_CSS = `calc((100% - ${THUMB_GAPS_TOTAL_PX}px) / ${THUMBNAILS_VISIBLE})`
+
+const computeThumbWidth = (viewportWidth: number) =>
+  viewportWidth > 0
+    ? Math.max(0, (viewportWidth - THUMB_GAPS_TOTAL_PX) / THUMBNAILS_VISIBLE)
+    : 0
 const DRAG_THRESHOLD_RATIO = 0.15
 const DRAG_CLICK_THRESHOLD = 5
 const EDGE_DRAG_RESISTANCE = 0.35
@@ -69,8 +76,8 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
   const activePointerIdRef = useRef<number | null>(null)
   const didDragRef = useRef(false)
 
-  const [thumbWidth, setThumbWidth] = useState(0)
   const [viewportWidth, setViewportWidth] = useState(0)
+  const thumbWidth = computeThumbWidth(viewportWidth)
 
   const [activeIndex, setActiveIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
@@ -95,25 +102,24 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
     [activeIndex, slideCount, thumbWidth, viewportWidth],
   )
 
-  useEffect(() => {
-    const element = thumbViewportRef.current
-    if (!element) return
+  useLayoutEffect(() => {
+    const thumbElement = thumbViewportRef.current
+    const mainElement = mainViewportRef.current
+    if (!thumbElement && !mainElement) return
 
     const updateMeasurements = () => {
-      const measuredViewport = element.clientWidth
-      const measuredThumb =
-        (measuredViewport - THUMB_GAP_PX * (THUMBNAILS_VISIBLE - 1)) / THUMBNAILS_VISIBLE
-
+      const measuredViewport =
+        thumbElement?.clientWidth || mainElement?.clientWidth || 0
       setViewportWidth(measuredViewport)
-      setThumbWidth(Math.max(0, measuredThumb))
     }
 
     updateMeasurements()
 
     const observer = new ResizeObserver(updateMeasurements)
-    observer.observe(element)
+    if (thumbElement) observer.observe(thumbElement)
+    if (mainElement) observer.observe(mainElement)
     return () => observer.disconnect()
-  }, [slideCount])
+  }, [slideCount, hasMultiple])
 
   useEffect(() => {
     setActiveIndex(0)
@@ -406,6 +412,7 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
           ref={thumbViewportRef}
           className="overflow-hidden"
           aria-label="Property image thumbnails"
+          style={{ '--thumb-size': THUMB_SIZE_CSS } as React.CSSProperties}
         >
           <div
             className={`flex gap-3 justify-start ease-in-out ${needsThumbSlider ? 'transition-transform' : ''}`}
@@ -433,13 +440,19 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
                       : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                   style={{
-                    ...(thumbWidth > 0 ? { width: thumbWidth } : undefined),
+                    width: 'var(--thumb-size)',
                     ...transitionStyle,
                   }}
                 >
                   <span className="block h-full w-full overflow-hidden rounded-[2px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img alt="" className="h-full w-full object-cover" src={src} loading="lazy" />
+                    <img
+                      alt=""
+                      className="h-full w-full object-cover"
+                      src={src}
+                      loading="eager"
+                      decoding="async"
+                    />
                   </span>
                 </button>
               )

@@ -141,6 +141,7 @@ export const PropertyListFilters: React.FC<Props> = ({
               type="button"
               onClick={() => setModalOpen(true)}
               className="px-4 py-3 border cursor-pointer border-outline-variant hover:border-tertiary hover:text-tertiary transition-colors duration-300 rounded-lg flex items-center justify-center"
+              title={moreFiltersAriaLabel}
               aria-label={moreFiltersAriaLabel}
             >
               <SlidersHorizontal size={20} />
@@ -150,7 +151,8 @@ export const PropertyListFilters: React.FC<Props> = ({
                 type="button"
                 onClick={onOpenMap}
                 className="px-4 py-3 border cursor-pointer border-outline-variant hover:border-tertiary hover:text-tertiary transition-colors duration-300 rounded-lg flex items-center justify-center"
-                aria-label="Search on map"
+                title={searchByMapLabel}
+                aria-label={searchByMapLabel}
               >
                 <MapPin size={20} />
               </button>
@@ -159,18 +161,22 @@ export const PropertyListFilters: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handleClear}
+                title={clearFiltersLabel}
+                aria-label={clearFiltersLabel}
                 className="px-4 py-3 border cursor-pointer border-outline-variant text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:border-tertiary hover:text-tertiary transition-colors duration-300"
               >
                 <RotateCcw size={18} />
-                <span>{clearFiltersLabel}</span>
+                <span className="hidden md:inline">{clearFiltersLabel}</span>
               </button>
             )}
             <button
               type="submit"
+              title={searchLabel}
+              aria-label={searchLabel}
               className="flex-1 cursor-pointer md:flex-none px-8 md:px-12 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors duration-300"
             >
               <Search size={18} />
-              {searchLabel}
+              <span className="hidden md:inline">{searchLabel}</span>
             </button>
           </div>
         </div>

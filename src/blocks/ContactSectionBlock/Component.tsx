@@ -7,6 +7,7 @@ import type { Form as FormType } from '@payloadcms/plugin-form-builder/types'
 
 import { Media } from '@/components/Media'
 import type { Page } from '@/payload-types'
+import { useTranslation } from '@/utilities/translateClient'
 import { useReveal } from '@/utilities/useReveal'
 
 import { ContactForm } from './ContactForm'
@@ -29,22 +30,53 @@ export const ContactSectionBlock: React.FC<Props> = ({
   const formData = typeof form === 'object' && form !== null ? (form as unknown as FormType) : null
   const sectionRef = useReveal()
 
+  const translatedEyebrow = useTranslation('contactSection.eyebrow', formEyebrow ?? 'Inquiry')
+  const translatedTitle = useTranslation(
+    'contactSection.title',
+    formTitle ?? 'Private Consultation',
+  )
+  const translatedDescription = useTranslation(
+    'contactSection.description',
+    formDescription ??
+      'Our specialists are dedicated to finding your ideal heritage property. Please share your requirements below.',
+  )
+  const translatedSubmitLabel = useTranslation(
+    'contactSection.submitLabel',
+    submitLabelOverride ?? 'Connect now',
+  )
+  const translatedTrustNote = useTranslation(
+    'contactSection.trustNote',
+    formTrustNote ?? "Your information is safe with us. We'll never share your details.",
+  )
+  const translatedResubmitLabel = useTranslation(
+    'contactSection.resubmitLabel',
+    resubmitButtonLabel ?? 'Submit another response',
+  )
+  const translatedSuccessTitle = useTranslation(
+    'contactSection.successTitle',
+    successTitle ?? 'Thank you!',
+  )
+  const translatedSuccessSubtitle = useTranslation(
+    'contactSection.successSubtitle',
+    successSubtitle ?? 'Your response has been submitted.',
+  )
+
   return (
     <section ref={sectionRef} className="relative overflow-hidden bg-surface-container py-20 md:py-24">
       <div className="container mx-auto grid gap-12 px-6 md:gap-16 lg:grid-cols-2 lg:items-start">
         {formData && (
           <div className="reveal rounded-none border-t-2 border-tertiary bg-white px-6 py-8 md:px-10 md:py-12 shadow-[0_30px_70px_-45px_rgba(0,0,0,0.45)]">
             <ContactForm
-              description={formDescription}
-              eyebrow={formEyebrow}
+              description={translatedDescription}
+              eyebrow={translatedEyebrow}
               form={formData}
-              heading={formTitle}
-              submitLabelOverride={submitLabelOverride}
-              trustNote={formTrustNote}
+              heading={translatedTitle}
+              submitLabelOverride={submitLabelOverride ? translatedSubmitLabel : null}
+              trustNote={translatedTrustNote}
               enableResubmit={enableResubmit}
-              resubmitButtonLabel={resubmitButtonLabel}
-              successTitle={successTitle}
-              successSubtitle={successSubtitle}
+              resubmitButtonLabel={translatedResubmitLabel}
+              successTitle={translatedSuccessTitle}
+              successSubtitle={translatedSuccessSubtitle}
             />
           </div>
         )}

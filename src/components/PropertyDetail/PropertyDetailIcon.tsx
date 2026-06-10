@@ -143,6 +143,7 @@ export const PropertyDetailIcon: React.FC<Props> = ({
   size = 24,
   strokeWidth = 1.75,
 }) => {
-  const Icon = PROPERTY_DETAIL_ICONS[name] ?? CheckCircle2
+  // const Icon = PROPERTY_DETAIL_ICONS[name] ?? CheckCircle2
+  const Icon = CheckCircle2
   return <Icon className={className} size={size} strokeWidth={strokeWidth} />
 }

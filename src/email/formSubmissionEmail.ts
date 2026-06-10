@@ -4,6 +4,7 @@ import type { Payload } from 'payload'
 import { buildNotificationEmailHtml } from '@/email/buildNotificationEmailHtml'
 import { getEmailSettings, isEmailConfigured } from '@/settings/email/server'
 import { sendConfiguredEmail } from '@/email/sendConfiguredEmail'
+import { getEmailFieldLabelMapping } from '@/utilities/formFieldLabels'
 import { t } from '@/utilities/translate'
 
 type SubmissionField = {
@@ -30,13 +31,17 @@ type SendNotificationEmailArgs = {
 const INTERNAL_FIELDS = new Set([
   '_id',
   'reference',
+  'property',
   'other_reference',
   'p_type',
   'interest',
   'assigned_to',
+  'to_email',
   'transaction_types',
   'scp',
   'gdpr_status',
+  'language',
+  'comments',
   'recaptchaRequired',
   'recaptchaToken',
   'syncToOptimaCrm',
@@ -44,36 +49,6 @@ const INTERNAL_FIELDS = new Set([
 ])
 
 const EXCLUDED_FIELD_BLOCK_TYPES = new Set(['checkbox', 'message'])
-
-const FIELD_LABEL_KEYS: Record<string, { key: string; fallback: string }> = {
-  'full-name': { key: 'email.notification.field.fullName', fallback: 'Full name' },
-  forename: { key: 'email.notification.field.firstName', fallback: 'First name' },
-  first_name: { key: 'email.notification.field.firstName', fallback: 'First name' },
-  'first-name': { key: 'email.notification.field.firstName', fallback: 'First name' },
-  firstname: { key: 'email.notification.field.firstName', fallback: 'First name' },
-  surname: { key: 'email.notification.field.lastName', fallback: 'Last name' },
-  last_name: { key: 'email.notification.field.lastName', fallback: 'Last name' },
-  'last-name': { key: 'email.notification.field.lastName', fallback: 'Last name' },
-  lastname: { key: 'email.notification.field.lastName', fallback: 'Last name' },
-  email: { key: 'email.notification.field.email', fallback: 'Email' },
-  phone: { key: 'email.notification.field.phone', fallback: 'Phone' },
-  mobile_phone: { key: 'email.notification.field.phone', fallback: 'Phone' },
-  subject: { key: 'email.notification.field.subject', fallback: 'Subject' },
-  message: { key: 'email.notification.field.message', fallback: 'Message' },
-  property: { key: 'email.notification.field.property', fallback: 'Property' },
-}
-
-function normalizeFieldName(fieldName: string): string {
-  return fieldName.trim().toLowerCase().replace(/-/g, '_')
-}
-
-function getFieldLabelMapping(fieldName: string): { key: string; fallback: string } | undefined {
-  return (
-    FIELD_LABEL_KEYS[fieldName] ??
-    FIELD_LABEL_KEYS[normalizeFieldName(fieldName)] ??
-    FIELD_LABEL_KEYS[fieldName.trim().toLowerCase()]
-  )
-}
 
 const TEMPLATE_DEFAULTS: Record<
   NotificationTemplate,
@@ -107,7 +82,9 @@ function getSubmissionValue(
 function isPropertyInquirySubmission(
   submissionData: SubmissionField[] | null | undefined,
 ): boolean {
-  return Boolean(getSubmissionValue(submissionData, 'reference'))
+  return Boolean(
+    getSubmissionValue(submissionData, 'property') || getSubmissionValue(submissionData, 'reference'),
+  )
 }
 
 function formatSubmittedAt(locale: string): string {
@@ -223,22 +200,9 @@ async function resolveFieldLabel(
   form: Form | null,
   locale: string,
 ): Promise<string> {
-  const mapped = getFieldLabelMapping(fieldName)
-  if (mapped) {
-    return t(mapped.key, locale, mapped.fallback, payload)
-  }
-
   const fromForm = getFieldLabelFromForm(form, fieldName)
-  if (fromForm) {
-    return t(
-      `email.notification.formField.${normalizeFieldName(fieldName)}`,
-      locale,
-      fromForm,
-      payload,
-    )
-  }
-
-  return fieldName
+  const mapped = getEmailFieldLabelMapping(fieldName, fromForm ?? undefined)
+  return t(mapped.key, locale, mapped.fallback, payload)
 }
 
 async function sendNotificationEmail({
@@ -348,7 +312,8 @@ export async function sendFormSubmissionNotificationEmail({
     template,
     fields,
     propertyReference: isPropertyInquiry
-      ? getSubmissionValue(submissionData, 'reference')
+      ? getSubmissionValue(submissionData, 'property') ||
+        getSubmissionValue(submissionData, 'reference')
       : undefined,
     subjectSuffix: formTitle,
   })

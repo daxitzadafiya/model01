@@ -317,7 +317,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
             onClick={() => {
               onClear()
             }}
-            className="text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 hover:text-primary transition-colors cursor-pointer"
+            className="px-10 py-3 text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 hover:text-primary transition-colors cursor-pointer border border-outline-variant rounded-lg"
           >
             <RotateCcw size={18} />
             {clearFiltersLabel}
