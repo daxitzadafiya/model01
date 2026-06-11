@@ -1,0 +1,94 @@
+'use client'
+
+import {
+  ConfirmPasswordField,
+  Form,
+  FormSubmit,
+  HiddenField,
+  PasswordField,
+  useAuth,
+  useConfig,
+  useTranslation,
+} from '@payloadcms/ui'
+import type { FormState } from 'payload'
+import { formatAdminURL } from 'payload/shared'
+import { useRouter } from 'next/navigation'
+import React from 'react'
+
+type ResetPasswordFormProps = {
+  token: string
+}
+
+export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+  const i18n = useTranslation()
+  const { config } = useConfig()
+  const {
+    admin: {
+      routes: { login: loginRoute },
+      user: userSlug,
+    },
+    routes: { admin: adminRoute, api: apiRoute },
+  } = config
+  const history = useRouter()
+  const { fetchFullUser } = useAuth()
+
+  const onSuccess = async () => {
+    const user = await fetchFullUser()
+
+    if (user) {
+      history.push(adminRoute)
+    } else {
+      history.push(
+        formatAdminURL({
+          adminRoute,
+          path: loginRoute,
+        }),
+      )
+    }
+  }
+
+  const initialState: FormState = {
+    'confirm-password': {
+      initialValue: '',
+      valid: false,
+      value: '',
+    },
+    password: {
+      initialValue: '',
+      valid: false,
+      value: '',
+    },
+    token: {
+      initialValue: token,
+      valid: true,
+      value: token,
+    },
+  }
+
+  return (
+    <Form
+      action={formatAdminURL({
+        apiRoute,
+        path: `/${userSlug}/reset-password`,
+      })}
+      initialState={initialState}
+      method="POST"
+      onSuccess={onSuccess}
+    >
+      <div className="inputWrap">
+        <PasswordField
+          field={{
+            name: 'password',
+            label: i18n.t('authentication:newPassword'),
+            required: true,
+          }}
+          path="password"
+          schemaPath={`${userSlug}.password`}
+        />
+        <ConfirmPasswordField />
+        <HiddenField path="token" schemaPath={`${userSlug}.token`} value={token} />
+      </div>
+      <FormSubmit size="large">{i18n.t('authentication:resetPassword')}</FormSubmit>
+    </Form>
+  )
+}

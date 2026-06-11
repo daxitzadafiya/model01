@@ -2,3 +2,5 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+patchedDependencies:
+  '@payloadcms/next@3.85.0': patches/@payloadcms__next@3.85.0.patch

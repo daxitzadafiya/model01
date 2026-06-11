@@ -36,6 +36,7 @@ import { AlignFeatureClient as AlignFeatureClient_e70f5e05f09f93e00b997edb1ef0c8
 import { default as default_c8f97ec34ecb4c45dad678c6203d9cb0 } from '@/components/Icon/Icon'
 import { default as default_a0bd5f2fa532ef2166f77171a2b9828a } from '@/components/Logo/Logo'
 import { default as default_3a0d2675453b772f02c1de6555319ff1 } from '@/components/ForgotPasswordView'
+import { default as default_b915deef35dfcf06f919ca32dc46e801 } from '@/components/ResetPasswordView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -78,5 +79,6 @@ export const importMap = {
   "@/components/Icon/Icon#default": default_c8f97ec34ecb4c45dad678c6203d9cb0,
   "@/components/Logo/Logo#default": default_a0bd5f2fa532ef2166f77171a2b9828a,
   "@/components/ForgotPasswordView#default": default_3a0d2675453b772f02c1de6555319ff1,
+  "@/components/ResetPasswordView#default": default_b915deef35dfcf06f919ca32dc46e801,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }
