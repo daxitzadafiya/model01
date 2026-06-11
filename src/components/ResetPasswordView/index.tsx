@@ -1,22 +1,19 @@
 import type { AdminViewServerProps } from 'payload'
 
-import { Logo } from '@payloadcms/next/rsc'
 import { Button, Link } from '@payloadcms/ui'
 import { Translation } from '@payloadcms/ui/shared'
 import { formatAdminURL } from 'payload/shared'
-import React, { Fragment } from 'react'
+import React from 'react'
 
+import { AdminBrandLogo } from '@/components/AdminBrandLogo'
 import { FormHeader } from '../ForgotPasswordView/FormHeader'
 import { ResetPasswordForm } from './ResetPasswordForm'
 
-export default function ResetPasswordView({
+export default async function ResetPasswordView({
   initPageResult,
   params,
-  searchParams,
 }: AdminViewServerProps) {
   const {
-    locale,
-    permissions,
     req: {
       i18n,
       payload,
@@ -25,7 +22,8 @@ export default function ResetPasswordView({
     },
   } = initPageResult
 
-  const token = (params as { segments?: string[] } | undefined)?.segments?.[1] ?? ''
+  const segments = (params as { segments?: string[] } | undefined)?.segments
+  const token = segments?.[1] ?? ''
 
   const {
     admin: {
@@ -36,7 +34,7 @@ export default function ResetPasswordView({
 
   if (user) {
     return (
-      <Fragment>
+      <div className="reset-password__wrap">
         <FormHeader
           description={
             <Translation
@@ -62,24 +60,13 @@ export default function ResetPasswordView({
         <Button buttonStyle="secondary" el="link" size="large" to={adminRoute}>
           {i18n.t('general:backToDashboard')}
         </Button>
-      </Fragment>
+      </div>
     )
   }
 
   return (
-    <Fragment>
-      <div className="login__brand">
-        <Logo
-          i18n={i18n}
-          locale={locale}
-          params={params}
-          payload={payload}
-          permissions={permissions}
-          searchParams={searchParams}
-          user={user ?? undefined}
-        />
-      </div>
-      <FormHeader heading={i18n.t('authentication:resetPassword')} />
+    <div className="reset-password__wrap">
+      <AdminBrandLogo payload={payload} />
       <ResetPasswordForm token={token} />
       <Link
         href={formatAdminURL({
@@ -90,6 +77,6 @@ export default function ResetPasswordView({
       >
         {i18n.t('authentication:backToLogin')}
       </Link>
-    </Fragment>
+    </div>
   )
 }

@@ -1,22 +1,18 @@
 import type { AdminViewServerProps } from 'payload'
 
-import { Logo } from '@payloadcms/next/rsc'
 import { Button, Link } from '@payloadcms/ui'
 import { Translation } from '@payloadcms/ui/shared'
 import { formatAdminURL } from 'payload/shared'
-import React, { Fragment } from 'react'
+import React from 'react'
 
+import { AdminBrandLogo } from '@/components/AdminBrandLogo'
 import { ForgotPasswordForm } from './ForgotPasswordForm'
 import { FormHeader } from './FormHeader'
 
-export default function ForgotPasswordView({
+export default async function ForgotPasswordView({
   initPageResult,
-  params,
-  searchParams,
 }: AdminViewServerProps) {
   const {
-    locale,
-    permissions,
     req: {
       i18n,
       payload,
@@ -34,7 +30,7 @@ export default function ForgotPasswordView({
 
   if (user) {
     return (
-      <Fragment>
+      <>
         <FormHeader
           description={
             <Translation
@@ -60,23 +56,13 @@ export default function ForgotPasswordView({
         <Button buttonStyle="secondary" el="link" size="large" to={adminRoute}>
           {i18n.t('general:backToDashboard')}
         </Button>
-      </Fragment>
+      </>
     )
   }
 
   return (
-    <Fragment>
-      <div className="login__brand">
-        <Logo
-          i18n={i18n}
-          locale={locale}
-          params={params}
-          payload={payload}
-          permissions={permissions}
-          searchParams={searchParams}
-          user={user ?? undefined}
-        />
-      </div>
+    <>
+      <AdminBrandLogo payload={payload} />
       <ForgotPasswordForm />
       <Link
         href={formatAdminURL({
@@ -87,6 +73,6 @@ export default function ForgotPasswordView({
       >
         {i18n.t('authentication:backToLogin')}
       </Link>
-    </Fragment>
+    </>
   )
 }

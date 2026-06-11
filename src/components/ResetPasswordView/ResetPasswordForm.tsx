@@ -15,12 +15,14 @@ import { formatAdminURL } from 'payload/shared'
 import { useRouter } from 'next/navigation'
 import React from 'react'
 
+import { FormHeader } from '../ForgotPasswordView/FormHeader'
+
 type ResetPasswordFormProps = {
   token: string
 }
 
 export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
-  const i18n = useTranslation()
+  const { t } = useTranslation()
   const { config } = useConfig()
   const {
     admin: {
@@ -32,7 +34,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const history = useRouter()
   const { fetchFullUser } = useAuth()
 
-  const onSuccess = async () => {
+  const onSuccess = React.useCallback(async () => {
     const user = await fetchFullUser()
 
     if (user) {
@@ -45,7 +47,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         }),
       )
     }
-  }
+  }, [adminRoute, fetchFullUser, history, loginRoute])
 
   const initialState: FormState = {
     'confirm-password': {
@@ -75,11 +77,12 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       method="POST"
       onSuccess={onSuccess}
     >
+      <FormHeader heading={t('authentication:resetPassword')} />
       <div className="inputWrap">
         <PasswordField
           field={{
             name: 'password',
-            label: i18n.t('authentication:newPassword'),
+            label: t('authentication:newPassword'),
             required: true,
           }}
           path="password"
@@ -88,7 +91,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         <ConfirmPasswordField />
         <HiddenField path="token" schemaPath={`${userSlug}.token`} value={token} />
       </div>
-      <FormSubmit size="large">{i18n.t('authentication:resetPassword')}</FormSubmit>
+      <FormSubmit size="large">{t('authentication:resetPassword')}</FormSubmit>
     </Form>
   )
 }
