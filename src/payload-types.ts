@@ -884,7 +884,45 @@ export interface HeroBlock {
     url?: string | null;
     label: string;
   };
-  backgroundImage: number | Media;
+  /**
+   * Choose between a static image, image slider, or video background.
+   */
+  mediaType: 'image' | 'video';
+  /**
+   * Display one image or rotate through multiple images.
+   */
+  imageMode?: ('single' | 'slider') | null;
+  /**
+   * Full-width hero background image.
+   */
+  backgroundImage?: (number | null) | Media;
+  /**
+   * Add at least two images for the hero slider.
+   */
+  sliderImages?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  sliderAutoplay?: boolean | null;
+  /**
+   * Time between slide transitions when autoplay is enabled.
+   */
+  sliderInterval?: number | null;
+  videoSource?: ('youtube' | 'vimeo' | 'upload') | null;
+  /**
+   * Paste a YouTube watch or share URL.
+   */
+  youtubeUrl?: string | null;
+  /**
+   * Paste a Vimeo page or player URL.
+   */
+  vimeoUrl?: string | null;
+  /**
+   * Upload an MP4 or WebM file. Video plays muted and loops automatically.
+   */
+  videoUpload?: (number | null) | Media;
   showSearch?: boolean | null;
   id?: string | null;
   blockName?: string | null;
@@ -2135,7 +2173,21 @@ export interface HeroBlockSelect<T extends boolean = true> {
         url?: T;
         label?: T;
       };
+  mediaType?: T;
+  imageMode?: T;
   backgroundImage?: T;
+  sliderImages?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  sliderAutoplay?: T;
+  sliderInterval?: T;
+  videoSource?: T;
+  youtubeUrl?: T;
+  vimeoUrl?: T;
+  videoUpload?: T;
   showSearch?: T;
   id?: T;
   blockName?: T;

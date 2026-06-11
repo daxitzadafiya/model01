@@ -13,9 +13,14 @@ import { FlagIcon } from './FlagIcon'
 type Props = {
   items: LanguageMenuItem[]
   currentLocale: Locale
+  onDarkBackground?: boolean
 }
 
-export const LanguageSwitcher: React.FC<Props> = ({ items, currentLocale }) => {
+export const LanguageSwitcher: React.FC<Props> = ({
+  items,
+  currentLocale,
+  onDarkBackground = false,
+}) => {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
@@ -66,13 +71,20 @@ export const LanguageSwitcher: React.FC<Props> = ({ items, currentLocale }) => {
     return (
       <div
         className={cn(
-          'inline-flex items-center gap-1 rounded-full border border-outline-variant/50 cursor-pointer  px-1.5 py-1.5 sm:px-2 sm:py-2 shadow-sm',
-          'text-primary',
+          'inline-flex items-center gap-1 rounded-full border cursor-pointer px-1.5 py-1.5 sm:px-2 sm:py-2 shadow-sm',
+          onDarkBackground
+            ? 'border-white/40 text-white'
+            : 'border-outline-variant/50 text-primary',
         )}
         aria-label={`Language: ${active.label}`}
       >
         <FlagIcon country={active.flagCountry} className="h-4 w-4 sm:h-5 sm:w-5" title={active.label} />
-        <span className="hidden font-label-nav text-[11px] uppercase tracking-wider text-secondary sm:inline">
+        <span
+          className={cn(
+            'hidden font-label-nav text-[11px] uppercase tracking-wider sm:inline',
+            onDarkBackground ? 'text-white/90' : 'text-secondary',
+          )}
+        >
           {active.triggerCode}
         </span>
       </div>
@@ -87,23 +99,34 @@ export const LanguageSwitcher: React.FC<Props> = ({ items, currentLocale }) => {
         aria-haspopup="listbox"
         aria-label={`Language: ${active.label}`}
         className={cn(
-          'inline-flex items-center gap-1 rounded-full border border-outline-variant/50 cursor-pointer px-1.5 py-1.5 sm:px-2 sm:py-2 shadow-sm',
-          'text-primary transition-colors duration-200',
-          'hover:border-outline-variant hover:bg-surface-container-low/60',
-          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-outline-variant',
-          open && 'border-outline-variant bg-surface-container-low/80',
+          'inline-flex items-center gap-1 rounded-full border cursor-pointer px-1.5 py-1.5 sm:px-2 sm:py-2 shadow-sm transition-colors duration-200',
+          'focus-visible:outline-none focus-visible:ring-1',
+          onDarkBackground
+            ? 'border-white/40 text-white hover:border-white/70 hover:bg-white/10 focus-visible:ring-white/40'
+            : 'border-outline-variant/50 text-primary hover:border-outline-variant hover:bg-surface-container-low/60 focus-visible:ring-outline-variant',
+          open &&
+            (onDarkBackground ? 'border-white/70 bg-white/10' : 'border-outline-variant bg-surface-container-low/80'),
           isPending && 'pointer-events-none opacity-60',
         )}
         disabled={isPending}
         onClick={() => setOpen((value) => !value)}
       >
         <FlagIcon country={active.flagCountry} className="h-4 w-4 sm:h-5 sm:w-5" title={active.label} />
-        <span className="hidden font-label-nav text-[11px] uppercase tracking-wider text-secondary sm:inline">
+        <span
+          className={cn(
+            'hidden font-label-nav text-[11px] uppercase tracking-wider sm:inline',
+            onDarkBackground ? 'text-white/90' : 'text-secondary',
+          )}
+        >
           {active.triggerCode}
         </span>
         <ChevronDown
           size={16}
-          className={cn('text-secondary transition-transform duration-200', open && 'rotate-180')}
+          className={cn(
+            'transition-transform duration-200',
+            onDarkBackground ? 'text-white/80' : 'text-secondary',
+            open && 'rotate-180',
+          )}
         />
       </button>
 

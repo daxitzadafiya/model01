@@ -4,20 +4,17 @@ import { usePathname } from 'next/navigation'
 import React from 'react'
 import type { Header as HeaderType } from '@/payload-types'
 import { CMSLink, getCMSLinkHref, isCMSLinkActive } from '@/components/Link'
+import { getHeaderNavLinkClass } from '@/providers/HeroOverlay'
 import { NavDropdown } from './NavDropdown'
 
 type Props = {
   data: HeaderType
   mobileOpen?: boolean
   onClose?: () => void
+  onDarkBackground?: boolean
 }
 
 type NavItem = NonNullable<HeaderType['navItems']>[number]
-
-const navLinkClass = (isActive: boolean) =>
-  `font-label-nav text-label-nav font-medium transition-colors duration-300 ${
-    isActive ? 'text-tertiary' : 'text-secondary hover:text-tertiary'
-  }`
 
 const linkIsActive = (pathname: string, link: NavItem['link']) => {
   const href = getCMSLinkHref(link)
@@ -26,7 +23,12 @@ const linkIsActive = (pathname: string, link: NavItem['link']) => {
 
 const hasSubLinks = (item: NavItem) => (item.subLinks?.length ?? 0) > 0
 
-export const HeaderNav: React.FC<Props> = ({ data, mobileOpen, onClose }) => {
+export const HeaderNav: React.FC<Props> = ({
+  data,
+  mobileOpen,
+  onClose,
+  onDarkBackground = false,
+}) => {
   const pathname = usePathname()
   const navItems = data?.navItems || []
 
@@ -35,9 +37,18 @@ export const HeaderNav: React.FC<Props> = ({ data, mobileOpen, onClose }) => {
       <div className="hidden md:flex items-center gap-8">
         {navItems.map((item, i) =>
           hasSubLinks(item) ? (
-            <NavDropdown key={i} link={item.link} subLinks={item.subLinks!} />
+            <NavDropdown
+              key={i}
+              link={item.link}
+              subLinks={item.subLinks!}
+              onDarkBackground={onDarkBackground}
+            />
           ) : (
-            <CMSLink key={i} {...item.link} className={navLinkClass(linkIsActive(pathname, item.link))} />
+            <CMSLink
+              key={i}
+              {...item.link}
+              className={getHeaderNavLinkClass(linkIsActive(pathname, item.link), onDarkBackground)}
+            />
           ),
         )}
       </div>
@@ -65,7 +76,7 @@ export const HeaderNav: React.FC<Props> = ({ data, mobileOpen, onClose }) => {
                   <div key={i} onClick={onClose} role="presentation">
                     <CMSLink
                       {...item.link}
-                      className={`block py-3 ${navLinkClass(linkIsActive(pathname, item.link))}`}
+                      className={`block py-3 ${getHeaderNavLinkClass(linkIsActive(pathname, item.link), false)}`}
                     />
                   </div>
                 ),

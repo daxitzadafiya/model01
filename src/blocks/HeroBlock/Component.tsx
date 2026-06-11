@@ -7,7 +7,7 @@ import type { Page } from '@/payload-types'
 import { FilterSelect } from '@/components/FilterSelect'
 import { LocationFilterSelect } from '@/components/LocationFilterSelect'
 import { CMSLink, getCMSLinkHref } from '@/components/Link'
-import { Media } from '@/components/Media'
+import { HeroBackground } from '@/blocks/HeroBlock/HeroBackground'
 import {
   applyPriceRangeValue,
   EMPTY_PROPERTY_FILTERS,
@@ -23,6 +23,7 @@ import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
 import type { PropertyListFilters } from '@/utilities/crmProperties'
 import { useTranslation } from '@/utilities/translateClient'
 import { useReveal } from '@/utilities/useReveal'
+import { useRegisterHeroOverlay } from '@/providers/HeroOverlay'
 
 const ALL_PROPERTIES_PATH = '/all-properties'
 
@@ -31,14 +32,10 @@ type Props = Extract<Page['layout'][0], { blockType: 'heroBlock' }>
 const buttonClassName =
   'px-8 md:px-10 py-3 md:py-4 bg-tertiary rounded-full font-label-nav text-label-nav uppercase tracking-widest hover:bg-tertiary-container transition-all shadow-xl active:scale-95 reveal cursor-pointer text-white'
 
-const HeroBlockContent: React.FC<Props> = ({
-  title,
-  buttonText,
-  ctaLink,
-  backgroundImage,
-  showSearch,
-}) => {
+const HeroBlockContent: React.FC<Props> = (props) => {
+  const { title, buttonText, ctaLink, showSearch } = props
   const ref = useReveal()
+  useRegisterHeroOverlay()
   const router = useRouter()
   const searchPropertiesLabel = useTranslation(
     'propertyList.filters.searchProperties',
@@ -97,15 +94,13 @@ const HeroBlockContent: React.FC<Props> = ({
       : { type: 'custom' as const, url: '/property-for-sale', label: buttonText }
 
   return (
-    <div ref={ref} className="relative bg-surface">
-      <section className="relative min-h-dvh md:h-screen w-full overflow-hidden flex items-center justify-center">
-        <div className="absolute inset-0 hero-gradient z-10"></div>
-        {typeof backgroundImage === 'object' && backgroundImage !== null && (
-          <div className="absolute inset-0 w-full h-full object-cover">
-            <Media resource={backgroundImage} fill priority imgClassName="object-cover" />
-          </div>
-        )}
-        <div className="relative z-20 flex w-full flex-col items-center justify-center text-center px-margin-mobile md:px-margin-desktop py-24 md:py-8">
+    <div ref={ref} className="relative">
+      <section className="relative h-dvh w-full overflow-hidden flex items-center justify-center bg-black">
+        <div className="absolute inset-0 z-0">
+          <HeroBackground {...props} />
+        </div>
+        <div className="absolute inset-0 hero-gradient z-10" aria-hidden />
+        <div className="relative z-20 flex w-full flex-col items-center justify-center text-center px-margin-mobile md:px-margin-desktop pt-20 pb-24 md:pt-24 md:pb-8">
           <div className="flex w-full max-w-4xl flex-col items-center">
             <h1 className="font-headline-lg-mobile md:font-display-lg text-headline-lg-mobile md:text-display-lg text-white text-center w-full mb-6 md:mb-8 reveal">
               {title}

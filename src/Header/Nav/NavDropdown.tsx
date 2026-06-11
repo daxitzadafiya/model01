@@ -6,6 +6,7 @@ import { ChevronDown } from 'lucide-react'
 
 import type { Header } from '@/payload-types'
 import { CMSLink, getCMSLinkHref, isCMSLinkActive } from '@/components/Link'
+import { getHeaderNavLinkClass } from '@/providers/HeroOverlay'
 import { cn } from '@/utilities/ui'
 
 type NavItem = NonNullable<Header['navItems']>[number]
@@ -17,12 +18,8 @@ type Props = {
   subLinks: NonNullable<NavItem['subLinks']>
   variant?: 'desktop' | 'mobile'
   onNavigate?: () => void
+  onDarkBackground?: boolean
 }
-
-const navLinkClass = (isActive: boolean) =>
-  `font-label-nav text-label-nav font-medium transition-colors duration-300 ${
-    isActive ? 'text-tertiary' : 'text-secondary hover:text-tertiary'
-  }`
 
 const linkIsActive = (pathname: string, link: NavLink | SubLink) => {
   const href = getCMSLinkHref(link)
@@ -34,6 +31,7 @@ export const NavDropdown: React.FC<Props> = ({
   subLinks,
   variant = 'desktop',
   onNavigate,
+  onDarkBackground = false,
 }) => {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
@@ -90,7 +88,7 @@ export const NavDropdown: React.FC<Props> = ({
         <button
           type="button"
           aria-expanded={open}
-          className={cn('flex w-full items-center justify-between py-3', navLinkClass(isActive))}
+          className={cn('flex w-full items-center justify-between py-3', getHeaderNavLinkClass(isActive, false))}
           onClick={() => setOpen((value) => !value)}
         >
           <span>{label}</span>
@@ -105,7 +103,7 @@ export const NavDropdown: React.FC<Props> = ({
               <div key={i} onClick={onNavigate} role="presentation">
                 <CMSLink
                   {...subLink}
-                  className={`block py-2 ${navLinkClass(linkIsActive(pathname, subLink))}`}
+                  className={`block py-2 ${getHeaderNavLinkClass(linkIsActive(pathname, subLink), false)}`}
                 />
               </div>
             ))}
@@ -121,7 +119,7 @@ export const NavDropdown: React.FC<Props> = ({
         type="button"
         aria-expanded={open}
         aria-haspopup="menu"
-        className={cn('inline-flex items-center gap-1 cursor-pointer', navLinkClass(isActive))}
+        className={cn('inline-flex items-center gap-1 cursor-pointer', getHeaderNavLinkClass(isActive, onDarkBackground))}
         onClick={() => (open ? scheduleClose() : openMenu())}
       >
         <span>{label}</span>
@@ -151,7 +149,7 @@ export const NavDropdown: React.FC<Props> = ({
                   {...subLink}
                   className={cn(
                     'block px-4 py-2.5 transition-colors duration-150',
-                    navLinkClass(linkIsActive(pathname, subLink)),
+                    getHeaderNavLinkClass(linkIsActive(pathname, subLink), false),
                   )}
                 />
               </li>

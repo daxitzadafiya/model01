@@ -18,13 +18,11 @@ const ebGaramond = EB_Garamond({
   display: 'swap',
 })
 
-import { AdminBar } from '@/components/AdminBar'
 import { CookieConsent } from '@/components/CookieConsent'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { draftMode } from 'next/headers'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 
@@ -37,7 +35,6 @@ import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { getServerSideURL } from '@/utilities/getURL'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isEnabled } = await draftMode()
   const { locale } = await getActiveLocale()
   const logoData = await getCachedGlobal('logo', 1)()
   const favicon = getFaviconSource(logoData)
@@ -63,12 +60,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           optimaCrmSettings={optimaCrmSettings}
           integrationsSettings={integrationsSettings}
         >
-          <AdminBar
-            adminBarProps={{
-              preview: isEnabled,
-            }}
-          />
-
           <Header />
           {children}
           <Footer />

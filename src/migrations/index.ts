@@ -10,6 +10,7 @@ import * as migration_20260609_124500_email_settings from './20260609_124500_ema
 import * as migration_20260610_120000_integration_settings_globals from './20260610_120000_integration_settings_globals'
 import * as migration_20260610_170500_email_template_fields from './20260610_170500_email_template_fields'
 import * as migration_20260610_180000_client_confirmation_contact_fields from './20260610_180000_client_confirmation_contact_fields'
+import * as migration_20260611_100700_hero_block_media from './20260611_100700_hero_block_media'
 
 export const migrations = [
   {
@@ -71,5 +72,10 @@ export const migrations = [
     up: migration_20260610_180000_client_confirmation_contact_fields.up,
     down: migration_20260610_180000_client_confirmation_contact_fields.down,
     name: '20260610_180000_client_confirmation_contact_fields',
+  },
+  {
+    up: migration_20260611_100700_hero_block_media.up,
+    down: migration_20260611_100700_hero_block_media.down,
+    name: '20260611_100700_hero_block_media',
   },
 ]
