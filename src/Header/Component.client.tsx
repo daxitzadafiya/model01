@@ -65,13 +65,18 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({
   return (
     <nav
       className={cn(
-        'fixed top-0 w-full z-50 h-16 md:h-20 transition-all duration-300',
+        'fixed top-0 w-full z-50 transition-all duration-300',
         isTransparent
-          ? 'bg-transparent border-b border-transparent shadow-none backdrop-blur-none'
-          : 'bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-md',
+          ? 'pt-3 md:pt-5 bg-transparent border-b border-transparent shadow-none backdrop-blur-none'
+          : 'h-16 md:h-20 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-md',
       )}
     >
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex justify-between items-center h-full gap-1.5 sm:gap-3">
+      <div
+        className={cn(
+          'max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex justify-between items-center gap-1.5 sm:gap-3',
+          isTransparent ? 'pb-3 md:pb-4' : 'h-full',
+        )}
+      >
         <Link
           className="font-headline-sm text-[13px] sm:text-headline-sm tracking-widest uppercase min-w-0 flex-1 pr-1 sm:pr-0"
           href="/"

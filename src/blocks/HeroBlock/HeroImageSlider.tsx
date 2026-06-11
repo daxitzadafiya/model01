@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Media as PayloadMedia } from '@/payload-types'
 
 import { Media } from '@/components/Media'
@@ -313,24 +312,6 @@ export const HeroImageSlider: React.FC<Props> = ({
       </div>
 
       {hasMultiple && (
-        <>
-          <button
-            type="button"
-            onClick={goToPrevious}
-            className="absolute left-3 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/50 md:flex"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <button
-            type="button"
-            onClick={goToNext}
-            className="absolute right-3 top-1/2 z-20 hidden -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/50 md:flex"
-            aria-label="Next slide"
-          >
-            <ChevronRight size={24} />
-          </button>
-
           <div
             className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 md:bottom-10"
             aria-live="polite"
@@ -348,7 +329,6 @@ export const HeroImageSlider: React.FC<Props> = ({
               />
             ))}
           </div>
-        </>
       )}
     </div>
   )

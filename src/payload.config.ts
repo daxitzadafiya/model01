@@ -16,6 +16,7 @@ import { CookieConsent } from './globals/CookieConsent/config'
 import { DeepLSettings } from './globals/DeepLSettings/config'
 import { EmailSettings } from './globals/EmailSettings/config'
 import { IntegrationsSettings } from './globals/IntegrationsSettings/config'
+import { WeatherSettings } from './globals/WeatherSettings/config'
 import { Localization } from './globals/Localization/config'
 import { SiteLogo } from './globals/Logo/config'
 import { OptimaCrmSettings } from './globals/OptimaCrmSettings/config'
@@ -140,6 +141,7 @@ export default buildConfig({
     OptimaCrmSettings,
     DeepLSettings,
     IntegrationsSettings,
+    WeatherSettings,
   ],
   plugins,
   secret: process.env.PAYLOAD_SECRET,

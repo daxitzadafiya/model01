@@ -224,8 +224,6 @@ export async function submitContactToOptimaCrm(
     ...mapContactToOptimaPayload(rawPayload, locale),
     source: CONTACT_SOURCE,
   }
-  console.log('endpoint:::::', endpoint)
-  console.log('payload:::::', payload)
 
   let response: Response
 

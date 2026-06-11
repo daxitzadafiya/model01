@@ -132,6 +132,7 @@ export interface Config {
     optimaCrmSettings: OptimaCrmSetting;
     deeplSettings: DeeplSetting;
     integrationsSettings: IntegrationsSetting;
+    weatherSettings: WeatherSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -146,6 +147,7 @@ export interface Config {
     optimaCrmSettings: OptimaCrmSettingsSelect<false> | OptimaCrmSettingsSelect<true>;
     deeplSettings: DeeplSettingsSelect<false> | DeeplSettingsSelect<true>;
     integrationsSettings: IntegrationsSettingsSelect<false> | IntegrationsSettingsSelect<true>;
+    weatherSettings: WeatherSettingsSelect<false> | WeatherSettingsSelect<true>;
   };
   locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   widgets: {
@@ -3828,6 +3830,34 @@ export interface IntegrationsSetting {
   createdAt?: string | null;
 }
 /**
+ * WeatherAPI.com credentials and cache settings for the hero search bar. API responses are cached server-side to reduce external API calls.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "weatherSettings".
+ */
+export interface WeatherSetting {
+  id: number;
+  enabled?: boolean | null;
+  /**
+   * Fixed WeatherAPI.com endpoint — not editable.
+   */
+  baseUrl?: string | null;
+  /**
+   * Your WeatherAPI.com key. Stored in the database — not in environment variables.
+   */
+  apiKey?: string | null;
+  /**
+   * City name or coordinates passed as the q parameter (e.g. Javea, Athens).
+   */
+  location?: string | null;
+  /**
+   * How long to reuse a cached API response before fetching fresh data from WeatherAPI.com.
+   */
+  cacheIntervalMinutes?: number | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -4212,6 +4242,20 @@ export interface IntegrationsSettingsSelect<T extends boolean = true> {
         siteKey?: T;
         secretKey?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "weatherSettings_select".
+ */
+export interface WeatherSettingsSelect<T extends boolean = true> {
+  enabled?: T;
+  baseUrl?: T;
+  apiKey?: T;
+  location?: T;
+  cacheIntervalMinutes?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

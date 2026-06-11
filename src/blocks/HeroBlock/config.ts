@@ -211,7 +211,7 @@ export const HeroBlock: Block = {
     {
       name: 'showSearch',
       type: 'checkbox',
-      label: 'Show Floating Search Bar below Hero',
+      label: 'Show Search Bar on Hero',
       defaultValue: true,
     },
   ],

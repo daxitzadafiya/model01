@@ -58,10 +58,12 @@ export const HeaderNav: React.FC<Props> = ({
           <button
             type="button"
             aria-label="Close menu"
-            className="md:hidden fixed inset-0 top-16 z-40 bg-primary/40 backdrop-blur-sm"
+            className={`md:hidden fixed inset-0 z-40 bg-primary/40 backdrop-blur-sm ${onDarkBackground ? 'top-[4.75rem]' : 'top-16'}`}
             onClick={onClose}
           />
-          <div className="md:hidden fixed top-16 left-0 right-0 z-50 max-h-[calc(100dvh-4rem)] overflow-y-auto bg-surface border-b border-outline-variant/30 shadow-lg">
+          <div
+            className={`md:hidden fixed left-0 right-0 z-50 overflow-y-auto bg-surface border-b border-outline-variant/30 shadow-lg ${onDarkBackground ? 'top-[4.75rem] max-h-[calc(100dvh-4.75rem)]' : 'top-16 max-h-[calc(100dvh-4rem)]'}`}
+          >
             <nav className="flex flex-col px-margin-mobile py-6 gap-1">
               {navItems.map((item, i) =>
                 hasSubLinks(item) ? (
