@@ -9,6 +9,7 @@ import { lexicalToEmailHtml } from '@/email/lexicalToEmailHtml'
 import { resolveEmailLogoDataUri } from '@/email/resolveEmailLogoDataUri'
 import { getEmailSettings, isEmailConfigured } from '@/settings/email/server'
 import { sendConfiguredEmail } from '@/email/sendConfiguredEmail'
+import { getAppName } from '@/utilities/getAppName'
 import { getEmailFieldLabelMapping } from '@/utilities/formFieldLabels'
 import { t } from '@/utilities/translate'
 
@@ -318,12 +319,7 @@ async function sendNotificationEmail({
       'This message was sent automatically from your website contact system.',
       payload,
     ),
-    t(
-      'email.notification.siteName',
-      normalizedLocale,
-      settings.sender?.fromName ?? 'Horizon Estates',
-      payload,
-    ),
+    t('email.notification.siteName', normalizedLocale, getAppName(logo), payload),
   ])
 
   const templateVariables = {

@@ -214,5 +214,22 @@ export const HeroBlock: Block = {
       label: 'Show Search Bar on Hero',
       defaultValue: true,
     },
+    link({
+      appearances: false,
+      disableLabel: true,
+      overrides: {
+        name: 'searchResultsLink',
+        label: 'Search Results Page',
+        admin: {
+          description:
+            'Where the hero property search sends visitors (e.g. your All Properties page).',
+          condition: (_, siblingData) => siblingData?.showSearch !== false,
+        },
+        defaultValue: {
+          type: 'custom',
+          url: '/all-properties',
+        },
+      },
+    }),
   ],
 }

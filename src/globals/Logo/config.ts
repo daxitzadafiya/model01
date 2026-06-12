@@ -13,6 +13,16 @@ export const SiteLogo: GlobalConfig = {
   },
   fields: [
     {
+      name: 'appName',
+      type: 'text',
+      label: 'App Name',
+      defaultValue: 'Horizon Estates',
+      required: true,
+      admin: {
+        description: 'Site name shown in page titles, metadata, and other branding.',
+      },
+    },
+    {
       name: 'alt',
       type: 'text',
       defaultValue: 'Horizon Estates',

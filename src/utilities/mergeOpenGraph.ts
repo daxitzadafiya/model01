@@ -1,4 +1,7 @@
 import type { Metadata } from 'next'
+
+import { DEFAULT_APP_NAME } from '@/utilities/getAppName'
+
 import { getServerSideURL } from './getURL'
 
 const defaultOpenGraph: Metadata['openGraph'] = {
@@ -9,8 +12,8 @@ const defaultOpenGraph: Metadata['openGraph'] = {
       url: `${getServerSideURL()}/website-template-OG.webp`,
     },
   ],
-  siteName: 'Payload Website Template',
-  title: 'Payload Website Template',
+  siteName: DEFAULT_APP_NAME,
+  title: DEFAULT_APP_NAME,
 }
 
 export const mergeOpenGraph = (og?: Metadata['openGraph']): Metadata['openGraph'] => {

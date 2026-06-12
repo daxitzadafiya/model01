@@ -8,6 +8,9 @@ import { getPayload } from 'payload'
 import React from 'react'
 import { notFound } from 'next/navigation'
 
+import { formatPageTitle, getAppName } from '@/utilities/getAppName'
+import { getCachedGlobal } from '@/utilities/getGlobals'
+
 export const revalidate = 600
 
 type Args = {
@@ -62,8 +65,11 @@ export default async function Page({ params: paramsPromise }: Args) {
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { pageNumber } = await paramsPromise
+  const logo = await getCachedGlobal('logo', 0)()
+  const appName = getAppName(logo)
+
   return {
-    title: `Horizon estates Posts Page ${pageNumber || ''}`,
+    title: formatPageTitle(pageNumber ? `Posts Page ${pageNumber}` : 'Posts', appName),
   }
 }
 

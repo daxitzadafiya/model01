@@ -12,7 +12,6 @@ import { HeroWeather } from '@/blocks/HeroBlock/HeroWeather'
 import {
   applyPriceRangeValue,
   EMPTY_PROPERTY_FILTERS,
-  hasActivePropertyFilters,
   parsePropertyTypeFilter,
   resolvePriceRangeValue,
 } from '@/components/PropertyList/filterOptions'
@@ -26,7 +25,7 @@ import { useTranslation } from '@/utilities/translateClient'
 import { useReveal } from '@/utilities/useReveal'
 import { useRegisterHeroOverlay } from '@/providers/HeroOverlay'
 
-const ALL_PROPERTIES_PATH = '/all-properties'
+const DEFAULT_SEARCH_RESULTS_PATH = '/property-for-sale'
 
 type Props = Extract<Page['layout'][0], { blockType: 'heroBlock' }>
 
@@ -46,7 +45,7 @@ const heroContainerClassName =
   'w-full max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop'
 
 const HeroBlockContent: React.FC<Props> = (props) => {
-  const { title, buttonText, ctaLink, showSearch } = props
+  const { title, buttonText, ctaLink, searchResultsLink, showSearch } = props
   const ref = useReveal()
   useRegisterHeroOverlay()
   const router = useRouter()
@@ -94,11 +93,13 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     setSearchFilters((prev) => ({ ...prev, minPrice, maxPrice }))
   }
 
+  const searchResultsPath =
+    getCMSLinkHref(searchResultsLink ?? {}) ?? DEFAULT_SEARCH_RESULTS_PATH
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!hasActivePropertyFilters(searchFilters)) return
     savePendingPropertyListFilters(searchFilters)
-    router.push(ALL_PROPERTIES_PATH)
+    router.push(searchResultsPath)
   }
 
   const linkProps =

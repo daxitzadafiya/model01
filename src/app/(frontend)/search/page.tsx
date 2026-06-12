@@ -6,6 +6,8 @@ import { getPayload } from 'payload'
 import React from 'react'
 import { Search } from '@/search/Component'
 import { CardPostData } from '@/components/Card'
+import { formatPageTitle, getAppName } from '@/utilities/getAppName'
+import { getCachedGlobal } from '@/utilities/getGlobals'
 
 type Args = {
   searchParams: Promise<{
@@ -79,8 +81,10 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
   )
 }
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
+  const logo = await getCachedGlobal('logo', 0)()
+
   return {
-    title: `Horizon estates Search`,
+    title: formatPageTitle('Search', getAppName(logo)),
   }
 }

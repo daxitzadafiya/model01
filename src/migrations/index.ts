@@ -12,6 +12,9 @@ import * as migration_20260610_170500_email_template_fields from './20260610_170
 import * as migration_20260610_180000_client_confirmation_contact_fields from './20260610_180000_client_confirmation_contact_fields'
 import * as migration_20260611_100700_hero_block_media from './20260611_100700_hero_block_media'
 import * as migration_20260611_140000_weather_settings from './20260611_140000_weather_settings'
+import * as migration_20260612_100000_hero_search_results_link from './20260612_100000_hero_search_results_link'
+import * as migration_20260612_110000_logo_app_name from './20260612_110000_logo_app_name'
+import * as migration_20260612_120000_footer_copyright_app_name from './20260612_120000_footer_copyright_app_name'
 
 export const migrations = [
   {
@@ -83,5 +86,20 @@ export const migrations = [
     up: migration_20260611_140000_weather_settings.up,
     down: migration_20260611_140000_weather_settings.down,
     name: '20260611_140000_weather_settings',
+  },
+  {
+    up: migration_20260612_100000_hero_search_results_link.up,
+    down: migration_20260612_100000_hero_search_results_link.down,
+    name: '20260612_100000_hero_search_results_link',
+  },
+  {
+    up: migration_20260612_110000_logo_app_name.up,
+    down: migration_20260612_110000_logo_app_name.down,
+    name: '20260612_110000_logo_app_name',
+  },
+  {
+    up: migration_20260612_120000_footer_copyright_app_name.up,
+    down: migration_20260612_120000_footer_copyright_app_name.down,
+    name: '20260612_120000_footer_copyright_app_name',
   },
 ]

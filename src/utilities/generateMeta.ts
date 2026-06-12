@@ -2,6 +2,9 @@ import type { Metadata } from 'next'
 
 import type { Media, Page, Post, Config } from '../payload-types'
 
+import { getCachedGlobal } from '@/utilities/getGlobals'
+
+import { formatPageTitle, getAppName } from './getAppName'
 import { mergeOpenGraph } from './mergeOpenGraph'
 import { getServerSideURL } from './getURL'
 
@@ -24,11 +27,10 @@ export const generateMeta = async (args: {
 }): Promise<Metadata> => {
   const { doc } = args
 
+  const logo = await getCachedGlobal('logo', 0)()
+  const appName = getAppName(logo)
   const ogImage = getImageURL(doc?.meta?.image)
-
-  const title = doc?.meta?.title
-    ? doc?.meta?.title + ' | Horizon estates'
-    : 'Horizon estates'
+  const title = formatPageTitle(doc?.meta?.title, appName)
 
   return {
     description: doc?.meta?.description,
@@ -41,6 +43,7 @@ export const generateMeta = async (args: {
             },
           ]
         : undefined,
+      siteName: appName,
       title,
       url: Array.isArray(doc?.slug) ? doc?.slug.join('/') : '/',
     }),

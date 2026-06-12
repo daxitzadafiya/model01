@@ -926,6 +926,23 @@ export interface HeroBlock {
    */
   videoUpload?: (number | null) | Media;
   showSearch?: boolean | null;
+  /**
+   * Where the hero property search sends visitors (e.g. your All Properties page).
+   */
+  searchResultsLink?: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+  };
   id?: string | null;
   blockName?: string | null;
   blockType: 'heroBlock';
@@ -2191,6 +2208,14 @@ export interface HeroBlockSelect<T extends boolean = true> {
   vimeoUrl?: T;
   videoUpload?: T;
   showSearch?: T;
+  searchResultsLink?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+      };
   id?: T;
   blockName?: T;
 }
@@ -3306,7 +3331,7 @@ export interface Footer {
       }[]
     | null;
   /**
-   * Use {year} as a placeholder for the current year.
+   * Same text in every language. Use {year} for the current year and {appName} for the site name from Logo → App Name.
    */
   copyrightText?: string | null;
   /**
@@ -3407,6 +3432,10 @@ export interface Localization {
  */
 export interface Logo {
   id: number;
+  /**
+   * Site name shown in page titles, metadata, and other branding.
+   */
+  appName: string;
   /**
    * Alternative text for accessibility.
    */
@@ -4008,6 +4037,7 @@ export interface LocalizationSelect<T extends boolean = true> {
  * via the `definition` "logo_select".
  */
 export interface LogoSelect<T extends boolean = true> {
+  appName?: T;
   alt?: T;
   lightLogo?: T;
   darkLogo?: T;

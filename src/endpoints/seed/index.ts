@@ -284,7 +284,7 @@ export const seed = async ({
           { icon: 'workspace_premium' },
           { icon: 'security' },
         ],
-        copyrightText: '© {year} HORIZON ESTATES. ALL RIGHTS RESERVED.',
+        copyrightText: '© {year} {appName}. ALL RIGHTS RESERVED.',
         legalLinks: [
           { link: { type: 'custom', label: 'Privacy Policy', url: '#' } },
           { link: { type: 'custom', label: 'Terms of Service', url: '#' } },

@@ -64,11 +64,11 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
   // Property reference structured as a prominent premium card at the top
   const referenceCallout = content.propertyReference
     ? `
-        <div class="reference-callout" style="margin-bottom:24px;background:${palette.calloutBackground};border:1px solid ${palette.border};border-left:4px solid ${palette.accent};border-radius:8px;padding:20px 24px;box-shadow:0 6px 18px ${palette.accentShadow};">
+        <div style="margin-bottom:26px;background:${palette.calloutBackground};border:1px solid ${palette.border};border-left:3px solid ${palette.accent};border-radius:8px;padding:16px 20px;box-shadow:0 6px 18px ${palette.accentShadow};">
           <div style="color:${palette.accent};font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
             ${escapeHtml(content.refLabel)}
           </div>
-          <div style="field-value" style="color:${palette.textPrimary};font-size:14px;font-weight:700;line-height:1.6;white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-weight:500;">
+          <div style="field-value" style="color:${palette.textPrimary};font-size:14px;line-height:1.6;white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-weight:500;">
             ${escapeHtml(content.propertyReference)}
           </div>
         </div>`
@@ -109,10 +109,6 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
         }
         .divider-td {
           padding: 0 20px !important;
-        }
-        .reference-callout {
-          padding: 16px 20px !important;
-          margin-bottom: 20px !important;
         }
       }
       .email-content img {
@@ -175,9 +171,8 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
             <!-- Fields & Callout section -->
             <tr>
               <td class="fields-wrapper-td" style="padding:0 40px 32px;background:${palette.cardBackground};" bgcolor="${palette.cardBackground}">
-                ${referenceCallout}
-
                 <div class="fields-container">
+                  ${referenceCallout}
                   ${fieldBlocks}
                 </div>
 

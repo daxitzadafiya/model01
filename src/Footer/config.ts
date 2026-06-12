@@ -161,10 +161,10 @@ export const Footer: GlobalConfig = {
             {
               name: 'copyrightText',
               type: 'text',
-              localized: true,
-              defaultValue: '© {year} HORIZON ESTATES. ALL RIGHTS RESERVED.',
+              defaultValue: '© {year} {appName}. ALL RIGHTS RESERVED.',
               admin: {
-                description: 'Use {year} as a placeholder for the current year.',
+                description:
+                  'Same text in every language. Use {year} for the current year and {appName} for the site name from Logo → App Name.',
               },
             },
             {

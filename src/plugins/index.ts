@@ -12,14 +12,20 @@ import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
 
 import { Page, Post } from '@/payload-types'
+import { DEFAULT_APP_NAME, formatPageTitle, getAppNameFromDatabase } from '@/utilities/getAppName'
 import { getServerSideURL } from '@/utilities/getURL'
 import { isContactFormTitle } from '@/utilities/isContactFormSubmission'
 import { sendFormSubmissionNotificationEmail } from '@/email/sendNotificationEmail'
 import { submitContactToOptimaCrm } from '@/utilities/submitContactToOptimaCrm'
 import { verifyRecaptchaToken } from '@/utilities/verifyRecaptcha'
 
+let resolvedAppName: string | null = null
+void getAppNameFromDatabase().then((name) => {
+  resolvedAppName = name
+})
+
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
-  return doc?.title ? `${doc.title} | Horizon estates` : 'Horizon estates'
+  return formatPageTitle(doc?.title, resolvedAppName ?? DEFAULT_APP_NAME)
 }
 
 const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
