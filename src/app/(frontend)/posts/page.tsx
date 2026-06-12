@@ -7,17 +7,20 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 
+import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { formatPageTitle, getAppName } from '@/utilities/getAppName'
 import { getCachedGlobal } from '@/utilities/getGlobals'
-export const dynamic = 'force-static'
+
 export const revalidate = 600
 
 export default async function Page() {
+  const { locale } = await getActiveLocale()
   const payload = await getPayload({ config: configPromise })
 
   const posts = await payload.find({
     collection: 'posts',
     depth: 1,
+    locale,
     limit: 12,
     overrideAccess: false,
     select: {

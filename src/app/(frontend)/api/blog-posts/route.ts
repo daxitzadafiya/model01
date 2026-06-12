@@ -3,6 +3,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { postToItem } from '@/blocks/BlogPostsBlock/postToItem'
+import { getActiveLocale } from '@/i18n/getLanguageMenu'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -10,20 +11,17 @@ export async function GET(request: Request) {
   const limit = Math.min(24, Math.max(1, parseInt(searchParams.get('limit') || '9', 10) || 9))
 
   try {
+    const { locale } = await getActiveLocale()
     const payload = await getPayload({ config: configPromise })
 
     const postsResult = await payload.find({
       collection: 'posts',
       depth: 1,
+      locale,
       limit,
       page,
       sort: '-publishedAt',
       overrideAccess: false,
-      where: {
-        _status: {
-          equals: 'published',
-        },
-      },
     })
 
     return NextResponse.json({

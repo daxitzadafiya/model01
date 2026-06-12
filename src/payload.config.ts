@@ -124,6 +124,10 @@ export default buildConfig({
     client: {
       url: process.env.DATABASE_URL || '',
     },
+    // Wait on SQLITE_BUSY instead of failing when auto-translate runs after save.
+    busyTimeout: 10_000,
+    // WAL + concurrent Next.js workers can corrupt local SQLite; keep WAL for production only.
+    wal: process.env.NODE_ENV === 'production',
     // Use migrations in production; dev schema push leaves a batch=-1 marker that
     // blocks non-interactive `next build` with an interactive migrate prompt.
     push: false,

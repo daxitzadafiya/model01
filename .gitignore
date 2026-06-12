@@ -13,6 +13,10 @@ public/robots.txt
 public/sitemap*.xml
 
 
+# Local SQLite (WAL sidecars — not for git)
+roumpos.db-wal
+roumpos.db-shm
+
 # Playwright
 node_modules/
 /test-results/

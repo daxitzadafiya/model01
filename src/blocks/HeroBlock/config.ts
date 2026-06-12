@@ -189,6 +189,10 @@ export const HeroBlock: Block = {
       required: true,
       defaultValue: 'Discover Exceptional Properties in Greece.',
       localized: true,
+      admin: {
+        description:
+          'Edit in English only. Other languages refresh via DeepL when English changes on save.',
+      },
     },
     {
       name: 'buttonText',
@@ -196,6 +200,10 @@ export const HeroBlock: Block = {
       required: true,
       defaultValue: 'View All Properties',
       localized: true,
+      admin: {
+        description:
+          'Edit in English only. Other languages refresh via DeepL when English changes on save.',
+      },
     },
     link({
       appearances: false,

@@ -6,6 +6,7 @@ import { useReveal } from '@/utilities/useReveal'
 import { ArticleCard } from '@/components/ArticleCard'
 import { CMSLink, type CMSLinkType } from '@/components/Link'
 import type { Media as MediaType } from '@/payload-types'
+import { useTranslation } from '@/utilities/translateClient'
 import { CAROUSEL_GAP_PX, useCardsPerView, useCarouselIndex } from '@/utilities/useCarousel'
 
 export type KnowledgeArticleItem = {
@@ -37,6 +38,7 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
   viewAllLink,
 }) => {
   const sectionRef = useReveal()
+  const readMoreLabel = useTranslation('blog.readMore', 'Read More')
   const cardsPerView = useCardsPerView(DESKTOP_CARDS, MOBILE_CARDS)
   const total = articles.length
   const { currentIndex, maxIndex, goTo, handlePrev, handleNext, cardWidth, translateX } =
@@ -108,6 +110,7 @@ export const KnowledgeBaseBlockClient: React.FC<ClientProps> = ({
               date={article.date}
               dateTime={article.dateTime}
               ctaLink={article.link}
+              readMoreLabel={readMoreLabel}
               linkImage={false}
               linkTitle={false}
             />

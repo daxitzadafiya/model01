@@ -20,6 +20,10 @@ export const StatsBlock: Block = {
           type: 'text',
           required: true,
           localized: true,
+          admin: {
+            description:
+              'Edit in English only. Other languages refresh via DeepL when English changes on save.',
+          },
         },
       ],
     },

@@ -7,6 +7,7 @@ import { PageRange } from '@/components/PageRange'
 import { PropertyListPagination } from '@/components/PropertyList/PropertyListPagination'
 import type { CMSLinkType } from '@/components/Link'
 import type { Media as MediaType } from '@/payload-types'
+import { useTranslation } from '@/utilities/translateClient'
 import { activateRevealElements, useReveal } from '@/utilities/useReveal'
 
 import { BlogEmptyState } from './BlogEmptyState'
@@ -51,6 +52,7 @@ export const BlogPostsBlockClient: React.FC<ClientProps> = ({
   emptyStateLink,
 }) => {
   const sectionRef = useReveal()
+  const readMoreLabel = useTranslation('blog.readMore', 'Read More')
   const resultsRef = useRef<HTMLDivElement>(null)
   const skipInitialFetch = useRef(true)
   const pendingPageScrollRef = useRef(false)
@@ -164,7 +166,7 @@ export const BlogPostsBlockClient: React.FC<ClientProps> = ({
                   date={post.date}
                   dateTime={post.dateTime}
                   href={`/posts/${post.slug}`}
-                  readMoreLabel="Read More"
+                  readMoreLabel={readMoreLabel}
                 />
               ))}
             </div>

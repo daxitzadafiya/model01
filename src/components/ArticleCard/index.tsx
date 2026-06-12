@@ -109,8 +109,12 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             </Link>
           ) : (
             ctaLink && (
-              <CMSLink {...ctaLink} appearance="inline" className={ctaClassName}>
-                {readMoreLabel}
+              <CMSLink
+                {...ctaLink}
+                label={readMoreLabel ?? ctaLink.label}
+                appearance="inline"
+                className={ctaClassName}
+              >
                 <ArrowRight size={14} aria-hidden />
               </CMSLink>
             )

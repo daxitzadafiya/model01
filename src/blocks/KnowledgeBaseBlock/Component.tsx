@@ -3,6 +3,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 
+import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { formatPublishedDate } from '@/utilities/formatDateTime'
 
 import { getCMSLinkHref } from '@/components/Link'
@@ -22,6 +23,7 @@ export const KnowledgeBaseBlock: React.FC<KnowledgeBaseBlockProps> = async (prop
   const { subtitle, title, populateBy, limit: limitFromProps, selectedPosts, articles, viewAllLink } =
     props
   const limit = limitFromProps || 3
+  const { locale } = await getActiveLocale()
 
   let resolved: KnowledgeArticleItem[] = []
 
@@ -52,6 +54,7 @@ export const KnowledgeBaseBlock: React.FC<KnowledgeBaseBlockProps> = async (prop
       const fetched = await payload.find({
         collection: 'posts',
         depth: 1,
+        locale,
         limit: postIds.length,
         sort: '-publishedAt',
         where: {
@@ -66,6 +69,7 @@ export const KnowledgeBaseBlock: React.FC<KnowledgeBaseBlockProps> = async (prop
     const fetched = await payload.find({
       collection: 'posts',
       depth: 1,
+      locale,
       limit,
       sort: '-publishedAt',
       where: {

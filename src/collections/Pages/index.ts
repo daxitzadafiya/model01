@@ -2,34 +2,12 @@ import type { CollectionConfig } from 'payload'
 
 import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
-import { Archive } from '../../blocks/ArchiveBlock/config'
-import { CallToAction } from '../../blocks/CallToAction/config'
-import { Content } from '../../blocks/Content/config'
-import { FormBlock } from '../../blocks/Form/config'
-import { MediaBlock } from '../../blocks/MediaBlock/config'
-import { HeroBlock } from '../../blocks/HeroBlock/config'
-import { StatsBlock } from '../../blocks/StatsBlock/config'
-import { MissionBlock } from '../../blocks/MissionBlock/config'
-import { PropertiesBlock } from '../../blocks/PropertiesBlock/config'
-import { PropertyListBlock } from '../../blocks/PropertyListBlock/config'
-import { InteractiveMapBlock } from '../../blocks/InteractiveMapBlock/config'
-import { VirtualTourBlock } from '../../blocks/VirtualTourBlock/config'
-import { AdvisorsBlock } from '../../blocks/AdvisorsBlock/config'
-import { TestimonialsBlock } from '../../blocks/TestimonialsBlock/config'
-import { KnowledgeBaseBlock } from '../../blocks/KnowledgeBaseBlock/config'
-import { DualActionBlock } from '../../blocks/DualActionBlock/config'
-import { FounderSpotlightBlock } from '../../blocks/FounderSpotlightBlock/config'
-import { WhoWeAreBlock } from '../../blocks/WhoWeAreBlock/config'
-import { AboutUsHeroBlock } from '../../blocks/AboutUsHeroBlock/config'
-import { MapBlock } from '../../blocks/MapBlock/config'
-import { ContactSectionBlock } from '../../blocks/ContactSectionBlock/config'
-import { PrivacyPolicyBlock } from '../../blocks/PrivacyPolicyBlock/config'
-import { CertificatesBlock } from '../../blocks/CertificatesBlock/config'
-import { BlogPostsBlock } from '../../blocks/BlogPostsBlock/config'
+import { pageLayoutBlocks } from '@/blocks/pageLayoutBlocks'
 import { hero } from '@/heros/config'
 import { slugField } from 'payload'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
+import { autoTranslatePageContent } from './hooks/autoTranslatePageContent'
 import { revalidateDelete, revalidatePage } from './hooks/revalidatePage'
 
 import {
@@ -91,32 +69,7 @@ export const Pages: CollectionConfig<'pages'> = {
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [
-                CallToAction,
-                Content,
-                MediaBlock,
-                Archive,
-                FormBlock,
-                HeroBlock,
-                StatsBlock,
-                MissionBlock,
-                PropertiesBlock,
-                PropertyListBlock,
-                InteractiveMapBlock,
-                VirtualTourBlock,
-                AdvisorsBlock,
-                TestimonialsBlock,
-                KnowledgeBaseBlock,
-                DualActionBlock,
-                FounderSpotlightBlock,
-                WhoWeAreBlock,
-                AboutUsHeroBlock,
-                MapBlock,
-                ContactSectionBlock,
-                PrivacyPolicyBlock,
-                CertificatesBlock,
-                BlogPostsBlock,
-              ],
+              blocks: [...pageLayoutBlocks],
               required: true,
               admin: {
                 initCollapsed: true,
@@ -164,7 +117,7 @@ export const Pages: CollectionConfig<'pages'> = {
     slugField(),
   ],
   hooks: {
-    afterChange: [revalidatePage],
+    afterChange: [autoTranslatePageContent, revalidatePage],
     beforeChange: [populatePublishedAt],
     afterDelete: [revalidateDelete],
   },

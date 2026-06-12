@@ -301,12 +301,18 @@ export interface Page {
  */
 export interface Post {
   id: number;
+  /**
+   * Edit in English only. Other languages refresh via DeepL when English changes on save.
+   */
   title: string;
   /**
-   * Short summary shown on knowledge base cards. If empty, the SEO meta description is used instead.
+   * Short summary shown on knowledge base cards. If empty, the SEO meta description is used instead. Edit in English only. Other languages refresh via DeepL when English changes on save.
    */
   subtitle?: string | null;
   heroImage?: (number | null) | Media;
+  /**
+   * Edit in English only. Other languages refresh via DeepL when English changes on save.
+   */
   content: {
     root: {
       type: string;
@@ -866,7 +872,13 @@ export interface Form {
  * via the `definition` "HeroBlock".
  */
 export interface HeroBlock {
+  /**
+   * Edit in English only. Other languages refresh via DeepL when English changes on save.
+   */
   title: string;
+  /**
+   * Edit in English only. Other languages refresh via DeepL when English changes on save.
+   */
   buttonText: string;
   /**
    * Where the hero button navigates to (e.g. Property for Sale page).
@@ -955,6 +967,9 @@ export interface StatsBlock {
   stats?:
     | {
         value: string;
+        /**
+         * Edit in English only. Other languages refresh via DeepL when English changes on save.
+         */
         label: string;
         id?: string | null;
       }[]

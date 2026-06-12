@@ -15,6 +15,8 @@ import * as migration_20260611_140000_weather_settings from './20260611_140000_w
 import * as migration_20260612_100000_hero_search_results_link from './20260612_100000_hero_search_results_link'
 import * as migration_20260612_110000_logo_app_name from './20260612_110000_logo_app_name'
 import * as migration_20260612_120000_footer_copyright_app_name from './20260612_120000_footer_copyright_app_name'
+import * as migration_20260612_160000_posts_localized_content from './20260612_160000_posts_localized_content'
+import * as migration_20260612_170000_posts_localized_backfill from './20260612_170000_posts_localized_backfill'
 
 export const migrations = [
   {
@@ -101,5 +103,15 @@ export const migrations = [
     up: migration_20260612_120000_footer_copyright_app_name.up,
     down: migration_20260612_120000_footer_copyright_app_name.down,
     name: '20260612_120000_footer_copyright_app_name',
+  },
+  {
+    up: migration_20260612_160000_posts_localized_content.up,
+    down: migration_20260612_160000_posts_localized_content.down,
+    name: '20260612_160000_posts_localized_content',
+  },
+  {
+    up: migration_20260612_170000_posts_localized_backfill.up,
+    down: migration_20260612_170000_posts_localized_backfill.down,
+    name: '20260612_170000_posts_localized_backfill',
   },
 ]

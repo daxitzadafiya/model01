@@ -8,6 +8,7 @@ import { getPayload } from 'payload'
 import React from 'react'
 import { notFound } from 'next/navigation'
 
+import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { formatPageTitle, getAppName } from '@/utilities/getAppName'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 
@@ -27,9 +28,12 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   if (!Number.isInteger(sanitizedPageNumber)) notFound()
 
+  const { locale } = await getActiveLocale()
+
   const posts = await payload.find({
     collection: 'posts',
     depth: 1,
+    locale,
     limit: 12,
     page: sanitizedPageNumber,
     overrideAccess: false,
