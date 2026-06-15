@@ -8,7 +8,9 @@ import { formatAuthors } from '@/utilities/formatAuthors'
 
 export const PostHero: React.FC<{
   post: Post
-}> = ({ post }) => {
+  authorLabel: string
+  datePublishedLabel: string
+}> = ({ post, authorLabel, datePublishedLabel }) => {
   const { categories, heroImage, populatedAuthors, publishedAt, title } = post
 
   const hasAuthors =
@@ -46,7 +48,7 @@ export const PostHero: React.FC<{
             {hasAuthors && (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm">Author</p>
+                  <p className="text-sm">{authorLabel}</p>
 
                   <p>{formatAuthors(populatedAuthors)}</p>
                 </div>
@@ -54,7 +56,7 @@ export const PostHero: React.FC<{
             )}
             {publishedAt && (
               <div className="flex flex-col gap-1">
-                <p className="text-sm">Date Published</p>
+                <p className="text-sm">{datePublishedLabel}</p>
 
                 <time dateTime={publishedAt}>{formatDateTime(publishedAt)}</time>
               </div>

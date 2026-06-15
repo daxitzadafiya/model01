@@ -1,4 +1,4 @@
-import { getDeepLSettings } from '@/settings/deepl/server'
+import { getDeepLSettings, type ResolvedDeepLSettings } from '@/settings/deepl/server'
 
 /** DeepL target/source language codes (uppercase) mapped from site locale codes */
 const DEEPL_LOCALE_MAP: Record<string, string> = {
@@ -28,15 +28,16 @@ export async function translateWithDeepL(
   text: string,
   targetLanguage: string,
   sourceLanguage = 'en',
+  settings?: ResolvedDeepLSettings,
 ): Promise<string | null> {
   const trimmed = text.trim()
   if (!trimmed) return null
 
-  const settings = await getDeepLSettings()
+  const resolvedSettings = settings ?? (await getDeepLSettings())
 
-  if (!settings.enabled) return null
+  if (!resolvedSettings.enabled) return null
 
-  const apiKey = settings.apiKey.trim()
+  const apiKey = resolvedSettings.apiKey.trim()
   if (!apiKey) {
     console.warn('[deepl] DeepL API key is not configured')
     return null
@@ -56,7 +57,7 @@ export async function translateWithDeepL(
     target_lang: targetLang,
     source_lang: sourceLang,
   })
-  const apiUrl = settings.apiUrl.trim() || 'https://api.deepl.com'
+  const apiUrl = resolvedSettings.apiUrl.trim() || 'https://api.deepl.com'
   try {
     const response = await fetch(`${apiUrl}/v2/translate`, {
       method: 'POST',

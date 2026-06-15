@@ -15,6 +15,7 @@ import { generateMeta } from '@/utilities/generateMeta'
 import type { Locale } from '@/i18n/config'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
+import { t } from '@/utilities/translate'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -53,6 +54,9 @@ export default async function Post({ params: paramsPromise }: Args) {
 
   if (!post) return <PayloadRedirects url={url} />
 
+  const authorLabel = await t('post.authorLabel', locale, 'Author')
+  const datePublishedLabel = await t('post.datePublishedLabel', locale, 'Date Published')
+
   return (
     <article className="pt-16">
       {/* Allows redirects for valid pages too */}
@@ -60,7 +64,7 @@ export default async function Post({ params: paramsPromise }: Args) {
 
       {draft && <LivePreviewListener />}
 
-      <PostHero post={post} />
+      <PostHero post={post} authorLabel={authorLabel} datePublishedLabel={datePublishedLabel} />
 
       <div className="flex flex-col items-center gap-4 pt-8 pb-8 bg-surface-container-low">
         <div className="container">

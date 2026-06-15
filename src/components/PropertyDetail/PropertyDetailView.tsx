@@ -97,6 +97,8 @@ export const PropertyDetailView: React.FC<Props> = ({
   const bedroomsLabel = useTranslation('propertyDetail.specs.bedrooms', 'Bedrooms')
   const bathroomsLabel = useTranslation('propertyDetail.specs.bathrooms', 'Bathrooms')
   const propertyTypeLabel = useTranslation('propertyDetail.specs.propertyType', 'Property Type')
+  const homeLabel = useTranslation('homeLabel', 'Home')
+  const propertiesLabel = useTranslation('propertiesLabel', 'Properties')
   const listHref = portfolioHref || '/'
 
   const specItems = [
@@ -136,11 +138,11 @@ export const PropertyDetailView: React.FC<Props> = ({
         <div className="lg:col-span-5 xl:col-span-4 flex flex-col h-full py-2">
           <nav className="flex flex-wrap gap-x-2 text-label-sm font-label-sm text-on-surface-variant uppercase mb-4">
             <Link className="hover:text-tertiary transition-colors" href="/">
-              Home
+              {homeLabel}
             </Link>
             <span>/</span>
             <Link className="hover:text-tertiary transition-colors" href={listHref}>
-              Properties
+              {propertiesLabel}
             </Link>
             <span>/</span>
             <span className="text-primary font-bold">{property.location}</span>

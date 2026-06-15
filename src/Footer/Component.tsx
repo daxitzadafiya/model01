@@ -9,12 +9,7 @@ import { CMSLink } from '@/components/Link'
 import { Logo } from '@/components/Logo/Logo'
 import { getLogoSources } from '@/components/Logo/getLogoSources'
 import { DEFAULT_APP_NAME, getAppName } from '@/utilities/getAppName'
-
-function formatCopyright(text: string, appName: string): string {
-  return text
-    .replace(/\{year\}/g, String(new Date().getFullYear()))
-    .replace(/\{appName\}/gi, appName)
-}
+import { DEFAULT_RIGHTS_RESERVED, formatFooterCopyright } from '@/Footer/formatCopyright'
 
 export async function Footer() {
   const { locale } = await getActiveLocale()
@@ -33,8 +28,7 @@ export async function Footer() {
   const contact = footerData?.contact
   const certificationsTitle = footerData?.certificationsTitle ?? 'CERTIFICATIONS'
   const certifications = footerData?.certifications ?? []
-  const copyrightText =
-    footerData?.copyrightText ?? `© {year} {appName}. ALL RIGHTS RESERVED.`
+  const rightsReserved = footerData?.copyrightText ?? DEFAULT_RIGHTS_RESERVED
   const legalLinks = footerData?.legalLinks ?? []
 
   return (
@@ -148,9 +142,9 @@ export async function Footer() {
         </div>
       </div>
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-12 md:mt-20 pt-6 md:pt-8 border-t border-on-primary-fixed-variant/20 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-        {copyrightText && (
+        {rightsReserved && (
           <p className="font-label-sm text-label-sm text-on-primary-fixed-variant">
-            {formatCopyright(copyrightText, appName || DEFAULT_APP_NAME)}
+            {formatFooterCopyright(rightsReserved, appName || DEFAULT_APP_NAME)}
           </p>
         )}
         {legalLinks.length > 0 && (

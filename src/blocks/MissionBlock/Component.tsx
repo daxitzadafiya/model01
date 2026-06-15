@@ -5,6 +5,7 @@ import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
 import { Media } from '@/components/Media'
 import { CMSLink } from '@/components/Link'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = Extract<Page['layout'][0], { blockType: 'missionBlock' }>
 
@@ -19,6 +20,8 @@ export const MissionBlock: React.FC<Props> = ({
 }) => {
   const ref = useReveal()
 
+  const establishedYearLabel = useTranslation('missionBlock.establishedYearLabel', 'Established')
+
   return (
     <section ref={ref} className="py-16 md:py-24 bg-surface-container-low overflow-hidden">
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 md:grid-cols-12 items-center gap-8 md:gap-gutter">
@@ -32,7 +35,7 @@ export const MissionBlock: React.FC<Props> = ({
                 <span className="font-headline-md md:font-display-lg text-headline-md md:text-headline-lg block leading-none">
                   {establishedYear}
                 </span>
-                <span className="font-label-sm text-label-sm tracking-widest mt-1 block">ESTABLISHED</span>
+                <span className="font-label-sm text-label-sm tracking-widest mt-1 block uppercase">{establishedYearLabel}</span>
               </div>
             )}
           </div>

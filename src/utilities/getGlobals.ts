@@ -30,7 +30,7 @@ async function getGlobal<T extends Global>(
 export const getCachedGlobal = <T extends Global>(slug: T, depth = 0, locale?: Locale) => {
   const localeKey = locale ?? 'default'
 
-  return unstable_cache(async () => getGlobal<T>(slug, depth, locale), [slug, localeKey], {
+  return unstable_cache(async () => getGlobal<T>(slug, depth, locale), [slug, localeKey, String(depth)], {
     tags: [`global_${slug}`, `global_${slug}_${localeKey}`],
   })
 }

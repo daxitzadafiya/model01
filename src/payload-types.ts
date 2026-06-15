@@ -3346,7 +3346,7 @@ export interface Footer {
       }[]
     | null;
   /**
-   * Same text in every language. Use {year} for the current year and {appName} for the site name from Logo → App Name.
+   * Localized “all rights reserved” phrase only. The footer adds ©, year, and app name from Logo → App Name automatically.
    */
   copyrightText?: string | null;
   /**
@@ -3455,7 +3455,7 @@ export interface Logo {
   createdAt?: string | null;
 }
 /**
- * Banner shown on the public site until visitors accept or reject cookies. Edit the message and button labels per locale.
+ * Banner shown on the public site until visitors accept or reject cookies. Edit localized copy in English; other locales update via DeepL on save.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "cookieConsent".
@@ -3468,11 +3468,11 @@ export interface CookieConsent {
    */
   showCloseButton?: boolean | null;
   /**
-   * Short heading shown in the banner.
+   * Short heading shown in the banner. Edit in English only. Other languages refresh via DeepL when English changes on save.
    */
   title?: string | null;
   /**
-   * Explain which cookies you use and why. Shown in the banner body.
+   * Explain which cookies you use and why. Shown in the banner body. Edit in English only. Other languages refresh via DeepL when English changes on save.
    */
   content?: {
     root: {
@@ -3489,13 +3489,16 @@ export interface CookieConsent {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Edit in English only. Other languages refresh via DeepL when English changes on save.
+   */
   acceptLabel: string;
   /**
-   * Leave empty to hide the reject button.
+   * Leave empty to hide the reject button. Edit in English only. Other languages refresh via DeepL when English changes on save.
    */
   rejectLabel?: string | null;
   /**
-   * Optional link to your cookie or privacy policy page.
+   * Optional link to your cookie or privacy policy page. Link label: Edit in English only. Other languages refresh via DeepL when English changes on save.
    */
   policyLink: {
     type?: ('reference' | 'custom') | null;

@@ -8,6 +8,7 @@ import { Media } from '@/components/Media'
 import { CMSLink, type CMSLinkType } from '@/components/Link'
 import type { Media as MediaType } from '@/payload-types'
 import { cn } from '@/utilities/ui'
+import { useTranslation } from '@/utilities/translateClient'
 
 export type ArticleCardData = {
   image?: MediaType | number | null
@@ -49,7 +50,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   linkTitle = !!href,
 }) => {
   const description = subtitle ?? excerpt
-
+  const categoryLabel = useTranslation('categoryLabel', category)
   const imageElement =
     typeof image === 'object' && image !== null ? (
       <Media
@@ -77,7 +78,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
       <div className="flex flex-col grow p-6 md:p-8">
         <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest mb-2">
-          {category}
+          {categoryLabel}
         </span>
         <h3 className="font-headline-sm text-headline-sm text-primary mb-3 leading-snug">
           {linkTitle && href ? (

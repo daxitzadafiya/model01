@@ -3,7 +3,7 @@ import type { Payload } from 'payload'
 import { getSiteContentLocales } from '@/i18n/getSiteContentLocales'
 import { defaultLocale } from '@/i18n/locales'
 import type { Page } from '@/payload-types'
-import { getDeepLSettings } from '@/settings/deepl/server'
+import { getDeepLSettingsFromPayload } from '@/settings/deepl/server'
 import { translateWithDeepL } from '@/utilities/deepl'
 
 import { layoutHasTranslatableBlocks } from './blockRegistry'
@@ -49,7 +49,7 @@ export async function autoTranslatePageLayout({
     return { updatedLocales: [] }
   }
 
-  const deepl = await getDeepLSettings()
+  const deepl = await getDeepLSettingsFromPayload(payload)
   if (!deepl.enabled || !deepl.apiKey.trim()) {
     payload.logger.info('[autoTranslate] DeepL disabled — skipping page layout translation')
     return { updatedLocales: [] }
@@ -63,7 +63,7 @@ export async function autoTranslatePageLayout({
   }
 
   const translate = (text: string, targetLocale: string) =>
-    translateWithDeepL(text, targetLocale, normalizedSource)
+    translateWithDeepL(text, targetLocale, normalizedSource, deepl)
 
   const updatedLocales: string[] = []
 

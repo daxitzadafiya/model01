@@ -81,6 +81,15 @@ export function documentHasTranslatableFields(registry: DocumentFieldRegistry): 
   return registry.strings.length > 0 || registry.richText.length > 0
 }
 
+export function documentHasSourceTranslatableContent(
+  doc: Record<string, unknown> | null | undefined,
+  registry: DocumentFieldRegistry,
+): boolean {
+  if (!doc || !documentHasTranslatableFields(registry)) return false
+
+  return collectFingerprints(doc, registry).size > 0
+}
+
 export function documentLocalizedFieldsChanged(
   current: Record<string, unknown> | null | undefined,
   previous: Record<string, unknown> | null | undefined,

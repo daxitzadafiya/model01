@@ -161,10 +161,11 @@ export const Footer: GlobalConfig = {
             {
               name: 'copyrightText',
               type: 'text',
-              defaultValue: '© {year} {appName}. ALL RIGHTS RESERVED.',
+              localized: true,
+              defaultValue: 'ALL RIGHTS RESERVED.',
               admin: {
                 description:
-                  'Same text in every language. Use {year} for the current year and {appName} for the site name from Logo → App Name.',
+                  'Localized “all rights reserved” phrase only. The footer adds ©, year, and app name from Logo → App Name automatically.',
               },
             },
             {
