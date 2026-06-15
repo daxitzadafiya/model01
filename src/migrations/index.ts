@@ -17,6 +17,9 @@ import * as migration_20260612_110000_logo_app_name from './20260612_110000_logo
 import * as migration_20260612_120000_footer_copyright_app_name from './20260612_120000_footer_copyright_app_name'
 import * as migration_20260612_160000_posts_localized_content from './20260612_160000_posts_localized_content'
 import * as migration_20260612_170000_posts_localized_backfill from './20260612_170000_posts_localized_backfill'
+import * as migration_20260615_100000_theme_custom_css from './20260615_100000_theme_custom_css'
+import * as migration_20260615_120000_property_filters_sort_options from './20260615_120000_property_filters_sort_options'
+import * as migration_20260615_130000_property_filters_sort_params_column from './20260615_130000_property_filters_sort_params_column'
 
 export const migrations = [
   {
@@ -113,5 +116,20 @@ export const migrations = [
     up: migration_20260612_170000_posts_localized_backfill.up,
     down: migration_20260612_170000_posts_localized_backfill.down,
     name: '20260612_170000_posts_localized_backfill',
+  },
+  {
+    up: migration_20260615_100000_theme_custom_css.up,
+    down: migration_20260615_100000_theme_custom_css.down,
+    name: '20260615_100000_theme_custom_css',
+  },
+  {
+    up: migration_20260615_120000_property_filters_sort_options.up,
+    down: migration_20260615_120000_property_filters_sort_options.down,
+    name: '20260615_120000_property_filters_sort_options',
+  },
+  {
+    up: migration_20260615_130000_property_filters_sort_params_column.up,
+    down: migration_20260615_130000_property_filters_sort_params_column.down,
+    name: '20260615_130000_property_filters_sort_params_column',
   },
 ]

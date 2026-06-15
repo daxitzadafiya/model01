@@ -1,61 +1,31 @@
 import type { GlobalConfig } from 'payload'
 
+import { revalidateTheme } from './hooks/revalidateTheme'
+import { THEME_CUSTOM_CSS_TEMPLATE } from './siteThemeTokens.mjs'
+
 export const Theme: GlobalConfig = {
   slug: 'theme',
+  label: 'Theme',
   access: {
     read: () => true,
   },
+  admin: {
+    description: 'Site-wide CSS variables for Tailwind classes (bg-primary, text-tertiary, border-outline-variant, etc.).',
+  },
+  hooks: {
+    afterChange: [revalidateTheme],
+  },
   fields: [
     {
-      name: 'colors',
-      type: 'group',
-      fields: [
-        {
-          name: 'primary',
-          type: 'text',
-          defaultValue: '#000000',
-          required: true,
-          admin: {
-            description: 'Main brand color (e.g., #000000)',
-          },
-        },
-        {
-          name: 'secondary',
-          type: 'text',
-          defaultValue: '#5e5e5c',
-          required: true,
-          admin: {
-            description: 'Secondary brand color (e.g., #5e5e5c)',
-          },
-        },
-        {
-          name: 'tertiary',
-          type: 'text',
-          defaultValue: '#755b00',
-          required: true,
-          admin: {
-            description: 'Accent color (e.g., #755b00)',
-          },
-        },
-        {
-          name: 'surface',
-          type: 'text',
-          defaultValue: '#fef9f1',
-          required: true,
-          admin: {
-            description: 'Main background surface color (e.g., #fef9f1)',
-          },
-        },
-        {
-          name: 'background',
-          type: 'text',
-          defaultValue: '#fef9f1',
-          required: true,
-          admin: {
-            description: 'General background color (e.g., #fef9f1)',
-          },
-        },
-      ],
+      name: 'customCSS',
+      type: 'code',
+      label: 'Custom CSS',
+      defaultValue: THEME_CUSTOM_CSS_TEMPLATE,
+      admin: {
+        language: 'css',
+        description:
+          'Defines :root variables used by Tailwind classes (e.g. --color-primary for bg-primary / text-primary). When empty, the default palette is used.',
+      },
     },
   ],
 }

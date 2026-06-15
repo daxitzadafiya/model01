@@ -3,20 +3,20 @@
 import { useMemo } from 'react'
 
 import { usePropertyFilterOptions } from '@/hooks/usePropertyFilterOptions'
+import type { PropertySortOption } from '@/utilities/propertyFilterOptions.shared'
 import { useTranslatedOptions, useTranslation } from '@/utilities/translateClient'
 
-export function useSortOptions() {
-  const newest = useTranslation('propertyList.sort.newest', 'Newest First')
-  const priceDesc = useTranslation('propertyList.sort.priceDesc', 'Price: High to Low')
-  const priceAsc = useTranslation('propertyList.sort.priceAsc', 'Price: Low to High')
+export function useSortOptions(): PropertySortOption[] {
+  const { sortOptions } = usePropertyFilterOptions()
+  const translated = useTranslatedOptions(sortOptions, 'propertyList.sort')
 
   return useMemo(
-    () => [
-      { value: 'newest', label: newest },
-      { value: 'priceDesc', label: priceDesc },
-      { value: 'priceAsc', label: priceAsc },
-    ],
-    [newest, priceDesc, priceAsc],
+    () =>
+      sortOptions.map((option, index) => ({
+        ...option,
+        label: translated[index]?.label ?? option.label,
+      })),
+    [sortOptions, translated],
   )
 }
 

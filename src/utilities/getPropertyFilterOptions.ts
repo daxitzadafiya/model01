@@ -1,16 +1,37 @@
 import type { PropertyFilter } from '@/payload-types'
 
 import { getCachedGlobal } from '@/utilities/getGlobals'
+import { parseCRMSortParams } from '@/utilities/crmProperties'
 import {
   DEFAULT_PROPERTY_FILTER_OPTIONS,
   type FilterSelectOption,
   type PriceRangeOption,
   type PropertyFilterOptions,
+  type PropertySortOption,
 } from '@/utilities/propertyFilterOptions.shared'
 
-export type { FilterSelectOption, PriceRangeOption, PropertyFilterOptions }
+export type { FilterSelectOption, PriceRangeOption, PropertyFilterOptions, PropertySortOption }
 
 type FilterOptionRow = { value?: string | null; label?: string | null }
+
+type SortOptionRow = FilterOptionRow & { sortParams?: string | null }
+
+function normalizeSortOptions(
+  rows: SortOptionRow[] | null | undefined,
+  fallback: readonly PropertySortOption[],
+): PropertySortOption[] {
+  const mapped = (rows ?? [])
+    .map((row) => {
+      const value = row.value?.trim() ?? ''
+      const label = row.label?.trim() ?? ''
+      const sort = parseCRMSortParams(row.sortParams ?? '')
+      if (!value || !label || !sort) return null
+      return { value, label, sort }
+    })
+    .filter((row): row is PropertySortOption => row !== null)
+
+  return mapped.length > 0 ? mapped : [...fallback]
+}
 
 function normalizeSimpleOptions(
   rows: FilterOptionRow[] | null | undefined,
@@ -48,6 +69,7 @@ export function normalizePropertyFilterOptions(
   if (!doc) return DEFAULT_PROPERTY_FILTER_OPTIONS
 
   return {
+    sortOptions: normalizeSortOptions(doc.sortOptions, DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions),
     priceRanges: normalizePriceRanges(doc.priceRanges, DEFAULT_PROPERTY_FILTER_OPTIONS.priceRanges),
     bedrooms: normalizeSimpleOptions(doc.bedrooms, DEFAULT_PROPERTY_FILTER_OPTIONS.bedrooms),
     minPrices: normalizeSimpleOptions(doc.minPrices, DEFAULT_PROPERTY_FILTER_OPTIONS.minPrices),

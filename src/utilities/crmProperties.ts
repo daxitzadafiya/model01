@@ -14,7 +14,7 @@ import {
 
 export type CRMListingPreset = 'forSale' | 'sold' | 'featured' | 'seaView' | 'custom' | 'favorites'
 
-export type PropertyListSort = 'newest' | 'priceDesc' | 'priceAsc'
+export type PropertyListSort = string
 
 export type PropertyListFilters = {
   reference?: string
@@ -122,6 +122,41 @@ export const parseCRMCustomQuery = (rawQuery: string): Record<string, unknown> |
   }
 
   return undefined
+}
+
+/** Parses admin sort JSON (e.g. `{"created_at": -1}` or `{"updated_at": true}`). */
+export const parseCRMSortParams = (raw: string): Record<string, unknown> | undefined => {
+  const trimmed = normalizeCRMCustomQueryText(raw)
+  if (!trimmed) return undefined
+
+  const candidates = [trimmed]
+  if (!trimmed.startsWith('{')) {
+    candidates.push(`{${trimmed}}`)
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as unknown
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) continue
+      return parsed as Record<string, unknown>
+    } catch {
+      // try next candidate
+    }
+  }
+
+  return undefined
+}
+
+const mergeCRMListingOptions = (
+  base: Record<string, unknown>,
+  sortParams?: Record<string, unknown>,
+): Record<string, unknown> => {
+  if (!sortParams || !Object.keys(sortParams).length) return base
+
+  return {
+    ...base,
+    sort: sortParams,
+  }
 }
 
 export const extractCRMList = (payload: unknown): Record<string, unknown>[] => {
@@ -549,6 +584,7 @@ export const buildCRMListingQuery = ({
   pageSize,
   filters = {},
   restrictToFavoriteIds,
+  sortParams,
 }: {
   preset: CRMListingPreset
   crmQueryJson?: string | null
@@ -556,6 +592,7 @@ export const buildCRMListingQuery = ({
   pageSize: number
   filters?: PropertyListFilters
   restrictToFavoriteIds?: (string | number)[]
+  sortParams?: Record<string, unknown>
 }): Record<string, unknown> => {
   const paginationOptions = buildCRMPageOptions(page, pageSize)
   const filterQuery = buildFilterQuery(filters)
@@ -579,10 +616,13 @@ export const buildCRMListingQuery = ({
 
       return {
         ...parsedQuery,
-        options: {
-          ...restOptions,
-          ...paginationOptions,
-        },
+        options: mergeCRMListingOptions(
+          {
+            ...restOptions,
+            ...paginationOptions,
+          },
+          sortParams,
+        ),
         query: mergedQuery,
       }
     }
@@ -592,7 +632,7 @@ export const buildCRMListingQuery = ({
       crmQueryJson,
     )
     return {
-      options: paginationOptions,
+      options: mergeCRMListingOptions(paginationOptions, sortParams),
       query: {},
     }
   }
@@ -650,7 +690,7 @@ export const buildCRMListingQuery = ({
   }
 
   return {
-    options: paginationOptions,
+    options: mergeCRMListingOptions(paginationOptions, sortParams),
     query: mergedQuery,
   }
 }

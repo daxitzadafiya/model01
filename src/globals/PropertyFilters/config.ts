@@ -5,6 +5,45 @@ import { revalidatePropertyFilters } from './hooks/revalidatePropertyFilters'
 const COL_THIRD = '33.33%' as const
 const COL_HALF = '50%' as const
 
+const sortOptionFields: Field[] = [
+  {
+    type: 'row',
+    fields: [
+      {
+        name: 'value',
+        type: 'text',
+        label: 'Value',
+        required: true,
+        admin: {
+          width: '30%',
+          description: 'Unique key for this sort option.',
+        },
+      },
+      {
+        name: 'label',
+        type: 'text',
+        label: 'Label',
+        required: true,
+        localized: true,
+        admin: {
+          width: '30%',
+        },
+      },
+      {
+        name: 'sortParams',
+        type: 'textarea',
+        label: 'CRM sort parameters',
+        required: true,
+        admin: {
+          width: '40%',
+          description:
+            'JSON merged into options.sort (e.g. {"created_at": -1}, {"current_price": 1}, {"updated_at": true}).',
+        },
+      },
+    ],
+  },
+]
+
 const filterOptionFields: Field[] = [
   {
     type: 'row',
@@ -106,12 +145,28 @@ export const PropertyFilters: GlobalConfig = {
   },
   admin: {
     description:
-      'Dropdown options for property search filters. Property type and location still come from the CRM API.',
+      'Dropdown options for property search filters and sort order. Property type and location still come from the CRM API.',
   },
   hooks: {
     afterChange: [revalidatePropertyFilters],
   },
   fields: [
+    filterArrayField({
+      name: 'sortOptions',
+      label: 'Sort options',
+      admin: {
+        width: '100%',
+        initCollapsed: false,
+        description: 'Options for the property list “Sort by” dropdown. Each row maps to CRM options.sort.',
+      },
+      defaultValue: [
+        { value: 'relevance', label: 'Relevance', sortParams: '{"featured": -1}' },
+        { value: 'recent', label: 'Recent', sortParams: '{"created_at": -1}' },
+        { value: 'priceAsc', label: 'Lowest Price', sortParams: '{"current_price": 1}' },
+        { value: 'priceDesc', label: 'Highest Price', sortParams: '{"current_price": -1}' },
+      ],
+      fields: sortOptionFields,
+    }),
     filterArrayField({
       name: 'priceRanges',
       label: 'Price ranges',

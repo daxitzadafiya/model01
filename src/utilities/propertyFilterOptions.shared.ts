@@ -7,13 +7,19 @@ import {
   PRICE_RANGE_OPTIONS,
   PROPERTY_LISTING_FEATURE_OPTIONS,
   PROPERTY_LISTING_STATUS_OPTIONS,
+  SORT_OPTIONS,
 } from '@/components/PropertyList/filterOptions'
 
 export type FilterSelectOption = { value: string; label: string }
 
 export type PriceRangeOption = FilterSelectOption & { min: string; max: string }
 
+export type PropertySortOption = FilterSelectOption & {
+  sort: Record<string, unknown>
+}
+
 export type PropertyFilterOptions = {
+  sortOptions: PropertySortOption[]
   priceRanges: PriceRangeOption[]
   bedrooms: FilterSelectOption[]
   minPrices: FilterSelectOption[]
@@ -25,6 +31,7 @@ export type PropertyFilterOptions = {
 }
 
 export const DEFAULT_PROPERTY_FILTER_OPTIONS: PropertyFilterOptions = {
+  sortOptions: SORT_OPTIONS.map((opt) => ({ ...opt, sort: { ...opt.sort } })),
   priceRanges: PRICE_RANGE_OPTIONS.map((opt) => ({ ...opt })),
   bedrooms: BEDROOM_OPTIONS.map((opt) => ({ ...opt })),
   minPrices: MIN_PRICE_OPTIONS.map((opt) => ({ ...opt })),

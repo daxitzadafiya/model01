@@ -113,9 +113,10 @@ export const DISTANCE_OPTIONS = [
 ] as const
 
 export const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest First' },
-  { value: 'priceDesc', label: 'Price: High to Low' },
-  { value: 'priceAsc', label: 'Price: Low to High' },
+  { value: 'relevance', label: 'Relevance', sort: { featured: -1 } },
+  { value: 'recent', label: 'Recent', sort: { created_at: -1 } },
+  { value: 'priceAsc', label: 'Lowest Price', sort: { current_price: 1 } },
+  { value: 'priceDesc', label: 'Highest Price', sort: { current_price: -1 } },
 ] as const
 
 export type FilterOption = { value: string; label: string }

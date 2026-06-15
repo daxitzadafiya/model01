@@ -3376,33 +3376,17 @@ export interface Footer {
   createdAt?: string | null;
 }
 /**
+ * Site-wide CSS variables for Tailwind classes (bg-primary, text-tertiary, border-outline-variant, etc.).
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "theme".
  */
 export interface Theme {
   id: number;
-  colors: {
-    /**
-     * Main brand color (e.g., #000000)
-     */
-    primary: string;
-    /**
-     * Secondary brand color (e.g., #5e5e5c)
-     */
-    secondary: string;
-    /**
-     * Accent color (e.g., #755b00)
-     */
-    tertiary: string;
-    /**
-     * Main background surface color (e.g., #fef9f1)
-     */
-    surface: string;
-    /**
-     * General background color (e.g., #fef9f1)
-     */
-    background: string;
-  };
+  /**
+   * Defines :root variables used by Tailwind classes (e.g. --color-primary for bg-primary / text-primary). When empty, the default palette is used.
+   */
+  customCSS?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -3571,13 +3555,30 @@ export interface PropertyMap {
   createdAt?: string | null;
 }
 /**
- * Dropdown options for property search filters. Property type and location still come from the CRM API.
+ * Dropdown options for property search filters and sort order. Property type and location still come from the CRM API.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "propertyFilters".
  */
 export interface PropertyFilter {
   id: number;
+  /**
+   * Options for the property list “Sort by” dropdown. Each row maps to CRM options.sort.
+   */
+  sortOptions?:
+    | {
+        /**
+         * Unique key for this sort option.
+         */
+        value: string;
+        label: string;
+        /**
+         * JSON merged into options.sort (e.g. {"created_at": -1}, {"current_price": 1}, {"updated_at": true}).
+         */
+        sortParams: string;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Used in the main filter bar and hero search.
    */
@@ -4015,15 +4016,7 @@ export interface FooterSelect<T extends boolean = true> {
  * via the `definition` "theme_select".
  */
 export interface ThemeSelect<T extends boolean = true> {
-  colors?:
-    | T
-    | {
-        primary?: T;
-        secondary?: T;
-        tertiary?: T;
-        surface?: T;
-        background?: T;
-      };
+  customCSS?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -4122,6 +4115,14 @@ export interface PropertyMapSelect<T extends boolean = true> {
  * via the `definition` "propertyFilters_select".
  */
 export interface PropertyFiltersSelect<T extends boolean = true> {
+  sortOptions?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        sortParams?: T;
+        id?: T;
+      };
   priceRanges?:
     | T
     | {

@@ -9,7 +9,7 @@ import { PropertyMapModal } from '@/components/PropertyMap/PropertyMapModal'
 import { ArrowUpDown } from 'lucide-react'
 import { useCRMLocationTree } from '@/hooks/useCRMLocationTree'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
-import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
+import { PropertyFilterOptionsProvider, usePropertyFilterOptions } from '@/hooks/usePropertyFilterOptions'
 import { PropertyCard, resolvePropertyCardStatusBadge } from '@/components/PropertyCard'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
@@ -17,10 +17,8 @@ import {
   buildCRMListingQuery,
   fetchCRMProperties,
   normalizeCRMListProperty,
-  sortProperties,
   type CRMListingPreset,
   type PropertyListFilters,
-  type PropertyListSort,
 } from '@/utilities/crmProperties'
 import { EMPTY_PROPERTY_FILTERS, hasAppliedPropertyFilters } from './filterOptions'
 import { useSortOptions } from './useFilterOptionLabels'
@@ -48,7 +46,13 @@ type Props = {
 
 const DEFAULT_PAGE_SIZE = 9
 
-export const PropertyListView: React.FC<Props> = ({
+export const PropertyListView: React.FC<Props> = (props) => (
+  <PropertyFilterOptionsProvider>
+    <PropertyListViewInner {...props} />
+  </PropertyFilterOptionsProvider>
+)
+
+const PropertyListViewInner: React.FC<Props> = ({
   listingPreset,
   crmQueryJson,
   pageSize: pageSizeProp,
@@ -64,7 +68,9 @@ export const PropertyListView: React.FC<Props> = ({
   const pageSize = Math.max(1, pageSizeProp ?? DEFAULT_PAGE_SIZE)
 
   const [page, setPage] = useState(1)
-  const [sort, setSort] = useState<PropertyListSort>('newest')
+  const sortOptions = useSortOptions()
+  const { loading: filterOptionsLoading } = usePropertyFilterOptions()
+  const [sort, setSort] = useState('')
   const [filters, setFilters] = useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
   const [appliedFilters, setAppliedFilters] =
     useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
@@ -98,7 +104,11 @@ export const PropertyListView: React.FC<Props> = ({
     isFavoritesList && hasFavoriteIds && !filtersAreApplied ? favoriteIds.length : total
   const totalPages = Math.max(1, Math.ceil(displayTotal / pageSize))
   const sortByLabel = useTranslation('propertyList.filters.sortBy', 'Sort by')
-  const sortOptions = useSortOptions()
+  const sortParamsKey = useMemo(() => {
+    if (!sort) return ''
+    const match = sortOptions.find((option) => option.value === sort)
+    return match ? `${sort}:${JSON.stringify(match.sort)}` : sort
+  }, [sort, sortOptions])
   const showingLabel = useTranslation('propertyList.results.showing', 'Showing')
   const defaultResultsLabel = useTranslation(
     'propertyList.results.extraordinaryProperties',
@@ -134,13 +144,19 @@ export const PropertyListView: React.FC<Props> = ({
     'We could not find any listings for this selection. Try adjusting your filters or check again soon.',
   )
   const properties = useMemo(() => {
-    const normalized = rawProperties.map((raw) =>
+    return rawProperties.map((raw) =>
       normalizeCRMListProperty(raw, activeLocale, { listingMode: 'sale' }),
     )
-    return sortProperties(normalized, sort)
-  }, [activeLocale, rawProperties, sort])
+  }, [activeLocale, rawProperties])
 
-  /** CRM fetch for filters/pagination — not when toggling hearts on for-sale. */
+  useEffect(() => {
+    if (!sortOptions.length) return
+    setSort((current) =>
+      sortOptions.some((option) => option.value === current) ? current : sortOptions[0].value,
+    )
+  }, [sortOptions])
+
+  /** CRM fetch for filters/pagination/sort — not when toggling hearts on for-sale. */
   useEffect(() => {
     if (isFavoritesList && favoriteIds.length === 0) {
       setRawProperties([])
@@ -149,6 +165,9 @@ export const PropertyListView: React.FC<Props> = ({
       return
     }
 
+    if (filterOptionsLoading || !sort) return
+
+    const sortParams = sortOptions.find((option) => option.value === sort)?.sort
     const controller = new AbortController()
     const generation = ++fetchGenerationRef.current
 
@@ -165,6 +184,7 @@ export const PropertyListView: React.FC<Props> = ({
           pageSize,
           filters: appliedFilters,
           restrictToFavoriteIds: isFavoritesList ? favoriteIds : undefined,
+          sortParams,
         })
 
         const result = await fetchCRMProperties({ body, signal: controller.signal })
@@ -188,7 +208,16 @@ export const PropertyListView: React.FC<Props> = ({
     void load()
     return () => controller.abort()
     // favoriteIds intentionally omitted — toggling hearts must not refetch for-sale lists
-  }, [appliedFilters, crmQueryJson, isFavoritesList, listingPreset, page, pageSize])
+  }, [
+    appliedFilters,
+    crmQueryJson,
+    filterOptionsLoading,
+    isFavoritesList,
+    listingPreset,
+    page,
+    pageSize,
+    sortParamsKey,
+  ])
 
   /** Favorites page: after unfavoriting, move to a valid page and refetch (no full-page skeleton). */
   useEffect(() => {
@@ -218,6 +247,7 @@ export const PropertyListView: React.FC<Props> = ({
       return
     }
 
+    const sortParams = sortOptions.find((option) => option.value === sort)?.sort
     const controller = new AbortController()
 
     const load = async () => {
@@ -229,6 +259,7 @@ export const PropertyListView: React.FC<Props> = ({
           pageSize,
           filters: appliedFilters,
           restrictToFavoriteIds: favoriteIds,
+          sortParams,
         })
 
         const result = await fetchCRMProperties({ body, signal: controller.signal })
@@ -277,7 +308,7 @@ export const PropertyListView: React.FC<Props> = ({
     setPage(1)
   }
 
-  const handleSortChange = (nextSort: PropertyListSort) => {
+  const handleSortChange = (nextSort: string) => {
     setSort(nextSort)
     setPage(1)
   }
@@ -311,7 +342,6 @@ export const PropertyListView: React.FC<Props> = ({
   }, [displayTotal, loading, resultsLabel, showingLabel, defaultResultsLabel])
 
   return (
-    <PropertyFilterOptionsProvider>
     <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12">
       {showFilters !== false && (
         <FiltersBar
@@ -336,7 +366,7 @@ export const PropertyListView: React.FC<Props> = ({
           icon={<ArrowUpDown size={20} strokeWidth={1.75} />}
           options={sortOptions}
           value={sort}
-          onChange={(value) => handleSortChange(value as PropertyListSort)}
+          onChange={(value) => handleSortChange(value)}
           className="w-full md:w-auto md:min-w-[220px]"
         />
       </section>
@@ -421,6 +451,5 @@ export const PropertyListView: React.FC<Props> = ({
         />
       )}
     </div>
-    </PropertyFilterOptionsProvider>
   )
 }

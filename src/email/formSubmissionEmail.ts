@@ -294,7 +294,7 @@ async function sendNotificationEmail({
   const defaults = TEMPLATE_DEFAULTS[template]
   const clientDefaults = CLIENT_TEMPLATE_DEFAULTS[template]
 
-  const [emailSettings, logo, theme] = await Promise.all([
+  const [emailSettings, logo] = await Promise.all([
     payload
       .findGlobal({
         slug: 'emailSettings',
@@ -305,7 +305,6 @@ async function sendNotificationEmail({
       })
       .catch(() => null),
     payload.findGlobal({ slug: 'logo', depth: 1, overrideAccess: true }).catch(() => null),
-    payload.findGlobal({ slug: 'theme', depth: 0, overrideAccess: true }).catch(() => null),
   ])
 
   const clientTemplate = getClientTemplate(emailSettings, template)
@@ -348,7 +347,6 @@ async function sendNotificationEmail({
     logo,
     logoSrc,
     siteName,
-    theme: theme?.colors,
   })
 
   const sender = settings.sender!
@@ -378,7 +376,6 @@ async function sendNotificationEmail({
     contentHtml: clientContentHtml || undefined,
     logo,
     logoSrc,
-    theme: theme?.colors,
   })
 
   await sendConfiguredEmail(payload, {

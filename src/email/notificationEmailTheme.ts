@@ -1,13 +1,19 @@
-import type { Theme } from '@/payload-types'
+import { DEFAULT_THEME_COLORS } from '@/globals/Theme/siteThemeTokens.mjs'
 
-export type NotificationEmailTheme = Theme['colors']
+export type NotificationEmailTheme = {
+  primary?: string | null
+  secondary?: string | null
+  tertiary?: string | null
+  surface?: string | null
+  background?: string | null
+}
 
 export const DEFAULT_NOTIFICATION_EMAIL_THEME: NotificationEmailTheme = {
-  primary: '#000000',
-  secondary: '#5e5e5c',
-  tertiary: '#755b00',
-  surface: '#fef9f1',
-  background: '#fef9f1',
+  primary: DEFAULT_THEME_COLORS.primary,
+  secondary: DEFAULT_THEME_COLORS.secondary,
+  tertiary: DEFAULT_THEME_COLORS.tertiary,
+  surface: DEFAULT_THEME_COLORS.surface,
+  background: DEFAULT_THEME_COLORS.background,
 }
 
 export type ResolvedNotificationEmailPalette = {
@@ -80,19 +86,27 @@ function hexWithAlpha(hex: string, alpha: number): string {
   return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${clampedAlpha})`
 }
 
-function resolveColor(value: string | undefined, fallback: string): string {
+export type ResolvedNotificationEmailTheme = {
+  primary: string
+  secondary: string
+  tertiary: string
+  surface: string
+  background: string
+}
+
+function resolveColor(value: string | null | undefined, fallback: string): string {
   return normalizeHex(value ?? '') ?? fallback
 }
 
 export function resolveNotificationEmailTheme(
   theme?: Partial<NotificationEmailTheme> | null,
-): NotificationEmailTheme {
+): ResolvedNotificationEmailTheme {
   return {
-    primary: resolveColor(theme?.primary, DEFAULT_NOTIFICATION_EMAIL_THEME.primary),
-    secondary: resolveColor(theme?.secondary, DEFAULT_NOTIFICATION_EMAIL_THEME.secondary),
-    tertiary: resolveColor(theme?.tertiary, DEFAULT_NOTIFICATION_EMAIL_THEME.tertiary),
-    surface: resolveColor(theme?.surface, DEFAULT_NOTIFICATION_EMAIL_THEME.surface),
-    background: resolveColor(theme?.background, DEFAULT_NOTIFICATION_EMAIL_THEME.background),
+    primary: resolveColor(theme?.primary, DEFAULT_THEME_COLORS.primary),
+    secondary: resolveColor(theme?.secondary, DEFAULT_THEME_COLORS.secondary),
+    tertiary: resolveColor(theme?.tertiary, DEFAULT_THEME_COLORS.tertiary),
+    surface: resolveColor(theme?.surface, DEFAULT_THEME_COLORS.surface),
+    background: resolveColor(theme?.background, DEFAULT_THEME_COLORS.background),
   }
 }
 

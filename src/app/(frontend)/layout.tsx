@@ -32,6 +32,7 @@ import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import { getPublicIntegrationsSettings } from '@/settings/integrations/server'
 import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
+import { resolveThemeCustomCSS } from '@/globals/Theme/siteThemeTokens.mjs'
 import { getServerSideURL } from '@/utilities/getURL'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -52,8 +53,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
-        {/* Inject dynamic CSS variables from Payload Theme global */}
-        <ThemeColors />
+        {/* Site-wide CSS variables from Theme global (falls back to default palette) */}
+        <ThemeStyles />
       </head>
       <body>
         <Providers
@@ -79,31 +80,19 @@ export const metadata: Metadata = {
   },
 }
 
-async function ThemeColors() {
+async function ThemeStyles() {
   const payload = await getPayload({ config: configPromise })
-  let colors = null
+  let customCSS: string | null = null
 
   try {
     const theme = await payload.findGlobal({
       slug: 'theme',
       depth: 0,
     })
-    colors = theme?.colors
+    customCSS = theme.customCSS ?? null
   } catch (error) {
     console.error('Error fetching Theme global:', error)
   }
 
-  if (!colors) return null
-
-  const css = `
-    :root {
-      --color-primary: ${colors.primary || '#000000'};
-      --color-secondary: ${colors.secondary || '#5e5e5c'};
-      --color-tertiary: ${colors.tertiary || '#755b00'};
-      --color-surface: ${colors.surface || '#fef9f1'};
-      --color-background: ${colors.background || '#fef9f1'};
-    }
-  `
-
-  return <style dangerouslySetInnerHTML={{ __html: css }} />
+  return <style dangerouslySetInnerHTML={{ __html: resolveThemeCustomCSS(customCSS) }} />
 }
