@@ -1,5 +1,5 @@
 import { fetchCRMProperties } from '@/utilities/crmProperties'
-import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
+import { getSimilarCommercialsQuery, resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
 
 export type CRMPropertyDetailRecord = Record<string, unknown>
 
@@ -74,7 +74,7 @@ export async function fetchCRMRelatedProperties(
       options: { limit, skip: 0 },
       query: {
         reference: { $in: numericRefs },
-        similar_commercials: 'exclude_similar',
+        ...getSimilarCommercialsQuery(),
       },
     },
   })

@@ -1,7 +1,9 @@
 import {
   EMPTY_OPTIMA_CRM_SETTINGS,
+  similarCommercialsQueryClause,
   type OptimaImageConfig,
   type ResolvedOptimaCrmSettings,
+  type SimilarCommercialsMode,
 } from '@/settings/optimaCrm/shared'
 
 let runtimeConfig: ResolvedOptimaCrmSettings | null = null
@@ -30,4 +32,12 @@ export function resolveOptimaCrmSettings(): ResolvedOptimaCrmSettings {
   return runtimeConfig ?? EMPTY_OPTIMA_CRM_SETTINGS
 }
 
-export type { OptimaImageConfig, ResolvedOptimaCrmSettings } from '@/settings/optimaCrm/shared'
+export function getSimilarCommercialsQuery(): { similar_commercials: SimilarCommercialsMode } {
+  return similarCommercialsQueryClause(resolveOptimaCrmSettings())
+}
+
+export type {
+  OptimaImageConfig,
+  ResolvedOptimaCrmSettings,
+  SimilarCommercialsMode,
+} from '@/settings/optimaCrm/shared'

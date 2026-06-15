@@ -20,6 +20,7 @@ import * as migration_20260612_170000_posts_localized_backfill from './20260612_
 import * as migration_20260615_100000_theme_custom_css from './20260615_100000_theme_custom_css'
 import * as migration_20260615_120000_property_filters_sort_options from './20260615_120000_property_filters_sort_options'
 import * as migration_20260615_130000_property_filters_sort_params_column from './20260615_130000_property_filters_sort_params_column'
+import * as migration_20260615_140000_optima_crm_similar_commercials from './20260615_140000_optima_crm_similar_commercials'
 
 export const migrations = [
   {
@@ -131,5 +132,10 @@ export const migrations = [
     up: migration_20260615_130000_property_filters_sort_params_column.up,
     down: migration_20260615_130000_property_filters_sort_params_column.down,
     name: '20260615_130000_property_filters_sort_params_column',
+  },
+  {
+    up: migration_20260615_140000_optima_crm_similar_commercials.up,
+    down: migration_20260615_140000_optima_crm_similar_commercials.down,
+    name: '20260615_140000_optima_crm_similar_commercials',
   },
 ]

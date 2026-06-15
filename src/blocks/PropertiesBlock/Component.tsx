@@ -12,8 +12,10 @@ import {
   parseCRMCustomQuery,
   normalizeCRMProperty as normalizeSharedCRMProperty,
   extractCRMList,
+  withSimilarCommercialsDefault,
 } from '@/utilities/crmProperties'
 import { PROPERTY_CARD_IMAGE_SIZE } from '@/utilities/optimaImage'
+import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 type Props = Extract<Page['layout'][0], { blockType: 'propertiesBlock' }>
@@ -72,12 +74,18 @@ export const PropertiesBlock: React.FC<Props> = ({
   )
 
   const buildCRMQuery = useCallback(() => {
+    const similarCommercials = getSimilarCommercialsQuery()
+
     if (crmQueryType === 'custom' && typeof crmQueryJson === 'string' && crmQueryJson.trim()) {
       const parsedQuery = parseCRMCustomQuery(crmQueryJson)
       if (parsedQuery) {
         const parsedOptions =
           parsedQuery.options && typeof parsedQuery.options === 'object'
             ? (parsedQuery.options as Record<string, unknown>)
+            : {}
+        const parsedBaseQuery =
+          parsedQuery.query && typeof parsedQuery.query === 'object'
+            ? (parsedQuery.query as Record<string, unknown>)
             : {}
 
         return {
@@ -87,6 +95,7 @@ export const PropertiesBlock: React.FC<Props> = ({
             page: 1,
             limit: resolvedLimit,
           },
+          query: withSimilarCommercialsDefault(parsedBaseQuery),
         }
       }
 
@@ -96,7 +105,7 @@ export const PropertiesBlock: React.FC<Props> = ({
           page: 1,
           limit: resolvedLimit,
         },
-        query: {},
+        query: withSimilarCommercialsDefault({}),
       }
     }
 
@@ -107,7 +116,7 @@ export const PropertiesBlock: React.FC<Props> = ({
           limit: resolvedLimit,
         },
         query: {
-          similar_commercials: 'exclude_similar',
+          ...similarCommercials,
           archived: { $ne: true },
           $and: [{ 'views.sea': true }],
           sale: true,
@@ -122,7 +131,7 @@ export const PropertiesBlock: React.FC<Props> = ({
         limit: resolvedLimit,
       },
       query: {
-        similar_commercials: 'exclude_similar',
+        ...similarCommercials,
         archived: { $ne: true },
         sale: true,
         featured: true,

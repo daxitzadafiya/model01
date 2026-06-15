@@ -1,4 +1,5 @@
 import { postToCRM } from '@/utilities/crmApi'
+import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import { getCRMLocalizedText } from '@/utilities/localizedValue'
 
 import { extractCRMList, type CRMListingPreset } from './crmProperties'
@@ -28,6 +29,7 @@ export const buildGeoDataRequest = (
   preset: CRMListingPreset = 'forSale',
   mode: 'cities' | 'locations',
 ): Record<string, unknown> => {
+  const similarCommercials = getSimilarCommercialsQuery()
   const propStatus = preset === 'sold' ? ['Sold'] : (['Available', 'Under Offer'] as const)
 
   return {
@@ -35,7 +37,7 @@ export const buildGeoDataRequest = (
       sort: 'en',
       order: 'ASC',
       prop_status: propStatus,
-      similar_commercials: 'exclude_similar',
+      ...similarCommercials,
       ...(mode === 'cities' ? { allow_cities: true } : { allow_location: true }),
     },
   }

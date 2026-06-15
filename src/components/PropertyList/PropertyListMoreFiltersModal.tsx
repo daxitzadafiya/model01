@@ -104,7 +104,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   const bedroomsLabel = useTranslation('propertyList.filters.bedrooms', 'Bedrooms')
   const minPriceLabel = useTranslation('propertyList.filters.minPrice', 'Min Price')
   const maxPriceLabel = useTranslation('propertyList.filters.maxPrice', 'Max Price')
-  const statusLabel = useTranslation('propertyList.filters.status', 'Status')
+  const stateLabel = useTranslation('propertyList.filters.state', 'State')
   const statusEmptyLabel = useTranslation('propertyList.filters.status.emptyLabel', 'Status')
   const featuresLabel = useTranslation('propertyList.filters.features', 'Features')
   const featuresEmptyLabel = useTranslation('propertyList.filters.features.emptyLabel', 'Features')
@@ -264,8 +264,8 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
             <div className="min-w-0">
               <FilterSelect
                 mode="multi"
-                label={statusLabel}
-                id="filter-status"
+                label={stateLabel}
+                id="filter-state"
                 options={statusFilterOptions}
                 value={parseStatusFilter(filters.status)}
                 onChange={(value) => onChange('status', value)}

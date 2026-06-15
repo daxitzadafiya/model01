@@ -120,6 +120,29 @@ export const OptimaCrmSettings: GlobalConfig = {
         },
       ],
     },
+    {
+      name: 'properties',
+      type: 'group',
+      label: 'Property queries',
+      fields: [
+        {
+          name: 'similarCommercials',
+          type: 'select',
+          label: 'Similar commercials',
+          defaultValue: 'exclude_similar',
+          required: true,
+          options: [
+            { label: 'Exclude similar', value: 'exclude_similar' },
+            { label: 'Include similar', value: 'include_similar' },
+            { label: 'Only similar', value: 'only_similar' },
+          ],
+          admin: {
+            description:
+              'Controls the similar_commercials parameter on all CRM property listing requests.',
+          },
+        },
+      ],
+    },
   ],
   hooks: {
     afterChange: [

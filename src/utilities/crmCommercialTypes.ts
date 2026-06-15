@@ -1,4 +1,5 @@
 import { postToCRM } from '@/utilities/crmApi'
+import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import type { FilterSelectOption } from '@/components/FilterSelect'
 import { getCRMLocalizedText } from '@/utilities/localizedValue'
 
@@ -21,12 +22,13 @@ const pickNumber = (candidate: unknown): number | undefined => {
 export const buildCommercialTypesRequest = (
   preset: CRMListingPreset = 'forSale',
 ): Record<string, unknown> => {
+  const similarCommercials = getSimilarCommercialsQuery()
   const propStatus = preset === 'sold' ? ['Sold'] : (['Available', 'Under Offer'] as const)
 
   return {
     query: {
       prop_status: propStatus,
-      similar_commercials: 'exclude_similar',
+      ...similarCommercials,
       commercial_properties: 1,
       parent_value: 1,
       type_one_only: 1,

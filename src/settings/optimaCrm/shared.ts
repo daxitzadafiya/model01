@@ -1,5 +1,15 @@
 import type { OptimaCrmSetting } from '@/payload-types'
 
+export type SimilarCommercialsMode = 'include_similar' | 'only_similar' | 'exclude_similar'
+
+export const SIMILAR_COMMERCIALS_MODES: SimilarCommercialsMode[] = [
+  'include_similar',
+  'only_similar',
+  'exclude_similar',
+]
+
+export const DEFAULT_SIMILAR_COMMERCIALS: SimilarCommercialsMode = 'exclude_similar'
+
 export type ResolvedOptimaCrmSettings = {
   apiUrl: string
   apiKey: string
@@ -12,6 +22,7 @@ export type ResolvedOptimaCrmSettings = {
   agencyId: string
   propertyResizeBase: string
   siteId: string
+  similarCommercials: SimilarCommercialsMode
 }
 
 export type OptimaImageConfig = Pick<
@@ -40,6 +51,7 @@ export const EMPTY_OPTIMA_CRM_SETTINGS: ResolvedOptimaCrmSettings = {
   userKey: '',
   brochureTemplateId: '39',
   ...IMAGE_DEFAULTS,
+  similarCommercials: DEFAULT_SIMILAR_COMMERCIALS,
 }
 
 function pickString(value: unknown, fallback: string): string {
@@ -54,11 +66,25 @@ function pickBrochureTemplateId(value: unknown, fallback: string): string {
   return fallback
 }
 
+function pickSimilarCommercials(value: unknown, fallback: SimilarCommercialsMode): SimilarCommercialsMode {
+  if (typeof value === 'string' && SIMILAR_COMMERCIALS_MODES.includes(value as SimilarCommercialsMode)) {
+    return value as SimilarCommercialsMode
+  }
+  return fallback
+}
+
+export function similarCommercialsQueryClause(
+  settings: Pick<ResolvedOptimaCrmSettings, 'similarCommercials'> = EMPTY_OPTIMA_CRM_SETTINGS,
+): { similar_commercials: SimilarCommercialsMode } {
+  return { similar_commercials: settings.similarCommercials }
+}
+
 export function resolveOptimaCrmSettingsFromGlobal(
   doc: OptimaCrmSetting | null | undefined,
 ): ResolvedOptimaCrmSettings {
   const api = doc?.api
   const images = doc?.images
+  const properties = doc?.properties
   const defaults = EMPTY_OPTIMA_CRM_SETTINGS
 
   return {
@@ -73,5 +99,9 @@ export function resolveOptimaCrmSettingsFromGlobal(
     agencyId: pickString(images?.agencyId, defaults.agencyId),
     propertyResizeBase: pickString(images?.propertyResizeBase, defaults.propertyResizeBase),
     siteId: pickString(images?.siteId, defaults.siteId),
+    similarCommercials: pickSimilarCommercials(
+      properties?.similarCommercials,
+      defaults.similarCommercials,
+    ),
   }
 }
