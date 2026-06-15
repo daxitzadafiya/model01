@@ -2,7 +2,7 @@
  * Optima CRM map markers — calls find-all directly from the browser (same as PHP).
  * Credentials are loaded from Globals → Optima CRM on the server and seeded in the root layout.
  */
-import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
+import { getSimilarCommercialsQuery, resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
 import {
   buildFavoriteIdsClause,
   buildFilterQuery,
@@ -10,6 +10,7 @@ import {
   extractCRMTotal,
   mergeCRMQueryObjects,
   parseCRMCustomQuery,
+  withSimilarCommercialsDefault,
   type CRMListingPreset,
   type PropertyListFilters,
 } from '@/utilities/crmProperties'
@@ -92,9 +93,11 @@ export const buildCRMMapOptions = (page: number, limit: number): Record<string, 
 })
 
 const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown> => {
+  const similarCommercials = getSimilarCommercialsQuery()
+
   if (preset === 'sold') {
     return {
-      similar_commercials: 'exclude_similar',
+      ...similarCommercials,
       sale: true,
       archived: { $ne: true },
       has_images: true,
@@ -104,14 +107,14 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
 
   if (preset === 'favorites') {
     return {
-      similar_commercials: 'exclude_similar',
+      ...similarCommercials,
       archived: { $ne: true },
       has_images: true,
     }
   }
 
   const baseQuery: Record<string, unknown> = {
-    similar_commercials: 'exclude_similar',
+    ...similarCommercials,
     sale: true,
     archived: { $ne: true },
     has_images: true,
@@ -134,12 +137,11 @@ export const normalizeMapFindAllQuery = (
 ): Record<string, unknown> => {
   const { remove_count: _removeCount, ...rest } = query
 
-  const normalized: Record<string, unknown> = {
+  const normalized: Record<string, unknown> = withSimilarCommercialsDefault({
     ...rest,
-    similar_commercials: 'exclude_similar',
     archived: { $ne: true },
     has_images: true,
-  }
+  })
 
   if (preset !== 'favorites') {
     normalized.sale = true
@@ -185,7 +187,7 @@ export const buildCRMMapQuery = ({
     if (parsedBase) {
       baseQuery = mergeCRMQueryObjects(
         {
-          similar_commercials: 'exclude_similar',
+          ...getSimilarCommercialsQuery(),
           sale: true,
           archived: { $ne: true },
           has_images: true,
@@ -195,7 +197,10 @@ export const buildCRMMapQuery = ({
     }
   }
 
-  let query = mergeCRMQueryObjects(baseQuery, buildFilterQuery(filters))
+  let query = mergeCRMQueryObjects(
+    baseQuery,
+    buildFilterQuery(filters, { referenceAsNumber: true }),
+  )
 
   if (preset === 'favorites' && restrictToFavoriteIds?.length) {
     const favoriteClause = buildFavoriteIdsClause(restrictToFavoriteIds)

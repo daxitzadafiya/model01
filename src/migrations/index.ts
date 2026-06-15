@@ -6,7 +6,7 @@ import * as migration_20260608_161500_translations_rels from './20260608_161500_
 import * as migration_20260609_095300_property_map_global from './20260609_095300_property_map_global'
 import * as migration_20260609_120000_property_list_block_show_map_version from './20260609_120000_property_list_block_show_map_version'
 import * as migration_20260609_150000_property_filters_global from './20260609_150000_property_filters_global'
-import * as migration_20260609_124500_email_settings from './20260609_124500_email_settings';
+import * as migration_20260609_124500_email_settings from './20260609_124500_email_settings'
 import * as migration_20260610_120000_integration_settings_globals from './20260610_120000_integration_settings_globals'
 import * as migration_20260610_170500_email_template_fields from './20260610_170500_email_template_fields'
 import * as migration_20260610_180000_client_confirmation_contact_fields from './20260610_180000_client_confirmation_contact_fields'
@@ -21,6 +21,7 @@ import * as migration_20260615_100000_theme_custom_css from './20260615_100000_t
 import * as migration_20260615_120000_property_filters_sort_options from './20260615_120000_property_filters_sort_options'
 import * as migration_20260615_130000_property_filters_sort_params_column from './20260615_130000_property_filters_sort_params_column'
 import * as migration_20260615_140000_footer_copyright_localized from './20260615_140000_footer_copyright_localized'
+import * as migration_20260615_140000_optima_crm_similar_commercials from './20260615_140000_optima_crm_similar_commercials'
 
 export const migrations = [
   {
@@ -66,7 +67,7 @@ export const migrations = [
   {
     up: migration_20260609_124500_email_settings.up,
     down: migration_20260609_124500_email_settings.down,
-    name: '20260609_124500_email_settings'
+    name: '20260609_124500_email_settings',
   },
   {
     up: migration_20260610_120000_integration_settings_globals.up,
@@ -137,5 +138,10 @@ export const migrations = [
     up: migration_20260615_140000_footer_copyright_localized.up,
     down: migration_20260615_140000_footer_copyright_localized.down,
     name: '20260615_140000_footer_copyright_localized',
+  },
+  {
+    up: migration_20260615_140000_optima_crm_similar_commercials.up,
+    down: migration_20260615_140000_optima_crm_similar_commercials.down,
+    name: '20260615_140000_optima_crm_similar_commercials',
   },
 ]

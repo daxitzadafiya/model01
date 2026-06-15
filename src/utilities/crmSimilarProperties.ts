@@ -1,5 +1,6 @@
 import { MAP_FIND_ALL_POPULATE } from '@/utilities/crmPropertyMap'
 import { extractCRMList, fetchCRMProperties } from '@/utilities/crmProperties'
+import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import { isCRMTruthy } from '@/utilities/localizedValue'
 
 export type SimilarListingContext = 'sale' | 'rent'
@@ -115,6 +116,7 @@ export const buildCRMSimilarPropertiesQuery = ({
   listingContext,
   relaxGeoFilters = false,
 }: BuildSimilarQueryOptions): Record<string, unknown> => {
+  const similarCommercials = getSimilarCommercialsQuery()
   const context = listingContext ?? resolveSimilarListingContext(property)
   const price = resolveSimilarPropertyPrice(property, context)
   const priceMax = price + (25 * price) / 100
@@ -122,7 +124,7 @@ export const buildCRMSimilarPropertiesQuery = ({
   const isSold = isSimilarPropertySold(property)
 
   const query: Record<string, unknown> = {
-    similar_commercials: 'exclude_similar',
+    ...similarCommercials,
     archived: { $ne: true },
     has_images: true,
     status: { $in: [...SIMILAR_AVAILABLE_STATUSES] },

@@ -3830,6 +3830,12 @@ export interface OptimaCrmSetting {
     propertyResizeBase: string;
     siteId: string;
   };
+  properties: {
+    /**
+     * Controls the similar_commercials parameter on all CRM property listing requests.
+     */
+    similarCommercials: 'exclude_similar' | 'include_similar' | 'only_similar';
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -4258,6 +4264,11 @@ export interface OptimaCrmSettingsSelect<T extends boolean = true> {
         agencyId?: T;
         propertyResizeBase?: T;
         siteId?: T;
+      };
+  properties?:
+    | T
+    | {
+        similarCommercials?: T;
       };
   updatedAt?: T;
   createdAt?: T;

@@ -1,4 +1,5 @@
 import { postToCRM } from '@/utilities/crmApi'
+import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import {
   getPublishedPropertyAttachmentImage,
   getPublishedPropertyAttachmentImages,
@@ -124,6 +125,14 @@ export const parseCRMCustomQuery = (rawQuery: string): Record<string, unknown> |
   return undefined
 }
 
+/** Uses global Optima CRM setting when the query omits similar_commercials. */
+export const withSimilarCommercialsDefault = (
+  query: Record<string, unknown>,
+): Record<string, unknown> => {
+  if ('similar_commercials' in query) return query
+  return { ...query, ...getSimilarCommercialsQuery() }
+}
+
 /** Parses admin sort JSON (e.g. `{"created_at": -1}` or `{"updated_at": true}`). */
 export const parseCRMSortParams = (raw: string): Record<string, unknown> | undefined => {
   const trimmed = normalizeCRMCustomQueryText(raw)
@@ -212,12 +221,18 @@ const parsePriceBound = (value?: string): string | undefined => {
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-const buildReferenceOrQuery = (reference: string): Record<string, unknown>[] => {
+const buildReferenceOrQuery = (
+  reference: string,
+  referenceAsNumber = false,
+): Record<string, unknown>[] => {
   const trimmed = reference.trim()
   const regexPattern = `.*${escapeRegex(trimmed)}.*`
+  const numericRef = Number(trimmed)
+  const referenceValue =
+    referenceAsNumber && Number.isFinite(numericRef) ? numericRef : trimmed
 
   return [
-    { reference: trimmed },
+    { reference: referenceValue },
     { other_reference: { $regex: regexPattern, $options: 'i' } },
     { external_reference: { $regex: regexPattern, $options: 'i' } },
   ]
@@ -464,7 +479,16 @@ export const buildPropertyListingStatusQuery = (
   return clauses[0]
 }
 
-export const buildFilterQuery = (filters: PropertyListFilters): Record<string, unknown> => {
+export type BuildFilterQueryOptions = {
+  /** find-all expects numeric `reference` values; default listing API uses strings */
+  referenceAsNumber?: boolean
+}
+
+export const buildFilterQuery = (
+  filters: PropertyListFilters,
+  options: BuildFilterQueryOptions = {},
+): Record<string, unknown> => {
+  const { referenceAsNumber = false } = options
   const query: Record<string, unknown> = {}
   const andClauses: Record<string, unknown>[] = []
   const orGroups: Record<string, unknown>[][] = []
@@ -486,7 +510,7 @@ export const buildFilterQuery = (filters: PropertyListFilters): Record<string, u
       andClauses.push({ $or: orClauses })
     }
   } else if (filters.reference?.trim()) {
-    orGroups.push(buildReferenceOrQuery(filters.reference))
+    orGroups.push(buildReferenceOrQuery(filters.reference, referenceAsNumber))
   }
 
   if (filters.propertyType?.length) {
@@ -594,6 +618,7 @@ export const buildCRMListingQuery = ({
   restrictToFavoriteIds?: (string | number)[]
   sortParams?: Record<string, unknown>
 }): Record<string, unknown> => {
+  const similarCommercials = getSimilarCommercialsQuery()
   const paginationOptions = buildCRMPageOptions(page, pageSize)
   const filterQuery = buildFilterQuery(filters)
 
@@ -609,7 +634,7 @@ export const buildCRMListingQuery = ({
           ? (parsedQuery.query as Record<string, unknown>)
           : {}
 
-      const mergedQuery = mergeCRMQueryObjects(baseQuery, filterQuery)
+      const mergedQuery = withSimilarCommercialsDefault(mergeCRMQueryObjects(baseQuery, filterQuery))
 
       const restOptions = { ...parsedOptions }
       delete restOptions.skip
@@ -633,33 +658,33 @@ export const buildCRMListingQuery = ({
     )
     return {
       options: mergeCRMListingOptions(paginationOptions, sortParams),
-      query: {},
+      query: withSimilarCommercialsDefault({}),
     }
   }
 
   let baseQuery: Record<string, unknown> = {
-    similar_commercials: 'exclude_similar',
+    ...similarCommercials,
     archived: { $ne: true },
     sale: true,
   }
 
   if (preset === 'sold') {
     baseQuery = {
-      similar_commercials: 'exclude_similar',
+      ...similarCommercials,
       sale: true,
       archived: { $ne: true },
       status: { $in: ['Sold'] },
     }
   } else if (preset === 'forSale') {
     baseQuery = {
-      similar_commercials: 'exclude_similar',
+      ...similarCommercials,
       sale: true,
       archived: { $ne: true },
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'seaView') {
     baseQuery = {
-      similar_commercials: 'exclude_similar',
+      ...similarCommercials,
       sale: true,
       archived: { $ne: true },
       status: { $in: ['Available', 'Under Offer'] },
@@ -667,7 +692,7 @@ export const buildCRMListingQuery = ({
     }
   } else if (preset === 'featured') {
     baseQuery = {
-      similar_commercials: 'exclude_similar',
+      ...similarCommercials,
       sale: true,
       featured: true,
       archived: { $ne: true },
@@ -675,7 +700,7 @@ export const buildCRMListingQuery = ({
     }
   } else if (preset === 'favorites') {
     baseQuery = {
-      similar_commercials: 'exclude_similar',
+      ...similarCommercials,
       archived: { $ne: true },
     }
   }
