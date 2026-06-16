@@ -4,14 +4,17 @@ import type { Form as FormType } from '@payloadcms/plugin-form-builder/types'
 import { AlertCircle, Check, CircleArrowRight, Loader2, Lock } from 'lucide-react'
 import React from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useIntegrationsSettings } from '@/hooks/useIntegrationsSettings'
 import RichText from '@/components/RichText'
+import { RecaptchaWidget } from '@/components/RecaptchaWidget/RecaptchaWidget'
 import { fields as defaultFields } from '@/blocks/Form/fields'
 import { useFormSubmission } from '@/blocks/Form/useFormSubmission'
 
 import { useTranslation } from '@/utilities/translateClient'
+import { useDeferredSiteLocale } from '@/utilities/useDeferredSiteLocale'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 import { contactFields } from './contactFields'
 
@@ -34,12 +37,6 @@ type Props = {
   defaultFieldValues?: Record<string, string>
   /** Stack all fields in a single column (property detail sidebar). */
   singleColumn?: boolean
-}
-
-declare global {
-  interface Window {
-    grecaptcha?: any
-  }
 }
 
 export const ContactForm: React.FC<Props> = ({
@@ -69,6 +66,8 @@ export const ContactForm: React.FC<Props> = ({
   const { settings: integrations } = useIntegrationsSettings()
   const recaptchaSiteKey = integrations.recaptchaSiteKey
   const recaptchaConfigured = Boolean(recaptchaSiteKey)
+  const locale = useSiteLocale()
+  const deferredLocale = useDeferredSiteLocale()
   const recaptchaRequiredMessage = useTranslation(
     'form.validation.recaptcha.required',
     'Please complete the reCAPTCHA verification.',
@@ -83,23 +82,11 @@ export const ContactForm: React.FC<Props> = ({
     'form.submit.connectNow',
     submitButtonLabel || 'Connect now',
   )
-  const [hasMounted, setHasMounted] = useState(false)
-  const recaptchaEnabled = hasMounted && recaptchaConfigured
   const [recaptchaToken, setRecaptchaToken] = useState('')
   const [isRecaptchaReady, setIsRecaptchaReady] = useState(false)
   const [recaptchaLoadError, setRecaptchaLoadError] = useState<string | null>(null)
   const [recaptchaValidationError, setRecaptchaValidationError] = useState<string | null>(null)
-  const [recaptchaMountKey, setRecaptchaMountKey] = useState(0)
-  const widgetIdRef = useRef<number | null>(null)
-  const recaptchaContainerRef = useRef<HTMLDivElement | null>(null)
-
-  const clearRecaptchaWidget = () => {
-    if (recaptchaContainerRef.current) {
-      recaptchaContainerRef.current.innerHTML = ''
-    }
-    widgetIdRef.current = null
-    setIsRecaptchaReady(false)
-  }
+  const [recaptchaResetKey, setRecaptchaResetKey] = useState(0)
 
   const formMethods = useForm<any>({
     defaultValues: formFields as any,
@@ -126,114 +113,18 @@ export const ContactForm: React.FC<Props> = ({
   )
 
   useEffect(() => {
-    setHasMounted(true)
-  }, [])
-
-  useEffect(() => {
     if (hasSubmitted) {
       formMethods.reset({})
       setRecaptchaToken('')
       setRecaptchaLoadError(null)
       setRecaptchaValidationError(null)
-      clearRecaptchaWidget()
     }
   }, [hasSubmitted, formMethods])
-
-  useEffect(() => {
-    if (!recaptchaEnabled || hasSubmitted) return
-
-    const renderWidget = () => {
-      const container = recaptchaContainerRef.current
-      if (!container) return
-      if (!window.grecaptcha) return
-      if (widgetIdRef.current !== null) return
-
-      container.innerHTML = ''
-      const standardRender =
-        typeof window.grecaptcha?.render === 'function' ? window.grecaptcha.render : undefined
-      const enterpriseRender =
-        typeof window.grecaptcha?.enterprise?.render === 'function'
-          ? window.grecaptcha.enterprise.render
-          : undefined
-      const renderFn = standardRender || enterpriseRender
-
-      if (!renderFn) {
-        setRecaptchaLoadError(
-          'reCAPTCHA key or script is incompatible with checkbox mode. Please use a v2 checkbox site key.',
-        )
-        return
-      }
-
-      widgetIdRef.current = renderFn(container, {
-        sitekey: recaptchaSiteKey,
-        callback: (token: string) => {
-          setRecaptchaToken(token)
-          setRecaptchaValidationError(null)
-        },
-        'expired-callback': () => {
-          setRecaptchaToken('')
-        },
-        'error-callback': () => {
-          setRecaptchaToken('')
-        },
-      })
-
-      setIsRecaptchaReady(true)
-      setRecaptchaLoadError(null)
-    }
-
-    const scriptId = 'recaptcha-api'
-    const existingScript = document.getElementById(scriptId) as HTMLScriptElement | null
-
-    const runWhenReady = () => {
-      const standardReady =
-        typeof window.grecaptcha?.ready === 'function' ? window.grecaptcha.ready : undefined
-      const enterpriseReady =
-        typeof window.grecaptcha?.enterprise?.ready === 'function'
-          ? window.grecaptcha.enterprise.ready
-          : undefined
-      const readyFn = standardReady || enterpriseReady
-
-      if (readyFn) {
-        readyFn(() => renderWidget())
-        return
-      }
-
-      renderWidget()
-    }
-
-    if (window.grecaptcha) {
-      runWhenReady()
-      return
-    }
-
-    const onScriptLoad = () => {
-      runWhenReady()
-    }
-
-    if (existingScript) {
-      existingScript.addEventListener('load', onScriptLoad)
-      return
-    }
-
-    const script = document.createElement('script')
-    script.id = scriptId
-    script.async = true
-    script.defer = true
-    script.src = 'https://www.google.com/recaptcha/api.js'
-    script.addEventListener('load', onScriptLoad)
-    document.body.appendChild(script)
-
-    return () => {
-      clearRecaptchaWidget()
-    }
-  }, [recaptchaEnabled, recaptchaSiteKey, hasSubmitted, recaptchaMountKey])
 
   const resetSubmissionWithRecaptcha = () => {
     setRecaptchaToken('')
     setRecaptchaValidationError(null)
-    clearRecaptchaWidget()
-    setRecaptchaMountKey((key) => key + 1)
+    setRecaptchaResetKey((key) => key + 1)
     formMethods.reset(defaultFieldValues ?? {})
     resetSubmission()
   }
@@ -304,6 +195,7 @@ export const ContactForm: React.FC<Props> = ({
       )}
       {!hasSubmitted && (
         <form
+          key={locale}
           className="space-y-5"
           id={String(formID)}
           onSubmit={handleSubmit(handleContactSubmit)}
@@ -337,6 +229,7 @@ export const ContactForm: React.FC<Props> = ({
           )}
 
           <fieldset
+            key={locale}
             className={`m-0 min-w-0 border-0 p-0 ${
               singleColumn ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-1 gap-4 md:grid-cols-2'
             }`}
@@ -390,9 +283,16 @@ export const ContactForm: React.FC<Props> = ({
             })}
           </fieldset>
 
-          {recaptchaEnabled && (
+          {deferredLocale && recaptchaConfigured && !hasSubmitted && (
             <div className={`space-y-2 mt-4 ${isLoading ? 'pointer-events-none opacity-60' : ''}`}>
-              <div key={`recaptcha-${recaptchaMountKey}`} ref={recaptchaContainerRef} />
+              <RecaptchaWidget
+                key={`${deferredLocale}-${recaptchaResetKey}`}
+                locale={deferredLocale}
+                onError={setRecaptchaLoadError}
+                onReadyChange={setIsRecaptchaReady}
+                onTokenChange={setRecaptchaToken}
+                siteKey={recaptchaSiteKey}
+              />
               {recaptchaLoadError && (
                 <p className="font-body-sm text-body-sm text-error">{recaptchaLoadError}</p>
               )}

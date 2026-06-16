@@ -1,4 +1,6 @@
 type PendingItem = {
+  language: string
+  key: string
   fallback: string
 }
 
@@ -10,7 +12,6 @@ const resolved = new Map<string, string>()
 const pending = new Map<string, PendingItem>()
 const listeners = new Set<() => void>()
 
-let batchLanguage = 'en'
 let flushScheduled = false
 
 function entryKey(language: string, key: string): string {
@@ -36,38 +37,44 @@ function scheduleFlush(): void {
 async function flushBatch(): Promise<void> {
   if (pending.size === 0) return
 
-  const language = batchLanguage
-  const items = Array.from(pending.entries()).map(([key, { fallback }]) => ({
-    key,
-    fallback,
-  }))
-
+  const items = Array.from(pending.values())
   pending.clear()
 
+  const byLanguage = new Map<string, Array<{ key: string; fallback: string }>>()
+
+  for (const { language, key, fallback } of items) {
+    const group = byLanguage.get(language) ?? []
+    group.push({ key, fallback })
+    byLanguage.set(language, group)
+  }
+
   try {
-    const response = await fetch('/api/translations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ language, items }),
-    })
+    await Promise.all(
+      Array.from(byLanguage.entries()).map(async ([language, langItems]) => {
+        const response = await fetch('/api/translations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language, items: langItems }),
+        })
 
-    if (!response.ok) {
-      for (const { key, fallback } of items) {
-        resolved.set(entryKey(language, key), fallback)
-      }
-      notify()
-      return
-    }
+        if (!response.ok) {
+          for (const { key, fallback } of langItems) {
+            resolved.set(entryKey(language, key), fallback)
+          }
+          return
+        }
 
-    const data = (await response.json()) as BatchResponse
-    const translations = data.translations ?? {}
+        const data = (await response.json()) as BatchResponse
+        const translations = data.translations ?? {}
 
-    for (const { key, fallback } of items) {
-      const text = translations[key] ?? fallback
-      resolved.set(entryKey(language, key), text)
-    }
+        for (const { key, fallback } of langItems) {
+          const text = translations[key] ?? fallback
+          resolved.set(entryKey(language, key), text)
+        }
+      }),
+    )
   } catch {
-    for (const { key, fallback } of items) {
+    for (const { language, key, fallback } of items) {
       resolved.set(entryKey(language, key), fallback)
     }
   }
@@ -98,11 +105,28 @@ export function requestTranslation(
   fallbackValue: string,
 ): void {
   const lang = language.trim().toLowerCase() || 'en'
-  batchLanguage = lang
+  const mapKey = entryKey(lang, key)
 
-  if (resolved.has(entryKey(lang, key))) return
+  if (resolved.has(mapKey)) return
 
-  pending.set(key, { fallback: fallbackValue })
+  pending.set(mapKey, { language: lang, key, fallback: fallbackValue })
   scheduleFlush()
 }
 
+/** Drop cached strings for a locale so components re-fetch after a language switch. */
+export function invalidateTranslationsForLocale(language: string): void {
+  const lang = language.trim().toLowerCase() || 'en'
+  const prefix = `${lang}::`
+  let changed = false
+
+  for (const mapKey of resolved.keys()) {
+    if (mapKey.startsWith(prefix)) {
+      resolved.delete(mapKey)
+      changed = true
+    }
+  }
+
+  if (changed) {
+    notify()
+  }
+}

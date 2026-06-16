@@ -6,7 +6,9 @@ import { APIProvider, Map } from '@vis.gl/react-google-maps'
 import { useIntegrationsSettings } from '@/hooks/useIntegrationsSettings'
 import type { MapPropertyPoint } from '@/utilities/crmPropertyMap'
 import type { PropertyMapSettings } from '@/utilities/getPropertyMapSettings'
-import { useSiteLocale } from '@/utilities/useSiteLocale'
+import { toGoogleHl } from '@/utilities/googleLocale'
+import { useTranslation } from '@/utilities/translateClient'
+import { useDeferredSiteLocale } from '@/utilities/useDeferredSiteLocale'
 
 import { filterPointsInsidePolygon } from './clusterRenderer'
 import { PropertyMapCluster } from './PropertyMapCluster'
@@ -29,6 +31,7 @@ const MapContent: React.FC<Props> = ({
   onMarkerClick,
   onDrawApply,
 }) => {
+  const loadingLabel = useTranslation('propertyMap.loading', 'Loading properties…')
   const [drawMode, setDrawMode] = useState<DrawMode>('idle')
   const polygonRef = useRef<google.maps.Polygon | null>(null)
   const polylineRef = useRef<google.maps.Polyline | null>(null)
@@ -85,7 +88,7 @@ const MapContent: React.FC<Props> = ({
 
       {loading && (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-surface/60 backdrop-blur-[1px]">
-          <p className="font-body-md text-body-md text-on-surface-variant">Loading properties…</p>
+          <p className="font-body-md text-body-md text-on-surface-variant">{loadingLabel}</p>
         </div>
       )}
 
@@ -112,11 +115,23 @@ const MapContent: React.FC<Props> = ({
 }
 
 export const PropertyMapView: React.FC<Props> = (props) => {
-  const locale = useSiteLocale()
+  const deferredLocale = useDeferredSiteLocale()
   const { settings: integrations } = useIntegrationsSettings()
   const mapsApiKey = integrations.googleMapsApiKey || ''
+
+  if (!deferredLocale) {
+    return <div className="relative h-full w-full bg-surface-container-low" />
+  }
+
+  const googleHl = toGoogleHl(deferredLocale)
+
   return (
-    <APIProvider apiKey={mapsApiKey} libraries={['marker', 'geometry']} language={locale}>
+    <APIProvider
+      key={deferredLocale}
+      apiKey={mapsApiKey}
+      libraries={['marker', 'geometry']}
+      language={googleHl}
+    >
       <MapContent {...props} />
     </APIProvider>
   )

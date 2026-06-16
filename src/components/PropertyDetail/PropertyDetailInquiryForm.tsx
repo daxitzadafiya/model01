@@ -48,7 +48,10 @@ export const PropertyDetailInquiryForm: React.FC<Props> = ({
     'propertyDetail.inquiry.formNotConfigured',
     'Contact form is not configured. Add a form titled "Contact Form" in the admin panel.',
   )
-  const heading = useTranslation('propertyDetail.inquiry.heading', 'Contact Us')
+  const heading = useTranslation(
+    'propertyDetail.inquiry.heading-property-inquiry',
+    'Property Inquiry',
+  )
   const resubmitButtonLabel = useTranslation(
     'propertyDetail.inquiry.resubmitButton',
     'Send another inquiry',

@@ -5,8 +5,10 @@ import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 
 import { setLocale } from '@/i18n/actions'
+import { dispatchSiteLocaleChange } from '@/i18n/localeEvents'
 import { getMenuItemForLocale, type LanguageMenuItem, type Locale } from '@/i18n/config'
 import { cn } from '@/utilities/ui'
+import { invalidateTranslationsForLocale } from '@/utilities/translationStore'
 
 import { FlagIcon } from './FlagIcon'
 
@@ -61,7 +63,8 @@ export const LanguageSwitcher: React.FC<Props> = ({
 
     setOpen(false)
     startTransition(async () => {
-      document.documentElement.lang = item.locale
+      dispatchSiteLocaleChange(item.locale)
+      invalidateTranslationsForLocale(item.locale)
       await setLocale(item.locale)
       router.refresh()
     })

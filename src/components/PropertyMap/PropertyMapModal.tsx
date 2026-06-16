@@ -8,6 +8,7 @@ import { usePropertyMapSettings } from '@/hooks/usePropertyMapSettings'
 import { fetchCRMMapProperties, type MapPropertyPoint } from '@/utilities/crmPropertyMap'
 import type { CRMListingPreset, PropertyListFilters } from '@/utilities/crmProperties'
 import { filtersForMapMarkers } from '@/utilities/propertyMapFilters'
+import { useTranslation } from '@/utilities/translateClient'
 
 import { PropertyMapView } from './PropertyMapView'
 
@@ -30,6 +31,12 @@ export const PropertyMapModal: React.FC<Props> = ({
   favoriteIds,
   onDrawApply,
 }) => {
+  const loadErrorFallback = useTranslation(
+    'propertyMap.error.loadFailed',
+    'Failed to load map properties',
+  )
+  const closeMapLabel = useTranslation('propertyMap.modal.close', 'Close map')
+  const closeLabel = useTranslation('propertyMap.modal.closeButton', 'Close')
   const { settings, loading: settingsLoading } = usePropertyMapSettings()
   const router = useRouter()
   const [points, setPoints] = useState<MapPropertyPoint[]>([])
@@ -85,7 +92,7 @@ export const PropertyMapModal: React.FC<Props> = ({
         if ((err as Error).name === 'AbortError') return
         if (generation !== fetchGenerationRef.current) return
         console.error('Failed to load map properties', err)
-        setError(err instanceof Error ? err.message : 'Failed to load map properties')
+        setError(err instanceof Error ? err.message : loadErrorFallback)
         setPoints([])
       } finally {
         if (!controller.signal.aborted && generation === fetchGenerationRef.current) {
@@ -104,6 +111,7 @@ export const PropertyMapModal: React.FC<Props> = ({
     mapFiltersKey,
     favoriteIdsKey,
     settings.mapFetchLimit,
+    loadErrorFallback,
   ])
 
   const handleMarkerClick = useCallback(
@@ -132,7 +140,7 @@ export const PropertyMapModal: React.FC<Props> = ({
     >
       <button
         type="button"
-        aria-label="Close map"
+        aria-label={closeMapLabel}
         className="fixed inset-0 bg-primary/40 backdrop-blur-sm"
         onClick={onClose}
       />
@@ -146,7 +154,7 @@ export const PropertyMapModal: React.FC<Props> = ({
             type="button"
             onClick={onClose}
             className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
-            aria-label="Close"
+            aria-label={closeLabel}
           >
             <X size={22} />
           </button>

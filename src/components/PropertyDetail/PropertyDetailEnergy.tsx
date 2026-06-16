@@ -90,7 +90,7 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
     <div className="mt-24 border-t border-outline-variant/30 pt-12">
       <h2 className="text-headline-lg font-headline-lg text-primary mb-12">{heading}</h2>
 
-      <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-8 md:p-10">
+      <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-6 md:p-8">
         {energy.isEmpty ? (
           <div className="py-10 text-center">
             <p className="text-label-sm font-label-sm uppercase tracking-[0.2em] text-on-surface-variant">

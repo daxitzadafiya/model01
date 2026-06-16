@@ -3,6 +3,8 @@
 import React from 'react'
 import { Pencil } from 'lucide-react'
 
+import { useTranslation } from '@/utilities/translateClient'
+
 import type { DrawMode } from './types'
 
 type Props = {
@@ -22,6 +24,13 @@ export const PropertyMapDrawToolbar: React.FC<Props> = ({
   onApply,
   onReset,
 }) => {
+  const drawHint = useTranslation(
+    'propertyMap.draw.hint',
+    'Click and drag on the map to draw your search area.',
+  )
+  const applyLabel = useTranslation('propertyMap.draw.apply', 'Apply')
+  const resetLabel = useTranslation('propertyMap.draw.reset', 'Reset')
+
   if (drawMode === 'idle') {
     return (
       <div className="absolute top-4 left-4 z-10">
@@ -45,7 +54,7 @@ export const PropertyMapDrawToolbar: React.FC<Props> = ({
         </p>
         {drawMode === 'drawing' && (
           <p className="mt-1 font-body-sm text-body-sm text-on-primary/80 normal-case tracking-normal">
-            Click and drag on the map to draw your search area.
+            {drawHint}
           </p>
         )}
       </div>
@@ -56,14 +65,14 @@ export const PropertyMapDrawToolbar: React.FC<Props> = ({
           disabled={drawMode !== 'drawn'}
           className="rounded-lg bg-surface px-5 py-2 font-label-sm text-label-sm uppercase tracking-widest text-primary hover:bg-surface-container-high transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Apply
+          {applyLabel}
         </button>
         <button
           type="button"
           onClick={onReset}
           className="rounded-lg border border-on-primary px-5 py-2 font-label-sm text-label-sm uppercase tracking-widest text-on-primary hover:bg-primary/80 transition-colors cursor-pointer"
         >
-          Reset
+          {resetLabel}
         </button>
       </div>
     </div>
