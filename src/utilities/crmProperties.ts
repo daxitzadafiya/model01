@@ -20,8 +20,10 @@ export type PropertyListSort = string
 export type PropertyListFilters = {
   reference?: string
   propertyType?: string[]
-  /** Selected area (location) keys from CRM geo-data */
-  location?: string[]
+  /** Selected coast (location group) key_system values */
+  coast?: string[]
+  /** Selected city keys from CRM */
+  city?: string[]
   minPrice?: string
   maxPrice?: string
   bedrooms?: string
@@ -43,6 +45,7 @@ export type NormalizedListProperty = {
   isNewListing?: boolean
   statusBadgeLabel?: 'SOLD' | 'RESERVED'
   location: string
+  city?: string
   reference?: string
   /** Site path e.g. `/property-details/luxury-villa-in-calpe_618268` */
   detailHref?: string
@@ -523,12 +526,21 @@ export const buildFilterQuery = (
     }
   }
 
-  const locationKeys = (filters.location ?? [])
+  // Match gestali-home CommercialPropertiesNew::setQuery — coast uses lg_by_key, not location_group.
+  const coastKeys = (filters.coast ?? [])
     .map((value) => Number(value))
     .filter((key) => Number.isFinite(key))
 
-  if (locationKeys.length > 0) {
-    query.location = { $in: locationKeys }
+  if (coastKeys.length > 0) {
+    query.lg_by_key = { $in: coastKeys }
+  }
+
+  const cityKeys = (filters.city ?? [])
+    .map((value) => Number(value))
+    .filter((key) => Number.isFinite(key))
+
+  if (cityKeys.length > 0) {
+    query.city = { $in: cityKeys }
   }
 
   const statusClause = buildPropertyListingStatusQuery(filters.status)

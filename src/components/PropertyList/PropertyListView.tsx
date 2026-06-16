@@ -7,7 +7,8 @@ import { useSiteLocale } from '@/utilities/useSiteLocale'
 import { FilterSelect } from '@/components/FilterSelect'
 import { PropertyMapModal } from '@/components/PropertyMap/PropertyMapModal'
 import { ArrowUpDown } from 'lucide-react'
-import { useCRMLocationTree } from '@/hooks/useCRMLocationTree'
+import { useCRMCoasts } from '@/hooks/useCRMCoasts'
+import { useCRMCities } from '@/hooks/useCRMCities'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
 import { PropertyFilterOptionsProvider, usePropertyFilterOptions } from '@/hooks/usePropertyFilterOptions'
 import { PropertyCard, resolvePropertyCardStatusBadge } from '@/components/PropertyCard'
@@ -25,8 +26,10 @@ import { useSortOptions } from './useFilterOptionLabels'
 import { PropertyListFilters as FiltersBar } from './PropertyListFilters'
 import { PropertyListPagination } from './PropertyListPagination'
 import {
-  consumePendingPropertyListFilters,
+  clearPendingPropertyListFilters,
+  normalizePropertyListFilters,
   stripPropertyFilterSearchParams,
+  takePendingPropertyListFilters,
 } from './propertyFilterUrl'
 import { useTranslation } from '@/utilities/translateClient'
 
@@ -71,6 +74,7 @@ const PropertyListViewInner: React.FC<Props> = ({
   const sortOptions = useSortOptions()
   const { loading: filterOptionsLoading } = usePropertyFilterOptions()
   const [sort, setSort] = useState('')
+  const [filtersHydrated, setFiltersHydrated] = useState(false)
   const [filters, setFilters] = useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
   const [appliedFilters, setAppliedFilters] =
     useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
@@ -92,7 +96,8 @@ const PropertyListViewInner: React.FC<Props> = ({
   const filterPreset = isFavoritesList ? 'forSale' : listingPreset
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions(filterPreset)
-  const { tree: locationTree, loading: locationLoading } = useCRMLocationTree(filterPreset)
+  const { coasts, loading: coastsLoading } = useCRMCoasts()
+  const { cities, loading: citiesLoading } = useCRMCities(filters.coast, coasts, filterPreset)
   const hasFavoriteIds = favoriteIds.length > 0
   const favoriteIdsKey = JSON.stringify(favoriteIds)
   const favoritesSyncReadyRef = useRef(false)
@@ -156,8 +161,22 @@ const PropertyListViewInner: React.FC<Props> = ({
     )
   }, [sortOptions])
 
+  /** Hero search → listing: read coast/city from sessionStorage (no URL params). */
+  useEffect(() => {
+    const pending = takePendingPropertyListFilters()
+    if (pending) {
+      setFilters(pending)
+      setAppliedFilters(pending)
+      setPage(1)
+    }
+    stripPropertyFilterSearchParams()
+    setFiltersHydrated(true)
+  }, [])
+
   /** CRM fetch for filters/pagination/sort — not when toggling hearts on for-sale. */
   useEffect(() => {
+    if (!filtersHydrated) return
+
     if (isFavoritesList && favoriteIds.length === 0) {
       setRawProperties([])
       setTotal(0)
@@ -212,6 +231,7 @@ const PropertyListViewInner: React.FC<Props> = ({
     appliedFilters,
     crmQueryJson,
     filterOptionsLoading,
+    filtersHydrated,
     isFavoritesList,
     listingPreset,
     page,
@@ -292,19 +312,14 @@ const PropertyListViewInner: React.FC<Props> = ({
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
-  useEffect(() => {
-    const pending = consumePendingPropertyListFilters()
-    if (pending) {
-      setFilters(pending)
-      setAppliedFilters(pending)
-      setPage(1)
-    }
-    stripPropertyFilterSearchParams()
-  }, [])
-
   const handleApply = (nextFilters: PropertyListFilters) => {
-    setFilters(nextFilters)
-    setAppliedFilters(nextFilters)
+    clearPendingPropertyListFilters()
+    const normalized = normalizePropertyListFilters({
+      ...filters,
+      ...nextFilters,
+    })
+    setFilters(normalized)
+    setAppliedFilters(normalized)
     setPage(1)
   }
 
@@ -353,8 +368,10 @@ const PropertyListViewInner: React.FC<Props> = ({
           onOpenMap={() => setMapModalOpen(true)}
           propertyTypeOptions={propertyTypeOptions}
           propertyTypeLoading={propertyTypeLoading}
-          locationTree={locationTree}
-          locationLoading={locationLoading}
+          coasts={coasts}
+          coastsLoading={coastsLoading}
+          cities={cities}
+          citiesLoading={citiesLoading}
         />
       )}
 
@@ -401,6 +418,7 @@ const PropertyListViewInner: React.FC<Props> = ({
                 imageUrl: property.imageUrl,
                 imageUrls: property.imageUrls,
                 location: property.location,
+                city: property.city,
                 reference: property.reference,
                 title: property.title,
                 beds: property.beds,

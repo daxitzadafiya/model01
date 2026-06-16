@@ -268,7 +268,9 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
             {icon}
           </span>
         )}
-        <span className="block truncate">{displayLabel}</span>
+        <span className="block truncate" title={displayLabel}>
+          {displayLabel}
+        </span>
         <ChevronDown
           size={20}
           className={cn(

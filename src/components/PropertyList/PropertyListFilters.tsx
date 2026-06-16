@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Banknote, Home, MapPin, RotateCcw, Search, SlidersHorizontal, Tag } from 'lucide-react'
+import { Banknote, Home, MapPin, RotateCcw, Search, SlidersHorizontal } from 'lucide-react'
 
 import { FilterSelect } from '@/components/FilterSelect'
 import type { FilterSelectOption } from '@/components/FilterSelect'
-import type { CRMLocationCity } from '@/utilities/crmLocations'
+import { CoastCityFilterFields } from '@/components/CoastCityFilterFields'
+import type { CRMCityOption, CRMCoastOption } from '@/utilities/crmCoasts'
 import type { PropertyListFilters as Filters } from '@/utilities/crmProperties'
 import {
   applyPriceRangeValue,
@@ -27,11 +28,11 @@ type Props = {
   onOpenMap?: () => void
   propertyTypeOptions: FilterSelectOption[]
   propertyTypeLoading?: boolean
-  locationTree: CRMLocationCity[]
-  locationLoading?: boolean
+  coasts: CRMCoastOption[]
+  coastsLoading?: boolean
+  cities: CRMCityOption[]
+  citiesLoading?: boolean
 }
-
-const fieldLabelClass = 'font-label-sm text-label-sm uppercase text-on-surface-variant ml-1'
 
 export const PropertyListFilters: React.FC<Props> = ({
   filters,
@@ -42,19 +43,16 @@ export const PropertyListFilters: React.FC<Props> = ({
   onOpenMap,
   propertyTypeOptions,
   propertyTypeLoading = false,
-  locationTree,
-  locationLoading = false,
+  coasts,
+  coastsLoading = false,
+  cities,
+  citiesLoading = false,
 }) => {
   const [modalOpen, setModalOpen] = useState(false)
   const priceRangeOptions = usePriceRangeOptions()
   const priceRange = resolvePriceRangeValue(filters.minPrice, filters.maxPrice, priceRangeOptions)
   const showClearFilters = hasActivePropertyFilters(appliedFilters)
 
-  const referenceLabel = useTranslation('propertyList.filters.reference', 'Reference')
-  const referencePlaceholder = useTranslation(
-    'propertyList.filters.reference.placeholder',
-    'Reference...',
-  )
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
@@ -91,28 +89,19 @@ export const PropertyListFilters: React.FC<Props> = ({
     <>
       <form onSubmit={handleSubmit} className="relative z-20 -mt-4 mb-6">
         <div className="bg-surface-container-lowest shadow-2xl rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-end gap-6 border border-outline-variant/30">
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-            <div className="flex flex-col gap-2">
-              <label className={fieldLabelClass} htmlFor="filter-bar-reference">
-                {referenceLabel}
-              </label>
-              <div className="relative">
-                <Tag
-                  size={20}
-                  strokeWidth={1.75}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-tertiary pointer-events-none"
-                  aria-hidden
-                />
-                <input
-                  id="filter-bar-reference"
-                  type="text"
-                  placeholder={referencePlaceholder}
-                  value={filters.reference ?? ''}
-                  onChange={(e) => onChange('reference', e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-surface-container-low border-transparent focus:border-tertiary focus:ring-0 rounded-lg font-body-md text-body-md text-on-surface"
-                />
-              </div>
-            </div>
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-6 w-full">
+            <CoastCityFilterFields
+              coast={filters.coast}
+              city={filters.city}
+              onCoastChange={(value) => onChange('coast', value)}
+              onCityChange={(value) => onChange('city', value)}
+              coasts={coasts}
+              coastsLoading={coastsLoading}
+              cities={cities}
+              citiesLoading={citiesLoading}
+              coastId="filter-bar-coast"
+              cityId="filter-bar-city"
+            />
 
             <FilterSelect
               mode="multi"
@@ -191,8 +180,10 @@ export const PropertyListFilters: React.FC<Props> = ({
         onSearch={handleModalSearch}
         propertyTypeOptions={propertyTypeOptions}
         propertyTypeLoading={propertyTypeLoading}
-        locationTree={locationTree}
-        locationLoading={locationLoading}
+        coasts={coasts}
+        coastsLoading={coastsLoading}
+        cities={cities}
+        citiesLoading={citiesLoading}
       />
     </>
   )

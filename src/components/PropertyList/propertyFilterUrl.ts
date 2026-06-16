@@ -1,27 +1,86 @@
 import type { PropertyListFilters } from '@/utilities/crmProperties'
 
-import { EMPTY_PROPERTY_FILTERS } from './filterOptions'
+import {
+  EMPTY_PROPERTY_FILTERS,
+  parseCityFilter,
+  parseCoastFilter,
+  parseFeaturesFilter,
+  parsePropertyTypeFilter,
+  parseStatusFilter,
+} from './filterOptions'
 
 const PENDING_FILTERS_STORAGE_KEY = 'propertyList.pendingFilters'
 
+/** Survives React Strict Mode remounts after hero → listing navigation. */
+let pendingFiltersMemory: PropertyListFilters | null | undefined
+
+export const normalizePropertyListFilters = (
+  filters: PropertyListFilters,
+): PropertyListFilters => ({
+  ...EMPTY_PROPERTY_FILTERS,
+  ...filters,
+  reference: filters.reference?.trim() ?? '',
+  propertyType: parsePropertyTypeFilter(filters.propertyType),
+  coast: parseCoastFilter(filters.coast),
+  city: parseCityFilter(filters.city),
+  minPrice: filters.minPrice && filters.minPrice !== 'any' ? filters.minPrice : 'any',
+  maxPrice: filters.maxPrice && filters.maxPrice !== 'any' ? filters.maxPrice : 'any',
+  bedrooms: filters.bedrooms && filters.bedrooms !== 'any' ? filters.bedrooms : 'any',
+  status: parseStatusFilter(filters.status),
+  features: parseFeaturesFilter(filters.features),
+  deliveryDate: filters.deliveryDate?.trim() ?? '',
+  distanceToSea: filters.distanceToSea?.trim() ?? '',
+  mapReferences: Array.isArray(filters.mapReferences)
+    ? filters.mapReferences.filter(Boolean)
+    : [],
+})
+
 export const savePendingPropertyListFilters = (filters: PropertyListFilters): void => {
   if (typeof window === 'undefined') return
-  sessionStorage.setItem(PENDING_FILTERS_STORAGE_KEY, JSON.stringify(filters))
+  pendingFiltersMemory = undefined
+  const normalized = normalizePropertyListFilters(filters)
+  sessionStorage.setItem(PENDING_FILTERS_STORAGE_KEY, JSON.stringify(normalized))
 }
 
-export const consumePendingPropertyListFilters = (): PropertyListFilters | null => {
-  if (typeof window === 'undefined') return null
+/**
+ * Read pending filters from hero search (sessionStorage). No URL params.
+ * Cached in memory so React Strict Mode does not drop filters on remount.
+ */
+export const takePendingPropertyListFilters = (): PropertyListFilters | null => {
+  if (pendingFiltersMemory !== undefined) {
+    return pendingFiltersMemory
+  }
+
+  if (typeof window === 'undefined') {
+    pendingFiltersMemory = null
+    return null
+  }
 
   const raw = sessionStorage.getItem(PENDING_FILTERS_STORAGE_KEY)
-  if (!raw) return null
+  if (!raw) {
+    pendingFiltersMemory = null
+    return null
+  }
 
   sessionStorage.removeItem(PENDING_FILTERS_STORAGE_KEY)
 
   try {
-    return JSON.parse(raw) as PropertyListFilters
+    pendingFiltersMemory = normalizePropertyListFilters(JSON.parse(raw) as PropertyListFilters)
+    return pendingFiltersMemory
   } catch {
+    pendingFiltersMemory = null
     return null
   }
+}
+
+/** @deprecated Prefer takePendingPropertyListFilters */
+export const consumePendingPropertyListFilters = (): PropertyListFilters | null =>
+  takePendingPropertyListFilters()
+
+export const clearPendingPropertyListFilters = (): void => {
+  pendingFiltersMemory = undefined
+  if (typeof window === 'undefined') return
+  sessionStorage.removeItem(PENDING_FILTERS_STORAGE_KEY)
 }
 
 export const stripPropertyFilterSearchParams = (): void => {
@@ -45,8 +104,10 @@ export const serializePropertyFiltersToSearchParams = (
   const reference = filters.reference?.trim()
   if (reference) params.set('reference', reference)
 
-  if (filters.location?.length) params.set('location', filters.location.join(','))
   if (filters.propertyType?.length) params.set('propertyType', filters.propertyType.join(','))
+
+  if (filters.coast?.length) params.set('coast', filters.coast.join(','))
+  if (filters.city?.length) params.set('city', filters.city.join(','))
 
   if (filters.minPrice && filters.minPrice !== 'any') params.set('minPrice', filters.minPrice)
   if (filters.maxPrice && filters.maxPrice !== 'any') params.set('maxPrice', filters.maxPrice)
@@ -73,7 +134,15 @@ export const parsePropertyFiltersFromSearchParams = (
   if (reference) filters.reference = reference
 
   const location = splitCsv(searchParams.get('location'))
-  if (location.length) filters.location = location
+  if (location.length) {
+    filters.coast = location
+  }
+
+  const coast = splitCsv(searchParams.get('coast'))
+  if (coast.length) filters.coast = coast
+
+  const city = splitCsv(searchParams.get('city'))
+  if (city.length) filters.city = city
 
   const propertyType = splitCsv(searchParams.get('propertyType'))
   if (propertyType.length) filters.propertyType = propertyType

@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Banknote, ChevronDown, Home, MapPin, Search } from 'lucide-react'
+import { Banknote, ChevronDown, Home, Search } from 'lucide-react'
 import type { Page } from '@/payload-types'
 import { FilterSelect } from '@/components/FilterSelect'
-import { LocationFilterSelect } from '@/components/LocationFilterSelect'
+import { CoastCityFilterFields } from '@/components/CoastCityFilterFields'
 import { CMSLink, getCMSLinkHref } from '@/components/Link'
 import { HeroBackground } from '@/blocks/HeroBlock/HeroBackground'
 import { HeroWeather } from '@/blocks/HeroBlock/HeroWeather'
@@ -17,7 +17,8 @@ import {
 } from '@/components/PropertyList/filterOptions'
 import { usePriceRangeOptions } from '@/components/PropertyList/useFilterOptionLabels'
 import { savePendingPropertyListFilters } from '@/components/PropertyList/propertyFilterUrl'
-import { useCRMLocationTree } from '@/hooks/useCRMLocationTree'
+import { useCRMCoasts } from '@/hooks/useCRMCoasts'
+import { useCRMCities } from '@/hooks/useCRMCities'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
 import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
 import type { PropertyListFilters } from '@/utilities/crmProperties'
@@ -53,15 +54,6 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     'propertyList.filters.searchProperties',
     'Search Properties',
   )
-  const locationLabel = useTranslation('propertyList.filters.location', 'Location')
-  const locationPlaceholder = useTranslation(
-    'propertyList.filters.location.placeholder',
-    'Athens, Cyclades...',
-  )
-  const locationEmptyLabel = useTranslation(
-    'propertyList.filters.location.emptyLabel',
-    'All Locations',
-  )
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
@@ -74,7 +66,12 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   })
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions('forSale')
-  const { tree: locationTree, loading: locationLoading } = useCRMLocationTree('forSale')
+  const { coasts, loading: coastsLoading } = useCRMCoasts()
+  const { cities, loading: citiesLoading } = useCRMCities(
+    searchFilters.coast,
+    coasts,
+    'forSale',
+  )
   const priceRange = resolvePriceRangeValue(
     searchFilters.minPrice,
     searchFilters.maxPrice,
@@ -98,7 +95,10 @@ const HeroBlockContent: React.FC<Props> = (props) => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    savePendingPropertyListFilters(searchFilters)
+    savePendingPropertyListFilters({
+      ...EMPTY_PROPERTY_FILTERS,
+      ...searchFilters,
+    })
     router.push(searchResultsPath)
   }
 
@@ -137,18 +137,18 @@ const HeroBlockContent: React.FC<Props> = (props) => {
                 </p>
                 <HeroWeather />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 md:p-6 items-end">
-                <LocationFilterSelect
-                  label={locationLabel}
-                  id="hero-search-location"
-                  icon={<MapPin size={20} strokeWidth={1.75} />}
-                  tree={locationTree}
-                  value={searchFilters.location ?? []}
-                  onChange={(value) => handleSearchFilterChange('location', value)}
-                  placeholder={locationPlaceholder}
-                  emptyLabel={locationEmptyLabel}
-                  loading={locationLoading}
-                  disabled={locationLoading}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 md:p-6 items-end">
+                <CoastCityFilterFields
+                  coast={searchFilters.coast}
+                  city={searchFilters.city}
+                  onCoastChange={(value) => handleSearchFilterChange('coast', value)}
+                  onCityChange={(value) => handleSearchFilterChange('city', value)}
+                  coasts={coasts}
+                  coastsLoading={coastsLoading}
+                  cities={cities}
+                  citiesLoading={citiesLoading}
+                  coastId="hero-search-coast"
+                  cityId="hero-search-city"
                   triggerClassName={heroSearchFieldClassName}
                 />
 

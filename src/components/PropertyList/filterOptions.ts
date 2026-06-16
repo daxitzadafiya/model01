@@ -34,6 +34,22 @@ export const parseLocationFilter = (value?: string | string[]): string[] => {
   return []
 }
 
+export const parseCoastFilter = (value?: string | string[]): string[] => {
+  if (Array.isArray(value)) return value.filter((key) => key && key !== 'all' && key !== 'any')
+  if (value && value !== 'all' && value !== 'any') return [value]
+  return []
+}
+
+export const parseCityFilter = (value?: string | string[]): string[] => {
+  if (Array.isArray(value)) return value.filter((key) => key && key !== 'all' && key !== 'any')
+  if (value && value !== 'all' && value !== 'any') return [value]
+  return []
+}
+
+export const isCoastFilterActive = (coast?: string[]) => parseCoastFilter(coast).length > 0
+
+export const isCityFilterActive = (city?: string[]) => parseCityFilter(city).length > 0
+
 export const MIN_PRICE_OPTIONS = [
   { value: 'any', label: 'Any Min Price' },
   { value: '500000', label: '€500,000' },
@@ -147,7 +163,8 @@ export const hasAppliedPropertyFilters = (filters: PropertyListFilters): boolean
   return Boolean(
     filters.reference?.trim() ||
       filters.propertyType?.length ||
-      filters.location?.length ||
+      isCoastFilterActive(filters.coast) ||
+      isCityFilterActive(filters.city) ||
       (filters.minPrice && filters.minPrice !== 'any') ||
       (filters.maxPrice && filters.maxPrice !== 'any') ||
       (filters.bedrooms && filters.bedrooms !== 'any') ||
@@ -162,7 +179,8 @@ export const hasAppliedPropertyFilters = (filters: PropertyListFilters): boolean
 export const EMPTY_PROPERTY_FILTERS = {
   reference: '',
   propertyType: [] as string[],
-  location: [] as string[],
+  coast: [] as string[],
+  city: [] as string[],
   minPrice: 'any',
   maxPrice: 'any',
   bedrooms: 'any',
@@ -176,7 +194,8 @@ export const EMPTY_PROPERTY_FILTERS = {
 type PropertyFiltersShape = {
   reference?: string
   propertyType?: string | string[]
-  location?: string | string[]
+  coast?: string | string[]
+  city?: string | string[]
   minPrice?: string
   maxPrice?: string
   bedrooms?: string
@@ -190,7 +209,8 @@ type PropertyFiltersShape = {
 export const hasActivePropertyFilters = (filters: PropertyFiltersShape): boolean => {
   if (filters.reference?.trim()) return true
   if (parsePropertyTypeFilter(filters.propertyType).length > 0) return true
-  if (parseLocationFilter(filters.location).length > 0) return true
+  if (isCoastFilterActive(parseCoastFilter(filters.coast))) return true
+  if (isCityFilterActive(parseCityFilter(filters.city))) return true
   if (filters.minPrice && filters.minPrice !== 'any') return true
   if (filters.maxPrice && filters.maxPrice !== 'any') return true
   if (filters.bedrooms && filters.bedrooms !== 'any') return true

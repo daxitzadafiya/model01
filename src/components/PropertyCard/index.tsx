@@ -16,6 +16,7 @@ export type PropertyCardData = {
   /** Multiple CRM images for in-card slider */
   imageUrls?: string[]
   location: string
+  city?: string
   reference?: string
   title: string
   beds?: number

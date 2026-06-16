@@ -7,7 +7,6 @@ import {
   Calendar,
   Home,
   ListFilter,
-  MapPin,
   RotateCcw,
   Search,
   Sparkles,
@@ -18,13 +17,12 @@ import {
 
 import { FilterSelect } from '@/components/FilterSelect'
 import type { FilterSelectOption } from '@/components/FilterSelect'
-import { LocationFilterSelect } from '@/components/LocationFilterSelect'
-import type { CRMLocationCity } from '@/utilities/crmLocations'
+import { CoastCityFilterFields } from '@/components/CoastCityFilterFields'
+import type { CRMCityOption, CRMCoastOption } from '@/utilities/crmCoasts'
 import type { PropertyListFilters as Filters } from '@/utilities/crmProperties'
 import type { FloatingMenuPlacement } from '@/utilities/floatingMenuPosition'
 import {
   parseFeaturesFilter,
-  parseLocationFilter,
   parsePropertyTypeFilter,
   parseStatusFilter,
 } from './filterOptions'
@@ -48,8 +46,10 @@ type Props = {
   onSearch: () => void
   propertyTypeOptions: FilterSelectOption[]
   propertyTypeLoading?: boolean
-  locationTree: CRMLocationCity[]
-  locationLoading?: boolean
+  coasts: CRMCoastOption[]
+  coastsLoading?: boolean
+  cities: CRMCityOption[]
+  citiesLoading?: boolean
 }
 
 const labelClass = 'font-label-sm text-label-sm uppercase text-on-surface-variant'
@@ -86,8 +86,10 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   onSearch,
   propertyTypeOptions,
   propertyTypeLoading = false,
-  locationTree,
-  locationLoading = false,
+  coasts,
+  coastsLoading = false,
+  cities,
+  citiesLoading = false,
 }) => {
   const moreFiltersLabel = useTranslation('propertyList.filters.moreFilters', 'More Filters')
   const referenceLabel = useTranslation('propertyList.filters.reference', 'Reference')
@@ -98,9 +100,6 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
-  const locationLabel = useTranslation('propertyList.filters.location', 'Location')
-  const locationPlaceholder = useTranslation('propertyList.filters.location.placeholder', 'Location')
-  const locationEmptyLabel = useTranslation('propertyList.filters.location.emptyLabel', 'Location')
   const bedroomsLabel = useTranslation('propertyList.filters.bedrooms', 'Bedrooms')
   const minPriceLabel = useTranslation('propertyList.filters.minPrice', 'Min Price')
   const maxPriceLabel = useTranslation('propertyList.filters.maxPrice', 'Max Price')
@@ -217,18 +216,21 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
               />
             </div>
 
-            <div className="min-w-0">
-              <LocationFilterSelect
-                label={locationLabel}
-                tree={locationTree}
-                value={parseLocationFilter(filters.location)}
-                onChange={(value) => onChange('location', value)}
-                placeholder={locationPlaceholder}
-                emptyLabel={locationEmptyLabel}
-                loading={locationLoading}
-                disabled={locationLoading}
-                icon={<MapPin {...filterFieldIcon} />}
-              />
+            <div className="min-w-0 sm:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <CoastCityFilterFields
+                  coast={filters.coast}
+                  city={filters.city}
+                  onCoastChange={(value) => onChange('coast', value)}
+                  onCityChange={(value) => onChange('city', value)}
+                  coasts={coasts}
+                  coastsLoading={coastsLoading}
+                  cities={cities}
+                  citiesLoading={citiesLoading}
+                  coastId="filter-modal-coast"
+                  cityId="filter-modal-city"
+                />
+              </div>
             </div>
 
             <div className="min-w-0">
