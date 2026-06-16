@@ -6,10 +6,9 @@ import type { Payload } from 'payload'
 import { buildClientConfirmationEmailHtml } from '@/email/buildClientConfirmationEmailHtml'
 import { buildNotificationEmailHtml } from '@/email/buildNotificationEmailHtml'
 import { lexicalToEmailHtml } from '@/email/lexicalToEmailHtml'
-import { resolveEmailLogoDataUri } from '@/email/resolveEmailLogoDataUri'
+import { loadNotificationEmailBranding } from '@/email/loadNotificationEmailBranding'
 import { getEmailSettings, isEmailConfigured } from '@/settings/email/server'
 import { sendConfiguredEmail } from '@/email/sendConfiguredEmail'
-import { getAppName } from '@/utilities/getAppName'
 import { getEmailFieldLabelMapping } from '@/utilities/formFieldLabels'
 import { t } from '@/utilities/translate'
 
@@ -294,7 +293,7 @@ async function sendNotificationEmail({
   const defaults = TEMPLATE_DEFAULTS[template]
   const clientDefaults = CLIENT_TEMPLATE_DEFAULTS[template]
 
-  const [emailSettings, logo] = await Promise.all([
+  const [emailSettings, branding] = await Promise.all([
     payload
       .findGlobal({
         slug: 'emailSettings',
@@ -304,8 +303,10 @@ async function sendNotificationEmail({
         overrideAccess: true,
       })
       .catch(() => null),
-    payload.findGlobal({ slug: 'logo', depth: 1, overrideAccess: true }).catch(() => null),
+    loadNotificationEmailBranding(payload),
   ])
+
+  const { logo, logoSrc, theme } = branding
 
   const clientTemplate = getClientTemplate(emailSettings, template)
 
@@ -318,7 +319,7 @@ async function sendNotificationEmail({
       'This message was sent automatically from your website contact system.',
       payload,
     ),
-    t('email.notification.siteName', normalizedLocale, getAppName(logo), payload),
+    t('email.notification.siteName', normalizedLocale, branding.siteName, payload),
   ])
 
   const templateVariables = {
@@ -333,8 +334,6 @@ async function sendNotificationEmail({
     ? await formatPropertyReferenceForEmail(payload, normalizedLocale, propertyReference)
     : undefined
 
-  const logoSrc = await resolveEmailLogoDataUri(logo)
-
   const notificationHtml = buildNotificationEmailHtml({
     name: teamName,
     contentHtml: teamContentHtml,
@@ -347,6 +346,7 @@ async function sendNotificationEmail({
     logo,
     logoSrc,
     siteName,
+    theme,
   })
 
   const sender = settings.sender!
@@ -376,6 +376,7 @@ async function sendNotificationEmail({
     contentHtml: clientContentHtml || undefined,
     logo,
     logoSrc,
+    theme,
   })
 
   await sendConfiguredEmail(payload, {

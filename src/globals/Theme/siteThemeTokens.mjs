@@ -165,3 +165,20 @@ export const THEME_CUSTOM_CSS_TEMPLATE = buildCustomCSSTemplate()
 export function resolveThemeCustomCSS(customCSS) {
   return customCSS?.trim() || THEME_CUSTOM_CSS_TEMPLATE
 }
+
+const EMAIL_THEME_TOKENS = ['primary', 'secondary', 'tertiary', 'surface', 'background']
+
+/** @param {string | null | undefined} customCSS */
+export function parseThemeEmailColorsFromCustomCSS(customCSS) {
+  const css = resolveThemeCustomCSS(customCSS)
+  /** @type {Record<string, string>} */
+  const colors = { ...DEFAULT_THEME_COLORS }
+
+  for (const token of EMAIL_THEME_TOKENS) {
+    const match = new RegExp(`--color-${token}\\s*:\\s*([^;\\n]+)`, 'i').exec(css)
+    const value = match?.[1]?.trim()
+    if (value) colors[token] = value
+  }
+
+  return colors
+}
