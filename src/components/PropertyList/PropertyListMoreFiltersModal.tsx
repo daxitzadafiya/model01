@@ -104,7 +104,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   const minPriceLabel = useTranslation('propertyList.filters.minPrice', 'Min Price')
   const maxPriceLabel = useTranslation('propertyList.filters.maxPrice', 'Max Price')
   const stateLabel = useTranslation('propertyList.filters.state', 'State')
-  const statusEmptyLabel = useTranslation('propertyList.filters.status.emptyLabel', 'Status')
+  const stateEmptyLabel = useTranslation('propertyList.filters.state.emptyLabel', 'State')
   const featuresLabel = useTranslation('propertyList.filters.features', 'Features')
   const featuresEmptyLabel = useTranslation('propertyList.filters.features.emptyLabel', 'Features')
   const deliveryDateLabel = useTranslation('propertyList.filters.deliveryDate', 'Delivery Date')
@@ -271,7 +271,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                 options={statusFilterOptions}
                 value={parseStatusFilter(filters.status)}
                 onChange={(value) => onChange('status', value)}
-                emptyLabel={statusEmptyLabel}
+                emptyLabel={stateEmptyLabel}
                 icon={<ListFilter {...filterFieldIcon} />}
               />
             </div>
