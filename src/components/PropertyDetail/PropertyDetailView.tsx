@@ -181,7 +181,7 @@ export const PropertyDetailView: React.FC<Props> = ({
       <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 lg:grid-cols-3 gap-24 mb-24">
         <div className="lg:col-span-2">
           <PropertyDetailAmenities amenities={amenities} />
-          {energy && <PropertyDetailEnergy energy={energy} />}
+          <PropertyDetailEnergy energy={energy ?? { isEmpty: true }} />
         </div>
 
         <div className="lg:col-span-1" id="property-inquiry">

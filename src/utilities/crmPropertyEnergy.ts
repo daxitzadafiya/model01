@@ -1,9 +1,40 @@
 /** CRM values that skip the A–G scale (matches legacy PHP `$exceptEnergyTypes`). */
 const EXCEPT_ENERGY_TYPES = new Set(
-  ['not available', 'exempt', 'pending', 'in process', 'no disponible', 'no indicado'].map((v) =>
-    v.toLowerCase(),
-  ),
+  [
+    'x',
+    'not available',
+    'exempt',
+    'pending',
+    'in process',
+    'no disponible',
+    'no indicado',
+  ].map((v) => v.toLowerCase()),
 )
+
+const ENERGY_FIELD_KEYS = [
+  'energy_certificate_one',
+  'energy_certificate_two',
+  'energy_rating',
+  'epc_rating',
+  'kilowatt',
+  'energy_consumption',
+  'epc_consumption',
+  'co2',
+  'co2_emissions',
+  'epc_emissions',
+] as const
+
+const isPlaceholderValue = (value: string): boolean =>
+  EXCEPT_ENERGY_TYPES.has(value.trim().toLowerCase())
+
+const hasRawEnergyField = (property: Record<string, unknown>): boolean =>
+  ENERGY_FIELD_KEYS.some((key) => {
+    const value = property[key]
+    if (value == null) return false
+    if (typeof value === 'string') return value.trim() !== ''
+    if (typeof value === 'number') return Number.isFinite(value)
+    return false
+  })
 
 const STANDARD_GRADES = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const
 export type EnergyGrade = (typeof STANDARD_GRADES)[number]
@@ -13,6 +44,8 @@ export type CRMPropertyEnergy = {
   certificate?: string
   /** Grade highlighted on the A–G scale (A+ maps to A). */
   activeGrade?: EnergyGrade
+  /** Label for the status row (e.g. A+ while activeGrade is A). */
+  displayGrade?: string
   consumption?: number | string
   emissions?: number | string
   /** Shown instead of the scale when certificate is an exception (e.g. Pending). */
@@ -21,14 +54,22 @@ export type CRMPropertyEnergy = {
 }
 
 const pickString = (value: unknown): string | undefined => {
-  if (typeof value === 'string' && value.trim()) return value.trim()
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed || isPlaceholderValue(trimmed)) return undefined
+    return trimmed
+  }
   if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   return undefined
 }
 
 const pickMetric = (value: unknown): number | string | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) return value
-  if (typeof value === 'string' && value.trim()) return value.trim()
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed || isPlaceholderValue(trimmed)) return undefined
+    return trimmed
+  }
   return undefined
 }
 
@@ -44,11 +85,16 @@ const resolveStatusMessage = (certificate: string): string | undefined => {
   const normalized = normalizeCertificate(certificate)
   const lower = normalized.toLowerCase()
 
-  if (lower === 'not available') return 'Pending'
+  if (lower === 'not available' || lower === 'x') return 'Pending'
   if (EXCEPT_ENERGY_TYPES.has(lower)) return normalized
   if (!toActiveGrade(normalized)) return normalized
 
   return undefined
+}
+
+const toDisplayGrade = (certificate: string, activeGrade: EnergyGrade): string => {
+  const normalized = normalizeCertificate(certificate).toUpperCase()
+  return normalized === 'A+' ? 'A+' : activeGrade
 }
 
 /**
@@ -62,6 +108,7 @@ export function normalizeCRMPropertyEnergy(
 ): CRMPropertyEnergy | null {
   const certificate =
     pickString(property.energy_certificate_one) ||
+    pickString(property.energy_certificate_two) ||
     pickString(property.energy_rating) ||
     pickString(property.epc_rating)
 
@@ -70,7 +117,14 @@ export function normalizeCRMPropertyEnergy(
   )
   const emissions = pickMetric(property.co2 ?? property.co2_emissions ?? property.epc_emissions)
 
-  if (!certificate && consumption == null && emissions == null) return null
+  if (!certificate && consumption == null && emissions == null) {
+    if (!hasRawEnergyField(property)) return null
+    return {
+      certificate: 'Not available',
+      isEmpty: true,
+      statusMessage: 'Pending',
+    }
+  }
 
   const resolvedCertificate = certificate || 'Not available'
   const activeGrade = toActiveGrade(resolvedCertificate)
@@ -80,6 +134,7 @@ export function normalizeCRMPropertyEnergy(
   return {
     certificate: resolvedCertificate,
     activeGrade,
+    displayGrade: activeGrade ? toDisplayGrade(resolvedCertificate, activeGrade) : undefined,
     consumption,
     emissions,
     statusMessage: isEmpty ? statusMessage : undefined,

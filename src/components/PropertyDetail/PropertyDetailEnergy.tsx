@@ -127,7 +127,7 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
                     {statusLabel}
                   </p>
                   <p className="mt-1 font-headline-lg text-[40px] leading-none text-accent-gold md:text-[48px]">
-                    {classPrefix} {energy.activeGrade}
+                    {classPrefix} {energy.displayGrade ?? energy.activeGrade}
                   </p>
                 </div>
               )}
