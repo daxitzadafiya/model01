@@ -136,6 +136,19 @@ export const withSimilarCommercialsDefault = (
   return { ...query, ...getSimilarCommercialsQuery() }
 }
 
+/** Coordinate filters for CRM property queries (matches Optima PHP commercial_properties presets). */
+export const CRM_COORDINATE_QUERY_FIELDS = {
+  latitude: { $exists: true, $ne: '' },
+  longitude: { $exists: true, $ne: '' },
+} as const
+
+export const withCRMCoordinateQueryFields = (
+  query: Record<string, unknown>,
+): Record<string, unknown> => ({
+  ...query,
+  ...CRM_COORDINATE_QUERY_FIELDS,
+})
+
 /** Parses admin sort JSON (e.g. `{"created_at": -1}` or `{"updated_at": true}`). */
 export const parseCRMSortParams = (raw: string): Record<string, unknown> | undefined => {
   const trimmed = normalizeCRMCustomQueryText(raw)
@@ -646,7 +659,9 @@ export const buildCRMListingQuery = ({
           ? (parsedQuery.query as Record<string, unknown>)
           : {}
 
-      const mergedQuery = withSimilarCommercialsDefault(mergeCRMQueryObjects(baseQuery, filterQuery))
+      const mergedQuery = withCRMCoordinateQueryFields(
+        withSimilarCommercialsDefault(mergeCRMQueryObjects(baseQuery, filterQuery)),
+      )
 
       const restOptions = { ...parsedOptions }
       delete restOptions.skip
@@ -670,7 +685,7 @@ export const buildCRMListingQuery = ({
     )
     return {
       options: mergeCRMListingOptions(paginationOptions, sortParams),
-      query: withSimilarCommercialsDefault({}),
+      query: withCRMCoordinateQueryFields(withSimilarCommercialsDefault({})),
     }
   }
 
@@ -728,7 +743,7 @@ export const buildCRMListingQuery = ({
 
   return {
     options: mergeCRMListingOptions(paginationOptions, sortParams),
-    query: mergedQuery,
+    query: withCRMCoordinateQueryFields(mergedQuery),
   }
 }
 

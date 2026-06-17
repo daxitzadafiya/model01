@@ -120,7 +120,7 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
               </p>
             </div>
 
-            <div className="flex flex-col items-center justify-center px-2 text-center lg:col-span-3 lg:items-start lg:text-left">
+            <div className="flex flex-col items-center justify-center text-center lg:col-span-3 lg:items-start lg:text-left">
               {energy.activeGrade && (
                 <div className="epc-status-reveal mb-8">
                   <p className="text-label-sm font-label-sm uppercase tracking-widest text-on-surface-variant">

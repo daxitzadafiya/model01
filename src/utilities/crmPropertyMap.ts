@@ -11,6 +11,7 @@ import {
   mergeCRMQueryObjects,
   parseCRMCustomQuery,
   withSimilarCommercialsDefault,
+  withCRMCoordinateQueryFields,
   type CRMListingPreset,
   type PropertyListFilters,
 } from '@/utilities/crmProperties'
@@ -137,11 +138,13 @@ export const normalizeMapFindAllQuery = (
 ): Record<string, unknown> => {
   const { remove_count: _removeCount, ...rest } = query
 
-  const normalized: Record<string, unknown> = withSimilarCommercialsDefault({
-    ...rest,
-    archived: { $ne: true },
-    has_images: true,
-  })
+  const normalized: Record<string, unknown> = withCRMCoordinateQueryFields(
+    withSimilarCommercialsDefault({
+      ...rest,
+      archived: { $ne: true },
+      has_images: true,
+    }),
+  )
 
   if (preset !== 'favorites') {
     normalized.sale = true
@@ -156,6 +159,8 @@ export const normalizeMapFindAllQuery = (
   } else {
     normalized.status = { $in: [...MAP_AVAILABLE_STATUSES] }
   }
+
+  normalized.frontend_api = true
 
   return normalized
 }

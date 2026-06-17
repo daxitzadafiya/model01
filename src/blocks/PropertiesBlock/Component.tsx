@@ -13,6 +13,7 @@ import {
   normalizeCRMProperty as normalizeSharedCRMProperty,
   extractCRMList,
   withSimilarCommercialsDefault,
+  withCRMCoordinateQueryFields,
 } from '@/utilities/crmProperties'
 import { PROPERTY_CARD_IMAGE_SIZE } from '@/utilities/optimaImage'
 import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
@@ -95,7 +96,7 @@ export const PropertiesBlock: React.FC<Props> = ({
             page: 1,
             limit: resolvedLimit,
           },
-          query: withSimilarCommercialsDefault(parsedBaseQuery),
+          query: withCRMCoordinateQueryFields(withSimilarCommercialsDefault(parsedBaseQuery)),
         }
       }
 
@@ -105,7 +106,7 @@ export const PropertiesBlock: React.FC<Props> = ({
           page: 1,
           limit: resolvedLimit,
         },
-        query: withSimilarCommercialsDefault({}),
+        query: withCRMCoordinateQueryFields(withSimilarCommercialsDefault({})),
       }
     }
 
@@ -115,13 +116,13 @@ export const PropertiesBlock: React.FC<Props> = ({
           page: 1,
           limit: resolvedLimit,
         },
-        query: {
+        query: withCRMCoordinateQueryFields({
           ...similarCommercials,
           archived: { $ne: true },
           $and: [{ 'views.sea': true }],
           sale: true,
           status: { $in: ['Available', 'Under Offer'] },
-        },
+        }),
       }
     }
 
@@ -130,13 +131,13 @@ export const PropertiesBlock: React.FC<Props> = ({
         page: 1,
         limit: resolvedLimit,
       },
-      query: {
+      query: withCRMCoordinateQueryFields({
         ...similarCommercials,
         archived: { $ne: true },
         sale: true,
         featured: true,
         status: { $in: ['Available', 'Under Offer'] },
-      },
+      }),
     }
   }, [crmQueryJson, crmQueryType, resolvedLimit])
 
