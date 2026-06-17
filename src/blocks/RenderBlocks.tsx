@@ -26,6 +26,7 @@ import { ContactSectionBlock } from '@/blocks/ContactSectionBlock/Component'
 import { PrivacyPolicyBlock } from '@/blocks/PrivacyPolicyBlock/Component'
 import { CertificatesBlock } from '@/blocks/CertificatesBlock/Component'
 import { BlogPostsBlock } from '@/blocks/BlogPostsBlock/Component'
+import { extractContactOfficeLocations } from '@/utilities/contactOfficeLocations'
 
 const blockComponents = {
   archive: ArchiveBlock,
@@ -60,6 +61,7 @@ export const RenderBlocks: React.FC<{
   const { blocks } = props
 
   const hasBlocks = blocks && Array.isArray(blocks) && blocks.length > 0
+  const contactOfficeLocations = extractContactOfficeLocations(blocks)
 
   if (hasBlocks) {
     return (
@@ -71,10 +73,13 @@ export const RenderBlocks: React.FC<{
             const Block = blockComponents[blockType]
 
             if (Block) {
+              const extraProps =
+                blockType === 'mapBlock' ? { officeLocations: contactOfficeLocations } : {}
+
               return (
                 <Fragment key={index}>
                   {/* @ts-expect-error there may be some mismatch between the expected types here */}
-                  <Block {...block} disableInnerContainer />
+                  <Block {...block} {...extraProps} disableInnerContainer />
                 </Fragment>
               )
             }

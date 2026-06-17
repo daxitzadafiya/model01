@@ -1407,16 +1407,20 @@ export interface AboutUsHeroBlock {
  * via the `definition` "MapBlock".
  */
 export interface MapBlock {
+  center: {
+    lat: number;
+    lng: number;
+  };
   /**
-   * Google Maps embed URL. In Google Maps: Share → Embed a map → copy the src value from the iframe code.
+   * Initial zoom level when the map loads.
    */
-  mapUrl: string;
+  defaultZoom?: number | null;
   /**
    * Map height in pixels.
    */
   height?: number | null;
   /**
-   * Accessible title for the embedded map.
+   * Accessible title for the map.
    */
   title?: string | null;
   id?: string | null;
@@ -1461,6 +1465,14 @@ export interface ContactSectionBlock {
           | null;
         phone?: string | null;
         email?: string | null;
+        /**
+         * Latitude for map marker (e.g. 48.9903224).
+         */
+        lat?: number | null;
+        /**
+         * Longitude for map marker (e.g. 12.1991392).
+         */
+        lon?: number | null;
         image?: (number | null) | Media;
         id?: string | null;
       }[]
@@ -2556,7 +2568,13 @@ export interface AboutUsHeroBlockSelect<T extends boolean = true> {
  * via the `definition` "MapBlock_select".
  */
 export interface MapBlockSelect<T extends boolean = true> {
-  mapUrl?: T;
+  center?:
+    | T
+    | {
+        lat?: T;
+        lng?: T;
+      };
+  defaultZoom?: T;
   height?: T;
   title?: T;
   id?: T;
@@ -2589,6 +2607,8 @@ export interface ContactSectionBlockSelect<T extends boolean = true> {
             };
         phone?: T;
         email?: T;
+        lat?: T;
+        lon?: T;
         image?: T;
         id?: T;
       };

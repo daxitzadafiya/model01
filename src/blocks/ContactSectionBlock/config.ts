@@ -137,6 +137,29 @@ export const ContactSectionBlock: Block = {
           type: 'email',
         },
         {
+          type: 'row',
+          fields: [
+            {
+              name: 'lat',
+              type: 'number',
+              admin: {
+                width: '50%',
+                description: 'Latitude for map marker (e.g. 48.9903224).',
+                step: 0.000001,
+              },
+            },
+            {
+              name: 'lon',
+              type: 'number',
+              admin: {
+                width: '50%',
+                description: 'Longitude for map marker (e.g. 12.1991392).',
+                step: 0.000001,
+              },
+            },
+          ],
+        },
+        {
           name: 'image',
           type: 'upload',
           relationTo: 'media',

@@ -9,13 +9,41 @@ export const MapBlock: Block = {
   },
   fields: [
     {
-      name: 'mapUrl',
-      type: 'text',
-      required: true,
-      defaultValue: 'https://maps.google.com',
+      name: 'center',
+      type: 'group',
+      label: 'Default map center',
+      fields: [
+        {
+          name: 'lat',
+          type: 'number',
+          label: 'Latitude',
+          defaultValue: 48.9903224,
+          required: true,
+          admin: {
+            step: 0.000001,
+          },
+        },
+        {
+          name: 'lng',
+          type: 'number',
+          label: 'Longitude',
+          defaultValue: 12.1991392,
+          required: true,
+          admin: {
+            step: 0.000001,
+          },
+        },
+      ],
+    },
+    {
+      name: 'defaultZoom',
+      type: 'number',
+      label: 'Default zoom',
+      defaultValue: 6,
+      min: 1,
+      max: 20,
       admin: {
-        description:
-          'Google Maps embed URL. In Google Maps: Share → Embed a map → copy the src value from the iframe code.',
+        description: 'Initial zoom level when the map loads.',
       },
     },
     {
@@ -32,7 +60,7 @@ export const MapBlock: Block = {
       localized: true,
       defaultValue: 'Map',
       admin: {
-        description: 'Accessible title for the embedded map.',
+        description: 'Accessible title for the map.',
       },
     },
   ],

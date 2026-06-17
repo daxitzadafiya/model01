@@ -62,7 +62,10 @@ export const ContactSectionBlock: React.FC<Props> = ({
   )
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden bg-surface-container py-20 md:py-24">
+    <section
+      ref={sectionRef}
+      className="relative overflow-hidden bg-surface-container py-20 md:py-24"
+    >
       <div className="container mx-auto grid gap-12 px-6 md:gap-16 lg:grid-cols-2 lg:items-start">
         {formData && (
           <div className="reveal rounded-none border-t-2 border-tertiary bg-white px-6 py-8 md:px-10 md:py-12 shadow-[0_30px_70px_-45px_rgba(0,0,0,0.45)]">
@@ -97,7 +100,9 @@ export const ContactSectionBlock: React.FC<Props> = ({
               </div>
 
               {office.city && (
-                <h3 className="mt-1 font-headline-sm text-headline-sm text-primary">{office.city}</h3>
+                <h3 className="mt-1 font-headline-sm text-headline-sm text-primary">
+                  {office.city}
+                </h3>
               )}
 
               {office.addressLines && office.addressLines.length > 0 && (
@@ -132,8 +137,8 @@ export const ContactSectionBlock: React.FC<Props> = ({
               )}
 
               {typeof office.image === 'object' && office.image !== null && (
-                <div className="mt-5 overflow-hidden">
-                  <Media imgClassName="h-[170px] w-full object-cover" resource={office.image} />
+                <div className="relative mt-5 h-[240px] w-full overflow-hidden md:h-[280px]">
+                  <Media fill resource={office.image} imgClassName="object-cover" />
                 </div>
               )}
             </article>

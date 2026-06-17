@@ -1,10 +1,9 @@
 'use client'
 
 import clsx from 'clsx'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 
-import { DEFAULT_FAVICON, getFaviconSource } from '@/components/Logo/getLogoSources'
-import type { Logo as LogoGlobal } from '@/payload-types'
+import { useFaviconSource } from '@/hooks/useFaviconSource'
 
 interface Props {
   className?: string
@@ -12,31 +11,7 @@ interface Props {
 
 export const Icon = (props: Props) => {
   const { className } = props
-  const [faviconSrc, setFaviconSrc] = useState(DEFAULT_FAVICON)
-
-  useEffect(() => {
-    let isCancelled = false
-
-    const loadFavicon = async () => {
-      try {
-        const response = await fetch('/api/globals/logo?depth=1')
-        if (!response.ok) return
-
-        const logoData = (await response.json()) as LogoGlobal
-        if (!isCancelled) {
-          setFaviconSrc(getFaviconSource(logoData))
-        }
-      } catch {
-        // Keep fallback favicon if request fails
-      }
-    }
-
-    void loadFavicon()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [])
+  const faviconSrc = useFaviconSource()
 
   return (
     /* eslint-disable @next/next/no-img-element */
