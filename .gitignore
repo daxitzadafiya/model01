@@ -14,6 +14,7 @@ public/sitemap*.xml
 
 
 # Local SQLite (WAL sidecars — not for git)
+roumpos.db
 roumpos.db-wal
 roumpos.db-shm
 
