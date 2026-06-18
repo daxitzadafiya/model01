@@ -35,6 +35,7 @@
 @source inline("bg-success/30");
 @source inline("border-warning");
 @source inline("bg-warning/30");
+@source inline("skeleton-shimmer");
 
 @theme {
   --breakpoint-sm: 40rem;
@@ -170,13 +171,40 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    color-scheme: light;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-tertiary, #755b00) var(--color-surface-container-low, #f8f3ec);
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
+    background: var(--color-surface-container-low, #f8f3ec);
+  }
+
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
+    background-color: var(--color-tertiary, #755b00);
+    border: 2px solid var(--color-surface-container-low, #f8f3ec);
+    border-radius: 9999px;
+  }
+
+  html::-webkit-scrollbar-thumb:hover,
+  body::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-tertiary-container, #c9a84c);
+  }
+
   body {
     @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-tertiary, #755b00) var(--color-surface-container-low, #f8f3ec);
   }
-}
-
-html {
-  color-scheme: light;
 }
 
 .reveal {
@@ -238,6 +266,35 @@ html {
   }
 }
 
+
+/* Skeleton loading shimmer */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@utility skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-container-highest, #e7e2db) 0%,
+    var(--color-surface-container-low, #f8f3ec) 45%,
+    var(--color-surface-container-highest, #e7e2db) 90%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  animation-delay: var(--skeleton-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+    background: var(--color-surface-container-highest, #e7e2db);
+  }
+}
 
 /* Property detail — EPC energy scale */
 @keyframes epc-active-bar-in {
@@ -301,7 +358,7 @@ html {
 /* Property detail lightbox — thumbnail scroll areas */
 .lightbox-thumb-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.28) rgba(255, 255, 255, 0.06);
+  scrollbar-color: var(--color-tertiary, #755b00) var(--color-surface-container-low, #f8f3ec);
 }
 
 .lightbox-thumb-scroll::-webkit-scrollbar {
@@ -310,22 +367,22 @@ html {
 
 .lightbox-thumb-scroll::-webkit-scrollbar-track {
   margin-block: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-surface-container-low, #f8f3ec);
   border-radius: 9999px;
 }
 
 .lightbox-thumb-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.22);
+  background-color: var(--color-tertiary, #755b00);
   border-radius: 9999px;
 }
 
 .lightbox-thumb-scroll::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.38);
+  background-color: var(--color-tertiary-container, #c9a84c);
 }
 
 .lightbox-thumb-scroll-x {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.28) rgba(255, 255, 255, 0.06);
+  scrollbar-color: var(--color-tertiary, #755b00) var(--color-surface-container-low, #f8f3ec);
 }
 
 .lightbox-thumb-scroll-x::-webkit-scrollbar {
@@ -334,17 +391,17 @@ html {
 
 .lightbox-thumb-scroll-x::-webkit-scrollbar-track {
   margin-inline: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-surface-container-low, #f8f3ec);
   border-radius: 9999px;
 }
 
 .lightbox-thumb-scroll-x::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.22);
+  background-color: var(--color-tertiary, #755b00);
   border-radius: 9999px;
 }
 
 .lightbox-thumb-scroll-x::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.38);
+  background-color: var(--color-tertiary-container, #c9a84c);
 }
 
 /* Language Switcher */

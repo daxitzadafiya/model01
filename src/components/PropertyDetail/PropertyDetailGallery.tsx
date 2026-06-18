@@ -385,7 +385,7 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
             event.stopPropagation()
             openLightbox(activeIndex)
           }}
-          className="absolute bottom-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md opacity-100 transition-all hover:bg-black/60 md:opacity-0 md:group-hover/main:opacity-100 focus:opacity-100"
+          className="absolute bottom-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md opacity-100 transition-all hover:bg-black/60 md:opacity-0 md:group-hover/main:opacity-100 focus:opacity-100 cursor-pointer"
         >
           <Expand size={18} />
         </button>

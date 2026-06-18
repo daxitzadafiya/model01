@@ -79,13 +79,7 @@ function useCardsPerView() {
 
 const SKELETON_CARD_COUNT = CARDS_PER_VIEW_DESKTOP
 
-const PropertyCardSkeleton: React.FC<{ className?: string }> = ({ className }) => (
-  <div className={cn('space-y-4 animate-pulse', className)}>
-    <div className="rounded-xl h-[280px] md:h-[400px] bg-surface-container-high" />
-    <div className="h-4 w-2/3 rounded bg-surface-container-high" />
-    <div className="h-6 w-full rounded bg-surface-container-high" />
-  </div>
-)
+import { PropertyCardSkeleton } from '@/components/PropertyCard/PropertyCardSkeleton'
 
 export const PropertiesCarousel: React.FC<Props> = ({
   subtitle,

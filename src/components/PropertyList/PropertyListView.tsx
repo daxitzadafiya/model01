@@ -12,6 +12,7 @@ import { useCRMCities } from '@/hooks/useCRMCities'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
 import { PropertyFilterOptionsProvider, usePropertyFilterOptions } from '@/hooks/usePropertyFilterOptions'
 import { PropertyCard, resolvePropertyCardStatusBadge } from '@/components/PropertyCard'
+import { PropertyCardSkeleton } from '@/components/PropertyCard/PropertyCardSkeleton'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import {
@@ -400,11 +401,10 @@ const PropertyListViewInner: React.FC<Props> = ({
       ) : loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {Array.from({ length: pageSize }).map((_, i) => (
-            <div key={i} className="space-y-4 animate-pulse">
-              <div className="rounded-xl h-[280px] md:h-[400px] bg-surface-container-high" />
-              <div className="h-4 w-2/3 rounded bg-surface-container-high" />
-              <div className="h-6 w-full rounded bg-surface-container-high" />
-            </div>
+            <PropertyCardSkeleton
+              key={i}
+              animationDelay={(i % 3) * 0.12}
+            />
           ))}
         </div>
       ) : properties.length > 0 ? (
