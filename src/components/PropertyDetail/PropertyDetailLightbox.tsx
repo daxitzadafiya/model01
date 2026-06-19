@@ -461,7 +461,7 @@ export const PropertyDetailLightbox: React.FC<Props> = ({
                   aria-label={`Show image ${index + 1} of ${slideCount}`}
                   aria-current={isActive ? 'true' : undefined}
                   onClick={() => goTo(index)}
-                  className={`aspect-square overflow-hidden rounded border-[3px] p-0 transition-all ${
+                  className={`aspect-square overflow-hidden rounded border-[3px] p-0 transition-all cursor-pointer ${
                     isActive
                       ? 'border-tertiary opacity-100'
                       : 'border-transparent opacity-60 hover:opacity-100'
