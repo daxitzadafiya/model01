@@ -10,6 +10,7 @@ import { Logo } from '@/components/Logo/Logo'
 import { getLogoSources } from '@/components/Logo/getLogoSources'
 import { DEFAULT_APP_NAME, getAppName } from '@/utilities/getAppName'
 import { DEFAULT_RIGHTS_RESERVED, formatFooterCopyright } from '@/Footer/formatCopyright'
+import { SocialIcon } from '@/components/SocialIcon'
 
 export async function Footer() {
   const { locale } = await getActiveLocale()
@@ -57,7 +58,7 @@ export async function Footer() {
                   rel={newTab ? 'noopener noreferrer' : undefined}
                   target={newTab ? '_blank' : undefined}
                 >
-                  <CmsIcon className="text-tertiary" name={icon} size={22} />
+                  <SocialIcon className="text-tertiary" name={icon} size={22} />
                 </a>
               ))}
             </div>
