@@ -54,29 +54,44 @@ export default async function Post({ params: paramsPromise }: Args) {
 
   if (!post) return <PayloadRedirects url={url} />
 
-  const authorLabel = await t('post.authorLabel', locale, 'Author')
-  const datePublishedLabel = await t('post.datePublishedLabel', locale, 'Date Published')
+  const [authorLabel, datePublishedLabel, relatedPostsTitle, readMoreLabel] =
+    await Promise.all([
+      t('post.authorLabel', locale, 'Author'),
+      t('post.datePublishedLabel', locale, 'Date Published'),
+      t('post.relatedPostsTitle', locale, 'Related Articles'),
+      t('blog.readMore', locale, 'Read More'),
+    ])
+
+  const relatedPosts = post.relatedPosts?.filter(
+    (relatedPost): relatedPost is Post => typeof relatedPost === 'object',
+  )
 
   return (
-    <article className="pt-16">
+    <article className="bg-surface">
       {/* Allows redirects for valid pages too */}
       <PayloadRedirects disableNotFound url={url} />
 
       {draft && <LivePreviewListener />}
 
-      <PostHero post={post} authorLabel={authorLabel} datePublishedLabel={datePublishedLabel} />
+      <PostHero
+        post={post}
+        authorLabel={authorLabel}
+        datePublishedLabel={datePublishedLabel}
+      />
 
-      <div className="flex flex-col items-center gap-4 pt-8 pb-8 bg-surface-container-low">
-        <div className="container">
-          <RichText className="max-w-[48rem] mx-auto" data={post.content} enableGutter={false} />
-          {post.relatedPosts && post.relatedPosts.length > 0 && (
-            <RelatedPosts
-              className="mt-12 max-w-[52rem] lg:grid lg:grid-cols-subgrid col-start-1 col-span-3 grid-rows-[2fr]"
-              docs={post.relatedPosts.filter((post) => typeof post === 'object')}
-            />
-          )}
+      <section className="pt-6 md:pt-8 pb-12 md:pb-16">
+        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop">
+          <RichText
+            className="w-full prose-headings:font-headline-md prose-headings:text-primary prose-p:text-secondary prose-p:font-body-lg prose-p:leading-relaxed prose-a:text-tertiary prose-a:no-underline hover:prose-a:underline"
+            data={post.content}
+            enableGutter={false}
+          />
         </div>
-      </div>
+      </section>
+
+      {relatedPosts && relatedPosts.length > 0 && (
+        <RelatedPosts docs={relatedPosts} readMoreLabel={readMoreLabel} title={relatedPostsTitle} />
+      )}
     </article>
   )
 }
@@ -98,6 +113,7 @@ const queryPostBySlug = cache(async ({ slug, locale }: { slug: string; locale: L
 
   const result = await payload.find({
     collection: 'posts',
+    depth: 2,
     draft,
     locale,
     limit: 1,

@@ -3312,12 +3312,12 @@ export interface Footer {
    */
   tagline?: string | null;
   /**
-   * Social or external links shown as Material Symbols icons.
+   * Social or external links shown as icons. you can use from https://react-icons.github.io/react-icons/icons/fi/
    */
   socialLinks?:
     | {
         /**
-         * Material Symbols icon name (e.g. public, share, language).
+         * icon name (e.g. FiPhone, FiMail, FiMapPin). you can use from https://react-icons.github.io/react-icons/icons/fi/
          */
         icon: string;
         url: string;
@@ -3359,7 +3359,7 @@ export interface Footer {
   certifications?:
     | {
         /**
-         * Material Symbols icon name (e.g. verified, workspace_premium).
+         * react icon name (e.g. FiPhone, FiMail, FiMapPin). You can use from https://react-icons.github.io/react-icons/icons/fi/
          */
         icon: string;
         id?: string | null;
@@ -3547,7 +3547,7 @@ export interface CookieConsent {
   createdAt?: string | null;
 }
 /**
- * Default map center, zoom, and cluster styling for the property search map modal.
+ * Default map center, zoom, and cluster styling for the property search map modal. Edit localized copy in English; other locales update via DeepL on save.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "propertyMap".

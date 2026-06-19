@@ -2,12 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 
-import { CmsIcon } from '@/components/CmsIcon'
 import { CMSLink } from '@/components/Link'
 import RichText from '@/components/RichText'
 import { Media } from '@/components/Media'
 import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
+import { SocialIcon } from '@/components/SocialIcon'
 
 type Props = Extract<Page['layout'][0], { blockType: 'privacyPolicyBlock' }>
 
@@ -181,7 +181,7 @@ export const PrivacyPolicyBlock: React.FC<Props> = ({
                         key={card.id || cardIndex}
                       >
                         {card.icon && (
-                          <CmsIcon className="text-tertiary mb-3" name={card.icon} size={24} />
+                          <SocialIcon className="text-tertiary mb-3" name={card.icon} size={24} />
                         )}
                         {card.title && (
                           <h4 className="font-label-nav text-label-nav uppercase mb-2">
@@ -202,9 +202,9 @@ export const PrivacyPolicyBlock: React.FC<Props> = ({
                   <ul className="list-none space-y-4 font-body-md text-on-surface-variant">
                     {section.bulletItems.map((item, itemIndex) => (
                       <li className="flex items-start gap-4" key={item.id || itemIndex}>
-                        <CmsIcon
+                        <SocialIcon
                           className="text-tertiary mt-1"
-                          name={item.icon || 'check_circle'}
+                          name={item.icon || 'FiCheckCircle'}
                           size={20}
                         />
                         <span>{item.text}</span>
@@ -222,13 +222,12 @@ export const PrivacyPolicyBlock: React.FC<Props> = ({
                         resource={section.visualPanel.image}
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
+                        <div className="text-center flex flex-wrap gap-2 text-sm lg:text-base lg:gap-4 justify-center items-center">
                           {section.visualPanel.icon && (
-                            <CmsIcon
+                            <SocialIcon
                               className="text-on-primary mb-4"
                               name={section.visualPanel.icon}
                               size={48}
-                              strokeWidth={1.5}
                             />
                           )}
                           {section.visualPanel.title && (

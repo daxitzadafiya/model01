@@ -4,12 +4,11 @@ import Link from 'next/link'
 import React from 'react'
 import { Mail, MapPin, Phone } from 'lucide-react'
 
-import { CmsIcon } from '@/components/CmsIcon'
 import { CMSLink } from '@/components/Link'
 import { Logo } from '@/components/Logo/Logo'
 import { getLogoSources } from '@/components/Logo/getLogoSources'
 import { DEFAULT_APP_NAME, getAppName } from '@/utilities/getAppName'
-import { DEFAULT_RIGHTS_RESERVED, formatFooterCopyright } from '@/Footer/formatCopyright'
+import { DEFAULT_RIGHTS_RESERVED } from '@/Footer/formatCopyright'
 import { SocialIcon } from '@/components/SocialIcon'
 
 export async function Footer() {
@@ -135,7 +134,7 @@ export async function Footer() {
                   key={id || i}
                   className="bg-white/10 w-14 h-14 md:w-16 md:h-16 rounded flex items-center justify-center opacity-50 grayscale text-white"
                 >
-                  <CmsIcon name={icon} size={24} />
+                  <SocialIcon className="text-white" name={icon} size={24} />
                 </div>
               ))}
             </div>
@@ -144,8 +143,8 @@ export async function Footer() {
       </div>
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-12 md:mt-20 pt-6 md:pt-8 border-t border-on-primary-fixed-variant/20 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
         {rightsReserved && (
-          <p className="font-label-sm text-label-sm text-on-primary-fixed-variant">
-            {formatFooterCopyright(rightsReserved, appName || DEFAULT_APP_NAME)}
+          <p className="font-label-sm text-label-sm text-on-primary-fixed-variant uppercase">
+            © {new Date().getFullYear()} <span className='text-tertiary'>{appName || DEFAULT_APP_NAME}</span>. {rightsReserved || DEFAULT_RIGHTS_RESERVED}
           </p>
         )}
         {legalLinks.length > 0 && (

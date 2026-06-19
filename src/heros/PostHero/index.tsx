@@ -1,9 +1,11 @@
-import { formatDateTime } from 'src/utilities/formatDateTime'
+import { Calendar, ChevronRight, User } from 'lucide-react'
+import Link from 'next/link'
 import React from 'react'
 
 import type { Post } from '@/payload-types'
 
 import { Media } from '@/components/Media'
+import { formatPublishedDate } from '@/utilities/formatDateTime'
 import { formatAuthors } from '@/utilities/formatAuthors'
 
 export const PostHero: React.FC<{
@@ -11,65 +13,77 @@ export const PostHero: React.FC<{
   authorLabel: string
   datePublishedLabel: string
 }> = ({ post, authorLabel, datePublishedLabel }) => {
-  const { categories, heroImage, populatedAuthors, publishedAt, title } = post
+  const { categories, heroImage, populatedAuthors, publishedAt, subtitle, title } = post
 
   const hasAuthors =
     populatedAuthors && populatedAuthors.length > 0 && formatAuthors(populatedAuthors) !== ''
 
+  const categoryTitle =
+    categories && typeof categories[0] === 'object' && categories[0] !== null
+      ? categories[0].title || 'News'
+      : null
+
+  const heroMedia =
+    heroImage && typeof heroImage !== 'string'
+      ? heroImage
+      : typeof post.meta?.image === 'object'
+        ? post.meta.image
+        : null
+
   return (
-    <div className="relative -mt-[10.4rem] flex items-end">
-      <div className="container z-10 relative lg:grid lg:grid-cols-[1fr_48rem_1fr] text-white pb-8">
-        <div className="col-start-1 col-span-1 md:col-start-2 md:col-span-2">
-          <div className="uppercase text-sm mb-6">
-            {categories?.map((category, index) => {
-              if (typeof category === 'object' && category !== null) {
-                const { title: categoryTitle } = category
-
-                const titleToUse = categoryTitle || 'Untitled category'
-
-                const isLast = index === categories.length - 1
-
-                return (
-                  <React.Fragment key={index}>
-                    {titleToUse}
-                    {!isLast && <React.Fragment>, &nbsp;</React.Fragment>}
-                  </React.Fragment>
-                )
-              }
-              return null
-            })}
-          </div>
-
-          <div className="">
-            <h1 className="mb-6 text-3xl md:text-5xl lg:text-6xl">{title}</h1>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-4 md:gap-16">
-            {hasAuthors && (
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm">{authorLabel}</p>
-
-                  <p>{formatAuthors(populatedAuthors)}</p>
-                </div>
-              </div>
-            )}
-            {publishedAt && (
-              <div className="flex flex-col gap-1">
-                <p className="text-sm">{datePublishedLabel}</p>
-
-                <time dateTime={publishedAt}>{formatDateTime(publishedAt)}</time>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="min-h-[80vh] select-none">
-        {heroImage && typeof heroImage !== 'string' && (
-          <Media fill priority imgClassName="-z-10 object-cover" resource={heroImage} />
+    <header className="pt-20 md:pt-24 pb-6 md:pb-8 bg-surface">
+      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop">
+        {categoryTitle && (
+          <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest">
+            {categoryTitle}
+          </span>
         )}
-        <div className="absolute pointer-events-none left-0 bottom-0 w-full h-1/2 bg-linear-to-t from-black to-transparent" />
+
+        <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mt-3 md:mt-4 max-w-4xl">
+          {title}
+        </h1>
+
+        {subtitle && (
+          <p className="font-body-lg text-body-lg text-secondary mt-4 md:mt-5 max-w-3xl leading-relaxed">
+            {subtitle.replace(/\s/g, ' ')}
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-4 mt-6 md:mt-8 pt-6 md:pt-8 border-t border-outline-variant/40">
+          {publishedAt && (
+            <div className="flex flex-col gap-1">
+              <span className="font-label-sm text-label-sm text-secondary uppercase tracking-widest">
+                {datePublishedLabel}
+              </span>
+              <time
+                dateTime={publishedAt}
+                className="inline-flex items-center gap-2 font-body-md text-body-md text-primary"
+              >
+                <Calendar size={16} className="text-tertiary shrink-0" aria-hidden />
+                {formatPublishedDate(publishedAt)}
+              </time>
+            </div>
+          )}
+
+          {hasAuthors && (
+            <div className="flex flex-col gap-1">
+              <span className="font-label-sm text-label-sm text-secondary uppercase tracking-widest">
+                {authorLabel}
+              </span>
+              <span className="inline-flex items-center gap-2 font-body-md text-body-md text-primary">
+                <User size={16} className="text-tertiary shrink-0" aria-hidden />
+                {formatAuthors(populatedAuthors)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {heroMedia && (
+          <div className="relative mt-8 md:mt-10 aspect-video md:aspect-21/9 rounded-xl overflow-hidden shadow-sm">
+            <Media fill priority imgClassName="object-cover" resource={heroMedia} />
+          </div>
+        )}
       </div>
-    </div>
+    </header>
   )
 }
