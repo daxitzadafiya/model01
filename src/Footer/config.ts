@@ -30,7 +30,7 @@ export const Footer: GlobalConfig = {
               type: 'array',
               maxRows: 6,
               admin: {
-                description: 'Social or external links shown as Material Symbols icons.',
+                description: 'Social or external links shown as icons. you can use from https://react-icons.github.io/react-icons/icons/fi/',
                 initCollapsed: true,
                 components: {
                   RowLabel: '@/Footer/SocialRowLabel#SocialRowLabel',
@@ -42,7 +42,7 @@ export const Footer: GlobalConfig = {
                   type: 'text',
                   required: true,
                   admin: {
-                    description: 'Material Symbols icon name (e.g. public, share, language).',
+                    description: 'icon name (e.g. FiPhone, FiMail, FiMapPin). you can use from https://react-icons.github.io/react-icons/icons/fi/',
                   },
                 },
                 {
@@ -148,7 +148,7 @@ export const Footer: GlobalConfig = {
                   type: 'text',
                   required: true,
                   admin: {
-                    description: 'Material Symbols icon name (e.g. verified, workspace_premium).',
+                    description: 'react icon name (e.g. FiPhone, FiMail, FiMapPin). You can use from https://react-icons.github.io/react-icons/icons/fi/',
                   },
                 },
               ],
