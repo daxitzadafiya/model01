@@ -760,15 +760,15 @@ export const buildCRMListingQuery = ({
 
   let baseQuery: Record<string, unknown> = {
     ...similarCommercials,
-    archived: { $ne: true },
     sale: true,
     remove_count: true,
-    has_images: true,
+    status: { $in: ['Available', 'Under Offer'] },
   }
 
   if (preset === 'sold') {
     baseQuery = {
       ...similarCommercials,
+      sale: true,
       remove_count: true,
       status: { $in: ['Sold'] },
     }
@@ -777,15 +777,14 @@ export const buildCRMListingQuery = ({
       ...similarCommercials,
       sale: true,
       remove_count: true,
-      status: { $in: ['Available', 'Under Offer','Sold'] },
+      status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'forRent') {
     baseQuery = {
       ...similarCommercials,
       rent: true,
+      lt_rental: true,
       remove_count: true,
-      archived: { $ne: true },
-      has_images: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'seaView') {

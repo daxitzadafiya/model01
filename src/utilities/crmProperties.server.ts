@@ -49,7 +49,7 @@ async function fetchCRMPropertiesServerLive(
 
 const getCachedCRMPropertiesList = unstable_cache(
   async (queryKey: string) => fetchCRMPropertiesServerLive(new URLSearchParams(queryKey)),
-  ['crm-properties-list-v2'],
+  ['crm-properties-list-v3'],
   {
     revalidate: CRM_LIST_REVALIDATE_SECONDS,
     tags: ['crm-properties-list'],

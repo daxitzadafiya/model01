@@ -19,9 +19,7 @@ const THUMB_GAPS_TOTAL_PX = THUMB_GAP_PX * (THUMBNAILS_VISIBLE - 1)
 const THUMB_SIZE_CSS = `calc((100% - ${THUMB_GAPS_TOTAL_PX}px) / ${THUMBNAILS_VISIBLE})`
 
 const computeThumbWidth = (viewportWidth: number) =>
-  viewportWidth > 0
-    ? Math.max(0, (viewportWidth - THUMB_GAPS_TOTAL_PX) / THUMBNAILS_VISIBLE)
-    : 0
+  viewportWidth > 0 ? Math.max(0, (viewportWidth - THUMB_GAPS_TOTAL_PX) / THUMBNAILS_VISIBLE) : 0
 const DRAG_THRESHOLD_RATIO = 0.15
 const DRAG_CLICK_THRESHOLD = 5
 const EDGE_DRAG_RESISTANCE = 0.35
@@ -108,8 +106,7 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
     if (!thumbElement && !mainElement) return
 
     const updateMeasurements = () => {
-      const measuredViewport =
-        thumbElement?.clientWidth || mainElement?.clientWidth || 0
+      const measuredViewport = thumbElement?.clientWidth || mainElement?.clientWidth || 0
       setViewportWidth(measuredViewport)
     }
 
@@ -318,7 +315,7 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
                 {loadedSlideIndices.has(index) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={src}
+                    src={`${src + '11111111111'} `}
                     alt={`${title} — image ${index + 1} of ${slides.length}`}
                     className="w-full h-full object-cover pointer-events-none"
                     draggable={false}

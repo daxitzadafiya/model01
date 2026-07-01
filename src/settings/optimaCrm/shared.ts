@@ -66,8 +66,14 @@ function pickBrochureTemplateId(value: unknown, fallback: string): string {
   return fallback
 }
 
-function pickSimilarCommercials(value: unknown, fallback: SimilarCommercialsMode): SimilarCommercialsMode {
-  if (typeof value === 'string' && SIMILAR_COMMERCIALS_MODES.includes(value as SimilarCommercialsMode)) {
+function pickSimilarCommercials(
+  value: unknown,
+  fallback: SimilarCommercialsMode,
+): SimilarCommercialsMode {
+  if (
+    typeof value === 'string' &&
+    SIMILAR_COMMERCIALS_MODES.includes(value as SimilarCommercialsMode)
+  ) {
     return value as SimilarCommercialsMode
   }
   return fallback
@@ -92,8 +98,14 @@ export function resolveOptimaCrmSettingsFromGlobal(
     apiKey: pickString(api?.apiKey, defaults.apiKey),
     contactUrl: pickString(api?.contactUrl, defaults.contactUrl),
     userKey: pickString(api?.userKey, defaults.userKey),
-    brochureTemplateId: pickBrochureTemplateId(api?.brochureTemplateId, defaults.brochureTemplateId),
-    imageUrlWithoutResize: pickString(images?.imageUrlWithoutResize, defaults.imageUrlWithoutResize),
+    brochureTemplateId: pickBrochureTemplateId(
+      api?.brochureTemplateId,
+      defaults.brochureTemplateId,
+    ),
+    imageUrlWithoutResize: pickString(
+      images?.imageUrlWithoutResize,
+      defaults.imageUrlWithoutResize,
+    ),
     imageUrl: pickString(images?.imageUrl, defaults.imageUrl),
     commercialImageBase: pickString(images?.commercialImageBase, defaults.commercialImageBase),
     agencyId: pickString(images?.agencyId, defaults.agencyId),

@@ -1,9 +1,6 @@
 import type { PropertyListInitialData } from '@/components/PropertyList/PropertyListServerData'
 import { extractPropertyListPreloadImageUrls } from '@/components/PropertyList/propertyListImagePreload'
-import {
-  buildCRMListingQuery,
-  type CRMListingPreset,
-} from '@/utilities/crmProperties'
+import { buildCRMListingQuery, type CRMListingPreset } from '@/utilities/crmProperties'
 import { fetchCRMPropertiesServer } from '@/utilities/crmProperties.server'
 import { resolveListingSortOption } from '@/utilities/resolveListingSortOption'
 

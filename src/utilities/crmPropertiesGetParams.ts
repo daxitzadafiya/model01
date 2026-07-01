@@ -1,7 +1,11 @@
 /**
  * Converts CRM listing bodies ({ options, query }) into GET /v3/properties/ query params.
  * Matches Optima PHP: status[]=…, sale=1, orderby=featured,-1, page_size, remove_count=1, etc.
+ *
+ * POST /commercial_properties accepted Mongo-style filters (archived, has_images, etc.).
+ * GET /v3/properties only documents flat query params — drop unsupported Mongo keys.
  */
+const GET_UNSUPPORTED_TOP_LEVEL_KEYS = new Set(['archived', 'has_images'])
 
 const serializePrimitive = (value: unknown): string => {
   if (typeof value === 'boolean') return value ? '1' : '0'
@@ -64,6 +68,8 @@ export const serializeCRMQueryObject = (
   query: Record<string, unknown>,
 ): void => {
   for (const [key, value] of Object.entries(query)) {
+    if (!prefix && GET_UNSUPPORTED_TOP_LEVEL_KEYS.has(key)) continue
+
     const fullKey = prefix ? `${prefix}[${key}]` : key
 
     if (key === '$and' || key === '$or' || key === '$nor') {
