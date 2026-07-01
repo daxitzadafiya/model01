@@ -760,7 +760,6 @@ export const buildCRMListingQuery = ({
 
   let baseQuery: Record<string, unknown> = {
     ...similarCommercials,
-    sale: true,
     remove_count: true,
     status: { $in: ['Available', 'Under Offer'] },
   }
@@ -775,8 +774,8 @@ export const buildCRMListingQuery = ({
   } else if (preset === 'forSale') {
     baseQuery = {
       ...similarCommercials,
-      sale: true,
       remove_count: true,
+      sale: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'forRent') {
@@ -798,8 +797,8 @@ export const buildCRMListingQuery = ({
   } else if (preset === 'featured') {
     baseQuery = {
       ...similarCommercials,
-      sale: true,
       featured: true,
+      sale: true,
       remove_count: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
@@ -809,7 +808,6 @@ export const buildCRMListingQuery = ({
       remove_count: true,
     }
   }
-
   let mergedQuery = mergeCRMQueryObjects(baseQuery, filterQuery)
 
   if (preset === 'favorites' && restrictToFavoriteIds?.length) {
@@ -941,6 +939,7 @@ export function normalizeCRMProperty(
   const referenceRaw = property.reference
   const reference =
     typeof referenceRaw === 'number' ? String(referenceRaw) : pickString(referenceRaw)
+  // in get method i get the  "sale": true, need to show the badge for Sale
   const statusBadgeLabel = resolveCRMStatusBadgeLabel(property.status)
   const id = pickString(property._id) || pickString(property.id)
 
