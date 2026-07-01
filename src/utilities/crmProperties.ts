@@ -1,4 +1,5 @@
-import { postToCRM } from '@/utilities/crmApi'
+import { getFromCRM } from '@/utilities/crmApi'
+import { crmListingBodyToSearchParams } from '@/utilities/crmPropertiesGetParams'
 import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import {
   getPublishedPropertyAttachmentImage,
@@ -13,7 +14,14 @@ import {
   type PropertyListingMode,
 } from '@/utilities/propertyUrl'
 
-export type CRMListingPreset = 'forSale' | 'sold' | 'featured' | 'seaView' | 'custom' | 'favorites'
+export type CRMListingPreset =
+  | 'forSale'
+  | 'forRent'
+  | 'sold'
+  | 'featured'
+  | 'seaView'
+  | 'custom'
+  | 'favorites'
 
 export type PropertyListSort = string
 
@@ -184,23 +192,38 @@ const mergeCRMListingOptions = (
   }
 }
 
+const hasCRMPropertyIdentity = (record: Record<string, unknown>): boolean =>
+  record._id != null || record.reference != null
+
+/** Optima property listings prepend `{ pagination: { total } }` as the first array item. */
+const isCRMPaginationMetaRow = (record: Record<string, unknown>): boolean =>
+  record.pagination != null &&
+  typeof record.pagination === 'object' &&
+  !hasCRMPropertyIdentity(record)
+
+const isCRMListRow = (item: unknown): item is Record<string, unknown> =>
+  !!item && typeof item === 'object' && !isCRMPaginationMetaRow(item as Record<string, unknown>)
+
 export const extractCRMList = (payload: unknown): Record<string, unknown>[] => {
   if (Array.isArray(payload)) {
-    return payload.filter(
-      (item): item is Record<string, unknown> => !!item && typeof item === 'object',
-    )
+    return payload.filter(isCRMListRow)
   }
 
   if (payload && typeof payload === 'object') {
     const asRecord = payload as Record<string, unknown>
-    const knownCollections = ['data', 'docs', 'results', 'items', 'commercial_properties']
+    const knownCollections = [
+      'data',
+      'docs',
+      'results',
+      'items',
+      'commercial_properties',
+      'properties',
+    ]
 
     for (const key of knownCollections) {
       const value = asRecord[key]
       if (Array.isArray(value)) {
-        return value.filter(
-          (item): item is Record<string, unknown> => !!item && typeof item === 'object',
-        )
+        return value.filter(isCRMListRow)
       }
     }
   }
@@ -209,7 +232,24 @@ export const extractCRMList = (payload: unknown): Record<string, unknown>[] => {
 }
 
 export const extractCRMTotal = (payload: unknown, fallback: number): number => {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return fallback
+  if (Array.isArray(payload)) {
+    for (const item of payload) {
+      if (!item || typeof item !== 'object') continue
+      const record = item as Record<string, unknown>
+
+      const paginationTotal = pickNumber(
+        (record.pagination as Record<string, unknown> | undefined)?.total,
+      )
+      if (paginationTotal !== undefined && paginationTotal >= 0) return paginationTotal
+
+      const totalProperties = pickNumber(record.total_properties)
+      if (totalProperties !== undefined && totalProperties >= 0) return totalProperties
+    }
+
+    return fallback
+  }
+
+  if (!payload || typeof payload !== 'object') return fallback
 
   const asRecord = payload as Record<string, unknown>
   const candidates = [
@@ -229,6 +269,38 @@ export const extractCRMTotal = (payload: unknown, fallback: number): number => {
   return fallback
 }
 
+/**
+ * Optima detail/view responses wrap the record as `{ property, attachments, ... }`.
+ * Listing items are usually flat. Unwrap so downstream code reads `description`, `title`, etc.
+ */
+export const unwrapCRMPropertyRecord = (
+  record: Record<string, unknown>,
+): Record<string, unknown> => {
+  const nested = record.property
+  if (!nested || typeof nested !== 'object' || Array.isArray(nested)) return record
+
+  const inner = nested as Record<string, unknown>
+  if (!hasCRMPropertyIdentity(inner) || hasCRMPropertyIdentity(record)) return record
+
+  const unwrapped: Record<string, unknown> = { ...inner }
+
+  const topAttachments = record.attachments ?? record.property_attachments
+  if (Array.isArray(topAttachments) && topAttachments.length > 0) {
+    const existing = Array.isArray(unwrapped.property_attachments)
+      ? unwrapped.property_attachments
+      : []
+    if (existing.length === 0) {
+      unwrapped.property_attachments = topAttachments
+    }
+  }
+
+  if (record.featured !== undefined && unwrapped.featured === undefined) {
+    unwrapped.featured = record.featured
+  }
+
+  return unwrapped
+}
+
 const parsePriceBound = (value?: string): string | undefined => {
   if (!value || value === 'any') return undefined
   const digits = value.replace(/[^\d]/g, '')
@@ -244,8 +316,7 @@ const buildReferenceOrQuery = (
   const trimmed = reference.trim()
   const regexPattern = `.*${escapeRegex(trimmed)}.*`
   const numericRef = Number(trimmed)
-  const referenceValue =
-    referenceAsNumber && Number.isFinite(numericRef) ? numericRef : trimmed
+  const referenceValue = referenceAsNumber && Number.isFinite(numericRef) ? numericRef : trimmed
 
   return [
     { reference: referenceValue },
@@ -511,9 +582,7 @@ export const buildFilterQuery = (
 
   if (filters.mapReferences?.length) {
     const refs = [...new Set(filters.mapReferences.map((ref) => ref.trim()).filter(Boolean))]
-    const numericRefs = refs
-      .map((ref) => Number(ref))
-      .filter((value) => Number.isFinite(value))
+    const numericRefs = refs.map((ref) => Number(ref)).filter((value) => Number.isFinite(value))
     const stringRefs = refs.filter((ref) => !Number.isFinite(Number(ref)))
 
     const orClauses: Record<string, unknown>[] = []
@@ -659,8 +728,8 @@ export const buildCRMListingQuery = ({
           ? (parsedQuery.query as Record<string, unknown>)
           : {}
 
-      const mergedQuery = withCRMCoordinateQueryFields(
-        withSimilarCommercialsDefault(mergeCRMQueryObjects(baseQuery, filterQuery)),
+      const mergedQuery = withSimilarCommercialsDefault(
+        mergeCRMQueryObjects({ remove_count: true }, baseQuery, filterQuery),
       )
 
       const restOptions = { ...parsedOptions }
@@ -685,7 +754,7 @@ export const buildCRMListingQuery = ({
     )
     return {
       options: mergeCRMListingOptions(paginationOptions, sortParams),
-      query: withCRMCoordinateQueryFields(withSimilarCommercialsDefault({})),
+      query: withSimilarCommercialsDefault({ remove_count: true }),
     }
   }
 
@@ -693,42 +762,51 @@ export const buildCRMListingQuery = ({
     ...similarCommercials,
     archived: { $ne: true },
     sale: true,
+    remove_count: true,
+    has_images: true,
   }
 
   if (preset === 'sold') {
     baseQuery = {
       ...similarCommercials,
-      sale: true,
-      archived: { $ne: true },
+      remove_count: true,
       status: { $in: ['Sold'] },
     }
   } else if (preset === 'forSale') {
     baseQuery = {
       ...similarCommercials,
       sale: true,
-      archived: { $ne: true },
+      remove_count: true,
+      status: { $in: ['Available', 'Under Offer','Sold'] },
+    }
+  } else if (preset === 'forRent') {
+    baseQuery = {
+      ...similarCommercials,
+      rent: true,
+      lt_rental : true,
+      remove_count: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'seaView') {
     baseQuery = {
       ...similarCommercials,
       sale: true,
-      archived: { $ne: true },
+      remove_count: true,
       status: { $in: ['Available', 'Under Offer'] },
-      'views.sea': true,
+      views: ['sea'],
     }
   } else if (preset === 'featured') {
     baseQuery = {
       ...similarCommercials,
       sale: true,
       featured: true,
-      archived: { $ne: true },
+      remove_count: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'favorites') {
     baseQuery = {
       ...similarCommercials,
-      archived: { $ne: true },
+      remove_count: true,
     }
   }
 
@@ -743,7 +821,7 @@ export const buildCRMListingQuery = ({
 
   return {
     options: mergeCRMListingOptions(paginationOptions, sortParams),
-    query: withCRMCoordinateQueryFields(mergedQuery),
+    query: mergedQuery,
   }
 }
 
@@ -760,6 +838,9 @@ export type NormalizeCRMPropertyOptions = {
   listingMode?: PropertyListingMode
 }
 
+export const resolveListingModeFromPreset = (preset: CRMListingPreset): PropertyListingMode =>
+  preset === 'forRent' ? 'rent' : 'sale'
+
 export type NormalizedCRMProperty = NormalizedListProperty & {
   description?: string
   city?: string
@@ -772,9 +853,13 @@ export function normalizeCRMProperty(
   locale: string,
   options: NormalizeCRMPropertyOptions = {},
 ): NormalizedCRMProperty {
+  property = unwrapCRMPropertyRecord(property)
+
   const propertyAttachments = Array.isArray(property.property_attachments)
     ? property.property_attachments
-    : []
+    : Array.isArray(property.attachments)
+      ? property.attachments
+      : []
   const images = Array.isArray(property.images) ? property.images : []
 
   const imageSize = options.attachmentImageSize ?? PROPERTY_DETAIL_IMAGE_SIZE
@@ -915,7 +1000,7 @@ export const sortProperties = (
   })
 }
 
-/** Direct CRM call using credentials from Globals → Optima CRM. */
+/** GET /v3/properties/ using credentials from Globals → Optima CRM. */
 export async function fetchCRMProperties({
   body,
   signal,
@@ -923,7 +1008,8 @@ export async function fetchCRMProperties({
   body: Record<string, unknown>
   signal?: AbortSignal
 }): Promise<CRMFetchResult> {
-  const response = await postToCRM('commercial_properties', body, { signal })
+  const searchParams = crmListingBodyToSearchParams(body)
+  const response = await getFromCRM('properties', searchParams, { signal })
 
   if (!response.ok) {
     throw new Error(`CRM API failed (${response.status})`)

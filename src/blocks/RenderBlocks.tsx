@@ -57,8 +57,9 @@ const blockComponents = {
 
 export const RenderBlocks: React.FC<{
   blocks: Page['layout'][0][]
+  searchParams?: Record<string, string | string[] | undefined>
 }> = (props) => {
-  const { blocks } = props
+  const { blocks, searchParams } = props
 
   const hasBlocks = blocks && Array.isArray(blocks) && blocks.length > 0
   const contactOfficeLocations = extractContactOfficeLocations(blocks)
@@ -74,7 +75,11 @@ export const RenderBlocks: React.FC<{
 
             if (Block) {
               const extraProps =
-                blockType === 'mapBlock' ? { officeLocations: contactOfficeLocations } : {}
+                blockType === 'mapBlock'
+                  ? { officeLocations: contactOfficeLocations }
+                  : blockType === 'propertyListBlock'
+                    ? { searchParams }
+                    : {}
 
               return (
                 <Fragment key={index}>

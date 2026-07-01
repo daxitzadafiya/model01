@@ -1,76 +1,69 @@
-'use client'
-
-import React, { Suspense } from 'react'
-import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
-import type { Page } from '@/payload-types'
-
-import { PropertyListView } from '@/components/PropertyList/PropertyListView'
+import {
+  PropertyListBlockClient,
+  type PropertyListBlockClientProps,
+} from '@/blocks/PropertyListBlock/Client'
+import { extractImageOrigin } from '@/components/PropertyList/propertyListImagePreload'
+import {
+  parsePropertyListPage,
+  parsePropertyListSort,
+} from '@/components/PropertyList/propertyListUrl'
+import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import type { CRMListingPreset } from '@/utilities/crmProperties'
+import { getPropertyFilterOptions } from '@/utilities/getPropertyFilterOptions'
+import { fetchPropertyListServerData } from '@/utilities/propertyListServer'
 
-type Props = Extract<Page['layout'][0], { blockType: 'propertyListBlock' }>
+type Props = PropertyListBlockClientProps & {
+  searchParams?: Record<string, string | string[] | undefined>
+}
 
-export const PropertyListBlock: React.FC<Props> = ({
-  showBreadcrumb,
-  breadcrumbParentLabel,
-  breadcrumbParentHref,
-  pageTitle,
-  resultsLabel,
+const DEFAULT_PAGE_SIZE = 9
+
+export const PropertyListBlock = async ({
   listingPreset,
-  crmQueryJson,
   pageSize,
-  showFilters,
-  showMap,
-  forceSoldBadge,
-  emptyStateNoFavoritesTitle,
-  emptyStateNoFavoritesDescription,
-  emptyStateNoResultsTitle,
-  emptyStateNoResultsDescription,
-}) => {
+  searchParams,
+  ...rest
+}: Props) => {
   const preset = (listingPreset ?? 'forSale') as CRMListingPreset
+  const resolvedPageSize = Math.max(1, pageSize ?? DEFAULT_PAGE_SIZE)
+  const listPage = parsePropertyListPage(searchParams)
+
+  let initialData = null
+
+  if (preset !== 'favorites') {
+    try {
+      const { locale } = await getActiveLocale()
+      const filterOptions = await getPropertyFilterOptions(locale)
+      const defaultSort = filterOptions.sortOptions[0]?.value ?? ''
+      const listSort = parsePropertyListSort(searchParams, defaultSort)
+
+      initialData = await fetchPropertyListServerData({
+        preset,
+        pageSize: resolvedPageSize,
+        page: listPage,
+        sortValue: listSort,
+      })
+    } catch (error) {
+      console.error('Failed to prefetch property list', error)
+    }
+  }
+
+  const imageOrigin = initialData?.preloadImageUrls?.[0]
+    ? extractImageOrigin(initialData.preloadImageUrls[0])
+    : null
 
   return (
-    <section className="bg-surface pt-24 pb-12 md:pt-28 md:pb-16">
-      {(showBreadcrumb !== false || pageTitle) && (
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-12">
-          {showBreadcrumb !== false && (
-            <nav
-              className="flex items-center gap-2 text-secondary font-label-sm text-label-sm mb-4 uppercase tracking-widest"
-              aria-label="Breadcrumb"
-            >
-              <Link
-                href={breadcrumbParentHref || '/'}
-                className="text-tertiary hover:text-primary transition-colors"
-              >
-                {breadcrumbParentLabel || 'Home'}
-              </Link>
-              <ChevronRight size={14} className="shrink-0 text-on-surface-variant" aria-hidden />
-              <span className="text-on-surface">{pageTitle || 'Collections'}</span>
-            </nav>
-          )}
-          {pageTitle && (
-            <h1 className="font-headline-lg text-headline-lg md:text-display-lg text-on-surface">
-              {pageTitle}
-            </h1>
-          )}
-        </div>
-      )}
-
-      <Suspense fallback={null}>
-        <PropertyListView
-          listingPreset={preset}
-          crmQueryJson={crmQueryJson}
-          pageSize={pageSize}
-          showFilters={showFilters}
-          showMap={showMap}
-          forceSoldBadge={forceSoldBadge}
-          resultsLabel={resultsLabel}
-          emptyStateNoFavoritesTitle={emptyStateNoFavoritesTitle}
-          emptyStateNoFavoritesDescription={emptyStateNoFavoritesDescription}
-          emptyStateNoResultsTitle={emptyStateNoResultsTitle}
-          emptyStateNoResultsDescription={emptyStateNoResultsDescription}
-        />
-      </Suspense>
-    </section>
+    <>
+      {imageOrigin && <link rel="preconnect" href={imageOrigin} crossOrigin="anonymous" />}
+      {initialData?.preloadImageUrls?.map((url) => (
+        <link key={url} rel="preload" as="image" href={url} />
+      ))}
+      <PropertyListBlockClient
+        listingPreset={listingPreset}
+        pageSize={pageSize}
+        initialData={initialData}
+        {...rest}
+      />
+    </>
   )
 }

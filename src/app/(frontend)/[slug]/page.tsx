@@ -42,12 +42,17 @@ type Args = {
   params: Promise<{
     slug?: string
   }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default async function Page({ params: paramsPromise }: Args) {
+export default async function Page({
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
+}: Args) {
   const { isEnabled: draft } = await draftMode()
   const { locale } = await getActiveLocale()
   const { slug = 'home' } = await paramsPromise
+  const searchParams = await searchParamsPromise
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
   const url = '/' + decodedSlug
@@ -77,7 +82,7 @@ export default async function Page({ params: paramsPromise }: Args) {
       {draft && <LivePreviewListener />}
 
       <RenderHero {...hero} />
-      <RenderBlocks blocks={layout} />
+      <RenderBlocks blocks={layout} searchParams={searchParams} />
     </article>
   )
 }

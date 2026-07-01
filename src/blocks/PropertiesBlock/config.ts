@@ -48,7 +48,6 @@ export const PropertiesBlock: Block = {
       options: [
         { label: 'Featured Properties', value: 'featured' },
         { label: 'Sea View Properties', value: 'seaView' },
-        { label: 'Custom Query JSON', value: 'custom' },
       ],
       admin: {
         condition: (_, siblingData) => siblingData?.dataSource === 'crm',
@@ -62,17 +61,6 @@ export const PropertiesBlock: Block = {
       min: 1,
       admin: {
         condition: (_, siblingData) => siblingData?.dataSource === 'crm',
-      },
-    },
-    {
-      name: 'crmQueryJson',
-      type: 'textarea',
-      label: 'CRM Custom Query (JSON)',
-      admin: {
-        description:
-          'Used only when "CRM Query Preset" is set to "Custom Query JSON". Enter a valid JSON payload.',
-        condition: (_, siblingData) =>
-          siblingData?.dataSource === 'crm' && siblingData?.crmPreset === 'custom',
       },
     },
     {

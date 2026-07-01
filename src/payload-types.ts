@@ -1021,12 +1021,8 @@ export interface PropertiesBlock {
   backgroundColor?: ('surface' | 'surface-container-low') | null;
   showSoldBadge?: boolean | null;
   dataSource?: ('cms' | 'crm') | null;
-  crmPreset?: ('featured' | 'seaView' | 'custom') | null;
+  crmPreset?: ('featured' | 'seaView') | null;
   crmLimit?: number | null;
-  /**
-   * Used only when "CRM Query Preset" is set to "Custom Query JSON". Enter a valid JSON payload.
-   */
-  crmQueryJson?: string | null;
   properties?:
     | {
         image: number | Media;
@@ -1054,11 +1050,7 @@ export interface PropertyListBlock {
   breadcrumbParentHref?: string | null;
   pageTitle?: string | null;
   resultsLabel?: string | null;
-  listingPreset: 'forSale' | 'favorites' | 'sold' | 'featured' | 'seaView' | 'custom';
-  /**
-   * Used when "Property collection" is Custom Query JSON. Paste the query object or full payload. MongoDB operators must be valid JSON, e.g. "archived": {"$ne": true}. You can also paste {$ne: true} — it will be auto-fixed.
-   */
-  crmQueryJson?: string | null;
+  listingPreset: 'forSale' | 'forRent' | 'favorites' | 'sold' | 'featured' | 'seaView';
   pageSize?: number | null;
   showFilters?: boolean | null;
   /**
@@ -2296,7 +2288,6 @@ export interface PropertiesBlockSelect<T extends boolean = true> {
   dataSource?: T;
   crmPreset?: T;
   crmLimit?: T;
-  crmQueryJson?: T;
   properties?:
     | T
     | {
@@ -2324,7 +2315,6 @@ export interface PropertyListBlockSelect<T extends boolean = true> {
   pageTitle?: T;
   resultsLabel?: T;
   listingPreset?: T;
-  crmQueryJson?: T;
   pageSize?: T;
   showFilters?: T;
   showMap?: T;

@@ -32,15 +32,21 @@ export const buildGeoDataRequest = (
   const similarCommercials = getSimilarCommercialsQuery()
   const propStatus = preset === 'sold' ? ['Sold'] : (['Available', 'Under Offer'] as const)
 
-  return {
-    query: {
-      sort: 'en',
-      order: 'ASC',
-      prop_status: propStatus,
-      ...similarCommercials,
-      ...(mode === 'cities' ? { allow_cities: true } : { allow_location: true }),
-    },
+  const query: Record<string, unknown> = {
+    sort: 'en',
+    order: 'ASC',
+    prop_status: propStatus,
+    ...similarCommercials,
+    ...(mode === 'cities' ? { allow_cities: true } : { allow_location: true }),
   }
+
+  if (preset === 'forRent') {
+    query.rent = true
+  } else if (preset !== 'sold') {
+    query.sale = true
+  }
+
+  return { query }
 }
 
 const normalizeCity = (

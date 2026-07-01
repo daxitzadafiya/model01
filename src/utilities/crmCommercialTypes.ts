@@ -25,14 +25,22 @@ export const buildCommercialTypesRequest = (
   const similarCommercials = getSimilarCommercialsQuery()
   const propStatus = preset === 'sold' ? ['Sold'] : (['Available', 'Under Offer'] as const)
 
+  const query: Record<string, unknown> = {
+    prop_status: propStatus,
+    ...similarCommercials,
+    commercial_properties: 1,
+    parent_value: 1,
+    type_one_only: 1,
+  }
+
+  if (preset === 'forRent') {
+    query.rent = true
+  } else if (preset !== 'sold') {
+    query.sale = true
+  }
+
   return {
-    query: {
-      prop_status: propStatus,
-      ...similarCommercials,
-      commercial_properties: 1,
-      parent_value: 1,
-      type_one_only: 1,
-    },
+    query,
     options: {
       page: 1,
       limit: 200,

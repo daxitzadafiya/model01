@@ -1,4 +1,4 @@
-import { fetchCRMProperties } from '@/utilities/crmProperties'
+import { fetchCRMProperties, unwrapCRMPropertyRecord } from '@/utilities/crmProperties'
 import { getSimilarCommercialsQuery, resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
 
 export type CRMPropertyDetailRecord = Record<string, unknown>
@@ -13,7 +13,7 @@ function getCRMViewConfig(): { apiUrl: string; userKey: string } | null {
   return { apiUrl, userKey }
 }
 
-/** POST /v3/commercial_properties/view/{reference}?user={userKey} */
+/** GET /properties/view-by-ref?user={userKey}&ref={reference} */
 export async function fetchCRMPropertyDetail(
   reference: string,
   init?: Omit<RequestInit, 'method' | 'body'>,
@@ -28,19 +28,18 @@ export async function fetchCRMPropertyDetail(
   if (!trimmedReference) return null
 
   const baseUrl = config.apiUrl.replace(/\/+$/, '')
-  const endpoint = `${baseUrl}/commercial_properties/view/${encodeURIComponent(trimmedReference)}?user=${encodeURIComponent(config.userKey)}`
+  const endpoint = `${baseUrl}/properties/view-by-ref?user=${encodeURIComponent(config.userKey)}&ref=${encodeURIComponent(trimmedReference)}`
 
   const { headers, ...restInit } = init ?? {}
 
   const response = await fetch(endpoint, {
     ...restInit,
-    method: 'POST',
+    method: 'GET',
     cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       ...headers,
     },
-    body: '{}',
   })
 
   if (!response.ok) {
@@ -53,7 +52,7 @@ export async function fetchCRMPropertyDetail(
   const data = (await response.json()) as unknown
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null
 
-  const record = data as CRMPropertyDetailRecord
+  const record = unwrapCRMPropertyRecord(data as CRMPropertyDetailRecord)
   if (record.reference == null && !record._id) return null
 
   return record

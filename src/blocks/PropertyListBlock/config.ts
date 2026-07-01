@@ -54,22 +54,12 @@ export const PropertyListBlock: Block = {
       defaultValue: 'forSale',
       options: [
         { label: 'Property for Sale', value: 'forSale' },
+        { label: 'Property for Rent', value: 'forRent' },
         { label: 'Favorites', value: 'favorites' },
         { label: 'Sold Properties', value: 'sold' },
         { label: 'Featured Properties', value: 'featured' },
         { label: 'Sea View Properties', value: 'seaView' },
-        { label: 'Custom Query JSON', value: 'custom' },
       ],
-    },
-    {
-      name: 'crmQueryJson',
-      type: 'textarea',
-      label: 'CRM Custom Query (JSON)',
-      admin: {
-        description:
-          'Used when "Property collection" is Custom Query JSON. Paste the query object or full payload. MongoDB operators must be valid JSON, e.g. "archived": {"$ne": true}. You can also paste {$ne: true} — it will be auto-fixed.',
-        condition: (_, siblingData) => siblingData?.listingPreset === 'custom',
-      },
     },
     {
       name: 'pageSize',

@@ -59,6 +59,28 @@ export async function getFromCRMContact(
   })
 }
 
+export async function getFromCRM(
+  path: string,
+  searchParams: URLSearchParams,
+  init?: Omit<RequestInit, 'method'>,
+): Promise<Response> {
+  const config = await getCRMConfig()
+  if (!config) {
+    throw new Error(
+      'CRM API is not configured. Set credentials under Globals → Optima CRM in the admin panel.',
+    )
+  }
+
+  const endpoint = buildCRMEndpoint(path, config)
+  const queryString = searchParams.toString()
+  const url = queryString ? `${endpoint}&${queryString}` : endpoint
+  return crmServerFetch(url, {
+    ...init,
+    method: 'GET',
+    cache: 'no-store',
+  })
+}
+
 export async function postToCRMWithUserKey(
   path: string,
   body: Record<string, unknown>,

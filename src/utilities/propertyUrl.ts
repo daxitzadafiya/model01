@@ -1,4 +1,4 @@
-import { buildCRMLocaleCandidates, isCRMTruthy } from '@/utilities/localizedValue'
+import { buildCRMLocaleCandidates, getLocalizedText, isCRMTruthy } from '@/utilities/localizedValue'
 
 export type PropertyListingMode = 'sale' | 'rent'
 
@@ -91,6 +91,76 @@ function isBareReferenceSlug(slug: string): boolean {
   return /^_\d+$/.test(slug)
 }
 
+/** Listing rows from Optima are often `{ property: { ... } }` without top-level identity fields. */
+function ensureFlatPropertyRecord(property: Record<string, unknown>): Record<string, unknown> {
+  const nested = property.property
+  if (!nested || typeof nested !== 'object' || Array.isArray(nested)) return property
+
+  const inner = nested as Record<string, unknown>
+  const hasTopLevelIdentity = property.reference != null || property._id != null || property.id != null
+  const hasNestedIdentity = inner.reference != null || inner._id != null || inner.id != null
+
+  if (hasNestedIdentity && !hasTopLevelIdentity) return inner
+
+  return property
+}
+
+function pickPropertyReference(property: Record<string, unknown>): string | undefined {
+  const referenceRaw = property.reference ?? property.id
+  if (typeof referenceRaw === 'number' && Number.isFinite(referenceRaw)) {
+    return String(referenceRaw)
+  }
+  if (typeof referenceRaw === 'string' && referenceRaw.trim()) {
+    return referenceRaw.trim()
+  }
+  return undefined
+}
+
+function slugifyPropertySegment(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function pickPropertyTitleForSlug(
+  property: Record<string, unknown>,
+  locale: string,
+  mode: PropertyListingMode,
+): string {
+  const saleFirst = mode === 'sale'
+  const fields = saleFirst
+    ? ['sale_title', 'title', 'rental_title', 'property_name', 'name', 'display_name']
+    : ['rental_title', 'rent_title', 'title', 'sale_title', 'property_name', 'name', 'display_name']
+
+  for (const field of fields) {
+    const value = property[field]
+    const text =
+      typeof value === 'string'
+        ? value.trim()
+        : getLocalizedText(value, locale, '').trim()
+    if (text) return text
+  }
+
+  return ''
+}
+
+function buildPropertyDetailSlugFromTitle(
+  property: Record<string, unknown>,
+  locale: string,
+  mode: PropertyListingMode,
+): string | undefined {
+  const reference = pickPropertyReference(property)
+  if (!reference) return undefined
+
+  const titleSlug = slugifyPropertySegment(pickPropertyTitleForSlug(property, locale, mode))
+  if (!titleSlug) return undefined
+
+  return `${titleSlug}_${reference}`
+}
+
 function getLocalizedUrlPath(
   maps: PropertyUrlMaps,
   locale: string,
@@ -135,7 +205,7 @@ export function getPropertyDetailSlug(
     return alternateSlug
   }
 
-  return primarySlug ?? alternateSlug
+  return undefined
 }
 
 /** Public site href — `/property-details/{locale-specific slug from CRM urls}`. */
@@ -144,21 +214,20 @@ export function resolvePropertyDetailHref(
   locale: string,
   options?: { listingMode?: PropertyListingMode },
 ): string | undefined {
-  const listingMode = options?.listingMode ?? resolvePropertyListingMode(property)
-  const slug = getPropertyDetailSlug(property, locale, listingMode)
+  const flatProperty = ensureFlatPropertyRecord(property)
+  const listingMode = options?.listingMode ?? resolvePropertyListingMode(flatProperty)
+  const slug = getPropertyDetailSlug(flatProperty, locale, listingMode)
 
-  if (slug) {
+  if (slug && !isBareReferenceSlug(slug)) {
     return `${PROPERTY_DETAILS_PATH}/${encodeURIComponent(slug)}`
   }
 
-  const referenceRaw = property.reference ?? property.id
-  const reference =
-    typeof referenceRaw === 'number'
-      ? String(referenceRaw)
-      : typeof referenceRaw === 'string' && referenceRaw.trim()
-        ? referenceRaw.trim()
-        : undefined
+  const titleSlug = buildPropertyDetailSlugFromTitle(flatProperty, locale, listingMode)
+  if (titleSlug) {
+    return `${PROPERTY_DETAILS_PATH}/${encodeURIComponent(titleSlug)}`
+  }
 
+  const reference = pickPropertyReference(flatProperty)
   if (!reference) return undefined
 
   return `${PROPERTY_DETAILS_PATH}/_${reference}`

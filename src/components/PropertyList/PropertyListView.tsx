@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
@@ -10,7 +11,7 @@ import { ArrowUpDown } from 'lucide-react'
 import { useCRMCoasts } from '@/hooks/useCRMCoasts'
 import { useCRMCities } from '@/hooks/useCRMCities'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
-import { PropertyFilterOptionsProvider, usePropertyFilterOptions } from '@/hooks/usePropertyFilterOptions'
+import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
 import { PropertyCard, resolvePropertyCardStatusBadge } from '@/components/PropertyCard'
 import { PropertyCardSkeleton } from '@/components/PropertyCard/PropertyCardSkeleton'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
@@ -19,6 +20,7 @@ import {
   buildCRMListingQuery,
   fetchCRMProperties,
   normalizeCRMListProperty,
+  resolveListingModeFromPreset,
   type CRMListingPreset,
   type PropertyListFilters,
 } from '@/utilities/crmProperties'
@@ -32,11 +34,19 @@ import {
   stripPropertyFilterSearchParams,
   takePendingPropertyListFilters,
 } from './propertyFilterUrl'
+import { buildPropertyListListingHref } from './propertyListUrl'
 import { useTranslation } from '@/utilities/translateClient'
+
+export type PropertyListInitialData = {
+  page: number
+  properties: Record<string, unknown>[]
+  total: number
+  sort: string
+  preloadImageUrls?: string[]
+}
 
 type Props = {
   listingPreset: CRMListingPreset
-  crmQueryJson?: string | null
   pageSize?: number | null
   showFilters?: boolean | null
   showMap?: boolean | null
@@ -46,6 +56,7 @@ type Props = {
   emptyStateNoFavoritesDescription?: string | null
   emptyStateNoResultsTitle?: string | null
   emptyStateNoResultsDescription?: string | null
+  initialData?: PropertyListInitialData | null
 }
 
 const DEFAULT_PAGE_SIZE = 9
@@ -58,7 +69,6 @@ export const PropertyListView: React.FC<Props> = (props) => (
 
 const PropertyListViewInner: React.FC<Props> = ({
   listingPreset,
-  crmQueryJson,
   pageSize: pageSizeProp,
   showFilters = true,
   showMap = false,
@@ -68,53 +78,67 @@ const PropertyListViewInner: React.FC<Props> = ({
   emptyStateNoFavoritesDescription,
   emptyStateNoResultsTitle,
   emptyStateNoResultsDescription,
+  initialData,
 }) => {
   const pageSize = Math.max(1, pageSizeProp ?? DEFAULT_PAGE_SIZE)
-
-  const [page, setPage] = useState(1)
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeLocale = useSiteLocale()
   const sortOptions = useSortOptions()
-  const { loading: filterOptionsLoading } = usePropertyFilterOptions()
-  const [sort, setSort] = useState('')
+
+  const [pendingFiltersApplied, setPendingFiltersApplied] = useState(false)
   const [filtersHydrated, setFiltersHydrated] = useState(false)
   const [filters, setFilters] = useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
-  const [appliedFilters, setAppliedFilters] =
-    useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
-  const [rawProperties, setRawProperties] = useState<Record<string, unknown>[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [appliedFilters, setAppliedFilters] = useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
   const [mapModalOpen, setMapModalOpen] = useState(false)
-  const activeLocale = useSiteLocale()
-  const mapEnabled = showMap === true
-  const pendingPageScrollRef = useRef(false)
 
-  const scrollToPageTop = useCallback(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
-  }, [])
-
-  // const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const { favoriteIds } = usePropertyFavorites()
   const isFavoritesList = listingPreset === 'favorites'
+  const filtersAreApplied = hasAppliedPropertyFilters(appliedFilters)
+  const isServerManaged =
+    !isFavoritesList && !filtersAreApplied && !pendingFiltersApplied && Boolean(initialData)
+
+  const [page, setPage] = useState(initialData?.page ?? 1)
+  const [sort, setSort] = useState(initialData?.sort ?? '')
+  const [rawProperties, setRawProperties] = useState<Record<string, unknown>[]>(
+    initialData?.properties ?? [],
+  )
+  const [total, setTotal] = useState(initialData?.total ?? 0)
+  const [loading, setLoading] = useState(!isServerManaged && !initialData)
+
   const filterPreset = isFavoritesList ? 'forSale' : listingPreset
+  const mapEnabled = showMap === true
+  const hasFavoriteIds = favoriteIds.length > 0
+  const favoriteIdsKey = JSON.stringify(favoriteIds)
+
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions(filterPreset)
   const { coasts, loading: coastsLoading } = useCRMCoasts()
   const { cities, loading: citiesLoading } = useCRMCities(filters.coast, coasts, filterPreset)
-  const hasFavoriteIds = favoriteIds.length > 0
-  const favoriteIdsKey = JSON.stringify(favoriteIds)
+
   const favoritesSyncReadyRef = useRef(false)
   const pageAdjustedByFavoritesSyncRef = useRef(false)
   const fetchGenerationRef = useRef(0)
 
-  const filtersAreApplied = hasAppliedPropertyFilters(appliedFilters)
   const displayTotal =
     isFavoritesList && hasFavoriteIds && !filtersAreApplied ? favoriteIds.length : total
   const totalPages = Math.max(1, Math.ceil(displayTotal / pageSize))
+
+  const getListingHref = useCallback(
+    (updates: { page?: number; sort?: string | null }) =>
+      buildPropertyListListingHref(pathname, updates, searchParams),
+    [pathname, searchParams],
+  )
+
+  const properties = useMemo(() => {
+    const listingMode = resolveListingModeFromPreset(listingPreset)
+    return rawProperties.map((raw) =>
+      normalizeCRMListProperty(raw, activeLocale, { listingMode }),
+    )
+  }, [activeLocale, listingPreset, rawProperties])
+
   const sortByLabel = useTranslation('propertyList.filters.sortBy', 'Sort by')
-  const sortParamsKey = useMemo(() => {
-    if (!sort) return ''
-    const match = sortOptions.find((option) => option.value === sort)
-    return match ? `${sort}:${JSON.stringify(match.sort)}` : sort
-  }, [sort, sortOptions])
   const showingLabel = useTranslation('propertyList.results.showing', 'Showing')
   const defaultResultsLabel = useTranslation(
     'propertyList.results.extraordinaryProperties',
@@ -149,34 +173,43 @@ const PropertyListViewInner: React.FC<Props> = ({
     'propertyList.emptyState.noPropertiesDescription',
     'We could not find any listings for this selection. Try adjusting your filters or check again soon.',
   )
-  const properties = useMemo(() => {
-    return rawProperties.map((raw) =>
-      normalizeCRMListProperty(raw, activeLocale, { listingMode: 'sale' }),
-    )
-  }, [activeLocale, rawProperties])
+
+  /** Apply server-rendered listing (page, sort, properties). */
+  useEffect(() => {
+    if (!initialData || !isServerManaged) return
+
+    setPage(initialData.page)
+    setSort(initialData.sort)
+    setRawProperties(initialData.properties)
+    setTotal(initialData.total)
+    setLoading(false)
+  }, [initialData, isServerManaged])
 
   useEffect(() => {
-    if (!sortOptions.length) return
+    if (!sortOptions.length || isServerManaged) return
     setSort((current) =>
       sortOptions.some((option) => option.value === current) ? current : sortOptions[0].value,
     )
-  }, [sortOptions])
+  }, [isServerManaged, sortOptions])
 
-  /** Hero search → listing: read coast/city from sessionStorage (no URL params). */
+  /** Hero search → listing: sessionStorage filters (client fetch only). */
   useEffect(() => {
     const pending = takePendingPropertyListFilters()
     if (pending) {
+      setPendingFiltersApplied(true)
       setFilters(pending)
       setAppliedFilters(pending)
       setPage(1)
+      setLoading(true)
+      router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
     }
     stripPropertyFilterSearchParams()
     setFiltersHydrated(true)
-  }, [])
+  }, [getListingHref, router])
 
-  /** CRM fetch for filters/pagination/sort — not when toggling hearts on for-sale. */
+  /** Client CRM fetch — favorites and filtered listings only. */
   useEffect(() => {
-    if (!filtersHydrated) return
+    if (!filtersHydrated || isServerManaged) return
 
     if (isFavoritesList && favoriteIds.length === 0) {
       setRawProperties([])
@@ -185,7 +218,7 @@ const PropertyListViewInner: React.FC<Props> = ({
       return
     }
 
-    if (filterOptionsLoading || !sort) return
+    if (!sort) return
 
     const sortParams = sortOptions.find((option) => option.value === sort)?.sort
     const controller = new AbortController()
@@ -199,7 +232,6 @@ const PropertyListViewInner: React.FC<Props> = ({
       try {
         const body = buildCRMListingQuery({
           preset: listingPreset,
-          crmQueryJson,
           page,
           pageSize,
           filters: appliedFilters,
@@ -227,22 +259,22 @@ const PropertyListViewInner: React.FC<Props> = ({
 
     void load()
     return () => controller.abort()
-    // favoriteIds intentionally omitted — toggling hearts must not refetch for-sale lists
   }, [
     appliedFilters,
-    crmQueryJson,
-    filterOptionsLoading,
+    favoriteIds,
     filtersHydrated,
     isFavoritesList,
+    isServerManaged,
     listingPreset,
     page,
     pageSize,
-    sortParamsKey,
+    sort,
+    sortOptions,
   ])
 
-  /** Favorites page: after unfavoriting, move to a valid page and refetch (no full-page skeleton). */
+  /** Favorites: adjust page after unfavoriting. */
   useEffect(() => {
-    if (!isFavoritesList) {
+    if (!isFavoritesList || isServerManaged) {
       favoritesSyncReadyRef.current = false
       return
     }
@@ -260,51 +292,11 @@ const PropertyListViewInner: React.FC<Props> = ({
     }
 
     const lastValidPage = Math.max(1, Math.ceil(favoriteIds.length / pageSize))
-    const targetPage = Math.min(page, lastValidPage)
-
-    if (targetPage !== page) {
+    if (page > lastValidPage) {
       pageAdjustedByFavoritesSyncRef.current = true
-      setPage(targetPage)
-      return
+      setPage(lastValidPage)
     }
-
-    const sortParams = sortOptions.find((option) => option.value === sort)?.sort
-    const controller = new AbortController()
-
-    const load = async () => {
-      try {
-        const body = buildCRMListingQuery({
-          preset: listingPreset,
-          crmQueryJson,
-          page: targetPage,
-          pageSize,
-          filters: appliedFilters,
-          restrictToFavoriteIds: favoriteIds,
-          sortParams,
-        })
-
-        const result = await fetchCRMProperties({ body, signal: controller.signal })
-        if (controller.signal.aborted) return
-
-        setRawProperties(result.properties as Record<string, unknown>[])
-        setTotal(result.total)
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.error('Failed to refresh favorites page', error)
-        }
-      }
-    }
-
-    void load()
-    return () => controller.abort()
-    // Only re-run when saved favorites change — not when filters/pagination change
-  }, [favoriteIdsKey, isFavoritesList, listingPreset, pageSize])
-
-  useEffect(() => {
-    if (loading || !pendingPageScrollRef.current) return
-    pendingPageScrollRef.current = false
-    scrollToPageTop()
-  }, [loading, page, scrollToPageTop])
+  }, [favoriteIdsKey, isFavoritesList, isServerManaged, page, pageSize])
 
   const handleFilterChange = (
     key: keyof PropertyListFilters,
@@ -322,18 +314,25 @@ const PropertyListViewInner: React.FC<Props> = ({
     setFilters(normalized)
     setAppliedFilters(normalized)
     setPage(1)
+    setLoading(true)
+    router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
   }
 
   const handleSortChange = (nextSort: string) => {
+    if (isServerManaged) {
+      router.push(getListingHref({ page: 1, sort: nextSort }))
+      return
+    }
     setSort(nextSort)
     setPage(1)
+    setLoading(true)
   }
 
   const handlePageChange = (nextPage: number) => {
     if (nextPage === page) return
-    pendingPageScrollRef.current = true
     setPage(nextPage)
-    scrollToPageTop()
+    setLoading(true)
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
   }
 
   const handleMapDrawApply = (references: string[]) => {
@@ -345,6 +344,8 @@ const PropertyListViewInner: React.FC<Props> = ({
     setFilters(nextFilters)
     setAppliedFilters(nextFilters)
     setPage(1)
+    setLoading(true)
+    router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
   }
 
   const resultsText = useMemo(() => {
@@ -401,10 +402,7 @@ const PropertyListViewInner: React.FC<Props> = ({
       ) : loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {Array.from({ length: pageSize }).map((_, i) => (
-            <PropertyCardSkeleton
-              key={i}
-              animationDelay={(i % 3) * 0.12}
-            />
+            <PropertyCardSkeleton key={i} animationDelay={(i % 3) * 0.12} />
           ))}
         </div>
       ) : properties.length > 0 ? (
@@ -455,14 +453,20 @@ const PropertyListViewInner: React.FC<Props> = ({
         </div>
       )}
 
-      <PropertyListPagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+      <PropertyListPagination
+        page={page}
+        totalPages={totalPages}
+        getPageHref={
+          isServerManaged ? (targetPage) => getListingHref({ page: targetPage }) : undefined
+        }
+        onPageChange={isServerManaged ? undefined : handlePageChange}
+      />
 
       {mapEnabled && (
         <PropertyMapModal
           open={mapModalOpen}
           onClose={() => setMapModalOpen(false)}
           listingPreset={listingPreset}
-          crmQueryJson={crmQueryJson}
           appliedFilters={appliedFilters}
           favoriteIds={isFavoritesList ? favoriteIds : undefined}
           onDrawApply={handleMapDrawApply}

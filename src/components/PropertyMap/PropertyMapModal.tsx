@@ -16,7 +16,6 @@ type Props = {
   open: boolean
   onClose: () => void
   listingPreset: CRMListingPreset
-  crmQueryJson?: string | null
   appliedFilters: PropertyListFilters
   favoriteIds?: (string | number)[]
   onDrawApply?: (references: string[]) => void
@@ -26,7 +25,6 @@ export const PropertyMapModal: React.FC<Props> = ({
   open,
   onClose,
   listingPreset,
-  crmQueryJson,
   appliedFilters,
   favoriteIds,
   onDrawApply,
@@ -79,7 +77,6 @@ export const PropertyMapModal: React.FC<Props> = ({
       try {
         const result = await fetchCRMMapProperties({
           preset: listingPreset,
-          crmQueryJson,
           filters: mapFilters,
           restrictToFavoriteIds: favoriteIds?.length ? favoriteIds : undefined,
           pageSize: settings.mapFetchLimit,
@@ -107,7 +104,6 @@ export const PropertyMapModal: React.FC<Props> = ({
     open,
     settingsLoading,
     listingPreset,
-    crmQueryJson,
     mapFiltersKey,
     favoriteIdsKey,
     settings.mapFetchLimit,

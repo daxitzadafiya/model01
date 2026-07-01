@@ -3,7 +3,8 @@
  */
 import { NextResponse } from 'next/server'
 
-import { getCRMConfig, postToCRM } from '@/utilities/crmApi.server'
+import { getCRMConfig, getFromCRM } from '@/utilities/crmApi.server'
+import { crmListingBodyToSearchParams } from '@/utilities/crmPropertiesGetParams'
 import { extractCRMList, extractCRMTotal } from '@/utilities/crmProperties'
 
 export async function POST(request: Request) {
@@ -27,7 +28,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const response = await postToCRM('commercial_properties', body)
+    const searchParams = crmListingBodyToSearchParams(body)
+    const response = await getFromCRM('properties', searchParams)
 
     if (!response.ok) {
       return NextResponse.json(

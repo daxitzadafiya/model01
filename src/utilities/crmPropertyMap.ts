@@ -106,6 +106,14 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
     }
   }
 
+  if (preset === 'forRent') {
+    return {
+      ...similarCommercials,
+      rent: true,
+      status: { $in: [...MAP_AVAILABLE_STATUSES] },
+    }
+  }
+
   if (preset === 'favorites') {
     return {
       ...similarCommercials,
@@ -147,7 +155,12 @@ export const normalizeMapFindAllQuery = (
   )
 
   if (preset !== 'favorites') {
-    normalized.sale = true
+    if (preset === 'forRent') {
+      normalized.rent = true
+      delete normalized.sale
+    } else {
+      normalized.sale = true
+    }
   }
 
   if (preset === 'sold') {

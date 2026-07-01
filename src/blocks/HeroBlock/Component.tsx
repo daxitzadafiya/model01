@@ -67,11 +67,7 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions('forSale')
   const { coasts, loading: coastsLoading } = useCRMCoasts()
-  const { cities, loading: citiesLoading } = useCRMCities(
-    searchFilters.coast,
-    coasts,
-    'forSale',
-  )
+  const { cities, loading: citiesLoading } = useCRMCities(searchFilters.coast, coasts, 'forSale')
   const priceRange = resolvePriceRangeValue(
     searchFilters.minPrice,
     searchFilters.maxPrice,
@@ -90,8 +86,7 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     setSearchFilters((prev) => ({ ...prev, minPrice, maxPrice }))
   }
 
-  const searchResultsPath =
-    getCMSLinkHref(searchResultsLink ?? {}) ?? DEFAULT_SEARCH_RESULTS_PATH
+  const searchResultsPath = getCMSLinkHref(searchResultsLink ?? {}) ?? DEFAULT_SEARCH_RESULTS_PATH
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,11 +121,10 @@ const HeroBlockContent: React.FC<Props> = (props) => {
         </div>
 
         {showSearch && (
-          <div className={`absolute bottom-[6%] md:bottom-[8%] left-0 right-0 z-30 ${heroContainerClassName}`}>
-            <form
-              onSubmit={handleSearchSubmit}
-              className={heroSearchFormClassName}
-            >
+          <div
+            className={`absolute bottom-[6%] md:bottom-[8%] left-0 right-0 z-30 ${heroContainerClassName}`}
+          >
+            <form onSubmit={handleSearchSubmit} className={heroSearchFormClassName}>
               <div className="flex flex-col gap-2 border-b border-white/20 px-4 md:px-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <p className="py-3 uppercase md:py-4 px-4 md:px-6 font-label-nav text-label-nav text-white border-b-2 border-tertiary self-start">
                   {searchPropertiesLabel}
@@ -175,10 +169,7 @@ const HeroBlockContent: React.FC<Props> = (props) => {
                   triggerClassName={heroSearchFieldClassName}
                 />
 
-                <button
-                  type="submit"
-                  className={heroSearchButtonClassName}
-                >
+                <button type="submit" className={heroSearchButtonClassName}>
                   <Search size={16} />
                   {searchLabel}
                 </button>
