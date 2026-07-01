@@ -1,41 +1,55 @@
 'use client'
 
-import React, { Suspense } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import type { Page } from '@/payload-types'
 
+import { PropertyListView } from '@/components/PropertyList/PropertyListView'
 import {
-  PropertyListView,
+  PropertyListServerDataProvider,
   type PropertyListInitialData,
-} from '@/components/PropertyList/PropertyListView'
+  type PropertyListServerDataPayload,
+} from '@/components/PropertyList/PropertyListServerData'
 import type { CRMListingPreset } from '@/utilities/crmProperties'
 
 export type PropertyListBlockClientProps = Extract<
   Page['layout'][0],
   { blockType: 'propertyListBlock' }
-> & {
-  initialData?: PropertyListInitialData | null
+>
+
+type Props = PropertyListBlockClientProps & {
+  children: React.ReactNode
+  listingKey?: string
 }
 
-export const PropertyListBlockClient: React.FC<PropertyListBlockClientProps> = ({
+export const PropertyListBlockClient: React.FC<Props> = ({
   showBreadcrumb,
   breadcrumbParentLabel,
   breadcrumbParentHref,
   pageTitle,
-  resultsLabel,
   listingPreset,
   pageSize,
   showFilters,
   showMap,
   forceSoldBadge,
+  resultsLabel,
   emptyStateNoFavoritesTitle,
   emptyStateNoFavoritesDescription,
   emptyStateNoResultsTitle,
   emptyStateNoResultsDescription,
-  initialData,
+  listingKey = '',
+  children,
 }) => {
   const preset = (listingPreset ?? 'forSale') as CRMListingPreset
+  const [initialData, setInitialData] = useState<PropertyListInitialData | null>(null)
+  const listingKeyRef = useRef(listingKey)
+  listingKeyRef.current = listingKey
+
+  const handleServerData = useCallback((payload: PropertyListServerDataPayload) => {
+    if (payload.listingKey !== listingKeyRef.current) return
+    setInitialData({ ...payload.data, listingKey: payload.listingKey })
+  }, [])
 
   return (
     <section className="bg-surface pt-24 pb-12 md:pt-28 md:pb-16">
@@ -64,7 +78,7 @@ export const PropertyListBlockClient: React.FC<PropertyListBlockClientProps> = (
         </div>
       )}
 
-      <Suspense fallback={null}>
+      <PropertyListServerDataProvider onServerData={handleServerData}>
         <PropertyListView
           listingPreset={preset}
           pageSize={pageSize}
@@ -77,8 +91,11 @@ export const PropertyListBlockClient: React.FC<PropertyListBlockClientProps> = (
           emptyStateNoResultsTitle={emptyStateNoResultsTitle}
           emptyStateNoResultsDescription={emptyStateNoResultsDescription}
           initialData={initialData}
+          listingKey={listingKey}
+          serverManaged={preset !== 'favorites'}
         />
-      </Suspense>
+        {children}
+      </PropertyListServerDataProvider>
     </section>
   )
 }

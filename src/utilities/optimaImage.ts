@@ -9,7 +9,9 @@ type ResizeType = 'user' | 'property' | 'cms_medias'
 
 export type PropertyAttachment = {
   model_id?: unknown
+  model_name?: unknown
   file_md5_name?: unknown
+  file_type?: unknown
   publish_status?: unknown
   document?: unknown
   order?: unknown
@@ -26,6 +28,20 @@ const getImageExtension = (filename: string) => {
   const parts = filename.split('.')
   return (parts[parts.length - 1] || '').toLowerCase()
 }
+
+const IMAGE_EXTENSIONS = new Set([
+  'jpg',
+  'jpeg',
+  'png',
+  'webp',
+  'gif',
+  'avif',
+  'bmp',
+  'tif',
+  'tiff',
+  'heic',
+  'heif',
+])
 
 const isTruthy = (value: unknown): boolean => {
   if (value === null || value === undefined || value === false) return false
@@ -104,11 +120,27 @@ const getAttachmentFileName = (attachment: PropertyAttachment) => {
   return resolveAttachmentName(attachment)
 }
 
+const getAttachmentModelName = (attachment: PropertyAttachment) => {
+  if (typeof attachment.model_name === 'string' && attachment.model_name.trim()) {
+    return attachment.model_name.trim()
+  }
+}
+
+const getAttachmentFileType = (attachment: PropertyAttachment): string => {
+  if (typeof attachment.file_type === 'string' && attachment.file_type.trim()) {
+    return attachment.file_type.trim().toLowerCase()
+  }
+  const fileName = getAttachmentFileName(attachment)
+  return getImageExtension(fileName)
+}
+
 /** PHP: isset($pic['document']) && $pic['document'] != 1 */
 export const isPropertyImageAttachment = (attachment: PropertyAttachment): boolean => {
   const document = attachment.document
-  if (document === undefined || document === null) return false
-  return !isDocumentFlag(document)
+  if (isDocumentFlag(document)) return false
+
+  const fileType = getAttachmentFileType(attachment)
+  return IMAGE_EXTENSIONS.has(fileType)
 }
 
 /**
@@ -121,17 +153,22 @@ export const buildPropertyAttachmentImageUrl = (
   attachment: PropertyAttachment,
   imageSize = 1000,
 ): string => {
+  const modelName = getAttachmentModelName(attachment)
   const modelId = getAttachmentModelId(attachment)
   const fileName = getAttachmentFileName(attachment)
-  if (!modelId || !fileName) return ''
+  if (!modelName || !modelId || !fileName) return ''
 
   if (imageSize > 0) {
     const resizeBase = stripTrailingSlash(getRuntimeOptimaImageConfig().propertyResizeBase)
-    return `${resizeBase}/${modelId}/${imageSize}/${fileName}`
+    const resizeBaseWithModel = resizeBase.endsWith(`/${modelName}`)
+      ? resizeBase
+      : `${resizeBase}/${modelName}`
+    return `${resizeBaseWithModel}/${modelId}/${imageSize}/${fileName}`
   }
 
   const comImg = stripTrailingSlash(getRuntimeOptimaImageConfig().commercialImageBase)
-  return `${comImg}/${modelId}/${fileName}`
+  const comImgWithModel = comImg.endsWith(`/${modelName}`) ? comImg : `${comImg}/${modelName}`
+  return `${comImgWithModel}/${modelId}/${fileName}`
 }
 
 /**
@@ -182,9 +219,7 @@ export const getOptimaPropertyAttachmentImage = (attachment: unknown, size = 100
   return buildPropertyAttachmentImageUrl(record, size)
 }
 
-const getSortedPublishedPropertyImageAttachments = (
-  attachments: unknown,
-): PropertyAttachment[] => {
+const getSortedPublishedPropertyImageAttachments = (attachments: unknown): PropertyAttachment[] => {
   if (!Array.isArray(attachments)) return []
 
   return (attachments as PropertyAttachment[])

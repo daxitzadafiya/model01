@@ -1,3 +1,5 @@
+import { cache } from 'react'
+
 import type { PropertyFilter } from '@/payload-types'
 
 import { getCachedGlobal } from '@/utilities/getGlobals'
@@ -87,8 +89,10 @@ export function normalizePropertyFilterOptions(
   }
 }
 
-export async function getPropertyFilterOptions(locale?: string): Promise<PropertyFilterOptions> {
-  const getGlobal = getCachedGlobal('propertyFilters', 0, locale as never)
-  const doc = await getGlobal()
-  return normalizePropertyFilterOptions(doc)
-}
+export const getPropertyFilterOptions = cache(
+  async (locale?: string): Promise<PropertyFilterOptions> => {
+    const getGlobal = getCachedGlobal('propertyFilters', 0, locale as never)
+    const doc = await getGlobal()
+    return normalizePropertyFilterOptions(doc)
+  },
+)

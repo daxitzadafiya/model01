@@ -1,3 +1,5 @@
+import { cache } from 'react'
+
 import type { Localization } from '@/payload-types'
 
 import { getCachedGlobal } from '@/utilities/getGlobals'
@@ -47,12 +49,12 @@ function mapGlobalToMenu(global: Localization | null): LanguageMenuItem[] {
     .filter((item): item is LanguageMenuItem => item !== null)
 }
 
-export async function getLanguageMenuItems(): Promise<LanguageMenuItem[]> {
+export const getLanguageMenuItems = cache(async (): Promise<LanguageMenuItem[]> => {
   const global = await getCachedGlobal('localization', 0)()
   const items = mapGlobalToMenu(global)
 
   return items.length > 0 ? items : fallbackMenu
-}
+})
 
 export function resolveActiveLocale(
   currentLocale: Locale,
@@ -65,10 +67,10 @@ export function resolveActiveLocale(
   return items[0]?.locale ?? defaultLocale
 }
 
-export async function getActiveLocale(): Promise<{
+export const getActiveLocale = cache(async (): Promise<{
   locale: Locale
   languageMenu: LanguageMenuItem[]
-}> {
+}> => {
   const languageMenu = await getLanguageMenuItems()
   const menuLocales = languageMenu.map((item) => item.locale)
   const cookieLocale = await getLocale(menuLocales)
@@ -77,4 +79,4 @@ export async function getActiveLocale(): Promise<{
     languageMenu,
     locale: resolveActiveLocale(cookieLocale, languageMenu),
   }
-}
+})

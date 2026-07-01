@@ -783,8 +783,9 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       ...similarCommercials,
       rent: true,
-      lt_rental : true,
       remove_count: true,
+      archived: { $ne: true },
+      has_images: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'seaView') {

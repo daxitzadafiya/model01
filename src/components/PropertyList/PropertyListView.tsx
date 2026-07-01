@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { useSiteLocale } from '@/utilities/useSiteLocale'
@@ -35,15 +35,10 @@ import {
   takePendingPropertyListFilters,
 } from './propertyFilterUrl'
 import { buildPropertyListListingHref } from './propertyListUrl'
+import type { PropertyListInitialData } from './PropertyListServerData'
 import { useTranslation } from '@/utilities/translateClient'
 
-export type PropertyListInitialData = {
-  page: number
-  properties: Record<string, unknown>[]
-  total: number
-  sort: string
-  preloadImageUrls?: string[]
-}
+export type { PropertyListInitialData } from './PropertyListServerData'
 
 type Props = {
   listingPreset: CRMListingPreset
@@ -57,6 +52,9 @@ type Props = {
   emptyStateNoResultsTitle?: string | null
   emptyStateNoResultsDescription?: string | null
   initialData?: PropertyListInitialData | null
+  listingKey?: string
+  /** Default listing pages: server fetch + URL pagination (filters/favorites stay client-driven). */
+  serverManaged?: boolean
 }
 
 const DEFAULT_PAGE_SIZE = 9
@@ -79,6 +77,8 @@ const PropertyListViewInner: React.FC<Props> = ({
   emptyStateNoResultsTitle,
   emptyStateNoResultsDescription,
   initialData,
+  listingKey = '',
+  serverManaged = false,
 }) => {
   const pageSize = Math.max(1, pageSizeProp ?? DEFAULT_PAGE_SIZE)
   const pathname = usePathname()
@@ -86,6 +86,7 @@ const PropertyListViewInner: React.FC<Props> = ({
   const searchParams = useSearchParams()
   const activeLocale = useSiteLocale()
   const sortOptions = useSortOptions()
+  const [isNavigating, startTransition] = useTransition()
 
   const [pendingFiltersApplied, setPendingFiltersApplied] = useState(false)
   const [filtersHydrated, setFiltersHydrated] = useState(false)
@@ -97,7 +98,7 @@ const PropertyListViewInner: React.FC<Props> = ({
   const isFavoritesList = listingPreset === 'favorites'
   const filtersAreApplied = hasAppliedPropertyFilters(appliedFilters)
   const isServerManaged =
-    !isFavoritesList && !filtersAreApplied && !pendingFiltersApplied && Boolean(initialData)
+    serverManaged && !isFavoritesList && !filtersAreApplied && !pendingFiltersApplied
 
   const [page, setPage] = useState(initialData?.page ?? 1)
   const [sort, setSort] = useState(initialData?.sort ?? '')
@@ -105,7 +106,12 @@ const PropertyListViewInner: React.FC<Props> = ({
     initialData?.properties ?? [],
   )
   const [total, setTotal] = useState(initialData?.total ?? 0)
-  const [loading, setLoading] = useState(!isServerManaged && !initialData)
+  const [loading, setLoading] = useState(isServerManaged ? !initialData : !initialData)
+  const serverDataReady =
+    Boolean(initialData) &&
+    (!listingKey || !initialData?.listingKey || initialData.listingKey === listingKey)
+  const showSkeleton =
+    loading || (isServerManaged && isNavigating) || (isServerManaged && !serverDataReady)
 
   const filterPreset = isFavoritesList ? 'forSale' : listingPreset
   const mapEnabled = showMap === true
@@ -131,11 +137,19 @@ const PropertyListViewInner: React.FC<Props> = ({
     [pathname, searchParams],
   )
 
+  const navigateServerListing = useCallback(
+    (href: string, options?: { scroll?: boolean }) => {
+      setLoading(true)
+      startTransition(() => {
+        router.push(href, { scroll: options?.scroll ?? false })
+      })
+    },
+    [router],
+  )
+
   const properties = useMemo(() => {
     const listingMode = resolveListingModeFromPreset(listingPreset)
-    return rawProperties.map((raw) =>
-      normalizeCRMListProperty(raw, activeLocale, { listingMode }),
-    )
+    return rawProperties.map((raw) => normalizeCRMListProperty(raw, activeLocale, { listingMode }))
   }, [activeLocale, listingPreset, rawProperties])
 
   const sortByLabel = useTranslation('propertyList.filters.sortBy', 'Sort by')
@@ -176,14 +190,17 @@ const PropertyListViewInner: React.FC<Props> = ({
 
   /** Apply server-rendered listing (page, sort, properties). */
   useEffect(() => {
-    if (!initialData || !isServerManaged) return
+    if (!initialData || !serverDataReady) {
+      if (isServerManaged) setLoading(true)
+      return
+    }
 
     setPage(initialData.page)
     setSort(initialData.sort)
     setRawProperties(initialData.properties)
     setTotal(initialData.total)
     setLoading(false)
-  }, [initialData, isServerManaged])
+  }, [initialData, isServerManaged, serverDataReady])
 
   useEffect(() => {
     if (!sortOptions.length || isServerManaged) return
@@ -320,7 +337,7 @@ const PropertyListViewInner: React.FC<Props> = ({
 
   const handleSortChange = (nextSort: string) => {
     if (isServerManaged) {
-      router.push(getListingHref({ page: 1, sort: nextSort }))
+      navigateServerListing(getListingHref({ page: 1, sort: nextSort }))
       return
     }
     setSort(nextSort)
@@ -330,6 +347,13 @@ const PropertyListViewInner: React.FC<Props> = ({
 
   const handlePageChange = (nextPage: number) => {
     if (nextPage === page) return
+
+    if (isServerManaged) {
+      navigateServerListing(getListingHref({ page: nextPage }), { scroll: true })
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+      return
+    }
+
     setPage(nextPage)
     setLoading(true)
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
@@ -353,10 +377,11 @@ const PropertyListViewInner: React.FC<Props> = ({
     return (
       <>
         {showingLabel}{' '}
-        <span className="font-bold text-on-surface">{loading ? '…' : displayTotal}</span> {label}
+        <span className="font-bold text-on-surface">{showSkeleton ? '…' : displayTotal}</span>{' '}
+        {label}
       </>
     )
-  }, [displayTotal, loading, resultsLabel, showingLabel, defaultResultsLabel])
+  }, [displayTotal, showSkeleton, resultsLabel, showingLabel, defaultResultsLabel])
 
   return (
     <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12">
@@ -399,7 +424,7 @@ const PropertyListViewInner: React.FC<Props> = ({
             tone="surface"
           />
         </div>
-      ) : loading ? (
+      ) : showSkeleton ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {Array.from({ length: pageSize }).map((_, i) => (
             <PropertyCardSkeleton key={i} animationDelay={(i % 3) * 0.12} />
@@ -456,10 +481,8 @@ const PropertyListViewInner: React.FC<Props> = ({
       <PropertyListPagination
         page={page}
         totalPages={totalPages}
-        getPageHref={
-          isServerManaged ? (targetPage) => getListingHref({ page: targetPage }) : undefined
-        }
-        onPageChange={isServerManaged ? undefined : handlePageChange}
+        onPageChange={handlePageChange}
+        disabled={showSkeleton}
       />
 
       {mapEnabled && (

@@ -105,10 +105,7 @@ export const PropertyCard: React.FC<Props> = ({
   const favorited = propertyId != null && propertyId !== '' && isFavorite(propertyId)
   const viewPropertyLabel = useTranslation('propertyList.filters.viewProperty', 'View Property')
   const refPrefixLabel = useTranslation('propertyList.card.refPrefix', 'Ref:')
-  const addToFavoritesLabel = useTranslation(
-    'propertyList.card.addToFavorites',
-    'Add to favorites',
-  )
+  const addToFavoritesLabel = useTranslation('propertyList.card.addToFavorites', 'Add to favorites')
   const removeFromFavoritesLabel = useTranslation(
     'propertyList.card.removeFromFavorites',
     'Remove from favorites',
@@ -232,7 +229,11 @@ export const PropertyCard: React.FC<Props> = ({
         )}
       </div>
       {href ? (
-        <Link href={href} className="block no-underline text-inherit cursor-pointer relative z-10">
+        <Link
+          href={href}
+          prefetch={false}
+          className="block no-underline text-inherit cursor-pointer relative z-10"
+        >
           {cardInfo}
         </Link>
       ) : (

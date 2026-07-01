@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { useTranslation } from '@/utilities/translateClient'
@@ -9,10 +8,8 @@ import { useTranslation } from '@/utilities/translateClient'
 type Props = {
   page: number
   totalPages: number
-  /** Client-side pagination (filters / favorites / custom sort) */
   onPageChange?: (page: number) => void
-  /** Server-side pagination — navigates with `?page=` */
-  getPageHref?: (page: number) => string
+  disabled?: boolean
 }
 
 const formatPage = (n: number) => String(n).padStart(2, '0')
@@ -24,7 +21,7 @@ export const PropertyListPagination: React.FC<Props> = ({
   page,
   totalPages,
   onPageChange,
-  getPageHref,
+  disabled = false,
 }) => {
   const pageLabel = useTranslation('propertyList.pagination.page', 'Page')
   const previousPageAria = useTranslation(
@@ -35,65 +32,32 @@ export const PropertyListPagination: React.FC<Props> = ({
 
   if (totalPages <= 1) return null
 
-  const canPrev = page > 1
-  const canNext = page < totalPages
-  const useLinks = Boolean(getPageHref)
+  const canPrev = page > 1 && !disabled
+  const canNext = page < totalPages && !disabled
 
-  const prevControl =
-    useLinks && getPageHref ? (
-      canPrev ? (
-        <Link
-          href={getPageHref(page - 1)}
-          className={navButtonClass}
-          aria-label={previousPageAria}
-          scroll
-        >
-          <ChevronLeft size={22} />
-        </Link>
-      ) : (
-        <span className={navButtonClass} aria-hidden>
-          <ChevronLeft size={22} />
-        </span>
-      )
-    ) : (
-      <button
-        type="button"
-        disabled={!canPrev}
-        onClick={() => onPageChange?.(page - 1)}
-        className={navButtonClass}
-        aria-label={previousPageAria}
-      >
-        <ChevronLeft size={22} />
-      </button>
-    )
+  const prevControl = (
+    <button
+      type="button"
+      disabled={!canPrev}
+      onClick={() => onPageChange?.(page - 1)}
+      className={navButtonClass}
+      aria-label={previousPageAria}
+    >
+      <ChevronLeft size={22} />
+    </button>
+  )
 
-  const nextControl =
-    useLinks && getPageHref ? (
-      canNext ? (
-        <Link
-          href={getPageHref(page + 1)}
-          className={navButtonClass}
-          aria-label={nextPageAria}
-          scroll
-        >
-          <ChevronRight size={22} />
-        </Link>
-      ) : (
-        <span className={navButtonClass} aria-hidden>
-          <ChevronRight size={22} />
-        </span>
-      )
-    ) : (
-      <button
-        type="button"
-        disabled={!canNext}
-        onClick={() => onPageChange?.(page + 1)}
-        className={navButtonClass}
-        aria-label={nextPageAria}
-      >
-        <ChevronRight size={22} />
-      </button>
-    )
+  const nextControl = (
+    <button
+      type="button"
+      disabled={!canNext}
+      onClick={() => onPageChange?.(page + 1)}
+      className={navButtonClass}
+      aria-label={nextPageAria}
+    >
+      <ChevronRight size={22} />
+    </button>
+  )
 
   return (
     <section className="flex flex-col items-center gap-8 py-12 border-t border-outline-variant/30">

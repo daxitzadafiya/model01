@@ -1,12 +1,11 @@
-import type { PropertyListInitialData } from '@/components/PropertyList/PropertyListView'
+import type { PropertyListInitialData } from '@/components/PropertyList/PropertyListServerData'
 import { extractPropertyListPreloadImageUrls } from '@/components/PropertyList/propertyListImagePreload'
-import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import {
   buildCRMListingQuery,
   type CRMListingPreset,
 } from '@/utilities/crmProperties'
 import { fetchCRMPropertiesServer } from '@/utilities/crmProperties.server'
-import { getPropertyFilterOptions } from '@/utilities/getPropertyFilterOptions'
+import { resolveListingSortOption } from '@/utilities/resolveListingSortOption'
 
 export async function fetchPropertyListServerData({
   preset,
@@ -21,13 +20,7 @@ export async function fetchPropertyListServerData({
 }): Promise<PropertyListInitialData | null> {
   if (preset === 'favorites') return null
 
-  const { locale } = await getActiveLocale()
-  const filterOptions = await getPropertyFilterOptions(locale)
-  const sortOption =
-    filterOptions.sortOptions.find((option) => option.value === sortValue) ??
-    filterOptions.sortOptions[0]
-
-  if (!sortOption) return null
+  const sortOption = await resolveListingSortOption(sortValue)
 
   const body = buildCRMListingQuery({
     preset,
