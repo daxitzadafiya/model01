@@ -122,7 +122,8 @@ export default buildConfig({
   editor: defaultLexical,
   db: sqliteAdapter({
     client: {
-      url: process.env.DATABASE_URL || '',
+      // Keep dev/runtime aligned with migration CLI when env loading varies.
+      url: process.env.DATABASE_URL || 'file:./roumpos.db',
     },
     // Wait on SQLITE_BUSY instead of failing when auto-translate runs after save.
     busyTimeout: 10_000,

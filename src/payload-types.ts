@@ -3613,7 +3613,23 @@ export interface PropertyFilter {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Exact bedroom counts. Use value "other" for the custom-number option.
+   */
   bedrooms?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Exact bathroom counts. Use value "other" for the custom-number option.
+   */
+  bathrooms?:
     | {
         /**
          * CRM filter value sent with the search query.
@@ -3644,48 +3660,9 @@ export interface PropertyFilter {
       }[]
     | null;
   /**
-   * Values must be "project" (new development) or "resale".
-   */
-  statuses?:
-    | {
-        /**
-         * CRM filter value sent with the search query.
-         */
-        value: string;
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
    * Values must be "sea views", "mountain", or "golf".
    */
   features?:
-    | {
-        /**
-         * CRM filter value sent with the search query.
-         */
-        value: string;
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Empty value = placeholder. Other values are months (1 = handover, 3, 6, 12, 18, 60).
-   */
-  deliveryDates?:
-    | {
-        /**
-         * CRM filter value sent with the search query.
-         */
-        value: string;
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Empty value = placeholder. Distances in meters. Use 1000000 for "indifferent".
-   */
-  distanceToSea?:
     | {
         /**
          * CRM filter value sent with the search query.
@@ -4158,6 +4135,13 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
         label?: T;
         id?: T;
       };
+  bathrooms?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
   minPrices?:
     | T
     | {
@@ -4172,28 +4156,7 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
         label?: T;
         id?: T;
       };
-  statuses?:
-    | T
-    | {
-        value?: T;
-        label?: T;
-        id?: T;
-      };
   features?:
-    | T
-    | {
-        value?: T;
-        label?: T;
-        id?: T;
-      };
-  deliveryDates?:
-    | T
-    | {
-        value?: T;
-        label?: T;
-        id?: T;
-      };
-  distanceToSea?:
     | T
     | {
         value?: T;

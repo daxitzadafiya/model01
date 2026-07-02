@@ -84,12 +84,19 @@ export const MAP_FIND_ALL_POPULATE = [
 ] as const
 
 /** CRM find-all pagination + sort + populate — matches Optima map API expectations. */
-export const buildCRMMapOptions = (page: number, limit: number): Record<string, unknown> => ({
+export const buildCRMMapOptions = (
+  page: number,
+  limit: number,
+  sortParams?: Record<string, unknown>,
+): Record<string, unknown> => ({
   page: Math.max(1, page),
   limit: Math.max(1, limit),
-  sort: {
-    current_price: '-1',
-  },
+  sort:
+    sortParams && Object.keys(sortParams).length > 0
+      ? sortParams
+      : {
+          current_price: '-1',
+        },
   populate: MAP_FIND_ALL_POPULATE,
 })
 
@@ -185,6 +192,7 @@ export const buildCRMMapQuery = ({
   restrictToFavoriteIds,
   page,
   pageSize,
+  sortParams,
 }: {
   preset: CRMListingPreset
   crmQueryJson?: string | null
@@ -192,6 +200,7 @@ export const buildCRMMapQuery = ({
   restrictToFavoriteIds?: (string | number)[]
   page: number
   pageSize: number
+  sortParams?: Record<string, unknown>
 }): Record<string, unknown> => {
   let baseQuery = buildCRMMapBaseQuery(preset)
 
@@ -217,7 +226,7 @@ export const buildCRMMapQuery = ({
 
   let query = mergeCRMQueryObjects(
     baseQuery,
-    buildFilterQuery(filters, { referenceAsNumber: true }),
+    buildFilterQuery(filters, { referenceAsNumber: true, includeMapReferences: true }),
   )
 
   if (preset === 'favorites' && restrictToFavoriteIds?.length) {
@@ -228,7 +237,7 @@ export const buildCRMMapQuery = ({
   }
 
   return {
-    options: buildCRMMapOptions(page, pageSize),
+    options: buildCRMMapOptions(page, pageSize, sortParams),
     query: normalizeMapFindAllQuery(query, preset),
   }
 }

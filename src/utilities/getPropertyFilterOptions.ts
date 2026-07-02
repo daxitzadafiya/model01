@@ -74,18 +74,10 @@ export function normalizePropertyFilterOptions(
     sortOptions: normalizeSortOptions(doc.sortOptions, DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions),
     priceRanges: normalizePriceRanges(doc.priceRanges, DEFAULT_PROPERTY_FILTER_OPTIONS.priceRanges),
     bedrooms: normalizeSimpleOptions(doc.bedrooms, DEFAULT_PROPERTY_FILTER_OPTIONS.bedrooms),
+    bathrooms: normalizeSimpleOptions(doc.bathrooms, DEFAULT_PROPERTY_FILTER_OPTIONS.bathrooms),
     minPrices: normalizeSimpleOptions(doc.minPrices, DEFAULT_PROPERTY_FILTER_OPTIONS.minPrices),
     maxPrices: normalizeSimpleOptions(doc.maxPrices, DEFAULT_PROPERTY_FILTER_OPTIONS.maxPrices),
-    statuses: normalizeSimpleOptions(doc.statuses, DEFAULT_PROPERTY_FILTER_OPTIONS.statuses),
     features: normalizeSimpleOptions(doc.features, DEFAULT_PROPERTY_FILTER_OPTIONS.features),
-    deliveryDates: normalizeSimpleOptions(
-      doc.deliveryDates,
-      DEFAULT_PROPERTY_FILTER_OPTIONS.deliveryDates,
-    ),
-    distanceToSea: normalizeSimpleOptions(
-      doc.distanceToSea,
-      DEFAULT_PROPERTY_FILTER_OPTIONS.distanceToSea,
-    ),
   }
 }
 

@@ -66,14 +66,43 @@ export const MAX_PRICE_OPTIONS = [
   { value: '50000000', label: '€50,000,000+' },
 ] as const
 
+export const COUNT_FILTER_OTHER_VALUE = 'other'
+
 export const BEDROOM_OPTIONS = [
   { value: 'any', label: 'Any Bedrooms' },
-  { value: '1', label: '1+' },
-  { value: '2', label: '2+' },
-  { value: '3', label: '3+' },
-  { value: '4', label: '4+' },
-  { value: '5', label: '5+' },
+  { value: '1', label: '1' },
+  { value: '2', label: '2' },
+  { value: '3', label: '3' },
+  { value: '4', label: '4' },
+  { value: '5', label: '5' },
+  { value: COUNT_FILTER_OTHER_VALUE, label: 'Other' },
 ] as const
+
+export const BATHROOM_OPTIONS = [
+  { value: 'any', label: 'Any Bathrooms' },
+  { value: '1', label: '1' },
+  { value: '2', label: '2' },
+  { value: '3', label: '3' },
+  { value: '4', label: '4' },
+  { value: '5', label: '5' },
+  { value: COUNT_FILTER_OTHER_VALUE, label: 'Other' },
+] as const
+
+/** Resolves a bedrooms/bathrooms dropdown (+ optional custom) to a CRM integer count. */
+export const parseCountFilterValue = (value?: string, custom?: string): number | undefined => {
+  if (!value || value === 'any') return undefined
+
+  if (value === COUNT_FILTER_OTHER_VALUE) {
+    const parsed = parseInt(custom?.replace(/\D/g, '') ?? '', 10)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+  }
+
+  const parsed = parseInt(value, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+}
+
+export const isCountFilterActive = (value?: string, custom?: string): boolean =>
+  parseCountFilterValue(value, custom) !== undefined
 
 export const PROPERTY_LISTING_STATUS_OPTIONS = [
   { id: 'property_project', value: 'project', label: 'New development' },
@@ -129,8 +158,8 @@ export const DISTANCE_OPTIONS = [
 ] as const
 
 export const SORT_OPTIONS = [
-  { value: 'relevance', label: 'Relevance', sort: { featured: -1 } },
   { value: 'recent', label: 'Recent', sort: { created_at: -1 } },
+  { value: 'relevance', label: 'Relevance', sort: { featured: -1 } },
   { value: 'priceAsc', label: 'Lowest Price', sort: { current_price: 1 } },
   { value: 'priceDesc', label: 'Highest Price', sort: { current_price: -1 } },
 ] as const
@@ -167,11 +196,9 @@ export const hasAppliedPropertyFilters = (filters: PropertyListFilters): boolean
       isCityFilterActive(filters.city) ||
       (filters.minPrice && filters.minPrice !== 'any') ||
       (filters.maxPrice && filters.maxPrice !== 'any') ||
-      (filters.bedrooms && filters.bedrooms !== 'any') ||
-      filters.status?.length ||
+      isCountFilterActive(filters.bedrooms, filters.bedroomsCustom) ||
+      isCountFilterActive(filters.bathrooms, filters.bathroomsCustom) ||
       filters.features?.length ||
-      (filters.deliveryDate && filters.deliveryDate !== 'any') ||
-      (filters.distanceToSea && filters.distanceToSea !== 'any') ||
       filters.mapReferences?.length,
   )
 }
@@ -184,10 +211,10 @@ export const EMPTY_PROPERTY_FILTERS = {
   minPrice: 'any',
   maxPrice: 'any',
   bedrooms: 'any',
-  status: [] as string[],
+  bedroomsCustom: '',
+  bathrooms: 'any',
+  bathroomsCustom: '',
   features: [] as string[],
-  deliveryDate: '',
-  distanceToSea: '',
   mapReferences: [] as string[],
 } as const
 
@@ -199,10 +226,10 @@ type PropertyFiltersShape = {
   minPrice?: string
   maxPrice?: string
   bedrooms?: string
-  status?: string | string[]
+  bedroomsCustom?: string
+  bathrooms?: string
+  bathroomsCustom?: string
   features?: string | string[]
-  deliveryDate?: string
-  distanceToSea?: string
   mapReferences?: string[]
 }
 
@@ -213,13 +240,9 @@ export const hasActivePropertyFilters = (filters: PropertyFiltersShape): boolean
   if (isCityFilterActive(parseCityFilter(filters.city))) return true
   if (filters.minPrice && filters.minPrice !== 'any') return true
   if (filters.maxPrice && filters.maxPrice !== 'any') return true
-  if (filters.bedrooms && filters.bedrooms !== 'any') return true
-  if (parseStatusFilter(filters.status).length > 0) return true
+  if (isCountFilterActive(filters.bedrooms, filters.bedroomsCustom)) return true
+  if (isCountFilterActive(filters.bathrooms, filters.bathroomsCustom)) return true
   if (parseFeaturesFilter(filters.features).length > 0) return true
-  if (filters.deliveryDate?.trim()) return true
-
-  const distance = filters.distanceToSea?.trim()
-  if (distance && distance !== '1000000') return true
   if (filters.mapReferences?.length) return true
 
   return false

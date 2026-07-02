@@ -1,6 +1,6 @@
 /**
  * Converts CRM listing bodies ({ options, query }) into GET /v3/properties/ query params.
- * Matches Optima PHP: status[]=…, sale=1, orderby=featured,-1, page_size, remove_count=1, etc.
+ * Matches Optima GET API: status[]=…, sale=1, orderby[]=field,ASC, page_size, etc.
  *
  * POST /commercial_properties accepted Mongo-style filters (archived, has_images, etc.).
  * GET /v3/properties only documents flat query params — drop unsupported Mongo keys.
@@ -16,11 +16,24 @@ const serializePrimitive = (value: unknown): string => {
 const serializeCRMValue = (params: URLSearchParams, key: string, value: unknown): void => {
   if (value === null || value === undefined) return
 
+  const isLogicalOperatorArrayKey =
+    key === '$and' ||
+    key === '$or' ||
+    key === '$nor' ||
+    key.endsWith('[$and]') ||
+    key.endsWith('[$or]') ||
+    key.endsWith('[$nor]')
+
   if (Array.isArray(value)) {
-    if (key === '$and' || key === '$or' || key === '$nor') {
+    // `$and`/`$or`/`$nor` values are arrays of objects. When nested,
+    // the key can look like `$and[0][$or]` — detect those too to avoid
+    // serializing objects as `"[object Object]"`.
+    if (isLogicalOperatorArrayKey) {
       value.forEach((item, index) => {
         if (item && typeof item === 'object' && !Array.isArray(item)) {
           serializeCRMQueryObject(params, `${key}[${index}]`, item as Record<string, unknown>)
+        } else {
+          params.append(`${key}[]`, serializePrimitive(item))
         }
       })
       return
@@ -81,24 +94,28 @@ export const serializeCRMQueryObject = (
   }
 }
 
-const formatSortDirection = (value: unknown): string => {
-  if (value === true) return '-1'
-  if (value === false) return '1'
-  if (value === 1 || value === '1') return '1'
-  if (value === -1 || value === '-1') return '-1'
-  return String(value)
-}
-
-/** `{ featured: -1, updated_at: -1 }` → `featured,-1,updated_at,-1` */
-export const formatCRMOrderby = (sort: Record<string, unknown>): string => {
-  const parts: string[] = []
-
-  for (const [field, direction] of Object.entries(sort)) {
-    parts.push(field, formatSortDirection(direction))
+const formatSortDirection = (value: unknown): 'ASC' | 'DESC' => {
+  if (typeof value === 'string') {
+    const upper = value.trim().toUpperCase()
+    if (upper === 'ASC' || upper === 'DESC') return upper
   }
 
-  return parts.join(',')
+  if (value === true || value === -1 || value === '-1') return 'DESC'
+  if (value === false || value === 1 || value === '1' || value === 0 || value === '0') return 'ASC'
+
+  const numeric = Number(value)
+  if (Number.isFinite(numeric)) return numeric < 0 ? 'DESC' : 'ASC'
+
+  return 'DESC'
 }
+
+/** `{ current_price: -1 }` → `['current_price,DESC']` for GET `orderby[]` params. */
+export const formatCRMOrderbyEntries = (sort: Record<string, unknown>): string[] =>
+  Object.entries(sort).map(([field, direction]) => `${field},${formatSortDirection(direction)}`)
+
+/** @deprecated Prefer formatCRMOrderbyEntries — GET API uses orderby[] with ASC/DESC. */
+export const formatCRMOrderby = (sort: Record<string, unknown>): string =>
+  formatCRMOrderbyEntries(sort).join(';')
 
 export const crmListingBodyToSearchParams = (body: Record<string, unknown>): URLSearchParams => {
   const params = new URLSearchParams()
@@ -119,11 +136,13 @@ export const crmListingBodyToSearchParams = (body: Record<string, unknown>): URL
   const sortFromBody =
     body.sort && typeof body.sort === 'object' ? (body.sort as Record<string, unknown>) : undefined
   const sort = sortFromOptions ?? sortFromBody
+  const orderbyEntries =
+    sort && Object.keys(sort).length > 0
+      ? formatCRMOrderbyEntries(sort)
+      : ['created_at,DESC']
 
-  if (sort && Object.keys(sort).length > 0) {
-    params.set('orderby', formatCRMOrderby(sort))
-  } else {
-    params.set('orderby', 'featured,-1')
+  for (const entry of orderbyEntries) {
+    params.append('orderby[]', entry)
   }
 
   serializeCRMQueryObject(params, '', query)

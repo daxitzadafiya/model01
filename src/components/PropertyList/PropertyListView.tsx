@@ -19,11 +19,15 @@ import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import {
   buildCRMListingQuery,
   fetchCRMProperties,
+  fetchCRMPropertiesPost,
+  needsCRMPropertiesPost,
   normalizeCRMListProperty,
   resolveListingModeFromPreset,
   type CRMListingPreset,
   type PropertyListFilters,
 } from '@/utilities/crmProperties'
+import { hasMapAreaReferences } from '@/utilities/propertyMapFilters'
+import { DEFAULT_PROPERTY_FILTER_OPTIONS } from '@/utilities/propertyFilterOptions.shared'
 import { EMPTY_PROPERTY_FILTERS, hasAppliedPropertyFilters } from './filterOptions'
 import { useSortOptions } from './useFilterOptionLabels'
 import { PropertyListFilters as FiltersBar } from './PropertyListFilters'
@@ -34,7 +38,12 @@ import {
   stripPropertyFilterSearchParams,
   takePendingPropertyListFilters,
 } from './propertyFilterUrl'
-import { buildPropertyListListingHref } from './propertyListUrl'
+import {
+  buildPropertyListListingHref,
+  parseOrderbyEntriesFromSearchParams,
+  parsePropertyListPage,
+  parsePropertyListSort,
+} from './propertyListUrl'
 import type { PropertyListInitialData } from './PropertyListServerData'
 import { useTranslation } from '@/utilities/translateClient'
 
@@ -58,6 +67,8 @@ type Props = {
 }
 
 const DEFAULT_PAGE_SIZE = 9
+const FALLBACK_SORT_OPTIONS = DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions
+const FALLBACK_DEFAULT_SORT = FALLBACK_SORT_OPTIONS[0]?.value ?? 'recent'
 
 export const PropertyListView: React.FC<Props> = (props) => (
   <PropertyFilterOptionsProvider>
@@ -100,8 +111,14 @@ const PropertyListViewInner: React.FC<Props> = ({
   const isServerManaged =
     serverManaged && !isFavoritesList && !filtersAreApplied && !pendingFiltersApplied
 
-  const [page, setPage] = useState(initialData?.page ?? 1)
-  const [sort, setSort] = useState(initialData?.sort ?? '')
+  const sortOptionsForUrl = sortOptions.length ? sortOptions : FALLBACK_SORT_OPTIONS
+  const sortFromUrl = useMemo(
+    () => parsePropertyListSort(searchParams, FALLBACK_DEFAULT_SORT, sortOptionsForUrl),
+    [searchParams, sortOptionsForUrl],
+  )
+
+  const [page, setPage] = useState(initialData?.page ?? parsePropertyListPage(searchParams))
+  const [sort, setSort] = useState(initialData?.sort ?? sortFromUrl ?? FALLBACK_DEFAULT_SORT)
   const [rawProperties, setRawProperties] = useState<Record<string, unknown>[]>(
     initialData?.properties ?? [],
   )
@@ -122,10 +139,24 @@ const PropertyListViewInner: React.FC<Props> = ({
     useCRMPropertyTypeOptions(filterPreset)
   const { coasts, loading: coastsLoading } = useCRMCoasts()
   const { cities, loading: citiesLoading } = useCRMCities(filters.coast, coasts, filterPreset)
+  const sortParams = useMemo(
+    () => sortOptions.find((option) => option.value === sort)?.sort,
+    [sort, sortOptions],
+  )
+  const sortParamsKey = useMemo(() => JSON.stringify(sortParams ?? {}), [sortParams])
+  const stableSortParams = useMemo<Record<string, unknown> | undefined>(() => {
+    if (sortParamsKey === '{}' || !sortParamsKey) return undefined
+    try {
+      return JSON.parse(sortParamsKey) as Record<string, unknown>
+    } catch {
+      return undefined
+    }
+  }, [sortParamsKey])
 
   const favoritesSyncReadyRef = useRef(false)
   const pageAdjustedByFavoritesSyncRef = useRef(false)
   const fetchGenerationRef = useRef(0)
+  const defaultOrderbySeededRef = useRef(false)
 
   const displayTotal =
     isFavoritesList && hasFavoriteIds && !filtersAreApplied ? favoriteIds.length : total
@@ -133,8 +164,8 @@ const PropertyListViewInner: React.FC<Props> = ({
 
   const getListingHref = useCallback(
     (updates: { page?: number; sort?: string | null }) =>
-      buildPropertyListListingHref(pathname, updates, searchParams),
-    [pathname, searchParams],
+      buildPropertyListListingHref(pathname, updates, searchParams, sortOptionsForUrl),
+    [pathname, searchParams, sortOptionsForUrl],
   )
 
   const navigateServerListing = useCallback(
@@ -190,24 +221,65 @@ const PropertyListViewInner: React.FC<Props> = ({
 
   /** Apply server-rendered listing (page, sort, properties). */
   useEffect(() => {
+    if (!isServerManaged) return
+
     if (!initialData || !serverDataReady) {
-      if (isServerManaged) setLoading(true)
+      setLoading(true)
       return
     }
 
     setPage(initialData.page)
-    setSort(initialData.sort)
+    setSort(initialData.sort || sortFromUrl || FALLBACK_DEFAULT_SORT)
     setRawProperties(initialData.properties)
     setTotal(initialData.total)
     setLoading(false)
-  }, [initialData, isServerManaged, serverDataReady])
+  }, [initialData, isServerManaged, serverDataReady, sortFromUrl])
 
+  /** Keep sort dropdown aligned with URL (client-managed listings). */
   useEffect(() => {
     if (!sortOptions.length || isServerManaged) return
-    setSort((current) =>
-      sortOptions.some((option) => option.value === current) ? current : sortOptions[0].value,
+    setSort((current) => {
+      const fromUrl = parsePropertyListSort(searchParams, FALLBACK_DEFAULT_SORT, sortOptions)
+      return current === fromUrl ? current : fromUrl
+    })
+  }, [isServerManaged, searchParams, sortOptions])
+
+  /** Seed default orderby[] in URL so refresh keeps the same CRM sort. */
+  useEffect(() => {
+    defaultOrderbySeededRef.current = false
+  }, [pathname])
+
+  useEffect(() => {
+    if (!filtersHydrated || isFavoritesList) return
+    if (defaultOrderbySeededRef.current) return
+
+    const orderbyEntries = parseOrderbyEntriesFromSearchParams(searchParams)
+    if (orderbyEntries.length > 0) {
+      defaultOrderbySeededRef.current = true
+      return
+    }
+
+    if (!sortOptionsForUrl.length) return
+
+    defaultOrderbySeededRef.current = true
+    const defaultSort = sortOptionsForUrl[0]?.value ?? FALLBACK_DEFAULT_SORT
+    const currentSort = sort || defaultSort
+    router.replace(
+      getListingHref({
+        page: parsePropertyListPage(searchParams),
+        sort: currentSort,
+      }),
+      { scroll: false },
     )
-  }, [isServerManaged, sortOptions])
+  }, [
+    filtersHydrated,
+    getListingHref,
+    isFavoritesList,
+    router,
+    searchParams,
+    sort,
+    sortOptionsForUrl,
+  ])
 
   /** Hero search → listing: sessionStorage filters (client fetch only). */
   useEffect(() => {
@@ -235,9 +307,15 @@ const PropertyListViewInner: React.FC<Props> = ({
       return
     }
 
-    if (!sort) return
+    if (
+      !sort &&
+      !hasMapAreaReferences(appliedFilters) &&
+      !(isFavoritesList && favoriteIds.length > 0)
+    ) {
+      setLoading(false)
+      return
+    }
 
-    const sortParams = sortOptions.find((option) => option.value === sort)?.sort
     const controller = new AbortController()
     const generation = ++fetchGenerationRef.current
 
@@ -247,16 +325,26 @@ const PropertyListViewInner: React.FC<Props> = ({
       if (showSkeleton) setLoading(true)
 
       try {
-        const body = buildCRMListingQuery({
+        const usePostListing = needsCRMPropertiesPost({
+          filters: appliedFilters,
+          preset: listingPreset,
+          favoriteIds: isFavoritesList ? favoriteIds : undefined,
+        })
+        const listingBody = buildCRMListingQuery({
           preset: listingPreset,
           page,
           pageSize,
           filters: appliedFilters,
           restrictToFavoriteIds: isFavoritesList ? favoriteIds : undefined,
-          sortParams,
+          sortParams: stableSortParams,
         })
-
-        const result = await fetchCRMProperties({ body, signal: controller.signal })
+        const result = usePostListing
+          ? await fetchCRMPropertiesPost({
+              body: listingBody,
+              signal: controller.signal,
+              reason: isFavoritesList ? 'favorites' : 'map-area',
+            })
+          : await fetchCRMProperties({ body: listingBody, signal: controller.signal })
         if (controller.signal.aborted || generation !== fetchGenerationRef.current) return
 
         setRawProperties(result.properties as Record<string, unknown>[])
@@ -286,7 +374,8 @@ const PropertyListViewInner: React.FC<Props> = ({
     page,
     pageSize,
     sort,
-    sortOptions,
+    sortParamsKey,
+    stableSortParams,
   ])
 
   /** Favorites: adjust page after unfavoriting. */
@@ -332,17 +421,23 @@ const PropertyListViewInner: React.FC<Props> = ({
     setAppliedFilters(normalized)
     setPage(1)
     setLoading(true)
-    router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
+    if (isServerManaged) {
+      router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
+    }
   }
 
   const handleSortChange = (nextSort: string) => {
+    const href = getListingHref({ page: 1, sort: nextSort })
+
     if (isServerManaged) {
-      navigateServerListing(getListingHref({ page: 1, sort: nextSort }))
+      navigateServerListing(href)
       return
     }
+
     setSort(nextSort)
     setPage(1)
     setLoading(true)
+    router.replace(href, { scroll: false })
   }
 
   const handlePageChange = (nextPage: number) => {
@@ -356,6 +451,7 @@ const PropertyListViewInner: React.FC<Props> = ({
 
     setPage(nextPage)
     setLoading(true)
+    router.replace(getListingHref({ page: nextPage }), { scroll: false })
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
   }
 
@@ -369,7 +465,9 @@ const PropertyListViewInner: React.FC<Props> = ({
     setAppliedFilters(nextFilters)
     setPage(1)
     setLoading(true)
-    router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
+    if (isServerManaged) {
+      router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
+    }
   }
 
   const resultsText = useMemo(() => {

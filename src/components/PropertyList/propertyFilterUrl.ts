@@ -6,7 +6,6 @@ import {
   parseCoastFilter,
   parseFeaturesFilter,
   parsePropertyTypeFilter,
-  parseStatusFilter,
 } from './filterOptions'
 
 const PENDING_FILTERS_STORAGE_KEY = 'propertyList.pendingFilters'
@@ -26,10 +25,10 @@ export const normalizePropertyListFilters = (
   minPrice: filters.minPrice && filters.minPrice !== 'any' ? filters.minPrice : 'any',
   maxPrice: filters.maxPrice && filters.maxPrice !== 'any' ? filters.maxPrice : 'any',
   bedrooms: filters.bedrooms && filters.bedrooms !== 'any' ? filters.bedrooms : 'any',
-  status: parseStatusFilter(filters.status),
+  bedroomsCustom: filters.bedroomsCustom?.trim() ?? '',
+  bathrooms: filters.bathrooms && filters.bathrooms !== 'any' ? filters.bathrooms : 'any',
+  bathroomsCustom: filters.bathroomsCustom?.trim() ?? '',
   features: parseFeaturesFilter(filters.features),
-  deliveryDate: filters.deliveryDate?.trim() ?? '',
-  distanceToSea: filters.distanceToSea?.trim() ?? '',
   mapReferences: Array.isArray(filters.mapReferences)
     ? filters.mapReferences.filter(Boolean)
     : [],
@@ -113,14 +112,10 @@ export const serializePropertyFiltersToSearchParams = (
   if (filters.maxPrice && filters.maxPrice !== 'any') params.set('maxPrice', filters.maxPrice)
 
   if (filters.bedrooms && filters.bedrooms !== 'any') params.set('bedrooms', filters.bedrooms)
-  if (filters.status?.length) params.set('status', filters.status.join(','))
+  if (filters.bedroomsCustom?.trim()) params.set('bedroomsCustom', filters.bedroomsCustom.trim())
+  if (filters.bathrooms && filters.bathrooms !== 'any') params.set('bathrooms', filters.bathrooms)
+  if (filters.bathroomsCustom?.trim()) params.set('bathroomsCustom', filters.bathroomsCustom.trim())
   if (filters.features?.length) params.set('features', filters.features.join(','))
-
-  const deliveryDate = filters.deliveryDate?.trim()
-  if (deliveryDate) params.set('deliveryDate', deliveryDate)
-
-  const distanceToSea = filters.distanceToSea?.trim()
-  if (distanceToSea) params.set('distanceToSea', distanceToSea)
 
   return params
 }
@@ -156,17 +151,17 @@ export const parsePropertyFiltersFromSearchParams = (
   const bedrooms = searchParams.get('bedrooms')
   if (bedrooms) filters.bedrooms = bedrooms
 
-  const status = splitCsv(searchParams.get('status'))
-  if (status.length) filters.status = status
+  const bedroomsCustom = searchParams.get('bedroomsCustom')
+  if (bedroomsCustom) filters.bedroomsCustom = bedroomsCustom
+
+  const bathrooms = searchParams.get('bathrooms')
+  if (bathrooms) filters.bathrooms = bathrooms
+
+  const bathroomsCustom = searchParams.get('bathroomsCustom')
+  if (bathroomsCustom) filters.bathroomsCustom = bathroomsCustom
 
   const features = splitCsv(searchParams.get('features'))
   if (features.length) filters.features = features
-
-  const deliveryDate = searchParams.get('deliveryDate')
-  if (deliveryDate) filters.deliveryDate = deliveryDate
-
-  const distanceToSea = searchParams.get('distanceToSea')
-  if (distanceToSea) filters.distanceToSea = distanceToSea
 
   return filters
 }

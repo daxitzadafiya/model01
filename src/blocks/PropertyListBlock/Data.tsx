@@ -14,6 +14,7 @@ type Props = {
   resolvedPageSize: number
   page: number
   sortValue?: string | null
+  orderbyEntries?: string[]
   listingKey: string
 }
 
@@ -22,9 +23,10 @@ export async function PropertyListBlockData({
   resolvedPageSize,
   page,
   sortValue,
+  orderbyEntries = [],
   listingKey,
 }: Props) {
-  const defaultSort = DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions[0]?.value ?? 'relevance'
+  const defaultSort = DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions[0]?.value ?? 'recent'
   let initialData: PropertyListInitialData = {
     page,
     properties: [],
@@ -40,6 +42,7 @@ export async function PropertyListBlockData({
         pageSize: resolvedPageSize,
         page,
         sortValue,
+        orderbyEntries,
       })
       if (fetched) initialData = fetched
     } catch (error) {

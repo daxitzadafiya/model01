@@ -81,6 +81,7 @@ export async function crmServerFetch(url: string, init?: RequestInit): Promise<R
   }
 
   try {
+    console.log('crmServerFetch:::url >>>>', url)
     return await fetch(url, init)
   } catch (error) {
     const causeMessage =

@@ -160,8 +160,8 @@ export const PropertyFilters: GlobalConfig = {
         description: 'Options for the property list “Sort by” dropdown. Each row maps to CRM options.sort.',
       },
       defaultValue: [
-        { value: 'relevance', label: 'Relevance', sortParams: '{"featured": -1}' },
         { value: 'recent', label: 'Recent', sortParams: '{"created_at": -1}' },
+        { value: 'relevance', label: 'Relevance', sortParams: '{"featured": -1}' },
         { value: 'priceAsc', label: 'Lowest Price', sortParams: '{"current_price": 1}' },
         { value: 'priceDesc', label: 'Highest Price', sortParams: '{"current_price": -1}' },
       ],
@@ -190,21 +190,48 @@ export const PropertyFilters: GlobalConfig = {
         filterArrayField({
           name: 'bedrooms',
           label: 'Bedrooms',
-          admin: { width: COL_THIRD },
+          admin: {
+            width: COL_HALF,
+            description: 'Exact bedroom counts. Use value "other" for the custom-number option.',
+          },
           defaultValue: [
             { value: 'any', label: 'Any Bedrooms' },
-            { value: '1', label: '1+' },
-            { value: '2', label: '2+' },
-            { value: '3', label: '3+' },
-            { value: '4', label: '4+' },
-            { value: '5', label: '5+' },
+            { value: '1', label: '1' },
+            { value: '2', label: '2' },
+            { value: '3', label: '3' },
+            { value: '4', label: '4' },
+            { value: '5', label: '5' },
+            { value: 'other', label: 'Other' },
           ],
           fields: filterOptionFields,
         }),
         filterArrayField({
+          name: 'bathrooms',
+          label: 'Bathrooms',
+          admin: {
+            width: COL_HALF,
+            description: 'Exact bathroom counts. Use value "other" for the custom-number option.',
+          },
+          defaultValue: [
+            { value: 'any', label: 'Any Bathrooms' },
+            { value: '1', label: '1' },
+            { value: '2', label: '2' },
+            { value: '3', label: '3' },
+            { value: '4', label: '4' },
+            { value: '5', label: '5' },
+            { value: 'other', label: 'Other' },
+          ],
+          fields: filterOptionFields,
+        }),
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        filterArrayField({
           name: 'minPrices',
           label: 'Min price',
-          admin: { width: COL_THIRD },
+          admin: { width: COL_HALF },
           defaultValue: [
             { value: 'any', label: 'Any Min Price' },
             { value: '500000', label: '€500,000' },
@@ -217,7 +244,7 @@ export const PropertyFilters: GlobalConfig = {
         filterArrayField({
           name: 'maxPrices',
           label: 'Max price',
-          admin: { width: COL_THIRD },
+          admin: { width: COL_HALF },
           defaultValue: [
             { value: 'any', label: 'Any Max Price' },
             { value: '1000000', label: '€1,000,000' },
@@ -233,72 +260,16 @@ export const PropertyFilters: GlobalConfig = {
       type: 'row',
       fields: [
         filterArrayField({
-          name: 'statuses',
-          label: 'Status',
-          admin: {
-            width: COL_HALF,
-            description: 'Values must be "project" (new development) or "resale".',
-          },
-          defaultValue: [
-            { value: 'project', label: 'New development' },
-            { value: 'resale', label: 'Resale' },
-          ],
-          fields: filterOptionFields,
-        }),
-        filterArrayField({
           name: 'features',
           label: 'Features',
           admin: {
-            width: COL_HALF,
+            width: '100%',
             description: 'Values must be "sea views", "mountain", or "golf".',
           },
           defaultValue: [
             { value: 'sea views', label: 'Sea view' },
             { value: 'mountain', label: 'Mountain' },
             { value: 'golf', label: 'Golf' },
-          ],
-          fields: filterOptionFields,
-        }),
-      ],
-    },
-    {
-      type: 'row',
-      fields: [
-        filterArrayField({
-          name: 'deliveryDates',
-          label: 'Delivery date',
-          admin: {
-            width: COL_HALF,
-            description:
-              'Empty value = placeholder. Other values are months (1 = handover, 3, 6, 12, 18, 60).',
-          },
-          defaultValue: [
-            { value: '', label: 'Delivery date' },
-            { value: '1', label: 'Handover' },
-            { value: '3', label: '3 months' },
-            { value: '6', label: '6 months' },
-            { value: '12', label: '12 months' },
-            { value: '18', label: '18 months' },
-            { value: '60', label: '18 months or older' },
-          ],
-          fields: filterOptionFields,
-        }),
-        filterArrayField({
-          name: 'distanceToSea',
-          label: 'Distance to the sea',
-          admin: {
-            width: COL_HALF,
-            description:
-              'Empty value = placeholder. Distances in meters. Use 1000000 for "indifferent".',
-          },
-          defaultValue: [
-            { value: '', label: 'Distance to the sea' },
-            { value: '600', label: 'Less than 600 m' },
-            { value: '1000', label: 'Less than 1 km' },
-            { value: '3000', label: 'Less than 3 km' },
-            { value: '6000', label: 'Less than 6 km' },
-            { value: '12000', label: 'Less than 12 km' },
-            { value: '1000000', label: 'Indifferent' },
           ],
           fields: filterOptionFields,
         }),

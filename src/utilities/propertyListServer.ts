@@ -9,15 +9,17 @@ export async function fetchPropertyListServerData({
   pageSize,
   page,
   sortValue,
+  orderbyEntries = [],
 }: {
   preset: CRMListingPreset
   pageSize: number
   page: number
   sortValue?: string | null
+  orderbyEntries?: string[]
 }): Promise<PropertyListInitialData | null> {
   if (preset === 'favorites') return null
 
-  const sortOption = await resolveListingSortOption(sortValue)
+  const sortOption = await resolveListingSortOption(sortValue, undefined, orderbyEntries)
 
   const body = buildCRMListingQuery({
     preset,

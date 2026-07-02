@@ -32,6 +32,12 @@ export function useBedroomOptions() {
   return useTranslatedOptions(bedrooms, 'propertyList.filters.bedrooms')
 }
 
+export function useBathroomOptions() {
+  const { bathrooms } = usePropertyFilterOptions()
+
+  return useTranslatedOptions(bathrooms, 'propertyList.filters.bathrooms')
+}
+
 export function useMinPriceOptions() {
   const { minPrices } = usePropertyFilterOptions()
 
@@ -44,26 +50,8 @@ export function useMaxPriceOptions() {
   return useTranslatedOptions(maxPrices, 'propertyList.filters.maxPrice')
 }
 
-export function useStatusFilterOptions() {
-  const { statuses } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(statuses, 'propertyList.filters.status')
-}
-
 export function useFeatureFilterOptions() {
   const { features } = usePropertyFilterOptions()
 
   return useTranslatedOptions(features, 'propertyList.filters.features')
-}
-
-export function useDeliveryOptions() {
-  const { deliveryDates } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(deliveryDates, 'propertyList.filters.deliveryDate')
-}
-
-export function useDistanceOptions() {
-  const { distanceToSea } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(distanceToSea, 'propertyList.filters.distanceToSea')
 }

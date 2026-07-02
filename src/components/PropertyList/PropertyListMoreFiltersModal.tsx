@@ -1,19 +1,7 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import {
-  Banknote,
-  Bed,
-  Calendar,
-  Home,
-  ListFilter,
-  RotateCcw,
-  Search,
-  Sparkles,
-  Tag,
-  Waves,
-  X,
-} from 'lucide-react'
+import { Banknote, Bath, Bed, Home, RotateCcw, Search, Sparkles, Tag, X } from 'lucide-react'
 
 import { FilterSelect } from '@/components/FilterSelect'
 import type { FilterSelectOption } from '@/components/FilterSelect'
@@ -21,19 +9,14 @@ import { CoastCityFilterFields } from '@/components/CoastCityFilterFields'
 import type { CRMCityOption, CRMCoastOption } from '@/utilities/crmCoasts'
 import type { PropertyListFilters as Filters } from '@/utilities/crmProperties'
 import type { FloatingMenuPlacement } from '@/utilities/floatingMenuPosition'
+import { CountFilterField } from './CountFilterField'
+import { parseFeaturesFilter, parsePropertyTypeFilter } from './filterOptions'
 import {
-  parseFeaturesFilter,
-  parsePropertyTypeFilter,
-  parseStatusFilter,
-} from './filterOptions'
-import {
+  useBathroomOptions,
   useBedroomOptions,
-  useDeliveryOptions,
-  useDistanceOptions,
   useFeatureFilterOptions,
   useMaxPriceOptions,
   useMinPriceOptions,
-  useStatusFilterOptions,
 } from './useFilterOptionLabels'
 import { useTranslation } from '@/utilities/translateClient'
 
@@ -101,17 +84,15 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
   const bedroomsLabel = useTranslation('propertyList.filters.bedrooms', 'Bedrooms')
+  const bathroomsLabel = useTranslation('propertyList.filters.bathrooms', 'Bathrooms')
+  const countCustomPlaceholder = useTranslation(
+    'propertyList.filters.countCustom.placeholder',
+    'Enter number',
+  )
   const minPriceLabel = useTranslation('propertyList.filters.minPrice', 'Min Price')
   const maxPriceLabel = useTranslation('propertyList.filters.maxPrice', 'Max Price')
-  const stateLabel = useTranslation('propertyList.filters.state', 'State')
-  const stateEmptyLabel = useTranslation('propertyList.filters.state.emptyLabel', 'State')
   const featuresLabel = useTranslation('propertyList.filters.features', 'Features')
   const featuresEmptyLabel = useTranslation('propertyList.filters.features.emptyLabel', 'Features')
-  const deliveryDateLabel = useTranslation('propertyList.filters.deliveryDate', 'Delivery Date')
-  const distanceToSeaLabel = useTranslation(
-    'propertyList.filters.distanceToSea',
-    'Distance to the Sea',
-  )
   const clearFiltersLabel = useTranslation('propertyList.filters.clearFilters', 'Clear Filters')
   const searchLabel = useTranslation('propertyList.filters.search', 'Search')
   const closeFiltersAriaLabel = useTranslation(
@@ -120,12 +101,10 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   )
   const closeAriaLabel = useTranslation('propertyList.filters.closeAria', 'Close')
   const bedroomOptions = useBedroomOptions()
+  const bathroomOptions = useBathroomOptions()
   const minPriceOptions = useMinPriceOptions()
   const maxPriceOptions = useMaxPriceOptions()
-  const statusFilterOptions = useStatusFilterOptions()
   const featureFilterOptions = useFeatureFilterOptions()
-  const deliveryOptions = useDeliveryOptions()
-  const distanceOptions = useDistanceOptions()
 
   useEffect(() => {
     if (!open) return
@@ -234,12 +213,30 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
             </div>
 
             <div className="min-w-0">
-              <ModalFieldSelect
+              <CountFilterField
+                id="filter-bedrooms"
                 label={bedroomsLabel}
                 value={filters.bedrooms ?? 'any'}
+                customValue={filters.bedroomsCustom ?? ''}
                 options={bedroomOptions}
-                onChange={(v) => onChange('bedrooms', v)}
+                onChange={(value) => onChange('bedrooms', value)}
+                onCustomChange={(value) => onChange('bedroomsCustom', value)}
+                customPlaceholder={countCustomPlaceholder}
                 icon={<Bed {...filterFieldIcon} />}
+              />
+            </div>
+
+            <div className="min-w-0">
+              <CountFilterField
+                id="filter-bathrooms"
+                label={bathroomsLabel}
+                value={filters.bathrooms ?? 'any'}
+                customValue={filters.bathroomsCustom ?? ''}
+                options={bathroomOptions}
+                onChange={(value) => onChange('bathrooms', value)}
+                onCustomChange={(value) => onChange('bathroomsCustom', value)}
+                customPlaceholder={countCustomPlaceholder}
+                icon={<Bath {...filterFieldIcon} />}
               />
             </div>
 
@@ -263,20 +260,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
               />
             </div>
 
-            <div className="min-w-0">
-              <FilterSelect
-                mode="multi"
-                label={stateLabel}
-                id="filter-state"
-                options={statusFilterOptions}
-                value={parseStatusFilter(filters.status)}
-                onChange={(value) => onChange('status', value)}
-                emptyLabel={stateEmptyLabel}
-                icon={<ListFilter {...filterFieldIcon} />}
-              />
-            </div>
-
-            <div className="min-w-0">
+            <div className="min-w-0 sm:col-span-2">
               <FilterSelect
                 mode="multi"
                 label={featuresLabel}
@@ -286,28 +270,6 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                 onChange={(value) => onChange('features', value)}
                 emptyLabel={featuresEmptyLabel}
                 icon={<Sparkles {...filterFieldIcon} />}
-              />
-            </div>
-
-            <div className="min-w-0">
-              <ModalFieldSelect
-                label={deliveryDateLabel}
-                value={filters.deliveryDate ?? ''}
-                options={deliveryOptions}
-                onChange={(v) => onChange('deliveryDate', v)}
-                menuPlacement="top"
-                icon={<Calendar {...filterFieldIcon} />}
-              />
-            </div>
-
-            <div className="min-w-0">
-              <ModalFieldSelect
-                label={distanceToSeaLabel}
-                value={filters.distanceToSea ?? ''}
-                options={distanceOptions}
-                onChange={(v) => onChange('distanceToSea', v)}
-                menuPlacement="top"
-                icon={<Waves {...filterFieldIcon} />}
               />
             </div>
           </div>

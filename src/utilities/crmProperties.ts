@@ -1,4 +1,4 @@
-import { getFromCRM } from '@/utilities/crmApi'
+import { getFromCRM, postToCRM } from '@/utilities/crmApi'
 import { crmListingBodyToSearchParams } from '@/utilities/crmPropertiesGetParams'
 import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import {
@@ -13,6 +13,7 @@ import {
   resolvePropertyListingMode,
   type PropertyListingMode,
 } from '@/utilities/propertyUrl'
+import { parseCountFilterValue } from '@/components/PropertyList/filterOptions'
 
 export type CRMListingPreset =
   | 'forSale'
@@ -35,12 +36,13 @@ export type PropertyListFilters = {
   minPrice?: string
   maxPrice?: string
   bedrooms?: string
-  /** Listing status filters: `project` (new development), `resale` */
-  status?: string[]
+  /** Custom bedroom count when `bedrooms` is `other` */
+  bedroomsCustom?: string
+  bathrooms?: string
+  /** Custom bathroom count when `bathrooms` is `other` */
+  bathroomsCustom?: string
   /** View features: `sea views`, `mountain`, `golf` */
   features?: string[]
-  deliveryDate?: string
-  distanceToSea?: string
   /** Property references selected via map polygon draw */
   mapReferences?: string[]
 }
@@ -307,24 +309,6 @@ const parsePriceBound = (value?: string): string | undefined => {
   return digits || undefined
 }
 
-const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-const buildReferenceOrQuery = (
-  reference: string,
-  referenceAsNumber = false,
-): Record<string, unknown>[] => {
-  const trimmed = reference.trim()
-  const regexPattern = `.*${escapeRegex(trimmed)}.*`
-  const numericRef = Number(trimmed)
-  const referenceValue = referenceAsNumber && Number.isFinite(numericRef) ? numericRef : trimmed
-
-  return [
-    { reference: referenceValue },
-    { other_reference: { $regex: regexPattern, $options: 'i' } },
-    { external_reference: { $regex: regexPattern, $options: 'i' } },
-  ]
-}
-
 /**
  * Merge CRM query objects. Simple fields (sale, status, location, …) stay at the top level.
  * `$and` / `$or` / `$nor` are preserved as `$and` entries so status filters match live CRM:
@@ -497,28 +481,13 @@ export const PROPERTY_LISTING_STATUS_VALUES = ['project', 'resale'] as const
 
 export const PROPERTY_LISTING_FEATURE_VALUES = ['sea views', 'mountain', 'golf'] as const
 
-const buildSinglePropertyListingFeatureQuery = (
-  feature: string,
-): Record<string, unknown> | null => {
-  switch (feature) {
-    case 'sea views':
-      return { 'views.sea': true }
-    case 'mountain':
-      return { 'views.mountain': true }
-    case 'golf':
-      return { 'views.golf': true }
-    default:
-      return null
-  }
+const FEATURE_TO_VIEW_PARAM: Record<string, string> = {
+  'sea views': 'sea',
+  mountain: 'mountain',
+  golf: 'golf',
 }
 
-/**
- * View feature filters (multi-select).
- * Live CRM: `$and: [{ $or: [{ views.sea: true }, { views.mountain: true }, …] }]`
- */
-export const buildPropertyListingFeatureQuery = (
-  features?: string | string[],
-): Record<string, unknown> | null => {
+const buildFeatureViewsParam = (features?: string | string[]): string[] | undefined => {
   const values = Array.from(
     new Set(
       (Array.isArray(features)
@@ -530,14 +499,13 @@ export const buildPropertyListingFeatureQuery = (
     ),
   )
 
-  if (values.length === 0) return null
+  if (values.length === 0) return undefined
 
-  const orItems = values
-    .map((value) => buildSinglePropertyListingFeatureQuery(value))
-    .filter((clause): clause is Record<string, unknown> => clause !== null)
+  const views = values
+    .map((value) => FEATURE_TO_VIEW_PARAM[value])
+    .filter((value): value is string => Boolean(value))
 
-  if (orItems.length === 0) return null
-  return { $or: orItems }
+  return views.length > 0 ? views : undefined
 }
 
 /** New development / resale filters for the property list Status field (multi-select). */
@@ -569,18 +537,19 @@ export const buildPropertyListingStatusQuery = (
 export type BuildFilterQueryOptions = {
   /** find-all expects numeric `reference` values; default listing API uses strings */
   referenceAsNumber?: boolean
+  /** Map polygon refs use find-all POST (`reference: { $in }`); omit from GET listing queries */
+  includeMapReferences?: boolean
 }
 
 export const buildFilterQuery = (
   filters: PropertyListFilters,
   options: BuildFilterQueryOptions = {},
 ): Record<string, unknown> => {
-  const { referenceAsNumber = false } = options
+  const { referenceAsNumber = false, includeMapReferences = false } = options
   const query: Record<string, unknown> = {}
   const andClauses: Record<string, unknown>[] = []
-  const orGroups: Record<string, unknown>[][] = []
 
-  if (filters.mapReferences?.length) {
+  if (includeMapReferences && filters.mapReferences?.length) {
     const refs = [...new Set(filters.mapReferences.map((ref) => ref.trim()).filter(Boolean))]
     const numericRefs = refs.map((ref) => Number(ref)).filter((value) => Number.isFinite(value))
     const stringRefs = refs.filter((ref) => !Number.isFinite(Number(ref)))
@@ -595,7 +564,9 @@ export const buildFilterQuery = (
       andClauses.push({ $or: orClauses })
     }
   } else if (filters.reference?.trim()) {
-    orGroups.push(buildReferenceOrQuery(filters.reference, referenceAsNumber))
+    const trimmedRef = filters.reference.trim()
+    const numericRef = Number(trimmedRef)
+    query.reference = referenceAsNumber && Number.isFinite(numericRef) ? numericRef : trimmedRef
   }
 
   if (filters.propertyType?.length) {
@@ -625,44 +596,30 @@ export const buildFilterQuery = (
     query.city = { $in: cityKeys }
   }
 
-  const statusClause = buildPropertyListingStatusQuery(filters.status)
-  if (statusClause) andClauses.push(statusClause)
+  const views = buildFeatureViewsParam(filters.features)
+  if (views) query.views = views
 
-  const featureClause = buildPropertyListingFeatureQuery(filters.features)
-  if (featureClause) andClauses.push(featureClause)
-
-  const distanceClause = buildPropertyListingDistanceQuery(filters.distanceToSea)
-  if (distanceClause) andClauses.push(distanceClause)
-
-  for (const group of orGroups) {
-    andClauses.push({ $or: group })
-  }
-
-  const hasLogicalClause = Boolean(statusClause || featureClause || distanceClause)
-  if (andClauses.length === 1 && orGroups.length === 1 && !hasLogicalClause) {
-    query.$or = orGroups[0]
-  } else if (andClauses.length > 0) {
+  if (andClauses.length > 0) {
     query.$and = andClauses
   }
 
   const minPrice = parsePriceBound(filters.minPrice)
   const maxPrice = parsePriceBound(filters.maxPrice)
   if (minPrice !== undefined || maxPrice !== undefined) {
-    const priceQuery: Record<string, string> = {}
-    if (minPrice !== undefined) priceQuery.$gte = minPrice
-    if (maxPrice !== undefined) priceQuery.$lte = maxPrice
-    query.current_price = priceQuery
+    const priceMin = minPrice !== undefined ? Number(minPrice) : 0
+    const priceMax = maxPrice !== undefined ? Number(maxPrice) : 999_999_999
+    query.current_price = [priceMin, priceMax]
   }
 
-  if (filters.bedrooms && filters.bedrooms !== 'any') {
-    const minBeds = parseInt(filters.bedrooms.replace(/\D/g, ''), 10)
-    if (Number.isFinite(minBeds)) {
-      query.bedrooms = { $gte: minBeds }
-    }
+  const bedroomCount = parseCountFilterValue(filters.bedrooms, filters.bedroomsCustom)
+  if (bedroomCount !== undefined) {
+    query.bedrooms = bedroomCount
   }
 
-  const deliveryQuery = buildPropertyListingDeliveryQuery(filters.deliveryDate)
-  if (deliveryQuery) Object.assign(query, deliveryQuery)
+  const bathroomCount = parseCountFilterValue(filters.bathrooms, filters.bathroomsCustom)
+  if (bathroomCount !== undefined) {
+    query.bathrooms = bathroomCount
+  }
 
   return query
 }
@@ -714,7 +671,11 @@ export const buildCRMListingQuery = ({
 }): Record<string, unknown> => {
   const similarCommercials = getSimilarCommercialsQuery()
   const paginationOptions = buildCRMPageOptions(page, pageSize)
-  const filterQuery = buildFilterQuery(filters)
+  const hasMapRefs = Boolean(filters.mapReferences?.length)
+  const filterQuery = buildFilterQuery(filters, {
+    includeMapReferences: hasMapRefs,
+    referenceAsNumber: hasMapRefs,
+  })
 
   if (preset === 'custom' && typeof crmQueryJson === 'string' && crmQueryJson.trim()) {
     const parsedQuery = parseCRMCustomQuery(crmQueryJson)
@@ -999,6 +960,24 @@ export const sortProperties = (
   })
 }
 
+/**
+ * POST commercial_properties — required when GET cannot express multi-value filters
+ * (map polygon `reference: { $in }`, favorites `_id: { $in }`).
+ */
+export function needsCRMPropertiesPost({
+  filters,
+  preset,
+  favoriteIds,
+}: {
+  filters?: PropertyListFilters
+  preset?: CRMListingPreset
+  favoriteIds?: (string | number)[]
+}): boolean {
+  if (filters?.mapReferences?.length) return true
+  if (preset === 'favorites' && favoriteIds?.length) return true
+  return false
+}
+
 /** GET /v3/properties/ using credentials from Globals → Optima CRM. */
 export async function fetchCRMProperties({
   body,
@@ -1009,7 +988,6 @@ export async function fetchCRMProperties({
 }): Promise<CRMFetchResult> {
   const searchParams = crmListingBodyToSearchParams(body)
   const response = await getFromCRM('properties', searchParams, { signal })
-
   if (!response.ok) {
     throw new Error(`CRM API failed (${response.status})`)
   }
@@ -1020,3 +998,65 @@ export async function fetchCRMProperties({
 
   return { properties: list, total }
 }
+
+/**
+ * POST commercial_properties — multi-value Mongo filters (map refs, favorite `_id`s).
+ * Main branch used this for map-area and favorites listings.
+ */
+export async function fetchCRMPropertiesPost({
+  body,
+  signal,
+  reason,
+}: {
+  body: Record<string, unknown>
+  signal?: AbortSignal
+  reason?: 'map-area' | 'favorites'
+}): Promise<CRMFetchResult> {
+  console.info('[CRM commercial_properties POST] request', {
+    reason: reason ?? 'multi-filter',
+    endpoint: 'commercial_properties',
+    options: body.options,
+    query: body.query,
+  })
+
+  const response = await postToCRM('commercial_properties', body, { signal })
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '')
+    console.error('[CRM commercial_properties POST] failed', {
+      reason: reason ?? 'multi-filter',
+      status: response.status,
+      body: errorText.slice(0, 500),
+    })
+    throw new Error(`CRM commercial_properties API failed (${response.status})`)
+  }
+
+  const data = (await response.json()) as unknown
+  const list = extractCRMList(data)
+  const total = extractCRMTotal(data, list.length)
+
+  console.info('[CRM commercial_properties POST] response', {
+    reason: reason ?? 'multi-filter',
+    count: list.length,
+    total,
+    references: list
+      .slice(0, 10)
+      .map((item) => item.reference)
+      .filter(Boolean),
+    ids: list
+      .slice(0, 10)
+      .map((item) => item._id)
+      .filter(Boolean),
+    payloadKeys:
+      data && typeof data === 'object' && !Array.isArray(data)
+        ? Object.keys(data as Record<string, unknown>)
+        : Array.isArray(data)
+          ? ['array']
+          : [],
+  })
+
+  return { properties: list, total }
+}
+
+/** @deprecated Use fetchCRMPropertiesPost */
+export const fetchCRMMapAreaProperties = fetchCRMPropertiesPost

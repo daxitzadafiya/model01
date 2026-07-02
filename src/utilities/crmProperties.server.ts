@@ -18,14 +18,7 @@ const CRM_LIST_REVALIDATE_SECONDS = 120
 async function fetchCRMPropertiesServerLive(
   searchParams: URLSearchParams,
 ): Promise<CRMFetchResult> {
-  const paramsWithSelectedFields = new URLSearchParams(searchParams)
-  paramsWithSelectedFields.set('selectedFields', '1')
-
-  let response = await getFromCRM('properties', paramsWithSelectedFields)
-  if (!response.ok) {
-    response = await getFromCRM('properties', searchParams)
-  }
-
+  let response = await getFromCRM('properties', searchParams)
   if (!response.ok) {
     throw new Error(`CRM API failed (${response.status})`)
   }

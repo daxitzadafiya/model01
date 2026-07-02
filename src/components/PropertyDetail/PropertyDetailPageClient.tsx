@@ -134,6 +134,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
 
         void (async () => {
           try {
+            console.log('fetching similar properties')
             const similarRaw = await fetchCRMSimilarProperties({
               property: raw,
               limit: 5,

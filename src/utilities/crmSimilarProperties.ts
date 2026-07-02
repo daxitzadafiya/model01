@@ -271,6 +271,7 @@ export async function fetchCRMSimilarProperties({
       listingContext,
       relaxGeoFilters,
     })
+    console.log('body >>>>', body)
     const { properties: batch } = await fetchCRMProperties({ body, signal })
     return filterOutCurrentProperty(batch, property)
   }

@@ -74,6 +74,8 @@ export async function getFromCRM(
   const endpoint = buildCRMEndpoint(path, config)
   const queryString = searchParams.toString()
   const url = queryString ? `${endpoint}&${queryString}` : endpoint
+
+  console.log('url >>>>', url)
   return crmServerFetch(url, {
     ...init,
     method: 'GET',

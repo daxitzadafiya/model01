@@ -315,7 +315,7 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
                 {loadedSlideIndices.has(index) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={`${src + '11111111111'} `}
+                    src={src}
                     alt={`${title} — image ${index + 1} of ${slides.length}`}
                     className="w-full h-full object-cover pointer-events-none"
                     draggable={false}
