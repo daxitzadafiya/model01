@@ -8,6 +8,7 @@ import { PropertyDetailView } from '@/components/PropertyDetail/PropertyDetailVi
 import { Skeleton } from '@/components/ui/skeleton'
 import { normalizeCRMAmenities, normalizeCRMPropertyEnergy } from '@/utilities/crmAmenities'
 import { fetchCRMPropertyDetail } from '@/utilities/crmPropertyDetail'
+import { takePropertyDetailFetchStatus } from '@/utilities/propertyDetailFetchStatus'
 import {
   fetchCRMSimilarProperties,
   isSimilarPropertySold,
@@ -104,8 +105,20 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
       setNotFoundState(false)
 
       try {
-        const raw = await fetchCRMPropertyDetail(reference, { signal: controller.signal })
+        const statuses = takePropertyDetailFetchStatus(reference)
+        let raw = await fetchCRMPropertyDetail(reference, {
+          statuses,
+          init: { signal: controller.signal },
+        })
         if (controller.signal.aborted) return
+
+        if (!raw && !statuses?.length) {
+          raw = await fetchCRMPropertyDetail(reference, {
+            statuses: ['Sold'],
+            init: { signal: controller.signal },
+          })
+          if (controller.signal.aborted) return
+        }
 
         if (!raw) {
           setNotFoundState(true)

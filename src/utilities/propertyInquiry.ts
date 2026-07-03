@@ -1,13 +1,32 @@
+import { isCRMTruthy } from '@/utilities/localizedValue'
+
 export type PropertyInquiryContext = {
   reference?: string
   /** CRM MongoDB _id */
   interestId?: string
   otherReference?: string
   assignedTo?: string
+  transactionType?: string
+  typeOneKey?: string
+  typeTwoKey?: string
 }
 
 const pickString = (candidate: unknown, fallback = '') =>
   typeof candidate === 'string' && candidate.trim() ? candidate.trim() : fallback
+
+const pickNumericKey = (candidate: unknown): string | undefined => {
+  if (typeof candidate === 'number' && Number.isFinite(candidate)) return String(candidate)
+  return pickString(candidate) || undefined
+}
+
+/** Mirrors legacy PHP property inquiry hidden input for transaction_types. */
+export function resolvePropertyInquiryTransactionType(
+  property: Record<string, unknown>,
+): string {
+  if (isCRMTruthy(property.sale)) return 'Buy'
+  if (isCRMTruthy(property.rent) || isCRMTruthy(property.lt_rental)) return 'long term rental'
+  return 'Buy'
+}
 
 export function extractPropertyInquiryContext(
   raw: Record<string, unknown>,
@@ -17,6 +36,9 @@ export function extractPropertyInquiryContext(
   const interestId = normalized.id
 
   const otherReference = pickString(raw.other_reference) || undefined
+  const transactionType = resolvePropertyInquiryTransactionType(raw)
+  const typeOneKey = pickNumericKey(raw.type_one_key)
+  const typeTwoKey = pickNumericKey(raw.type_two_key)
 
   const agentDetails = raw.agent_details
   const agent = raw.agent
@@ -37,8 +59,14 @@ export function extractPropertyInquiryContext(
     interestId,
     otherReference,
     assignedTo,
+    transactionType,
+    typeOneKey,
+    typeTwoKey,
   }
 }
+
+export const COMMERCIAL_PROFILE_TYPE_ONE_FIELD = 'commercial_profile[type_one][]'
+export const COMMERCIAL_PROFILE_TYPE_TWO_FIELD = 'commercial_profile[type_two][]'
 
 export function buildPropertyInquiryHiddenFields(
   context: PropertyInquiryContext,
@@ -48,12 +76,20 @@ export function buildPropertyInquiryHiddenFields(
     { field: 'p_type', value: 'commercial_property' },
     { field: 'interest', value: context.interestId ?? '' },
     { field: 'to_email', value: context.assignedTo ?? '' },
-    { field: 'transaction_types', value: 'Buy' },
+    { field: 'transaction_types', value: context.transactionType ?? 'Buy' },
     { field: 'source', value: 'web-client' },
   ]
 
   if (context.otherReference) {
     fields.push({ field: 'other_reference', value: context.otherReference })
+  }
+
+  if (context.typeOneKey) {
+    fields.push({ field: COMMERCIAL_PROFILE_TYPE_ONE_FIELD, value: context.typeOneKey })
+  }
+
+  if (context.typeTwoKey) {
+    fields.push({ field: COMMERCIAL_PROFILE_TYPE_TWO_FIELD, value: context.typeTwoKey })
   }
 
   return fields

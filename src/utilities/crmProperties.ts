@@ -54,6 +54,8 @@ export type NormalizedListProperty = {
   imageUrls?: string[]
   isNewListing?: boolean
   statusBadgeLabel?: 'SOLD' | 'RESERVED'
+  /** Raw CRM status e.g. Sold, Under Offer — used for detail API fetch without URL params. */
+  crmStatus?: string
   location: string
   city?: string
   reference?: string
@@ -902,7 +904,12 @@ export function normalizeCRMProperty(
     typeof referenceRaw === 'number' ? String(referenceRaw) : pickString(referenceRaw)
   // in get method i get the  "sale": true, need to show the badge for Sale
   const statusBadgeLabel = resolveCRMStatusBadgeLabel(property.status)
+  const crmStatus = pickString(property.status) || undefined
   const id = pickString(property._id) || pickString(property.id)
+
+  let detailHref = resolvePropertyDetailHref(property, locale, {
+    listingMode: options.listingMode ?? resolvePropertyListingMode(property),
+  })
 
   return {
     id,
@@ -910,13 +917,12 @@ export function normalizeCRMProperty(
     imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
     isNewListing: Boolean(property.featured),
     statusBadgeLabel,
+    crmStatus,
     location: localized.location || 'Greece',
     city: localized.city || undefined,
     region: localized.region || undefined,
     reference,
-    detailHref: resolvePropertyDetailHref(property, locale, {
-      listingMode: options.listingMode ?? resolvePropertyListingMode(property),
-    }),
+    detailHref,
     title: propertyTitle,
     description: localized.description || undefined,
     propertyType: localized.propertyType || undefined,

@@ -13,6 +13,7 @@ import { useCRMCities } from '@/hooks/useCRMCities'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
 import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
 import { PropertyCard, resolvePropertyCardStatusBadge } from '@/components/PropertyCard'
+import { resolvePropertyDetailFetchStatuses } from '@/utilities/propertyDetailFetchStatus'
 import { PropertyCardSkeleton } from '@/components/PropertyCard/PropertyCardSkeleton'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
@@ -552,6 +553,11 @@ const PropertyListViewInner: React.FC<Props> = ({
                 statusBadgeLabel: property.statusBadgeLabel,
                 forceSoldBadge: Boolean(forceSoldBadge),
                 useCrmStatus: true,
+              })}
+              detailFetchStatuses={resolvePropertyDetailFetchStatuses({
+                crmStatus: property.crmStatus,
+                statusBadgeLabel: property.statusBadgeLabel,
+                forceSold: Boolean(forceSoldBadge),
               })}
               variant="surface"
             />

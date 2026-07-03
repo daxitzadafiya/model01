@@ -8,6 +8,7 @@ import { usePropertyMapSettings } from '@/hooks/usePropertyMapSettings'
 import { fetchCRMMapProperties, type MapPropertyPoint } from '@/utilities/crmPropertyMap'
 import type { CRMListingPreset, PropertyListFilters } from '@/utilities/crmProperties'
 import { filtersForMapMarkers } from '@/utilities/propertyMapFilters'
+import { stashPropertyDetailFetchStatus } from '@/utilities/propertyDetailFetchStatus'
 import { useTranslation } from '@/utilities/translateClient'
 
 import { PropertyMapView } from './PropertyMapView'
@@ -112,9 +113,12 @@ export const PropertyMapModal: React.FC<Props> = ({
 
   const handleMarkerClick = useCallback(
     (point: MapPropertyPoint) => {
+      if (listingPreset === 'sold') {
+        stashPropertyDetailFetchStatus(String(point.reference), ['Sold'])
+      }
       router.push(`/property-details/_${point.reference}`)
     },
-    [router],
+    [listingPreset, router],
   )
 
   const handleDrawApply = useCallback(

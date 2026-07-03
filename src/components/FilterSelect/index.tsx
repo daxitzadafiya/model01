@@ -34,6 +34,11 @@ export type FilterSelectSingleProps = BaseProps & {
   mode?: 'single'
   value: string
   onChange: (value: string) => void
+  /** When `value` matches this option, show an inline input in the trigger for a custom value. */
+  customOptionValue?: string
+  customValue?: string
+  onCustomValueChange?: (value: string) => void
+  customPlaceholder?: string
 }
 
 export type FilterSelectMultiProps = BaseProps & {
@@ -74,8 +79,13 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({})
   const rootRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLUListElement>(null)
+  const customInputRef = useRef<HTMLInputElement>(null)
 
   const isMulti = props.mode === 'multi'
+  const singleProps = !isMulti ? (props as FilterSelectSingleProps) : null
+  const isCustomMode = Boolean(
+    singleProps?.customOptionValue && singleProps.value === singleProps.customOptionValue,
+  )
   const selectedValues = useMemo(
     () => (isMulti ? props.value : [props.value]),
     [isMulti, props.value],
@@ -182,7 +192,69 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
 
     props.onChange(value)
     setOpen(false)
+
+    if (singleProps?.customOptionValue === value) {
+      requestAnimationFrame(() => customInputRef.current?.focus())
+    }
   }
+
+  useEffect(() => {
+    if (!isCustomMode || open) return
+    customInputRef.current?.focus()
+  }, [isCustomMode, open])
+
+  const triggerClass = cn(
+    defaultTriggerClass,
+    'relative flex items-center transition-colors cursor-pointer duration-200',
+    disabled && 'cursor-not-allowed opacity-60',
+    open && 'border-tertiary',
+    triggerClassName,
+  )
+
+  const triggerIcon = icon ? (
+    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-tertiary flex items-center justify-center">
+      {icon}
+    </span>
+  ) : null
+
+  const triggerChevron = (
+    <ChevronDown
+      size={20}
+      className={cn(
+        'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant transition-transform duration-200',
+        open && 'rotate-180',
+      )}
+    />
+  )
+
+  const triggerBody = isCustomMode ? (
+    <input
+      ref={customInputRef}
+      id={triggerId}
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      disabled={disabled}
+      value={singleProps?.customValue ?? ''}
+      onChange={(event) =>
+        singleProps?.onCustomValueChange?.(event.target.value.replace(/\D/g, ''))
+      }
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault()
+          setOpen(true)
+        }
+      }}
+      placeholder={singleProps?.customPlaceholder ?? 'Enter number'}
+      className="min-w-0 w-full bg-transparent border-0 p-0 pr-8 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-0"
+      aria-label={`${label} — custom value`}
+    />
+  ) : (
+    <span className="block truncate pr-8" title={displayLabel}>
+      {displayLabel}
+    </span>
+  )
 
   const menu = open ? (
     <ul
@@ -247,38 +319,36 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
         {label}
       </label>
 
-      <button
-        type="button"
-        id={triggerId}
-        disabled={disabled}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-controls={listboxId}
-        className={cn(
-          defaultTriggerClass,
-          'relative transition-colors cursor-pointer duration-200',
-          disabled && 'cursor-not-allowed opacity-60',
-          open && 'border-tertiary',
-          triggerClassName,
-        )}
-        onClick={() => setOpen((current) => !current)}
-      >
-        {icon && (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-tertiary flex items-center justify-center">
-            {icon}
-          </span>
-        )}
-        <span className="block truncate" title={displayLabel}>
-          {displayLabel}
-        </span>
-        <ChevronDown
-          size={20}
-          className={cn(
-            'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant transition-transform duration-200',
-            open && 'rotate-180',
-          )}
-        />
-      </button>
+      {isCustomMode ? (
+        <div
+          role="combobox"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={listboxId}
+          aria-disabled={disabled || undefined}
+          className={triggerClass}
+          onClick={() => !disabled && setOpen((current) => !current)}
+        >
+          {triggerIcon}
+          {triggerBody}
+          {triggerChevron}
+        </div>
+      ) : (
+        <button
+          type="button"
+          id={triggerId}
+          disabled={disabled}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={listboxId}
+          className={triggerClass}
+          onClick={() => setOpen((current) => !current)}
+        >
+          {triggerIcon}
+          {triggerBody}
+          {triggerChevron}
+        </button>
+      )}
 
       {typeof document !== 'undefined' && menu ? createPortal(menu, document.body) : null}
     </div>

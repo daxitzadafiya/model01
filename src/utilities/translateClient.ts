@@ -35,6 +35,14 @@ export function filterOptionTranslationKey(keyPrefix: string, value: string): st
     return `${keyPrefix}.indifferent`
   }
 
+  if (
+    (keyPrefix === 'propertyList.filters.bedrooms' ||
+      keyPrefix === 'propertyList.filters.bathrooms') &&
+    value === 'other'
+  ) {
+    return `${keyPrefix}.needMore`
+  }
+
   return `${keyPrefix}.${value}`
 }
 

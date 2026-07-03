@@ -13,10 +13,13 @@ function getCRMViewConfig(): { apiUrl: string; userKey: string } | null {
   return { apiUrl, userKey }
 }
 
-/** GET /properties/view-by-ref?user={userKey}&ref={reference} */
+/** GET /properties/view-by-ref?user={userKey}&ref={reference}&status[]=Sold */
 export async function fetchCRMPropertyDetail(
   reference: string,
-  init?: Omit<RequestInit, 'method' | 'body'>,
+  options?: {
+    statuses?: string[]
+    init?: Omit<RequestInit, 'method' | 'body'>
+  },
 ): Promise<CRMPropertyDetailRecord | null> {
   const config = getCRMViewConfig()
   if (!config) {
@@ -28,9 +31,19 @@ export async function fetchCRMPropertyDetail(
   if (!trimmedReference) return null
 
   const baseUrl = config.apiUrl.replace(/\/+$/, '')
-  const endpoint = `${baseUrl}/properties/view-by-ref?user=${encodeURIComponent(config.userKey)}&ref=${encodeURIComponent(trimmedReference)}`
+  const params = new URLSearchParams({
+    user: config.userKey,
+    ref: trimmedReference,
+  })
 
-  const { headers, ...restInit } = init ?? {}
+  for (const status of options?.statuses ?? []) {
+    const trimmedStatus = status.trim()
+    if (trimmedStatus) params.append('status[]', trimmedStatus)
+  }
+
+  const endpoint = `${baseUrl}/properties/view-by-ref?${params.toString()}`
+
+  const { headers, ...restInit } = options?.init ?? {}
 
   const response = await fetch(endpoint, {
     ...restInit,

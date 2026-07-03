@@ -66,6 +66,7 @@ export const MAX_PRICE_OPTIONS = [
   { value: '50000000', label: '€50,000,000+' },
 ] as const
 
+/** Internal filter value — keep stable for URL/CRM; label is "Need More". */
 export const COUNT_FILTER_OTHER_VALUE = 'other'
 
 export const BEDROOM_OPTIONS = [
@@ -75,7 +76,7 @@ export const BEDROOM_OPTIONS = [
   { value: '3', label: '3' },
   { value: '4', label: '4' },
   { value: '5', label: '5' },
-  { value: COUNT_FILTER_OTHER_VALUE, label: 'Other' },
+  { value: COUNT_FILTER_OTHER_VALUE, label: 'Need More' },
 ] as const
 
 export const BATHROOM_OPTIONS = [
@@ -85,7 +86,7 @@ export const BATHROOM_OPTIONS = [
   { value: '3', label: '3' },
   { value: '4', label: '4' },
   { value: '5', label: '5' },
-  { value: COUNT_FILTER_OTHER_VALUE, label: 'Other' },
+  { value: COUNT_FILTER_OTHER_VALUE, label: 'Need More' },
 ] as const
 
 /** Resolves a bedrooms/bathrooms dropdown (+ optional custom) to a CRM integer count. */
@@ -191,15 +192,15 @@ export const applyPriceRangeValue = (
 export const hasAppliedPropertyFilters = (filters: PropertyListFilters): boolean => {
   return Boolean(
     filters.reference?.trim() ||
-      filters.propertyType?.length ||
-      isCoastFilterActive(filters.coast) ||
-      isCityFilterActive(filters.city) ||
-      (filters.minPrice && filters.minPrice !== 'any') ||
-      (filters.maxPrice && filters.maxPrice !== 'any') ||
-      isCountFilterActive(filters.bedrooms, filters.bedroomsCustom) ||
-      isCountFilterActive(filters.bathrooms, filters.bathroomsCustom) ||
-      filters.features?.length ||
-      filters.mapReferences?.length,
+    filters.propertyType?.length ||
+    isCoastFilterActive(filters.coast) ||
+    isCityFilterActive(filters.city) ||
+    (filters.minPrice && filters.minPrice !== 'any') ||
+    (filters.maxPrice && filters.maxPrice !== 'any') ||
+    isCountFilterActive(filters.bedrooms, filters.bedroomsCustom) ||
+    isCountFilterActive(filters.bathrooms, filters.bathroomsCustom) ||
+    filters.features?.length ||
+    filters.mapReferences?.length,
   )
 }
 

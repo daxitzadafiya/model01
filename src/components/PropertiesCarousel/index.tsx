@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Media as PayloadMedia } from '@/payload-types'
 
 import { PropertyCard, resolvePropertyCardStatusBadge } from '@/components/PropertyCard'
+import { resolvePropertyDetailFetchStatuses } from '@/utilities/propertyDetailFetchStatus'
 import { useReveal, activateRevealElements } from '@/utilities/useReveal'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
 import { cn } from '@/utilities/ui'
@@ -31,6 +32,7 @@ export type PropertiesCarouselItem = {
   imageUrl?: string
   imageUrls?: string[]
   statusBadgeLabel?: 'SOLD' | 'RESERVED'
+  crmStatus?: string
   location: string
   reference?: string
   detailHref?: string
@@ -522,6 +524,11 @@ export const PropertiesCarousel: React.FC<Props> = ({
                     statusBadgeLabel: property.statusBadgeLabel,
                     showSoldBadge: Boolean(showSoldBadge),
                     useCrmStatus,
+                  })}
+                  detailFetchStatuses={resolvePropertyDetailFetchStatuses({
+                    crmStatus: property.crmStatus,
+                    statusBadgeLabel: property.statusBadgeLabel,
+                    forceSold: Boolean(showSoldBadge),
                   })}
                   variant={cardVariant}
                   className="shrink-0"

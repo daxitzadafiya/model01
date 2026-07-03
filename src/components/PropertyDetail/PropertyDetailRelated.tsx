@@ -27,6 +27,7 @@ export const PropertyDetailRelated: React.FC<Props> = ({
         imageUrl: property.imageUrl,
         imageUrls: property.imageUrls,
         statusBadgeLabel: property.statusBadgeLabel,
+        crmStatus: property.crmStatus,
         location: property.location,
         reference: property.reference,
         detailHref: property.detailHref,

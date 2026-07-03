@@ -40,7 +40,7 @@ export const IMAGE_DEFAULTS: OptimaImageConfig = {
   imageUrl: 'https://images.optima-crm.com/resize/cms_medias/',
   commercialImageBase: 'https://images.optima-crm.com/commercial_images',
   agencyId: '',
-  propertyResizeBase: 'https://images.optima-crm.com/resize/commercial_images/',
+  propertyResizeBase: 'https://images.optima-crm.com/resize/',
   siteId: '237',
 }
 

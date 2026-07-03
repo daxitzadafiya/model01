@@ -1,6 +1,10 @@
 import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { crmServerFetch } from '@/utilities/crmServerFetch'
 import { mapLocaleToBrochurePdfLang } from '@/utilities/propertyBrochure'
+import {
+  COMMERCIAL_PROFILE_TYPE_ONE_FIELD,
+  COMMERCIAL_PROFILE_TYPE_TWO_FIELD,
+} from '@/utilities/propertyInquiry'
 
 type SubmissionField = {
   field: string
@@ -21,7 +25,15 @@ const FULL_NAME_ALIASES = ['full-name', 'full_name', 'fullname', 'fullName'] as 
 
 const SURNAME_ALIASES = ['surname', 'last_name', 'last-name', 'lastname', 'lastName'] as const
 
-const PASSTHROUGH_FIELDS = ['email', 'phone', 'subject', 'p_type', 'transaction_types'] as const
+const PASSTHROUGH_FIELDS = [
+  'email',
+  'phone',
+  'subject',
+  'p_type',
+  'transaction_types',
+  'interest',
+  'other_reference',
+] as const
 
 /** Fields sent to Optima as JSON booleans (not strings). */
 const BOOLEAN_FIELDS = new Set(['gdpr_status'])
@@ -91,14 +103,35 @@ function pickStringField(
   return undefined
 }
 
+function applyCommercialProfileFields(
+  out: Record<string, unknown>,
+  payload: Record<string, string | boolean>,
+): void {
+  const typeOne = payload[COMMERCIAL_PROFILE_TYPE_ONE_FIELD]
+  const typeTwo = payload[COMMERCIAL_PROFILE_TYPE_TWO_FIELD]
+  const profile: Record<string, string[]> = {}
+
+  if (typeof typeOne === 'string' && typeOne.trim()) {
+    profile.type_one = [typeOne.trim()]
+  }
+
+  if (typeof typeTwo === 'string' && typeTwo.trim()) {
+    profile.type_two = [typeTwo.trim()]
+  }
+
+  if (Object.keys(profile).length > 0) {
+    out.commercial_profile = profile
+  }
+}
+
 /**
  * Maps contact and property-inquiry submissions to the Optima CRM accounts/index shape.
  */
 function mapContactToOptimaPayload(
   payload: Record<string, string | boolean>,
   locale?: string,
-): Record<string, string | boolean> {
-  const out: Record<string, string | boolean> = {}
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
 
   const forename =
     pickStringField(payload, [...FIRST_NAME_ALIASES]) ??
@@ -130,6 +163,8 @@ function mapContactToOptimaPayload(
 
   if (property) out.property = property
   if (toEmail) out.to_email = toEmail
+
+  applyCommercialProfileFields(out, payload)
 
   if (locale?.trim()) {
     out.language = mapLocaleToBrochurePdfLang(locale)

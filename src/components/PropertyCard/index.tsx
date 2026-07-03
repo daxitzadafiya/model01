@@ -8,6 +8,7 @@ import type { Media as PayloadMedia } from '@/payload-types'
 import { PropertyCardImageGallery } from '@/components/PropertyCard/PropertyCardImageGallery'
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import type { FavoritePropertyId } from '@/utilities/propertyFavorites'
+import { stashPropertyDetailFetchStatus } from '@/utilities/propertyDetailFetchStatus'
 import { useTranslation } from '@/utilities/translateClient'
 
 export type PropertyCardData = {
@@ -41,6 +42,8 @@ type Props = {
   variant?: 'surface' | 'surface-container-low'
   className?: string
   style?: React.CSSProperties
+  /** Passed to view-by-ref on the detail page (via sessionStorage), not the browser URL. */
+  detailFetchStatuses?: string[]
   /** When set (e.g. Properties block), pauses parent carousel auto-play while engaging this card */
   onCardEngage?: () => void
   onCardRelease?: () => void
@@ -95,6 +98,7 @@ export const PropertyCard: React.FC<Props> = ({
   propertyId,
   href,
   statusBadgeLabel,
+  detailFetchStatuses,
   variant = 'surface',
   className = '',
   style,
@@ -190,6 +194,12 @@ export const PropertyCard: React.FC<Props> = ({
     </div>
   )
 
+  const handleDetailNavigate = () => {
+    const reference = property.reference?.trim()
+    if (!href || !reference || !detailFetchStatuses?.length) return
+    stashPropertyDetailFetchStatus(reference, detailFetchStatuses)
+  }
+
   const cardShellClass = `group ${cardBase} ${className}`.trim()
 
   return (
@@ -232,6 +242,7 @@ export const PropertyCard: React.FC<Props> = ({
         <Link
           href={href}
           prefetch={false}
+          onClick={handleDetailNavigate}
           className="block no-underline text-inherit cursor-pointer relative z-10"
         >
           {cardInfo}

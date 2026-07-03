@@ -10,6 +10,10 @@ import { loadNotificationEmailBranding } from '@/email/loadNotificationEmailBran
 import { getEmailSettings, isEmailConfigured } from '@/settings/email/server'
 import { sendConfiguredEmail } from '@/email/sendConfiguredEmail'
 import { getEmailFieldLabelMapping } from '@/utilities/formFieldLabels'
+import {
+  COMMERCIAL_PROFILE_TYPE_ONE_FIELD,
+  COMMERCIAL_PROFILE_TYPE_TWO_FIELD,
+} from '@/utilities/propertyInquiry'
 import { t } from '@/utilities/translate'
 
 type SubmissionField = {
@@ -49,6 +53,8 @@ const INTERNAL_FIELDS = new Set([
   'assigned_to',
   'to_email',
   'transaction_types',
+  COMMERCIAL_PROFILE_TYPE_ONE_FIELD,
+  COMMERCIAL_PROFILE_TYPE_TWO_FIELD,
   'scp',
   'gdpr_status',
   'language',

@@ -77,7 +77,8 @@ export const OptimaCrmSettings: GlobalConfig = {
       label: 'Image CDN',
       required: true,
       admin: {
-        description: 'Optima image URL bases. Defaults match the standard Optima CDN if left empty.',
+        description:
+          'Optima image URL bases. Defaults match the standard Optima CDN if left empty.',
       },
       fields: [
         {
@@ -110,7 +111,7 @@ export const OptimaCrmSettings: GlobalConfig = {
           name: 'propertyResizeBase',
           type: 'text',
           required: true,
-          defaultValue: 'https://images.optima-crm.com/resize/commercial_images/',
+          defaultValue: 'https://images.optima-crm.com/resize/',
         },
         {
           name: 'siteId',

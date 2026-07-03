@@ -21,6 +21,7 @@ export async function fetchPropertiesCarouselServerData(
     preset,
     page: 1,
     pageSize: Math.max(1, limit),
+    sortParams: { featured: -1 },
   })
 
   const result = await fetchCRMPropertiesServer(body)
@@ -38,6 +39,7 @@ export async function fetchPropertiesCarouselServerData(
       imageUrl: normalized.imageUrl,
       imageUrls: normalized.imageUrls,
       statusBadgeLabel: normalized.statusBadgeLabel,
+      crmStatus: normalized.crmStatus,
       location: normalized.location,
       reference: normalized.reference,
       detailHref: normalized.detailHref,
