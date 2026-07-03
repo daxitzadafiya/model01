@@ -1,5 +1,5 @@
 import { MAP_FIND_ALL_POPULATE } from '@/utilities/crmPropertyMap'
-import { extractCRMList, fetchCRMProperties } from '@/utilities/crmProperties'
+import { extractCRMList, fetchCRMPropertiesPost } from '@/utilities/crmProperties'
 import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import { isCRMTruthy } from '@/utilities/localizedValue'
 
@@ -102,26 +102,34 @@ const pickFilterKey = (property: Record<string, unknown>, keys: string[]): unkno
   return undefined
 }
 
+/** CRM filter fields expect numeric keys — skip display labels like "House". */
+const pickNumericFilterKey = (
+  property: Record<string, unknown>,
+  keys: string[],
+): number | undefined => {
+  for (const key of keys) {
+    const value = pickNumber(property[key])
+    if (value !== undefined) return value
+  }
+  return undefined
+}
+
 type BuildSimilarQueryOptions = {
   property: Record<string, unknown>
   limit?: number
   listingContext?: SimilarListingContext
-  /** Drop city/location filters to widen results when the strict query only returns the current listing. */
-  relaxGeoFilters?: boolean
 }
 
 export const buildCRMSimilarPropertiesQuery = ({
   property,
   limit = 5,
   listingContext,
-  relaxGeoFilters = false,
 }: BuildSimilarQueryOptions): Record<string, unknown> => {
   const similarCommercials = getSimilarCommercialsQuery()
   const context = listingContext ?? resolveSimilarListingContext(property)
   const price = resolveSimilarPropertyPrice(property, context)
   const priceMax = price + (25 * price) / 100
   const priceMin = price - (10 * price) / 100
-  const isSold = isSimilarPropertySold(property)
 
   const query: Record<string, unknown> = {
     ...similarCommercials,
@@ -142,21 +150,9 @@ export const buildCRMSimilarPropertiesQuery = ({
     }
   }
 
-  const typeKey = pickFilterKey(property, ['type', 'type_one'])
+  const typeKey = pickNumericFilterKey(property, ['type', 'type_one'])
   if (typeKey !== undefined) {
     query.type_one = { $in: [typeKey] }
-  }
-
-  if (!relaxGeoFilters) {
-    const locationKey = pickFilterKey(property, ['location_key', 'location'])
-    if (locationKey !== undefined) {
-      query.location = { $in: [locationKey] }
-    }
-
-    const cityKey = pickFilterKey(property, ['city_key', 'city'])
-    if (cityKey !== undefined) {
-      query.city = { $in: [cityKey] }
-    }
   }
 
   const propertyCrmId = pickFilterKey(property, ['id'])
@@ -215,41 +211,6 @@ const filterOutCurrentProperty = (
 ): Record<string, unknown>[] =>
   properties.filter((candidate) => !isSameCRMProperty(candidate, property))
 
-const mergeUniqueProperties = (
-  existing: Record<string, unknown>[],
-  incoming: Record<string, unknown>[],
-  property: Record<string, unknown>,
-  limit: number,
-): Record<string, unknown>[] => {
-  const seen = new Set<string>()
-
-  const addKey = (item: Record<string, unknown>) => {
-    const key =
-      pickIdentifier(item._id) ??
-      pickIdentifier(item.id) ??
-      pickIdentifier(item.reference) ??
-      undefined
-    return key
-  }
-
-  const merged: Record<string, unknown>[] = []
-
-  for (const item of [...existing, ...incoming]) {
-    if (isSameCRMProperty(item, property)) continue
-
-    const key = addKey(item)
-    if (key) {
-      if (seen.has(key)) continue
-      seen.add(key)
-    }
-
-    merged.push(item)
-    if (merged.length >= limit) break
-  }
-
-  return merged
-}
-
 export async function fetchCRMSimilarProperties({
   property,
   limit = 5,
@@ -264,26 +225,14 @@ export async function fetchCRMSimilarProperties({
   const resolvedLimit = Math.max(1, limit)
   const requestLimit = resolvedLimit + 1
 
-  const fetchBatch = async (relaxGeoFilters: boolean) => {
-    const body = buildCRMSimilarPropertiesQuery({
-      property,
-      limit: requestLimit,
-      listingContext,
-      relaxGeoFilters,
-    })
-    console.log('body >>>>', body)
-    const { properties: batch } = await fetchCRMProperties({ body, signal })
-    return filterOutCurrentProperty(batch, property)
-  }
+  const body = buildCRMSimilarPropertiesQuery({
+    property,
+    limit: requestLimit,
+    listingContext,
+  })
+  const { properties: batch } = await fetchCRMPropertiesPost({ body, signal })
 
-  let results = await fetchBatch(false)
-
-  if (results.length < resolvedLimit) {
-    const relaxed = await fetchBatch(true)
-    results = mergeUniqueProperties(results, relaxed, property, resolvedLimit)
-  }
-
-  return results.slice(0, resolvedLimit)
+  return filterOutCurrentProperty(batch, property).slice(0, resolvedLimit)
 }
 
 export { extractCRMList }
