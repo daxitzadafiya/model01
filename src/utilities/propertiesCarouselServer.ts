@@ -21,7 +21,6 @@ export async function fetchPropertiesCarouselServerData(
     preset,
     page: 1,
     pageSize: Math.max(1, limit),
-    sortParams: { featured: -1 },
   })
 
   const result = await fetchCRMPropertiesServer(body)
