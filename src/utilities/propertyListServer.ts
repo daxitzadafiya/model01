@@ -29,7 +29,7 @@ export async function fetchPropertyListServerData({
     sortParams: sortOption.sort,
   })
 
-  const result = await fetchCRMPropertiesServer(body)
+  const result = await fetchCRMPropertiesServer(body, { preset })
 
   return {
     page,

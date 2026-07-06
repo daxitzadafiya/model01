@@ -21,7 +21,7 @@ import {
   buildCRMListingQuery,
   fetchCRMProperties,
   fetchCRMPropertiesPost,
-  needsCRMPropertiesPost,
+  shouldUseCRMPropertiesPost,
   normalizeCRMListProperty,
   resolveListingModeFromPreset,
   type CRMListingPreset,
@@ -326,7 +326,7 @@ const PropertyListViewInner: React.FC<Props> = ({
       if (showSkeleton) setLoading(true)
 
       try {
-        const usePostListing = needsCRMPropertiesPost({
+        const usePostListing = shouldUseCRMPropertiesPost({
           filters: appliedFilters,
           preset: listingPreset,
           favoriteIds: isFavoritesList ? favoriteIds : undefined,

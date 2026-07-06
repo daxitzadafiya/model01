@@ -1,4 +1,4 @@
-import { MAP_FIND_ALL_POPULATE } from '@/utilities/crmPropertyMap'
+import { CRM_PROPERTY_ATTACHMENTS_POPULATE } from '@/utilities/crmProperties'
 import { extractCRMList, fetchCRMPropertiesPost } from '@/utilities/crmProperties'
 import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import { isCRMTruthy } from '@/utilities/localizedValue'
@@ -169,7 +169,7 @@ export const buildCRMSimilarPropertiesQuery = ({
     options: {
       page: 1,
       limit: Math.max(1, limit),
-      populate: MAP_FIND_ALL_POPULATE,
+      populate: CRM_PROPERTY_ATTACHMENTS_POPULATE,
       sort: { own: '-1' },
     },
     query,

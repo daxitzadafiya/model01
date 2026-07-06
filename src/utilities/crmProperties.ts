@@ -158,7 +158,8 @@ export const withCRMCoordinateQueryFields = (
   query: Record<string, unknown>,
 ): Record<string, unknown> => ({
   ...query,
-  ...CRM_COORDINATE_QUERY_FIELDS,
+  // as for now not need to pass the latitude and longitude query fields so i have comment it out
+  // ...CRM_COORDINATE_QUERY_FIELDS,
 })
 
 /** Parses admin sort JSON (e.g. `{"created_at": -1}` or `{"updated_at": true}`). */
@@ -632,6 +633,33 @@ export const buildCRMPageOptions = (page: number, limit: number): Record<string,
   limit: Math.max(1, limit),
 })
 
+/** POST commercial_properties — populate published image attachments only. */
+export const CRM_PROPERTY_ATTACHMENTS_POPULATE = [
+  {
+    path: 'property_attachments',
+    match: {
+      document: { $ne: true },
+      publish_status: { $ne: false },
+    },
+  },
+] as const
+
+/** Ensures POST listing bodies include attachment populate in options. */
+export const withCRMPostListingOptions = (
+  body: Record<string, unknown>,
+): Record<string, unknown> => {
+  const options =
+    body.options && typeof body.options === 'object'
+      ? { ...(body.options as Record<string, unknown>) }
+      : {}
+
+  if (!Array.isArray(options.populate) || options.populate.length === 0) {
+    options.populate = [...CRM_PROPERTY_ATTACHMENTS_POPULATE]
+  }
+
+  return { ...body, options }
+}
+
 /** Restrict listing to favorited property IDs (supports CRM `_id` and numeric `id`). */
 export const buildFavoriteIdsClause = (
   ids: (string | number)[],
@@ -724,6 +752,9 @@ export const buildCRMListingQuery = ({
   let baseQuery: Record<string, unknown> = {
     ...similarCommercials,
     remove_count: true,
+    has_images: true,
+    // coordinates query fields
+    ...CRM_COORDINATE_QUERY_FIELDS,
     status: { $in: ['Available', 'Under Offer'] },
   }
 
@@ -732,6 +763,8 @@ export const buildCRMListingQuery = ({
       ...similarCommercials,
       sale: true,
       remove_count: true,
+      has_images: true,
+      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Sold'] },
     }
   } else if (preset === 'forSale') {
@@ -739,6 +772,13 @@ export const buildCRMListingQuery = ({
       ...similarCommercials,
       remove_count: true,
       sale: true,
+      // archive
+      archive: {
+        $ne: true,
+      },
+      has_images: true,
+      // coordinates query fields
+      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'forRent') {
@@ -747,6 +787,8 @@ export const buildCRMListingQuery = ({
       rent: true,
       lt_rental: true,
       remove_count: true,
+      has_images: true,
+      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'seaView') {
@@ -754,8 +796,15 @@ export const buildCRMListingQuery = ({
       ...similarCommercials,
       sale: true,
       remove_count: true,
+      has_images: true,
+      // coordinates query fields
+      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
-      views: ['sea'],
+      $and: [
+        {
+          'views.sea': true,
+        },
+      ],
     }
   } else if (preset === 'featured') {
     baseQuery = {
@@ -763,12 +812,16 @@ export const buildCRMListingQuery = ({
       featured: true,
       sale: true,
       remove_count: true,
+      has_images: true,
+      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'favorites') {
     baseQuery = {
       ...similarCommercials,
+      ...CRM_COORDINATE_QUERY_FIELDS,
       remove_count: true,
+      has_images: true,
     }
   }
   let mergedQuery = mergeCRMQueryObjects(baseQuery, filterQuery)
@@ -966,6 +1019,21 @@ export const sortProperties = (
   })
 }
 
+/** `auto` = POST only when GET cannot express the query (map refs, favorites). */
+export type CRMPropertiesListMethod = 'get' | 'post' | 'auto'
+
+/**
+ * Override property list HTTP method via env:
+ * - `NEXT_PUBLIC_CRM_PROPERTIES_LIST_METHOD` — client + server (recommended)
+ * - `CRM_PROPERTIES_LIST_METHOD` — server-only fallback
+ */
+export function resolveCRMPropertiesListMethod(): CRMPropertiesListMethod {
+  const raw = (process.env.NEXT_PUBLIC_CRM_PROPERTIES_LIST_METHOD ?? '').trim().toLowerCase()
+
+  if (raw === 'get' || raw === 'post') return raw
+  return 'auto'
+}
+
 /**
  * POST commercial_properties — required when GET cannot express multi-value filters
  * (map polygon `reference: { $in }`, favorites `_id: { $in }`).
@@ -982,6 +1050,21 @@ export function needsCRMPropertiesPost({
   if (filters?.mapReferences?.length) return true
   if (preset === 'favorites' && favoriteIds?.length) return true
   return false
+}
+
+export function shouldUseCRMPropertiesPost({
+  filters,
+  preset,
+  favoriteIds,
+}: {
+  filters?: PropertyListFilters
+  preset?: CRMListingPreset
+  favoriteIds?: (string | number)[]
+}): boolean {
+  const method = resolveCRMPropertiesListMethod()
+  if (method === 'post') return true
+  if (method === 'get') return false
+  return needsCRMPropertiesPost({ filters, preset, favoriteIds })
 }
 
 /** GET /v3/properties/ using credentials from Globals → Optima CRM. */
@@ -1018,14 +1101,16 @@ export async function fetchCRMPropertiesPost({
   signal?: AbortSignal
   reason?: 'map-area' | 'favorites'
 }): Promise<CRMFetchResult> {
+  const postBody = withCRMPostListingOptions(body)
+
   console.info('[CRM commercial_properties POST] request', {
     reason: reason ?? 'multi-filter',
     endpoint: 'commercial_properties',
-    options: body.options,
-    query: body.query,
+    options: postBody.options,
+    query: postBody.query,
   })
 
-  const response = await postToCRM('commercial_properties', body, { signal })
+  const response = await postToCRM('commercial_properties', postBody, { signal })
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => '')

@@ -6,6 +6,7 @@ import { getSimilarCommercialsQuery, resolveOptimaCrmSettings } from '@/settings
 import {
   buildFavoriteIdsClause,
   buildFilterQuery,
+  CRM_PROPERTY_ATTACHMENTS_POPULATE,
   extractCRMList,
   extractCRMTotal,
   mergeCRMQueryObjects,
@@ -73,15 +74,7 @@ export const normalizeMapPropertyPoint = (
   }
 }
 
-export const MAP_FIND_ALL_POPULATE = [
-  {
-    path: 'property_attachments',
-    match: {
-      document: { $ne: true },
-      publish_status: { $ne: false },
-    },
-  },
-] as const
+export { CRM_PROPERTY_ATTACHMENTS_POPULATE as MAP_FIND_ALL_POPULATE } from '@/utilities/crmProperties'
 
 /** CRM find-all pagination + sort + populate — matches Optima map API expectations. */
 export const buildCRMMapOptions = (
@@ -97,7 +90,7 @@ export const buildCRMMapOptions = (
       : {
           current_price: '-1',
         },
-  populate: MAP_FIND_ALL_POPULATE,
+  populate: CRM_PROPERTY_ATTACHMENTS_POPULATE,
 })
 
 const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown> => {
