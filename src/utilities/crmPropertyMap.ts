@@ -157,6 +157,7 @@ export const normalizeMapFindAllQuery = (
   if (preset !== 'favorites') {
     if (preset === 'forRent') {
       normalized.rent = true
+      normalized.lt_rental = true
       delete normalized.sale
     } else {
       normalized.sale = true
