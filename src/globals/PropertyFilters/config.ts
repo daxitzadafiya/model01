@@ -275,5 +275,47 @@ export const PropertyFilters: GlobalConfig = {
         }),
       ],
     },
+    {
+      type: 'row',
+      fields: [
+        filterArrayField({
+          name: 'guests',
+          label: 'Holiday guests',
+          admin: {
+            width: COL_HALF,
+            description: 'Guest count options for holiday rental search.',
+          },
+          defaultValue: [
+            { value: 'any', label: 'Any Guests' },
+            { value: '1', label: '1 Guest' },
+            { value: '2', label: '2 Guests' },
+            { value: '3', label: '3 Guests' },
+            { value: '4', label: '4 Guests' },
+            { value: '5', label: '5 Guests' },
+            { value: '6', label: '6 Guests' },
+            { value: '8', label: '8 Guests' },
+            { value: '10', label: '10+ Guests' },
+          ],
+          fields: filterOptionFields,
+        }),
+        filterArrayField({
+          name: 'holidayBudgetRanges',
+          label: 'Holiday total budget',
+          admin: {
+            width: COL_HALF,
+            description: 'Budget ranges for holiday rental search (hero + holiday listing filters).',
+          },
+          defaultValue: [
+            { value: 'any', label: 'Any Budget', min: 'any', max: 'any' },
+            { value: '0-500', label: 'Up to €500', min: '0', max: '500' },
+            { value: '500-1000', label: '€500 - €1,000', min: '500', max: '1000' },
+            { value: '1000-2500', label: '€1,000 - €2,500', min: '1000', max: '2500' },
+            { value: '2500-5000', label: '€2,500 - €5,000', min: '2500', max: '5000' },
+            { value: '5000+', label: '€5,000+', min: '5000', max: 'any' },
+          ],
+          fields: priceRangeFields,
+        }),
+      ],
+    },
   ],
 }

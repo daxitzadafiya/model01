@@ -65,9 +65,7 @@ const normalizeCity = (doc: Record<string, unknown>, locale: string): CRMCityOpt
   }
 }
 
-export async function fetchCRMCoasts(
-  init?: { signal?: AbortSignal },
-): Promise<CRMCoastOption[]> {
+export async function fetchCRMCoasts(init?: { signal?: AbortSignal }): Promise<CRMCoastOption[]> {
   const response = await fetch('/api/crm/location-groups', {
     signal: init?.signal,
     cache: 'no-store',
@@ -93,9 +91,7 @@ export const resolveLocationGroupKeys = (
 ): number[] => {
   if (!coasts.length) return []
 
-  const selected = (coast ?? [])
-    .map((value) => Number(value))
-    .filter((key) => Number.isFinite(key))
+  const selected = (coast ?? []).map((value) => Number(value)).filter((key) => Number.isFinite(key))
 
   if (!selected.length) {
     return coasts.map((item) => item.keySystem)
@@ -112,6 +108,7 @@ export async function fetchCRMCities(
 ): Promise<CRMCityOption[]> {
   if (!locationGroupKeys.length) return []
 
+  console.log('fetchCRMCities:::locationGroupKeys >>>>', locationGroupKeys)
   const response = await fetch('/api/crm/location-group-cities', {
     method: 'POST',
     signal: init?.signal,

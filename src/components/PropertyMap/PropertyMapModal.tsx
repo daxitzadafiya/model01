@@ -8,7 +8,12 @@ import { usePropertyMapSettings } from '@/hooks/usePropertyMapSettings'
 import { fetchCRMMapProperties, type MapPropertyPoint } from '@/utilities/crmPropertyMap'
 import type { CRMListingPreset, PropertyListFilters } from '@/utilities/crmProperties'
 import { filtersForMapMarkers } from '@/utilities/propertyMapFilters'
+import { appendListingContextToDetailHref } from '@/components/PropertyList/propertyFilterUrl'
 import { stashPropertyDetailFetchStatus } from '@/utilities/propertyDetailFetchStatus'
+import {
+  listingPresetToDetailContext,
+  stashPropertyDetailListingContext,
+} from '@/utilities/propertyDetailListingContext'
 import { useTranslation } from '@/utilities/translateClient'
 
 import { PropertyMapView } from './PropertyMapView'
@@ -113,10 +118,21 @@ export const PropertyMapModal: React.FC<Props> = ({
 
   const handleMarkerClick = useCallback(
     (point: MapPropertyPoint) => {
+      const reference = String(point.reference)
+      const listingContext = listingPresetToDetailContext(listingPreset)
+
       if (listingPreset === 'sold') {
-        stashPropertyDetailFetchStatus(String(point.reference), ['Sold'])
+        stashPropertyDetailFetchStatus(reference, ['Sold'])
       }
-      router.push(`/property-details/_${point.reference}`)
+      if (listingContext) {
+        stashPropertyDetailListingContext(reference, listingContext)
+      }
+
+      const href = appendListingContextToDetailHref(
+        `/property-details/_${reference}`,
+        listingContext,
+      )
+      router.push(href ?? `/property-details/_${reference}`)
     },
     [listingPreset, router],
   )

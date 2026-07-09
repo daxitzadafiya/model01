@@ -1,6 +1,6 @@
 'use client'
 
-import { notFound } from 'next/navigation'
+import { notFound, useSearchParams } from 'next/navigation'
 import { useParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
@@ -10,12 +10,21 @@ import { normalizeCRMAmenities, normalizeCRMPropertyEnergy } from '@/utilities/c
 import { fetchCRMPropertyDetail } from '@/utilities/crmPropertyDetail'
 import { takePropertyDetailFetchStatus } from '@/utilities/propertyDetailFetchStatus'
 import {
+  parsePropertyDetailForQuery,
+  resolvePropertyDetailHolidayMode,
+  takePropertyDetailListingContext,
+} from '@/utilities/propertyDetailListingContext'
+import {
   fetchCRMSimilarProperties,
   isSimilarPropertySold,
   resolveSimilarListingContext,
 } from '@/utilities/crmSimilarProperties'
 import type { Form } from '@/payload-types'
 import { normalizeCRMListProperty, normalizeCRMProperty } from '@/utilities/crmProperties'
+import {
+  parseCRMPropertyBookings,
+} from '@/utilities/crmHoliday'
+import { parseRentalSeasons } from '@/utilities/holidayRentalPricing'
 import {
   extractPropertyInquiryContext,
   type PropertyInquiryContext,
@@ -64,6 +73,7 @@ type Props = {
 
 export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
   const params = useParams<{ slug: string }>()
+  const searchParams = useSearchParams()
   const activeLocale = useSiteLocale()
   const [loading, setLoading] = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
@@ -81,8 +91,18 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
   const [brochureUrl, setBrochureUrl] = useState<string | undefined>()
   const [videos, setVideos] = useState<ReturnType<typeof resolveCRMPropertyVideos>>([])
   const [inquiry, setInquiry] = useState<PropertyInquiryContext>({})
+  const [isHolidayRental, setIsHolidayRental] = useState(false)
+  const [rentalSeasons, setRentalSeasons] = useState<ReturnType<typeof parseRentalSeasons>>([])
+  const [bookings, setBookings] = useState<ReturnType<typeof parseCRMPropertyBookings>>([])
 
   const slug = decodeURIComponent(params.slug ?? '')
+  const holidayArrival = searchParams.get('periodFrom')?.trim() ?? ''
+  const holidayDeparture = searchParams.get('periodTo')?.trim() ?? ''
+  const holidayGuests = searchParams.get('guests')?.trim() || '2'
+  const forQuery = searchParams.get('for')?.trim() ?? ''
+  const hasHolidaySearchParams = Boolean(
+    holidayArrival || holidayDeparture || (holidayGuests && holidayGuests !== '2'),
+  )
 
   useEffect(() => {
     if (!slug) {
@@ -97,6 +117,9 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
       setLoading(false)
       return
     }
+
+    const listingContext =
+      parsePropertyDetailForQuery(forQuery) ?? takePropertyDetailListingContext(reference)
 
     const controller = new AbortController()
 
@@ -125,12 +148,24 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
           return
         }
 
+        const isHolidayDetail = resolvePropertyDetailHolidayMode(listingContext, raw, {
+          hasHolidaySearchParams,
+        })
+
         const normalized = normalizeCRMProperty(raw, activeLocale, {
           attachmentImageSize: PROPERTY_DETAIL_IMAGE_SIZE,
+          holidayListing: isHolidayDetail,
+          holidayPeriodFrom: holidayArrival,
+          holidayPeriodTo: holidayDeparture,
+          holidayGuests,
+          holidayPriceVariant: 'detail',
         })
 
         setProperty(normalized)
-        setInquiry(extractPropertyInquiryContext(raw, normalized))
+        setIsHolidayRental(isHolidayDetail)
+        setRentalSeasons(parseRentalSeasons(raw))
+        setBookings(parseCRMPropertyBookings(raw))
+        setInquiry(extractPropertyInquiryContext(raw, normalized, listingContext))
         setBrochureUrl(buildPropertyBrochurePdfUrl(raw, activeLocale))
         setVideos(resolveCRMPropertyVideos(raw, activeLocale))
         setAmenities(normalizeCRMAmenities(raw))
@@ -140,7 +175,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
 
         document.title = `${normalized.title} | Roumpos Real Estate`
 
-        const listingContext = resolveSimilarListingContext(raw)
+        const similarListingContext = resolveSimilarListingContext(raw)
         setShowSimilarSoldBadge(isSimilarPropertySold(raw))
         setSimilarPropertiesLoading(true)
         setRelatedProperties([])
@@ -151,7 +186,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
             const similarRaw = await fetchCRMSimilarProperties({
               property: raw,
               limit: 5,
-              listingContext,
+              listingContext: similarListingContext,
               signal: controller.signal,
             })
 
@@ -159,7 +194,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
               setRelatedProperties(
                 similarRaw.map((item) =>
                   normalizeCRMListProperty(item, activeLocale, {
-                    listingMode: listingContext === 'rent' ? 'rent' : 'sale',
+                    listingMode: similarListingContext === 'rent' ? 'rent' : 'sale',
                   }),
                 ),
               )
@@ -185,7 +220,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
     void load()
 
     return () => controller.abort()
-  }, [slug, activeLocale])
+  }, [slug, activeLocale, holidayArrival, holidayDeparture, holidayGuests, forQuery, hasHolidaySearchParams])
 
   if (loading) return <PropertyDetailSkeleton />
 
@@ -207,6 +242,12 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
       videos={videos}
       latitude={latitude}
       longitude={longitude}
+      isHolidayRental={isHolidayRental}
+      rentalSeasons={rentalSeasons}
+      bookings={bookings}
+      holidayArrival={holidayArrival}
+      holidayDeparture={holidayDeparture}
+      holidayGuests={holidayGuests}
     />
   )
 }

@@ -42,6 +42,10 @@ export const buildGeoDataRequest = (
 
   if (preset === 'forRent') {
     query.rent = true
+    query.lt_rental = true
+  } else if (preset === 'forHoliday') {
+    query.rent = true
+    query.st_rental = true
   } else if (preset !== 'sold') {
     query.sale = true
   }

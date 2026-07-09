@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { MapPin } from 'lucide-react'
 
 import {
@@ -12,6 +12,8 @@ import { PropertyDetailAmenities } from '@/components/PropertyDetail/PropertyDet
 import { PropertyDetailEnergy } from '@/components/PropertyDetail/PropertyDetailEnergy'
 import { PropertyDetailGallery } from '@/components/PropertyDetail/PropertyDetailGallery'
 import { PropertyDetailInquiryForm } from '@/components/PropertyDetail/PropertyDetailInquiryForm'
+import { PropertyHolidayBooking } from '@/components/PropertyDetail/PropertyHolidayBooking'
+import { PropertyHolidayAvailabilityPanel } from '@/components/PropertyDetail/PropertyHolidayAvailabilityPanel'
 import { PropertyDetailMap } from '@/components/PropertyDetail/PropertyDetailMap'
 import { PropertyDetailRelated } from '@/components/PropertyDetail/PropertyDetailRelated'
 import { PropertyDetailSpecs } from '@/components/PropertyDetail/PropertyDetailSpecs'
@@ -25,6 +27,13 @@ import {
   type NormalizedListProperty,
 } from '@/utilities/crmProperties'
 import type { PropertyInquiryContext } from '@/utilities/propertyInquiry'
+import type { CRMPropertyBooking, RentalSeason } from '@/utilities/holidayRentalPricing'
+import {
+  calculateHolidayRentalQuote,
+  formatHolidayStayNightlyRate,
+  formatHolidayStayTotalSummary,
+} from '@/utilities/holidayRentalPricing'
+import { parseHolidayGuestCount } from '@/utilities/crmHoliday'
 import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
@@ -41,6 +50,12 @@ type Props = {
   latitude?: number
   longitude?: number
   portfolioHref?: string
+  isHolidayRental?: boolean
+  rentalSeasons?: RentalSeason[]
+  bookings?: CRMPropertyBooking[]
+  holidayArrival?: string
+  holidayDeparture?: string
+  holidayGuests?: string
 }
 
 const renderDescription = (description?: string) => {
@@ -86,6 +101,12 @@ export const PropertyDetailView: React.FC<Props> = ({
   latitude,
   longitude,
   portfolioHref,
+  isHolidayRental = false,
+  rentalSeasons = [],
+  bookings = [],
+  holidayArrival = '',
+  holidayDeparture = '',
+  holidayGuests = '2',
 }) => {
   const locationSubtitle = [property.city, property.region].filter(Boolean).join(', ')
   const bedroomSingular = useTranslation('propertyDetail.specs.bedroomSingular', 'Bedroom')
@@ -100,6 +121,24 @@ export const PropertyDetailView: React.FC<Props> = ({
   const homeLabel = useTranslation('homeLabel', 'Home')
   const propertiesLabel = useTranslation('propertiesLabel', 'Properties')
   const listHref = portfolioHref || '/'
+  const selectDatesLabel = useTranslation(
+    'propertyDetail.holiday.selectDatesForPrice',
+    'Select dates to view price',
+  )
+
+  const [liveArrival, setLiveArrival] = useState(holidayArrival)
+  const [liveDeparture, setLiveDeparture] = useState(holidayDeparture)
+  const [liveGuests, setLiveGuests] = useState(holidayGuests)
+
+  const liveHolidayQuote = useMemo(() => {
+    if (!isHolidayRental || !liveArrival || !liveDeparture) return null
+    return calculateHolidayRentalQuote({
+      seasons: rentalSeasons,
+      checkIn: liveArrival,
+      checkOut: liveDeparture,
+      guests: parseHolidayGuestCount(liveGuests),
+    })
+  }, [isHolidayRental, liveArrival, liveDeparture, liveGuests, rentalSeasons])
 
   const specItems = [
     property.sqft
@@ -164,10 +203,33 @@ export const PropertyDetailView: React.FC<Props> = ({
             </div>
           )}
 
-          {property.price && (
-            <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary mb-6 md:mb-10">
-              {property.price}
+          {isHolidayRental ? (
+            <div className="mb-6 md:mb-10">
+              {liveHolidayQuote ? (
+                <>
+                  <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary">
+                    {formatHolidayStayNightlyRate(liveHolidayQuote)}
+                  </div>
+                  <p className="mt-2 text-body-md text-on-surface-variant">
+                    {formatHolidayStayTotalSummary(liveHolidayQuote)}
+                  </p>
+                </>
+              ) : property.price ? (
+                <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary">
+                  {property.price}
+                </div>
+              ) : (
+                <div className="text-[22px] md:text-[26px] font-headline-md text-on-surface-variant italic">
+                  {selectDatesLabel}
+                </div>
+              )}
             </div>
+          ) : (
+            property.price && (
+              <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary mb-6 md:mb-10">
+                {property.price}
+              </div>
+            )
           )}
 
           {renderDescription(property.description)}
@@ -178,18 +240,39 @@ export const PropertyDetailView: React.FC<Props> = ({
 
       <PropertyDetailSpecs items={specItems} />
 
-      <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 lg:grid-cols-3 gap-24 mb-24">
+      <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-16 grid grid-cols-1 gap-12 md:mb-24 md:gap-16 lg:grid-cols-3 lg:gap-24">
         <div className="lg:col-span-2">
           <PropertyDetailAmenities amenities={amenities} />
           <PropertyDetailEnergy energy={energy ?? { isEmpty: true }} />
+          {isHolidayRental && (
+            <PropertyHolidayAvailabilityPanel
+              bookings={bookings}
+              arrival={liveArrival}
+              departure={liveDeparture}
+            />
+          )}
         </div>
 
         <div className="lg:col-span-1" id="property-inquiry">
-          <PropertyDetailInquiryForm
-            contactForm={contactForm}
-            inquiry={inquiry}
-            propertyTitle={property.title}
-          />
+          {isHolidayRental && property.reference ? (
+            <PropertyHolidayBooking
+              propertyReference={property.reference}
+              rentalSeasons={rentalSeasons}
+              bookings={bookings}
+              arrival={liveArrival}
+              departure={liveDeparture}
+              guests={liveGuests}
+              onArrivalChange={setLiveArrival}
+              onDepartureChange={setLiveDeparture}
+              onGuestsChange={setLiveGuests}
+            />
+          ) : (
+            <PropertyDetailInquiryForm
+              contactForm={contactForm}
+              inquiry={inquiry}
+              propertyTitle={property.title}
+            />
+          )}
         </div>
       </section>
 

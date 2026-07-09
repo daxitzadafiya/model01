@@ -55,3 +55,15 @@ export function useFeatureFilterOptions() {
 
   return useTranslatedOptions(features, 'propertyList.filters.features')
 }
+
+export function useGuestOptions() {
+  const { guests } = usePropertyFilterOptions()
+
+  return useTranslatedOptions(guests, 'propertyList.filters.guests')
+}
+
+export function useHolidayBudgetOptions() {
+  const { holidayBudgetRanges } = usePropertyFilterOptions()
+
+  return useTranslatedOptions(holidayBudgetRanges, 'propertyList.filters.totalBudget')
+}

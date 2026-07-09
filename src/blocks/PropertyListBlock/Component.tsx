@@ -10,7 +10,6 @@ import {
   parsePropertyListPage,
   parsePropertyListSort,
 } from '@/components/PropertyList/propertyListUrl'
-import type { CRMListingPreset } from '@/utilities/crmProperties'
 import { DEFAULT_PROPERTY_FILTER_OPTIONS } from '@/utilities/propertyFilterOptions.shared'
 
 type Props = PropertyListBlockClientProps & {
@@ -20,13 +19,9 @@ type Props = PropertyListBlockClientProps & {
 const DEFAULT_PAGE_SIZE = 9
 const DEFAULT_SORT_OPTIONS = DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions
 
-export const PropertyListBlock = ({
-  listingPreset,
-  pageSize,
-  searchParams,
-  ...rest
-}: Props) => {
-  const preset = (listingPreset ?? 'forSale') as CRMListingPreset
+export const PropertyListBlock = ({ listingPreset, pageSize, searchParams, ...rest }: Props) => {
+  const preset = (listingPreset ?? 'forSale') as NonNullable<PropertyListBlockClientProps['listingPreset']>
+  console.log(':::preset:::', preset)
   const resolvedPageSize = Math.max(1, pageSize ?? DEFAULT_PAGE_SIZE)
   const listPage = parsePropertyListPage(searchParams)
   const defaultSort = DEFAULT_SORT_OPTIONS[0]?.value ?? 'recent'
@@ -36,7 +31,7 @@ export const PropertyListBlock = ({
 
   return (
     <PropertyListBlockClient
-      listingPreset={listingPreset}
+      listingPreset={preset}
       pageSize={pageSize}
       listingKey={suspenseKey}
       {...rest}

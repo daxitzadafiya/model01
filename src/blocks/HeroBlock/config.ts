@@ -222,6 +222,36 @@ export const HeroBlock: Block = {
       label: 'Show Search Bar on Hero',
       defaultValue: true,
     },
+    {
+      name: 'defaultPropertyTab',
+      type: 'select',
+      label: 'Default Selected Property Tab',
+      defaultValue: 'sale',
+      options: [
+        { label: 'Sale Properties', value: 'sale' },
+        { label: 'Rental Properties', value: 'rental' },
+        { label: 'Holiday Properties', value: 'holiday' },
+      ],
+      admin: {
+        condition: (_, siblingData) => siblingData?.showSearch !== false,
+      },
+    },
+    {
+      name: 'defaultCountry',
+      type: 'select',
+      label: 'Default Country (Sale Properties only)',
+      defaultValue: 'spain',
+      options: [
+        { label: 'Spain', value: 'spain' },
+        { label: 'France', value: 'france' },
+        { label: 'Portugal', value: 'portugal' },
+        { label: 'Others', value: 'others' },
+      ],
+      admin: {
+        condition: (_, siblingData) => siblingData?.showSearch !== false,
+        description: 'Pre-selected country on the Sale Properties tab (defaults to Spain).',
+      },
+    },
     link({
       appearances: false,
       disableLabel: true,

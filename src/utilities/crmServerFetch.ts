@@ -8,9 +8,7 @@ import { URL } from 'node:url'
  * Use this helper for server-side CRM calls in development only.
  */
 export function shouldAllowInsecureCrmTls(): boolean {
-  return (
-    process.env.CRM_ALLOW_INSECURE_TLS === 'true' || process.env.NODE_ENV === 'development'
-  )
+  return process.env.CRM_ALLOW_INSECURE_TLS === 'true' || process.env.NODE_ENV === 'development'
 }
 
 function nodeRequest(

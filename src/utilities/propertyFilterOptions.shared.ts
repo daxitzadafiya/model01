@@ -1,6 +1,8 @@
 import {
   BATHROOM_OPTIONS,
   BEDROOM_OPTIONS,
+  GUEST_OPTIONS,
+  HOLIDAY_BUDGET_OPTIONS,
   MAX_PRICE_OPTIONS,
   MIN_PRICE_OPTIONS,
   PRICE_RANGE_OPTIONS,
@@ -24,6 +26,8 @@ export type PropertyFilterOptions = {
   minPrices: FilterSelectOption[]
   maxPrices: FilterSelectOption[]
   features: FilterSelectOption[]
+  guests: FilterSelectOption[]
+  holidayBudgetRanges: PriceRangeOption[]
 }
 
 export const DEFAULT_PROPERTY_FILTER_OPTIONS: PropertyFilterOptions = {
@@ -34,4 +38,6 @@ export const DEFAULT_PROPERTY_FILTER_OPTIONS: PropertyFilterOptions = {
   minPrices: MIN_PRICE_OPTIONS.map((opt) => ({ ...opt })),
   maxPrices: MAX_PRICE_OPTIONS.map((opt) => ({ ...opt })),
   features: PROPERTY_LISTING_FEATURE_OPTIONS.map(({ value, label }) => ({ value, label })),
+  guests: GUEST_OPTIONS.map((opt) => ({ ...opt })),
+  holidayBudgetRanges: HOLIDAY_BUDGET_OPTIONS.map((opt) => ({ ...opt })),
 }

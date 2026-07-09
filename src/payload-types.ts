@@ -938,6 +938,11 @@ export interface HeroBlock {
    */
   videoUpload?: (number | null) | Media;
   showSearch?: boolean | null;
+  defaultPropertyTab?: ('sale' | 'rental' | 'holiday') | null;
+  /**
+   * Pre-selected country on the Sale Properties tab (defaults to Spain).
+   */
+  defaultCountry?: ('spain' | 'france' | 'portugal' | 'others') | null;
   /**
    * Where the hero property search sends visitors (e.g. your All Properties page).
    */
@@ -1050,7 +1055,7 @@ export interface PropertyListBlock {
   breadcrumbParentHref?: string | null;
   pageTitle?: string | null;
   resultsLabel?: string | null;
-  listingPreset: 'forSale' | 'forRent' | 'favorites' | 'sold' | 'featured' | 'seaView';
+  listingPreset: 'forSale' | 'forRent' | 'forHoliday' | 'favorites' | 'sold' | 'featured' | 'seaView';
   pageSize?: number | null;
   showFilters?: boolean | null;
   /**
@@ -2227,6 +2232,8 @@ export interface HeroBlockSelect<T extends boolean = true> {
   vimeoUrl?: T;
   videoUpload?: T;
   showSearch?: T;
+  defaultPropertyTab?: T;
+  defaultCountry?: T;
   searchResultsLink?:
     | T
     | {
@@ -3672,6 +3679,40 @@ export interface PropertyFilter {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Guest count options for holiday rental search.
+   */
+  guests?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Budget ranges for holiday rental search (hero + holiday listing filters).
+   */
+  holidayBudgetRanges?:
+    | {
+        /**
+         * Unique key (e.g. 500k-1m).
+         */
+        value: string;
+        label: string;
+        /**
+         * CRM value or "any".
+         */
+        min: string;
+        /**
+         * CRM value or "any".
+         */
+        max: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -4161,6 +4202,22 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
     | {
         value?: T;
         label?: T;
+        id?: T;
+      };
+  guests?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  holidayBudgetRanges?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        min?: T;
+        max?: T;
         id?: T;
       };
   updatedAt?: T;

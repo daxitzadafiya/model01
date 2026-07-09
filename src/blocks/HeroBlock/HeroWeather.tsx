@@ -47,9 +47,12 @@ export const HeroWeather: React.FC = () => {
       window.clearInterval(intervalRef.current)
     }
 
-    intervalRef.current = window.setInterval(() => {
-      void loadWeather()
-    }, intervalMinutes * 60 * 1000)
+    intervalRef.current = window.setInterval(
+      () => {
+        void loadWeather()
+      },
+      intervalMinutes * 60 * 1000,
+    )
 
     return () => {
       if (intervalRef.current !== null) window.clearInterval(intervalRef.current)
@@ -59,7 +62,7 @@ export const HeroWeather: React.FC = () => {
   if (!weather) return null
 
   return (
-    <div className="flex items-center gap-2 md:gap-3 py-3 md:py-4 px-4 md:px-6 text-white/90 shrink-0">
+    <div className="flex items-center gap-2 text-white/90 shrink-0">
       {weather.conditionIcon ? (
         <img
           src={weather.conditionIcon}

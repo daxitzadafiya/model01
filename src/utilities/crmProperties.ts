@@ -7,17 +7,24 @@ import {
   PROPERTY_CARD_IMAGE_SIZE,
   PROPERTY_DETAIL_IMAGE_SIZE,
 } from '@/utilities/optimaImage'
-import { resolveCRMPropertyLocalizedTexts } from '@/utilities/localizedValue'
+import { isCRMTruthy, resolveCRMPropertyLocalizedTexts } from '@/utilities/localizedValue'
 import {
   resolvePropertyDetailHref,
   resolvePropertyListingMode,
   type PropertyListingMode,
 } from '@/utilities/propertyUrl'
-import { parseCountFilterValue } from '@/components/PropertyList/filterOptions'
+import {
+  HOLIDAY_SELECT_DATES_LABEL,
+  isHolidayRentalProperty,
+  resolveHolidayPriceDisplay,
+} from '@/utilities/crmHoliday'
+import { dateKeyToUnixSeconds } from '@/utilities/holidayRentalPricing'
+import { parseCountFilterValue, resolveHolidayBudgetRange } from '@/utilities/propertyFilterParsing'
 
 export type CRMListingPreset =
   | 'forSale'
   | 'forRent'
+  | 'forHoliday'
   | 'sold'
   | 'featured'
   | 'seaView'
@@ -29,6 +36,8 @@ export type PropertyListSort = string
 export type PropertyListFilters = {
   reference?: string
   propertyType?: string[]
+  /** Selected country keys from CRM */
+  country?: string[]
   /** Selected coast (location group) key_system values */
   coast?: string[]
   /** Selected city keys from CRM */
@@ -45,7 +54,22 @@ export type PropertyListFilters = {
   features?: string[]
   /** Property references selected via map polygon draw */
   mapReferences?: string[]
+  /** Holiday rental arrival date (YYYY-MM-DD) → CRM `rental_period_from` (unix seconds) */
+  periodFrom?: string
+  /** Holiday rental departure date (YYYY-MM-DD) → CRM `rental_period_to` (unix seconds) */
+  periodTo?: string
+  /** Number of guests for holiday rentals (UI only — not sent to CRM list API yet) */
+  guests?: string
+  /** Total budget range → CRM `period_seasons_price_from/to` */
+  totalBudget?: string
 }
+
+export const hasHolidayListingFilters = (filters?: PropertyListFilters): boolean =>
+  Boolean(
+    filters?.periodFrom?.trim() ||
+    filters?.periodTo?.trim() ||
+    (filters?.totalBudget && filters.totalBudget !== 'any'),
+  )
 
 export type NormalizedListProperty = {
   id?: string
@@ -68,6 +92,8 @@ export type NormalizedListProperty = {
   sqft?: number | string
   price: string
   priceValue?: number
+  /** Holiday rental total summary when dates are selected on listing */
+  holidayPriceSummary?: string
   createdAt?: string
 }
 
@@ -86,6 +112,43 @@ const pickNumber = (candidate: unknown) => {
     return Number.isFinite(parsed) ? parsed : undefined
   }
   return undefined
+}
+
+const toEpochSeconds = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value > 1_000_000_000_000 ? Math.floor(value / 1000) : Math.floor(value)
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const asNumber = Number(value)
+    if (Number.isFinite(asNumber)) {
+      return asNumber > 1_000_000_000_000 ? Math.floor(asNumber / 1000) : Math.floor(asNumber)
+    }
+    const parsed = Date.parse(value)
+    if (Number.isFinite(parsed)) return Math.floor(parsed / 1000)
+  }
+  return undefined
+}
+
+const pickActiveLongTermRentalSeason = (
+  property: Record<string, unknown>,
+): Record<string, unknown> | undefined => {
+  const seasonsRaw = Array.isArray(property.rental_season_data)
+    ? property.rental_season_data
+    : Array.isArray(property.period_seasons)
+      ? property.period_seasons
+      : []
+  const seasons = seasonsRaw.filter(
+    (item): item is Record<string, unknown> => !!item && typeof item === 'object',
+  )
+  if (!seasons.length) return undefined
+
+  const now = Math.floor(Date.now() / 1000)
+  return seasons.find((season) => {
+    const from = toEpochSeconds(season.period_from)
+    const to = toEpochSeconds(season.period_to)
+    if (from == null || to == null) return false
+    return now >= from && now <= to
+  })
 }
 
 const isPriceOnDemandEnabled = (value: unknown) => {
@@ -301,6 +364,10 @@ export const unwrapCRMPropertyRecord = (
 
   if (record.featured !== undefined && unwrapped.featured === undefined) {
     unwrapped.featured = record.featured
+  }
+
+  if (Array.isArray(record.bookings) && !Array.isArray(unwrapped.bookings)) {
+    unwrapped.bookings = record.bookings
   }
 
   return unwrapped
@@ -582,6 +649,14 @@ export const buildFilterQuery = (
     }
   }
 
+  const countryKeys = (filters.country ?? [])
+    .map((value) => Number(value))
+    .filter((key) => Number.isFinite(key))
+
+  if (countryKeys.length > 0) {
+    query.country = { $in: countryKeys }
+  }
+
   // Match gestali-home CommercialPropertiesNew::setQuery — coast uses lg_by_key, not location_group.
   const coastKeys = (filters.coast ?? [])
     .map((value) => Number(value))
@@ -622,6 +697,27 @@ export const buildFilterQuery = (
   const bathroomCount = parseCountFilterValue(filters.bathrooms, filters.bathroomsCustom)
   if (bathroomCount !== undefined) {
     query.bathrooms = bathroomCount
+  }
+
+  if (filters.periodFrom?.trim()) {
+    const arrivalTs = dateKeyToUnixSeconds(filters.periodFrom.trim())
+    if (arrivalTs != null) query.rental_period_from = arrivalTs
+  }
+
+  if (filters.periodTo?.trim()) {
+    const departureTs = dateKeyToUnixSeconds(filters.periodTo.trim())
+    if (departureTs != null) query.rental_period_to = departureTs
+  }
+
+  if (filters.periodFrom?.trim() && filters.periodTo?.trim()) {
+    query.booking_search = 1
+  }
+
+  const holidayBudget = resolveHolidayBudgetRange(filters.totalBudget)
+  if (holidayBudget) {
+    query.period_seasons_price = true
+    query.period_seasons_price_from = holidayBudget[0]
+    query.period_seasons_price_to = holidayBudget[1]
   }
 
   return query
@@ -791,6 +887,16 @@ export const buildCRMListingQuery = ({
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
+  } else if (preset === 'forHoliday') {
+    baseQuery = {
+      ...similarCommercials,
+      rent: true,
+      st_rental: true,
+      remove_count: true,
+      has_images: true,
+      ...CRM_COORDINATE_QUERY_FIELDS,
+      status: { $in: ['Available', 'Under Offer'] },
+    }
   } else if (preset === 'seaView') {
     baseQuery = {
       ...similarCommercials,
@@ -833,6 +939,7 @@ export const buildCRMListingQuery = ({
     }
   }
 
+  console.log(':::mergedQuery:::', mergedQuery)
   return {
     options: mergeCRMListingOptions(paginationOptions, sortParams),
     query: mergedQuery,
@@ -850,16 +957,24 @@ export type NormalizeCRMPropertyOptions = {
   maxGalleryImages?: number
   /** Sale vs rent URL map — defaults from CRM `sale` / `rent` flags. */
   listingMode?: PropertyListingMode
+  /** Holiday rental listing — hide sale price until dates are selected. */
+  holidayListing?: boolean
+  holidayPeriodFrom?: string
+  holidayPeriodTo?: string
+  holidayGuests?: string
+  /** Listing cards use "from €X /night"; detail pages use "€X/night". */
+  holidayPriceVariant?: 'listing' | 'detail'
 }
 
 export const resolveListingModeFromPreset = (preset: CRMListingPreset): PropertyListingMode =>
-  preset === 'forRent' ? 'rent' : 'sale'
+  preset === 'forRent' || preset === 'forHoliday' ? 'rent' : 'sale'
 
 export type NormalizedCRMProperty = NormalizedListProperty & {
   description?: string
   city?: string
   region?: string
   propertySubtype?: string
+  holidayPriceSummary?: string
 }
 
 export function normalizeCRMProperty(
@@ -936,6 +1051,12 @@ export function normalizeCRMProperty(
       ? `0${dimensions === 'Metres' ? 'm²' : 'ft²'}`
       : undefined
 
+  const isHolidayProperty = options.holidayListing === true
+  const isLongTermRentalProperty =
+    options.listingMode === 'rent' &&
+    !isHolidayProperty &&
+    (isCRMTruthy(property.lt_rental) || isCRMTruthy(property.rent))
+
   const rawPrice =
     property.price ?? property.current_price ?? property.sale_price ?? property.list_price
   const hasPriceOnDemand = isPriceOnDemandEnabled(property.price_on_demand)
@@ -946,7 +1067,47 @@ export function normalizeCRMProperty(
       : pickString(rawPrice)
 
   let resolvedPrice = options.emptyPriceWhenMissing ? '' : 'Price on request'
-  if (hasPriceOnDemand) {
+  let holidayPriceSummary: string | undefined
+  let holidayPriceValue: number | undefined
+
+  if (isHolidayProperty) {
+    const holidayPrice = resolveHolidayPriceDisplay({
+      property,
+      periodFrom: options.holidayPeriodFrom,
+      periodTo: options.holidayPeriodTo,
+      guests: options.holidayGuests,
+      variant: options.holidayPriceVariant ?? 'listing',
+    })
+    resolvedPrice = holidayPrice.label
+    holidayPriceSummary = holidayPrice.summary
+    holidayPriceValue = holidayPrice.nightlyRate ?? holidayPrice.quote?.dailyPrice ?? undefined
+  } else if (isLongTermRentalProperty) {
+    if (hasPriceOnDemand) {
+      resolvedPrice = 'Price on demand'
+    } else {
+      const activeSeason = pickActiveLongTermRentalSeason(property)
+      const seasonPrice = activeSeason
+        ? pickNumber(activeSeason.new_price) ??
+          pickNumber(activeSeason.total_per_month) ??
+          pickNumber(activeSeason.price)
+        : undefined
+      const duration = activeSeason?.duration === 'per_month' ? 'month' : 'year'
+      if (seasonPrice != null && seasonPrice > 0) {
+        const formatted = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
+          seasonPrice,
+        )
+        resolvedPrice = options.currencySymbolAfter
+          ? `${formatted} € per ${duration}`
+          : `€${formatted} per ${duration}`
+      } else if (formattedRawPrice) {
+        resolvedPrice = options.currencySymbolAfter
+          ? `${formattedRawPrice} €`
+          : `€${formattedRawPrice}`
+      } else {
+        resolvedPrice = 'Price on demand'
+      }
+    }
+  } else if (hasPriceOnDemand) {
     resolvedPrice = 'Price on demand'
   } else if (formattedRawPrice) {
     resolvedPrice = options.currencySymbolAfter ? `${formattedRawPrice} €` : `€${formattedRawPrice}`
@@ -984,10 +1145,13 @@ export function normalizeCRMProperty(
     baths,
     sqft: sizeWithUnit,
     price: resolvedPrice,
-    priceValue,
+    priceValue: isHolidayProperty ? holidayPriceValue : priceValue,
+    holidayPriceSummary,
     createdAt: pickString(property.created_at) || pickString(property.createdAt),
   }
 }
+
+export { HOLIDAY_SELECT_DATES_LABEL }
 
 export const normalizeCRMListProperty = (
   property: Record<string, unknown>,
@@ -1028,7 +1192,13 @@ export type CRMPropertiesListMethod = 'get' | 'post' | 'auto'
  * - `CRM_PROPERTIES_LIST_METHOD` — server-only fallback
  */
 export function resolveCRMPropertiesListMethod(): CRMPropertiesListMethod {
-  const raw = (process.env.NEXT_PUBLIC_CRM_PROPERTIES_LIST_METHOD ?? '').trim().toLowerCase()
+  const raw = (
+    process.env.NEXT_PUBLIC_CRM_PROPERTIES_LIST_METHOD ??
+    process.env.CRM_PROPERTIES_LIST_METHOD ??
+    ''
+  )
+    .trim()
+    .toLowerCase()
 
   if (raw === 'get' || raw === 'post') return raw
   return 'auto'
@@ -1099,7 +1269,7 @@ export async function fetchCRMPropertiesPost({
 }: {
   body: Record<string, unknown>
   signal?: AbortSignal
-  reason?: 'map-area' | 'favorites'
+  reason?: 'map-area' | 'favorites' | 'holiday'
 }): Promise<CRMFetchResult> {
   const postBody = withCRMPostListingOptions(body)
 

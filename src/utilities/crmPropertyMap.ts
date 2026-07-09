@@ -110,6 +110,16 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
     return {
       ...similarCommercials,
       rent: true,
+      lt_rental: true,
+      status: { $in: [...MAP_AVAILABLE_STATUSES] },
+    }
+  }
+
+  if (preset === 'forHoliday') {
+    return {
+      ...similarCommercials,
+      rent: true,
+      st_rental: true,
       status: { $in: [...MAP_AVAILABLE_STATUSES] },
     }
   }
@@ -158,6 +168,11 @@ export const normalizeMapFindAllQuery = (
     if (preset === 'forRent') {
       normalized.rent = true
       normalized.lt_rental = true
+      delete normalized.sale
+      delete normalized.st_rental
+    } else if (preset === 'forHoliday') {
+      normalized.rent = true
+      normalized.st_rental = true
       delete normalized.sale
     } else {
       normalized.sale = true

@@ -55,6 +55,7 @@ export const PropertyListBlock: Block = {
       options: [
         { label: 'Property for Sale', value: 'forSale' },
         { label: 'Property for Rent', value: 'forRent' },
+        { label: 'Holiday Rentals', value: 'forHoliday' },
         { label: 'Favorites', value: 'favorites' },
         { label: 'Sold Properties', value: 'sold' },
         { label: 'Featured Properties', value: 'featured' },

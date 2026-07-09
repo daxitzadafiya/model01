@@ -74,9 +74,7 @@ export const LocationFilterSelect: React.FC<Props> = ({
     if (loading) return 'Loading locations…'
     if (value.length === 0) return emptyLabel ?? placeholder
 
-    const labels = value
-      .map((key) => areaLabelByKey.get(key))
-      .filter(Boolean) as string[]
+    const labels = value.map((key) => areaLabelByKey.get(key)).filter(Boolean) as string[]
 
     if (labels.length <= 2) return labels.join(', ')
     return `${labels.length} selected`

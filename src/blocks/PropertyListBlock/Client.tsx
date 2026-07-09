@@ -42,6 +42,7 @@ export const PropertyListBlockClient: React.FC<Props> = ({
   children,
 }) => {
   const preset = (listingPreset ?? 'forSale') as CRMListingPreset
+
   const [initialData, setInitialData] = useState<PropertyListInitialData | null>(null)
   const listingKeyRef = useRef(listingKey)
   listingKeyRef.current = listingKey

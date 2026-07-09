@@ -25,6 +25,8 @@ import * as migration_20260615_140000_optima_crm_similar_commercials from './202
 import * as migration_20260617_100000_contact_section_office_coordinates from './20260617_100000_contact_section_office_coordinates'
 import * as migration_20260617_110000_map_block_center from './20260617_110000_map_block_center'
 import * as migration_20260702_125500_property_filters_bathrooms from './20260702_125500_property_filters_bathrooms'
+import * as migration_20260703_170000_hero_block_search_tabs from './20260703_170000_hero_block_search_tabs'
+import * as migration_20260706_120000_property_filters_holiday from './20260706_120000_property_filters_holiday'
 
 export const migrations = [
   {
@@ -161,5 +163,15 @@ export const migrations = [
     up: migration_20260702_125500_property_filters_bathrooms.up,
     down: migration_20260702_125500_property_filters_bathrooms.down,
     name: '20260702_125500_property_filters_bathrooms',
+  },
+  {
+    up: migration_20260703_170000_hero_block_search_tabs.up,
+    down: migration_20260703_170000_hero_block_search_tabs.down,
+    name: '20260703_170000_hero_block_search_tabs',
+  },
+  {
+    up: migration_20260706_120000_property_filters_holiday.up,
+    down: migration_20260706_120000_property_filters_holiday.down,
+    name: '20260706_120000_property_filters_holiday',
   },
 ]

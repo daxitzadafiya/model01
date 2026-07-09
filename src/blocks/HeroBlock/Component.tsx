@@ -1,78 +1,173 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Banknote, ChevronDown, Home, Search } from 'lucide-react'
+import { Banknote, ChevronDown, Globe, Home, Search, Users } from 'lucide-react'
 import type { Page } from '@/payload-types'
 import { FilterSelect } from '@/components/FilterSelect'
 import { CoastCityFilterFields } from '@/components/CoastCityFilterFields'
+import DateRangePickerField from '@/components/PropertyList/DateRangePickerField'
 import { CMSLink, getCMSLinkHref } from '@/components/Link'
 import { HeroBackground } from '@/blocks/HeroBlock/HeroBackground'
 import { HeroWeather } from '@/blocks/HeroBlock/HeroWeather'
 import {
   applyPriceRangeValue,
   EMPTY_PROPERTY_FILTERS,
+  parseCountryFilter,
   parsePropertyTypeFilter,
   resolvePriceRangeValue,
 } from '@/components/PropertyList/filterOptions'
-import { usePriceRangeOptions } from '@/components/PropertyList/useFilterOptionLabels'
+import {
+  useGuestOptions,
+  useHolidayBudgetOptions,
+  usePriceRangeOptions,
+} from '@/components/PropertyList/useFilterOptionLabels'
 import { savePendingPropertyListFilters } from '@/components/PropertyList/propertyFilterUrl'
 import { useCRMCoasts } from '@/hooks/useCRMCoasts'
+import { useCRMCountries } from '@/hooks/useCRMCountries'
 import { useCRMCities } from '@/hooks/useCRMCities'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
 import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
-import type { PropertyListFilters } from '@/utilities/crmProperties'
+import type { CRMListingPreset, PropertyListFilters } from '@/utilities/crmProperties'
+import { resolveDefaultCountryKeys } from '@/utilities/crmCountries'
 import { useTranslation } from '@/utilities/translateClient'
 import { useReveal } from '@/utilities/useReveal'
 import { useRegisterHeroOverlay } from '@/providers/HeroOverlay'
-
-const DEFAULT_SEARCH_RESULTS_PATH = '/property-for-sale'
+import { cn } from '@/utilities/ui'
 
 type Props = Extract<Page['layout'][0], { blockType: 'heroBlock' }>
+type HeroPropertyTab = 'sale' | 'rental' | 'holiday'
+
+const HERO_TAB_PATHS: Record<HeroPropertyTab, string> = {
+  sale: '/property-for-sale',
+  rental: '/property-for-rent',
+  holiday: '/holiday-rentals',
+}
+
+const HERO_TAB_PRESETS: Record<HeroPropertyTab, CRMListingPreset> = {
+  sale: 'forSale',
+  rental: 'forRent',
+  holiday: 'forHoliday',
+}
 
 const buttonClassName =
   'px-8 md:px-10 py-3 md:py-4 bg-tertiary rounded-full font-label-nav text-label-nav uppercase tracking-widest hover:bg-tertiary-container transition-all shadow-xl active:scale-95 reveal cursor-pointer text-white'
 
 const heroSearchFormClassName =
-  'rounded-xl md:rounded-2xl border border-white/25 bg-white/15 p-2 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl [&_label]:text-white/75 [&_.lucide-chevron-down]:text-white/70'
+  'rounded-xl md:rounded-2xl border border-white/25 bg-white/15 p-1.5 md:p-2 shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl [&_label]:text-white/75 [&_.lucide-chevron-down]:text-white/70'
 
 const heroSearchFieldClassName =
-  'w-full pl-10 pr-10 py-3 bg-white/20 backdrop-blur-sm border border-white/30 focus:border-white/60 focus:ring-0 rounded-lg font-body-md text-body-md text-white text-left transition-colors'
+  'w-full pl-10 pr-10 py-2.5 md:py-3 bg-white/20 backdrop-blur-sm border border-white/30 focus:border-white/60 focus:ring-0 rounded-lg font-body-md text-body-md text-white text-left transition-colors'
 
 const heroSearchButtonClassName =
-  'w-full h-[50px] bg-tertiary hover:bg-tertiary-container transition-colors duration-300 text-white rounded-lg cursor-pointer font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg'
+  'w-full h-[46px] md:h-[50px] bg-tertiary hover:bg-tertiary-container transition-colors duration-300 text-white rounded-lg cursor-pointer font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg md:justify-self-end'
+
+const heroDateFieldClassName =
+  'w-full pl-10 pr-3 py-3 bg-white/20 backdrop-blur-sm border border-white/30 focus:border-white/60 focus:ring-0 rounded-lg font-body-md text-body-md text-white transition-colors [color-scheme:dark]'
 
 const heroContainerClassName =
   'w-full max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop'
 
+const heroGridClassName: Record<HeroPropertyTab, string> = {
+  sale: 'grid-cols-1 md:grid-cols-6',
+  rental: 'grid-cols-1 md:grid-cols-5',
+  holiday: 'grid-cols-1 md:grid-cols-6',
+}
+
 const HeroBlockContent: React.FC<Props> = (props) => {
-  const { title, buttonText, ctaLink, searchResultsLink, showSearch } = props
+  const {
+    title,
+    buttonText,
+    ctaLink,
+    searchResultsLink,
+    showSearch,
+    defaultPropertyTab,
+    defaultCountry,
+  } = props
   const ref = useReveal()
   useRegisterHeroOverlay()
   const router = useRouter()
-  const searchPropertiesLabel = useTranslation(
-    'propertyList.filters.searchProperties',
-    'Search Properties',
+
+  const saleTabLabel = useTranslation('hero.searchTabs.sale', 'Sale Properties')
+  const rentalTabLabel = useTranslation('hero.searchTabs.rental', 'Rental Properties')
+  const holidayTabLabel = useTranslation('hero.searchTabs.holiday', 'Holiday Properties')
+  const countryLabel = useTranslation('propertyList.filters.country', 'Country')
+  const allCountriesLabel = useTranslation(
+    'propertyList.filters.country.emptyLabel',
+    'All Countries',
+  )
+  const loadingCountriesLabel = useTranslation(
+    'propertyList.filters.loadingCountries',
+    'Loading countries…',
   )
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
   const priceRangeLabel = useTranslation('propertyList.filters.priceRange', 'Price Range')
+  const periodRangeLabel = useTranslation('propertyList.filters.periodRange', 'Stay period')
+  const guestsLabel = useTranslation('propertyList.filters.guests', 'Guests')
+  const totalBudgetLabel = useTranslation('propertyList.filters.totalBudget', 'Total Budget')
   const searchLabel = useTranslation('propertyList.filters.search', 'Search')
   const scrollLabel = useTranslation('hero.scrollIndicator', 'SCROLL')
-  const priceRangeOptions = usePriceRangeOptions()
+
+  const initialTab = (defaultPropertyTab ?? 'sale') as HeroPropertyTab
+  const [activeTab, setActiveTab] = useState<HeroPropertyTab>(initialTab)
   const [searchFilters, setSearchFilters] = useState<PropertyListFilters>({
     ...EMPTY_PROPERTY_FILTERS,
   })
+
+  const listingPreset = HERO_TAB_PRESETS[activeTab]
+  // Keep hero filter option APIs stable; do not re-fetch when switching tabs.
+  const filterDataPreset: CRMListingPreset = 'forSale'
+  const priceRangeOptions = usePriceRangeOptions()
+  const guestOptions = useGuestOptions()
+  const holidayBudgetOptions = useHolidayBudgetOptions()
+
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
-    useCRMPropertyTypeOptions('forSale')
+    useCRMPropertyTypeOptions(filterDataPreset)
+  const { countries, loading: countriesLoading } = useCRMCountries()
   const { coasts, loading: coastsLoading } = useCRMCoasts()
-  const { cities, loading: citiesLoading } = useCRMCities(searchFilters.coast, coasts, 'forSale')
+  const { cities, loading: citiesLoading } = useCRMCities(
+    searchFilters.coast,
+    coasts,
+    filterDataPreset,
+  )
+
+  const countryOptions = useMemo(
+    () => countries.map((item) => ({ value: item.value, label: item.label })),
+    [countries],
+  )
+
   const priceRange = resolvePriceRangeValue(
     searchFilters.minPrice,
     searchFilters.maxPrice,
     priceRangeOptions,
   )
+
+  const resetFiltersForTab = useCallback(
+    (tab: HeroPropertyTab) => {
+      const nextFilters: PropertyListFilters = { ...EMPTY_PROPERTY_FILTERS }
+      if (tab === 'sale' && countries.length) {
+        nextFilters.country = resolveDefaultCountryKeys(defaultCountry, countries)
+      }
+      setSearchFilters(nextFilters)
+    },
+    [countries, defaultCountry],
+  )
+
+  useEffect(() => {
+    if (activeTab === 'sale' && countries.length && !searchFilters.country?.length) {
+      const defaultKeys = resolveDefaultCountryKeys(defaultCountry, countries)
+      if (defaultKeys.length) {
+        setSearchFilters((prev) => ({ ...prev, country: defaultKeys }))
+      }
+    }
+  }, [activeTab, countries, defaultCountry, searchFilters.country?.length])
+
+  const handleTabChange = (tab: HeroPropertyTab) => {
+    setActiveTab(tab)
+    resetFiltersForTab(tab)
+  }
 
   const handleSearchFilterChange = (
     key: keyof PropertyListFilters,
@@ -86,7 +181,10 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     setSearchFilters((prev) => ({ ...prev, minPrice, maxPrice }))
   }
 
-  const searchResultsPath = getCMSLinkHref(searchResultsLink ?? {}) ?? DEFAULT_SEARCH_RESULTS_PATH
+  const searchResultsPath =
+    activeTab === 'sale'
+      ? (getCMSLinkHref(searchResultsLink ?? {}) ?? HERO_TAB_PATHS.sale)
+      : HERO_TAB_PATHS[activeTab]
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,6 +199,12 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     ctaLink && getCMSLinkHref(ctaLink)
       ? { ...ctaLink, label: buttonText || ctaLink.label }
       : { type: 'custom' as const, url: '/property-for-sale', label: buttonText }
+
+  const tabs: { id: HeroPropertyTab; label: string }[] = [
+    { id: 'sale', label: saleTabLabel },
+    { id: 'rental', label: rentalTabLabel },
+    { id: 'holiday', label: holidayTabLabel },
+  ]
 
   return (
     <div ref={ref} className="relative">
@@ -125,13 +229,49 @@ const HeroBlockContent: React.FC<Props> = (props) => {
             className={`absolute bottom-[6%] md:bottom-[8%] left-0 right-0 z-30 ${heroContainerClassName}`}
           >
             <form onSubmit={handleSearchSubmit} className={heroSearchFormClassName}>
-              <div className="flex flex-col gap-2 border-b border-white/20 px-4 md:px-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                <p className="py-3 uppercase md:py-4 px-4 md:px-6 font-label-nav text-label-nav text-white border-b-2 border-tertiary self-start">
-                  {searchPropertiesLabel}
-                </p>
-                <HeroWeather />
+              <div className="flex flex-col gap-2 border-b border-white/20 px-4 py-2.5 md:px-6 md:py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div className="flex w-full flex-col gap-1 rounded-xl border border-white/20 bg-black/15 p-1.5 sm:w-auto md:inline-flex md:w-fit md:flex-row md:flex-wrap md:items-center md:gap-1 md:rounded-full md:p-1">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => handleTabChange(tab.id)}
+                      className={cn(
+                        'w-full cursor-pointer rounded-full px-4 py-2.5 text-left font-label-nav text-label-nav uppercase transition-all md:w-auto md:rounded-full md:px-5 md:py-2 md:text-center',
+                        activeTab === tab.id
+                          ? 'bg-tertiary text-white shadow-md'
+                          : 'text-white/75 hover:bg-white/15 hover:text-white',
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="py-0.5 sm:py-0">
+                  <HeroWeather />
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 md:p-6 items-end">
+              <div
+                className={cn(
+                  'grid gap-3 md:gap-4 p-3.5 md:p-6 items-end',
+                  heroGridClassName[activeTab],
+                )}
+              >
+                {activeTab === 'sale' && (
+                  <FilterSelect
+                    mode="multi"
+                    label={countryLabel}
+                    id="hero-search-country"
+                    icon={<Globe size={20} strokeWidth={1.75} />}
+                    options={countryOptions}
+                    value={parseCountryFilter(searchFilters.country)}
+                    onChange={(value) => handleSearchFilterChange('country', value)}
+                    emptyLabel={countriesLoading ? loadingCountriesLabel : allCountriesLabel}
+                    disabled={countriesLoading}
+                    triggerClassName={heroSearchFieldClassName}
+                  />
+                )}
+
                 <CoastCityFilterFields
                   coast={searchFilters.coast}
                   city={searchFilters.city}
@@ -146,28 +286,68 @@ const HeroBlockContent: React.FC<Props> = (props) => {
                   triggerClassName={heroSearchFieldClassName}
                 />
 
-                <FilterSelect
-                  mode="multi"
-                  label={propertyTypeLabel}
-                  id="hero-search-type"
-                  icon={<Home size={20} strokeWidth={1.75} />}
-                  options={propertyTypeOptions}
-                  value={parsePropertyTypeFilter(searchFilters.propertyType)}
-                  onChange={(value) => handleSearchFilterChange('propertyType', value)}
-                  emptyLabel={propertyTypeLoading ? loadingTypesLabel : allPropertiesLabel}
-                  disabled={propertyTypeLoading}
-                  triggerClassName={heroSearchFieldClassName}
-                />
+                {(activeTab === 'sale' || activeTab === 'rental') && (
+                  <>
+                    <FilterSelect
+                      mode="multi"
+                      label={propertyTypeLabel}
+                      id="hero-search-type"
+                      icon={<Home size={20} strokeWidth={1.75} />}
+                      options={propertyTypeOptions}
+                      value={parsePropertyTypeFilter(searchFilters.propertyType)}
+                      onChange={(value) => handleSearchFilterChange('propertyType', value)}
+                      emptyLabel={propertyTypeLoading ? loadingTypesLabel : allPropertiesLabel}
+                      disabled={propertyTypeLoading}
+                      triggerClassName={heroSearchFieldClassName}
+                    />
 
-                <FilterSelect
-                  label={priceRangeLabel}
-                  id="hero-search-price"
-                  icon={<Banknote size={20} strokeWidth={1.75} />}
-                  options={priceRangeOptions}
-                  value={priceRange}
-                  onChange={handlePriceRangeChange}
-                  triggerClassName={heroSearchFieldClassName}
-                />
+                    <FilterSelect
+                      label={priceRangeLabel}
+                      id="hero-search-price"
+                      icon={<Banknote size={20} strokeWidth={1.75} />}
+                      options={priceRangeOptions}
+                      value={priceRange}
+                      onChange={handlePriceRangeChange}
+                      triggerClassName={heroSearchFieldClassName}
+                    />
+                  </>
+                )}
+
+                {activeTab === 'holiday' && (
+                  <>
+                    <DateRangePickerField
+                      id="hero-search-period-range"
+                      label={periodRangeLabel}
+                      periodFrom={searchFilters.periodFrom ?? ''}
+                      periodTo={searchFilters.periodTo ?? ''}
+                      onPeriodFromChange={(value) => handleSearchFilterChange('periodFrom', value)}
+                      onPeriodToChange={(value) => handleSearchFilterChange('periodTo', value)}
+                      triggerClassName={heroDateFieldClassName}
+                      labelClassName="font-label-sm text-label-sm uppercase text-white/75 ml-1 mb-1 block"
+                      iconClassName="text-tertiary pointer-events-none"
+                      openDirection="up"
+                      panelClassName="rounded-2xl border border-white/20 bg-surface shadow-2xl"
+                    />
+                    <FilterSelect
+                      label={guestsLabel}
+                      id="hero-search-guests"
+                      icon={<Users size={20} strokeWidth={1.75} />}
+                      options={guestOptions}
+                      value={searchFilters.guests ?? 'any'}
+                      onChange={(value) => handleSearchFilterChange('guests', value)}
+                      triggerClassName={heroSearchFieldClassName}
+                    />
+                    <FilterSelect
+                      label={totalBudgetLabel}
+                      id="hero-search-budget"
+                      icon={<Banknote size={20} strokeWidth={1.75} />}
+                      options={holidayBudgetOptions}
+                      value={searchFilters.totalBudget ?? 'any'}
+                      onChange={(value) => handleSearchFilterChange('totalBudget', value)}
+                      triggerClassName={heroSearchFieldClassName}
+                    />
+                  </>
+                )}
 
                 <button type="submit" className={heroSearchButtonClassName}>
                   <Search size={16} />
@@ -177,8 +357,7 @@ const HeroBlockContent: React.FC<Props> = (props) => {
             </form>
           </div>
         )}
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden  flex-col items-center animate-bounce text-white/70">
+        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden flex-col items-center animate-bounce text-white/70">
           <span className="font-label-sm text-label-sm mb-2">{scrollLabel}</span>
           <ChevronDown size={20} />
         </div>

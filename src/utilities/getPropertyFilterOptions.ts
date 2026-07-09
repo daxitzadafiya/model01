@@ -78,6 +78,11 @@ export function normalizePropertyFilterOptions(
     minPrices: normalizeSimpleOptions(doc.minPrices, DEFAULT_PROPERTY_FILTER_OPTIONS.minPrices),
     maxPrices: normalizeSimpleOptions(doc.maxPrices, DEFAULT_PROPERTY_FILTER_OPTIONS.maxPrices),
     features: normalizeSimpleOptions(doc.features, DEFAULT_PROPERTY_FILTER_OPTIONS.features),
+    guests: normalizeSimpleOptions(doc.guests, DEFAULT_PROPERTY_FILTER_OPTIONS.guests),
+    holidayBudgetRanges: normalizePriceRanges(
+      doc.holidayBudgetRanges,
+      DEFAULT_PROPERTY_FILTER_OPTIONS.holidayBudgetRanges,
+    ),
   }
 }
 

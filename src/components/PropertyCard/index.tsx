@@ -9,6 +9,10 @@ import { PropertyCardImageGallery } from '@/components/PropertyCard/PropertyCard
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import type { FavoritePropertyId } from '@/utilities/propertyFavorites'
 import { stashPropertyDetailFetchStatus } from '@/utilities/propertyDetailFetchStatus'
+import {
+  stashPropertyDetailListingContext,
+  type PropertyDetailListingContext,
+} from '@/utilities/propertyDetailListingContext'
 import { useTranslation } from '@/utilities/translateClient'
 
 export type PropertyCardData = {
@@ -24,6 +28,8 @@ export type PropertyCardData = {
   baths?: number
   sqft?: number | string
   price: string
+  /** Secondary price line (e.g. holiday total summary) */
+  priceSubtext?: string
   statusBadgeLabel?: 'SOLD' | 'RESERVED'
 }
 
@@ -44,6 +50,8 @@ type Props = {
   style?: React.CSSProperties
   /** Passed to view-by-ref on the detail page (via sessionStorage), not the browser URL. */
   detailFetchStatuses?: string[]
+  /** Passed to detail page via sessionStorage (kept out of URL). */
+  detailListingContext?: PropertyDetailListingContext
   /** When set (e.g. Properties block), pauses parent carousel auto-play while engaging this card */
   onCardEngage?: () => void
   onCardRelease?: () => void
@@ -99,6 +107,7 @@ export const PropertyCard: React.FC<Props> = ({
   href,
   statusBadgeLabel,
   detailFetchStatuses,
+  detailListingContext,
   variant = 'surface',
   className = '',
   style,
@@ -188,7 +197,14 @@ export const PropertyCard: React.FC<Props> = ({
             {formatPropertyAreaDisplay(property.sqft)}
           </span>
         </div>
-        <span className="font-body-md text-body-md font-bold text-primary">{property.price}</span>
+        <span className="font-body-md text-body-md font-bold text-primary text-right">
+          <span className="block">{property.price}</span>
+          {property.priceSubtext && (
+            <span className="block text-label-sm font-label-sm font-normal text-on-surface-variant mt-0.5">
+              {property.priceSubtext}
+            </span>
+          )}
+        </span>
       </div>
       {viewButton}
     </div>
@@ -196,8 +212,13 @@ export const PropertyCard: React.FC<Props> = ({
 
   const handleDetailNavigate = () => {
     const reference = property.reference?.trim()
-    if (!href || !reference || !detailFetchStatuses?.length) return
-    stashPropertyDetailFetchStatus(reference, detailFetchStatuses)
+    if (!href || !reference) return
+    if (detailFetchStatuses?.length) {
+      stashPropertyDetailFetchStatus(reference, detailFetchStatuses)
+    }
+    if (detailListingContext) {
+      stashPropertyDetailListingContext(reference, detailListingContext)
+    }
   }
 
   const cardShellClass = `group ${cardBase} ${className}`.trim()

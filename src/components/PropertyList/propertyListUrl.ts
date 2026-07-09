@@ -146,17 +146,20 @@ export function buildPropertyListListingQuery(
 
   if (updates.sort !== undefined) {
     clearPropertyListOrderbyParams(params)
-
-    if (updates.sort && sortOptions?.length) {
-      const sortOption = findSortOptionByValue(updates.sort, sortOptions)
-      if (sortOption) {
-        setPropertyListOrderbyParams(params, sortOption)
-      }
-    }
   }
 
   const query = params.toString()
   return query ? `?${query}` : ''
+}
+
+export function stripOrderbyFromListingHref(
+  pathname: string,
+  current?: URLSearchParams | string | null,
+): string {
+  const params = toSearchParams(current)
+  clearPropertyListOrderbyParams(params)
+  const query = params.toString()
+  return query ? `${pathname}?${query}` : pathname
 }
 
 export function buildPropertyListListingHref(

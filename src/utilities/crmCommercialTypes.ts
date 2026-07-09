@@ -33,8 +33,13 @@ export const buildCommercialTypesRequest = (
     type_one_only: 1,
   }
 
-  if (preset === 'forRent') {
+  if (preset === 'forRent' || preset === 'forHoliday') {
     query.rent = true
+    if (preset === 'forHoliday') {
+      query.st_rental = true
+    } else {
+      query.lt_rental = true
+    }
   } else if (preset !== 'sold') {
     query.sale = true
   }

@@ -1,9 +1,14 @@
 import type { PropertyListFilters } from '@/utilities/crmProperties'
+import {
+  appendForQueryToDetailHref,
+  type PropertyDetailListingContext,
+} from '@/utilities/propertyDetailListingContext'
 
 import {
   EMPTY_PROPERTY_FILTERS,
   parseCityFilter,
   parseCoastFilter,
+  parseCountryFilter,
   parseFeaturesFilter,
   parsePropertyTypeFilter,
 } from './filterOptions'
@@ -20,6 +25,7 @@ export const normalizePropertyListFilters = (
   ...filters,
   reference: filters.reference?.trim() ?? '',
   propertyType: parsePropertyTypeFilter(filters.propertyType),
+  country: parseCountryFilter(filters.country),
   coast: parseCoastFilter(filters.coast),
   city: parseCityFilter(filters.city),
   minPrice: filters.minPrice && filters.minPrice !== 'any' ? filters.minPrice : 'any',
@@ -32,6 +38,10 @@ export const normalizePropertyListFilters = (
   mapReferences: Array.isArray(filters.mapReferences)
     ? filters.mapReferences.filter(Boolean)
     : [],
+  periodFrom: filters.periodFrom?.trim() ?? '',
+  periodTo: filters.periodTo?.trim() ?? '',
+  guests: filters.guests && filters.guests !== 'any' ? filters.guests : 'any',
+  totalBudget: filters.totalBudget && filters.totalBudget !== 'any' ? filters.totalBudget : 'any',
 })
 
 export const savePendingPropertyListFilters = (filters: PropertyListFilters): void => {
@@ -105,6 +115,7 @@ export const serializePropertyFiltersToSearchParams = (
 
   if (filters.propertyType?.length) params.set('propertyType', filters.propertyType.join(','))
 
+  if (filters.country?.length) params.set('country', filters.country.join(','))
   if (filters.coast?.length) params.set('coast', filters.coast.join(','))
   if (filters.city?.length) params.set('city', filters.city.join(','))
 
@@ -116,6 +127,13 @@ export const serializePropertyFiltersToSearchParams = (
   if (filters.bathrooms && filters.bathrooms !== 'any') params.set('bathrooms', filters.bathrooms)
   if (filters.bathroomsCustom?.trim()) params.set('bathroomsCustom', filters.bathroomsCustom.trim())
   if (filters.features?.length) params.set('features', filters.features.join(','))
+
+  if (filters.periodFrom?.trim()) params.set('periodFrom', filters.periodFrom.trim())
+  if (filters.periodTo?.trim()) params.set('periodTo', filters.periodTo.trim())
+  if (filters.guests && filters.guests !== 'any') params.set('guests', filters.guests)
+  if (filters.totalBudget && filters.totalBudget !== 'any') {
+    params.set('totalBudget', filters.totalBudget)
+  }
 
   return params
 }
@@ -135,6 +153,9 @@ export const parsePropertyFiltersFromSearchParams = (
 
   const coast = splitCsv(searchParams.get('coast'))
   if (coast.length) filters.coast = coast
+
+  const country = splitCsv(searchParams.get('country'))
+  if (country.length) filters.country = country
 
   const city = splitCsv(searchParams.get('city'))
   if (city.length) filters.city = city
@@ -163,6 +184,18 @@ export const parsePropertyFiltersFromSearchParams = (
   const features = splitCsv(searchParams.get('features'))
   if (features.length) filters.features = features
 
+  const periodFrom = searchParams.get('periodFrom')
+  if (periodFrom) filters.periodFrom = periodFrom
+
+  const periodTo = searchParams.get('periodTo')
+  if (periodTo) filters.periodTo = periodTo
+
+  const guests = searchParams.get('guests')
+  if (guests) filters.guests = guests
+
+  const totalBudget = searchParams.get('totalBudget')
+  if (totalBudget) filters.totalBudget = totalBudget
+
   return filters
 }
 
@@ -171,3 +204,41 @@ export const buildPropertyListUrl = (path: string, filters: PropertyListFilters)
   const qs = params.toString()
   return qs ? `${path}?${qs}` : path
 }
+
+/** Append holiday search params to a property detail href when present. */
+export const appendHolidayParamsToHref = (
+  href: string | undefined,
+  filters: Pick<PropertyListFilters, 'periodFrom' | 'periodTo' | 'guests'>,
+): string | undefined => {
+  if (!href) return href
+
+  const hasHolidayParams =
+    filters.periodFrom?.trim() ||
+    filters.periodTo?.trim() ||
+    (filters.guests && filters.guests !== 'any')
+
+  if (!hasHolidayParams) return href
+
+  const params = serializePropertyFiltersToSearchParams({
+    ...EMPTY_PROPERTY_FILTERS,
+    periodFrom: filters.periodFrom,
+    periodTo: filters.periodTo,
+    guests: filters.guests,
+  })
+
+  const qs = params.toString()
+  if (!qs) return href
+
+  return href.includes('?') ? `${href}&${qs}` : `${href}?${qs}`
+}
+
+/** Append `?for=` listing context and optional holiday search params to detail hrefs. */
+export const appendListingContextToDetailHref = (
+  href: string | undefined,
+  listingContext?: PropertyDetailListingContext,
+  filters?: Pick<PropertyListFilters, 'periodFrom' | 'periodTo' | 'guests'>,
+): string | undefined => {
+  const withContext = appendForQueryToDetailHref(href, listingContext)
+  return appendHolidayParamsToHref(withContext, filters ?? {})
+}
+

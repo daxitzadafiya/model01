@@ -36,6 +36,21 @@ export function buildCRMContactEndpoint(contactUrl: string, route: string, apiKe
   return `${contactUrl}${separator}r=${normalizedRoute}&user_apikey=${encodeURIComponent(apiKey)}`
 }
 
+/** Yii `r` routes use slashes — must not encode `/` as `%2F`. */
+export function buildCRMContactEndpointWithUserKey(
+  contactUrl: string,
+  route: string,
+  userKey: string,
+): string {
+  const normalizedRoute = route.replace(/^\//, '')
+  if (!/^[a-zA-Z0-9/_-]+$/.test(normalizedRoute)) {
+    throw new Error(`Invalid CRM contact route: ${route}`)
+  }
+
+  const separator = contactUrl.includes('?') ? '&' : '?'
+  return `${contactUrl}${separator}r=${normalizedRoute}&user=${encodeURIComponent(userKey)}`
+}
+
 export async function getFromCRMContact(
   route: string,
   init?: Omit<RequestInit, 'method'>,
@@ -59,6 +74,60 @@ export async function getFromCRMContact(
   })
 }
 
+/** GET on Yii contact URL with extra query params (e.g. bookings/create-booking). */
+export async function getFromCRMContactWithQuery(
+  route: string,
+  searchParams: URLSearchParams,
+  init?: Omit<RequestInit, 'method'>,
+): Promise<Response> {
+  const settings = await getOptimaCrmSettings()
+  const contactUrl = settings.contactUrl.trim()
+  const apiKey = settings.apiKey.trim()
+
+  if (!contactUrl || !apiKey) {
+    throw new Error(
+      'CRM contact URL is not configured. Set credentials under Globals → Optima CRM in the admin panel.',
+    )
+  }
+
+  const endpoint = buildCRMContactEndpoint(contactUrl, route, apiKey)
+  const queryString = searchParams.toString()
+  const url = queryString ? `${endpoint}&${queryString}` : endpoint
+
+  return crmServerFetch(url, {
+    ...init,
+    method: 'GET',
+    cache: 'no-store',
+  })
+}
+
+/** GET on Yii contact URL using `user` query param (instead of `user_apikey`). */
+export async function getFromCRMContactWithQueryUsingUserKey(
+  route: string,
+  searchParams: URLSearchParams,
+  init?: Omit<RequestInit, 'method'>,
+): Promise<Response> {
+  const settings = await getOptimaCrmSettings()
+  const contactUrl = settings.contactUrl.trim()
+  const userKey = settings.userKey.trim()
+
+  if (!contactUrl || !userKey) {
+    throw new Error(
+      'CRM contact URL / user key is not configured. Set credentials under Globals → Optima CRM in the admin panel.',
+    )
+  }
+
+  const endpoint = buildCRMContactEndpointWithUserKey(contactUrl, route, userKey)
+  const queryString = searchParams.toString()
+  const url = queryString ? `${endpoint}&${queryString}` : endpoint
+
+  return crmServerFetch(url, {
+    ...init,
+    method: 'GET',
+    cache: 'no-store',
+  })
+}
+
 export async function getFromCRM(
   path: string,
   searchParams: URLSearchParams,
@@ -75,7 +144,6 @@ export async function getFromCRM(
   const queryString = searchParams.toString()
   const url = queryString ? `${endpoint}&${queryString}` : endpoint
 
-  console.log('url >>>>', url)
   return crmServerFetch(url, {
     ...init,
     method: 'GET',
@@ -119,6 +187,7 @@ export async function postToCRM(
   path: string,
   body: Record<string, unknown>,
   init?: Omit<RequestInit, 'method' | 'body'>,
+  searchParams?: URLSearchParams,
 ): Promise<Response> {
   const config = await getCRMConfig()
   if (!config) {
@@ -128,9 +197,12 @@ export async function postToCRM(
   }
 
   const endpoint = buildCRMEndpoint(path, config)
+  const queryString = searchParams?.toString()
+  const url = queryString ? `${endpoint}&${queryString}` : endpoint
   const { headers, ...restInit } = init ?? {}
 
-  return crmServerFetch(endpoint, {
+  console.log('------[POST TO CRM - URL]------', url)
+  return crmServerFetch(url, {
     ...restInit,
     method: 'POST',
     cache: 'no-store',

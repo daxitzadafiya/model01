@@ -45,6 +45,7 @@ export async function fetchCRMPropertyDetail(
 
   const { headers, ...restInit } = options?.init ?? {}
 
+  console.log('-----[GET CRM PROPERTY DETAIL - URL]------', endpoint)
   const response = await fetch(endpoint, {
     ...restInit,
     method: 'GET',
@@ -67,6 +68,11 @@ export async function fetchCRMPropertyDetail(
 
   const record = unwrapCRMPropertyRecord(data as CRMPropertyDetailRecord)
   if (record.reference == null && !record._id) return null
+
+  const topLevelBookings = (data as Record<string, unknown>).bookings
+  if (Array.isArray(topLevelBookings) && !Array.isArray(record.bookings)) {
+    record.bookings = topLevelBookings
+  }
 
   return record
 }

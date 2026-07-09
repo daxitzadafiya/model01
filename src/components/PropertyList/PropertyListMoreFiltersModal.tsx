@@ -1,16 +1,17 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import { Banknote, Bath, Bed, Home, RotateCcw, Search, Sparkles, Tag, X } from 'lucide-react'
+import { Banknote, Bath, Bed, Globe, Home, RotateCcw, Search, Sparkles, Tag, X } from 'lucide-react'
 
 import { FilterSelect } from '@/components/FilterSelect'
 import type { FilterSelectOption } from '@/components/FilterSelect'
 import { CoastCityFilterFields } from '@/components/CoastCityFilterFields'
 import type { CRMCityOption, CRMCoastOption } from '@/utilities/crmCoasts'
+import type { CRMCountryOption } from '@/utilities/crmCountries'
 import type { PropertyListFilters as Filters } from '@/utilities/crmProperties'
 import type { FloatingMenuPlacement } from '@/utilities/floatingMenuPosition'
 import { CountFilterField } from './CountFilterField'
-import { parseFeaturesFilter, parsePropertyTypeFilter } from './filterOptions'
+import { parseCountryFilter, parseFeaturesFilter, parsePropertyTypeFilter } from './filterOptions'
 import {
   useBathroomOptions,
   useBedroomOptions,
@@ -29,6 +30,9 @@ type Props = {
   onSearch: () => void
   propertyTypeOptions: FilterSelectOption[]
   propertyTypeLoading?: boolean
+  countries: CRMCountryOption[]
+  countriesLoading?: boolean
+  showCountryFilter?: boolean
   coasts: CRMCoastOption[]
   coastsLoading?: boolean
   cities: CRMCityOption[]
@@ -69,6 +73,9 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   onSearch,
   propertyTypeOptions,
   propertyTypeLoading = false,
+  countries,
+  countriesLoading = false,
+  showCountryFilter = false,
   coasts,
   coastsLoading = false,
   cities,
@@ -83,6 +90,9 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
+  const countryLabel = useTranslation('propertyList.filters.country', 'Country')
+  const loadingCountriesLabel = useTranslation('propertyList.filters.loadingCountries', 'Loading countries…')
+  const allCountriesLabel = useTranslation('propertyList.filters.country.emptyLabel', 'All Countries')
   const bedroomsLabel = useTranslation('propertyList.filters.bedrooms', 'Bedrooms')
   const bathroomsLabel = useTranslation('propertyList.filters.bathrooms', 'Bathrooms')
   const countCustomPlaceholder = useTranslation(
@@ -260,7 +270,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
               />
             </div>
 
-            <div className="min-w-0 sm:col-span-2">
+            <div className={`min-w-0 ${showCountryFilter ? 'sm:col-span-1' : 'sm:col-span-2'}`}>
               <FilterSelect
                 mode="multi"
                 label={featuresLabel}
@@ -272,6 +282,21 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                 icon={<Sparkles {...filterFieldIcon} />}
               />
             </div>
+
+            {showCountryFilter && (
+              <div className="min-w-0 sm:col-span-1">
+                <FilterSelect
+                  mode="multi"
+                  label={countryLabel}
+                  options={countries.map((item) => ({ value: item.value, label: item.label }))}
+                  value={parseCountryFilter(filters.country)}
+                  onChange={(value) => onChange('country', value)}
+                  emptyLabel={countriesLoading ? loadingCountriesLabel : allCountriesLabel}
+                  disabled={countriesLoading || !countries.length}
+                  icon={<Globe {...filterFieldIcon} />}
+                />
+              </div>
+            )}
           </div>
         </div>
 

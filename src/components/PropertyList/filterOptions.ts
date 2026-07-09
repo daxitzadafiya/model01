@@ -1,4 +1,11 @@
 import type { PropertyListFilters } from '@/utilities/crmProperties'
+import {
+  COUNT_FILTER_OTHER_VALUE,
+  parseCountFilterValue,
+  resolveHolidayBudgetRange,
+} from '@/utilities/propertyFilterParsing'
+
+export { COUNT_FILTER_OTHER_VALUE, parseCountFilterValue, resolveHolidayBudgetRange }
 
 export const PRICE_RANGE_OPTIONS = [
   { value: 'any', label: 'Any Price', min: 'any', max: 'any' },
@@ -46,9 +53,17 @@ export const parseCityFilter = (value?: string | string[]): string[] => {
   return []
 }
 
+export const parseCountryFilter = (value?: string | string[]): string[] => {
+  if (Array.isArray(value)) return value.filter((key) => key && key !== 'all' && key !== 'any')
+  if (value && value !== 'all' && value !== 'any') return [value]
+  return []
+}
+
 export const isCoastFilterActive = (coast?: string[]) => parseCoastFilter(coast).length > 0
 
 export const isCityFilterActive = (city?: string[]) => parseCityFilter(city).length > 0
+
+export const isCountryFilterActive = (country?: string[]) => parseCountryFilter(country).length > 0
 
 export const MIN_PRICE_OPTIONS = [
   { value: 'any', label: 'Any Min Price' },
@@ -65,9 +80,6 @@ export const MAX_PRICE_OPTIONS = [
   { value: '10000000', label: '€10,000,000' },
   { value: '50000000', label: '€50,000,000+' },
 ] as const
-
-/** Internal filter value — keep stable for URL/CRM; label is "Need More". */
-export const COUNT_FILTER_OTHER_VALUE = 'other'
 
 export const BEDROOM_OPTIONS = [
   { value: 'any', label: 'Any Bedrooms' },
@@ -88,19 +100,6 @@ export const BATHROOM_OPTIONS = [
   { value: '5', label: '5' },
   { value: COUNT_FILTER_OTHER_VALUE, label: 'Need More' },
 ] as const
-
-/** Resolves a bedrooms/bathrooms dropdown (+ optional custom) to a CRM integer count. */
-export const parseCountFilterValue = (value?: string, custom?: string): number | undefined => {
-  if (!value || value === 'any') return undefined
-
-  if (value === COUNT_FILTER_OTHER_VALUE) {
-    const parsed = parseInt(custom?.replace(/\D/g, '') ?? '', 10)
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
-  }
-
-  const parsed = parseInt(value, 10)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
-}
 
 export const isCountFilterActive = (value?: string, custom?: string): boolean =>
   parseCountFilterValue(value, custom) !== undefined
@@ -189,24 +188,71 @@ export const applyPriceRangeValue = (
   return { minPrice: match.min, maxPrice: match.max }
 }
 
+export const GUEST_OPTIONS = [
+  { value: 'any', label: 'Any Guests' },
+  { value: '1', label: '1 Guest' },
+  { value: '2', label: '2 Guests' },
+  { value: '3', label: '3 Guests' },
+  { value: '4', label: '4 Guests' },
+  { value: '5', label: '5 Guests' },
+  { value: '6', label: '6 Guests' },
+  { value: '8', label: '8 Guests' },
+  { value: '10', label: '10+ Guests' },
+] as const
+
+export const HOLIDAY_BUDGET_OPTIONS = [
+  { value: 'any', label: 'Any Budget', min: 'any', max: 'any' },
+  { value: '0-500', label: 'Up to €500', min: '0', max: '500' },
+  { value: '500-1000', label: '€500 - €1,000', min: '500', max: '1000' },
+  { value: '1000-2500', label: '€1,000 - €2,500', min: '1000', max: '2500' },
+  { value: '2500-5000', label: '€2,500 - €5,000', min: '2500', max: '5000' },
+  { value: '5000+', label: '€5,000+', min: '5000', max: 'any' },
+] as const
+
+export const resolveHolidayBudgetValue = (
+  minBudget?: string,
+  maxBudget?: string,
+  options: readonly PriceRangeOption[] = HOLIDAY_BUDGET_OPTIONS,
+): string => {
+  const min = minBudget ?? 'any'
+  const max = maxBudget ?? 'any'
+  const match = options.find((opt) => opt.min === min && opt.max === max)
+  return match?.value ?? 'any'
+}
+
+export const applyHolidayBudgetValue = (
+  range: string,
+  options: readonly PriceRangeOption[] = HOLIDAY_BUDGET_OPTIONS,
+): { minBudget: string; maxBudget: string } => {
+  const match = options.find((opt) => opt.value === range)
+  if (!match) return { minBudget: 'any', maxBudget: 'any' }
+  return { minBudget: match.min, maxBudget: match.max }
+}
+
 export const hasAppliedPropertyFilters = (filters: PropertyListFilters): boolean => {
   return Boolean(
     filters.reference?.trim() ||
     filters.propertyType?.length ||
     isCoastFilterActive(filters.coast) ||
     isCityFilterActive(filters.city) ||
+    isCountryFilterActive(filters.country) ||
     (filters.minPrice && filters.minPrice !== 'any') ||
     (filters.maxPrice && filters.maxPrice !== 'any') ||
     isCountFilterActive(filters.bedrooms, filters.bedroomsCustom) ||
     isCountFilterActive(filters.bathrooms, filters.bathroomsCustom) ||
     filters.features?.length ||
-    filters.mapReferences?.length,
+    filters.mapReferences?.length ||
+    filters.periodFrom?.trim() ||
+    filters.periodTo?.trim() ||
+    (filters.guests && filters.guests !== 'any') ||
+    (filters.totalBudget && filters.totalBudget !== 'any'),
   )
 }
 
 export const EMPTY_PROPERTY_FILTERS = {
   reference: '',
   propertyType: [] as string[],
+  country: [] as string[],
   coast: [] as string[],
   city: [] as string[],
   minPrice: 'any',
@@ -217,11 +263,16 @@ export const EMPTY_PROPERTY_FILTERS = {
   bathroomsCustom: '',
   features: [] as string[],
   mapReferences: [] as string[],
+  periodFrom: '',
+  periodTo: '',
+  guests: 'any',
+  totalBudget: 'any',
 } as const
 
 type PropertyFiltersShape = {
   reference?: string
   propertyType?: string | string[]
+  country?: string | string[]
   coast?: string | string[]
   city?: string | string[]
   minPrice?: string
@@ -232,11 +283,16 @@ type PropertyFiltersShape = {
   bathroomsCustom?: string
   features?: string | string[]
   mapReferences?: string[]
+  periodFrom?: string
+  periodTo?: string
+  guests?: string
+  totalBudget?: string
 }
 
 export const hasActivePropertyFilters = (filters: PropertyFiltersShape): boolean => {
   if (filters.reference?.trim()) return true
   if (parsePropertyTypeFilter(filters.propertyType).length > 0) return true
+  if (isCountryFilterActive(parseCountryFilter(filters.country))) return true
   if (isCoastFilterActive(parseCoastFilter(filters.coast))) return true
   if (isCityFilterActive(parseCityFilter(filters.city))) return true
   if (filters.minPrice && filters.minPrice !== 'any') return true
@@ -245,6 +301,10 @@ export const hasActivePropertyFilters = (filters: PropertyFiltersShape): boolean
   if (isCountFilterActive(filters.bathrooms, filters.bathroomsCustom)) return true
   if (parseFeaturesFilter(filters.features).length > 0) return true
   if (filters.mapReferences?.length) return true
+  if (filters.periodFrom?.trim()) return true
+  if (filters.periodTo?.trim()) return true
+  if (filters.guests && filters.guests !== 'any') return true
+  if (filters.totalBudget && filters.totalBudget !== 'any') return true
 
   return false
 }

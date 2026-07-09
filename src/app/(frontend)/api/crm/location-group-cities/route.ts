@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { postToCRMWithUserKey } from '@/utilities/crmApi.server'
 import { unwrapCRMJsonPayload } from '@/utilities/crmCoasts'
 import type { CRMListingPreset } from '@/utilities/crmProperties'
+import { getActiveLocale } from '@/i18n/getLanguageMenu'
 
 type RequestBody = {
   locationGroup?: number[]
@@ -29,21 +30,37 @@ export async function POST(request: Request) {
   }
 
   const preset = body.preset ?? 'forSale'
-  const propStatus = preset === 'sold' ? (['Sold'] as const) : (['Available', 'Under Offer'] as const)
+  const { locale } = await getActiveLocale()
+  const propStatus =
+    preset === 'sold' ? (['Sold'] as const) : (['Available', 'Under Offer'] as const)
 
+  const query: Record<string, unknown> = {
+    sort: locale === 'es' ? 'es_AR' : locale,
+    order: 'DESC',
+    prop_status: propStatus,
+    allow_cities: true,
+    frontend_api: true,
+    location_group: locationGroup,
+  }
+
+  // if (preset === 'forRent') {
+  //   query.rent = true
+  //   query.lt_rental = true
+  // } else if (preset === 'forHoliday') {
+  //   query.rent = true
+  //   query.st_rental = true
+  // } else if (preset !== 'sold') {
+  //   query.sale = true
+  // }
+
+  const requestBody = { query }
   try {
     const response = await postToCRMWithUserKey(
       'locationgroups/get-location-groups-with-properties',
-      {
-        query: {
-          sort: 'en',
-          order: 'DESC',
-          prop_status: propStatus,
-          allow_cities: true,
-          location_group: locationGroup,
-        },
-      },
+      requestBody,
     )
+
+    console.log('BODY >>>>', requestBody)
 
     if (!response.ok) {
       return NextResponse.json(

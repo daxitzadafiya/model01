@@ -1,4 +1,5 @@
 import { isCRMTruthy } from '@/utilities/localizedValue'
+import type { PropertyDetailListingContext } from '@/utilities/propertyDetailListingContext'
 
 export type PropertyInquiryContext = {
   reference?: string
@@ -25,18 +26,38 @@ export function resolvePropertyInquiryTransactionType(
 ): string {
   if (isCRMTruthy(property.sale)) return 'Buy'
   if (isCRMTruthy(property.rent) || isCRMTruthy(property.lt_rental)) return 'long term rental'
+  if (isCRMTruthy(property.st_rental)) return 'holiday rental'
   return 'Buy'
+}
+
+/** Pick inquiry transaction type from listing context when property is multi-listed. */
+export function resolvePropertyInquiryTransactionTypeForContext(
+  property: Record<string, unknown>,
+  listingContext?: PropertyDetailListingContext,
+): string {
+  switch (listingContext) {
+    case 'forHoliday':
+      return 'holiday rental'
+    case 'forRent':
+      return 'long term rental'
+    case 'forSale':
+    case 'forSold':
+      return 'Buy'
+    default:
+      return resolvePropertyInquiryTransactionType(property)
+  }
 }
 
 export function extractPropertyInquiryContext(
   raw: Record<string, unknown>,
   normalized: { reference?: string; id?: string },
+  listingContext?: PropertyDetailListingContext,
 ): PropertyInquiryContext {
   const reference = normalized.reference
   const interestId = normalized.id
 
   const otherReference = pickString(raw.other_reference) || undefined
-  const transactionType = resolvePropertyInquiryTransactionType(raw)
+  const transactionType = resolvePropertyInquiryTransactionTypeForContext(raw, listingContext)
   const typeOneKey = pickNumericKey(raw.type_one_key)
   const typeTwoKey = pickNumericKey(raw.type_two_key)
 
