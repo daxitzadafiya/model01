@@ -1,7 +1,7 @@
 import { getRuntimeOptimaImageConfig } from '@/settings/optimaCrm/client'
 
 /** Card / list carousels — fits ~400px wide slots without loading 1000px assets */
-export const PROPERTY_CARD_IMAGE_SIZE = 500
+export const PROPERTY_CARD_IMAGE_SIZE = 800
 /** Property detail / lightbox — full quality */
 export const PROPERTY_DETAIL_IMAGE_SIZE = 1000
 
