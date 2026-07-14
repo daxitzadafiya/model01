@@ -134,7 +134,7 @@ export const buildCRMSimilarPropertiesQuery = ({
   const query: Record<string, unknown> = {
     ...similarCommercials,
     archived: { $ne: true },
-    has_images: true,
+    // has_images: true,
     status: { $in: [...SIMILAR_AVAILABLE_STATUSES] },
   }
 

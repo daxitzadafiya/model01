@@ -848,7 +848,7 @@ export const buildCRMListingQuery = ({
   let baseQuery: Record<string, unknown> = {
     ...similarCommercials,
     remove_count: true,
-    has_images: true,
+    // has_images: true,
     // coordinates query fields
     ...CRM_COORDINATE_QUERY_FIELDS,
     status: { $in: ['Available', 'Under Offer'] },
@@ -859,7 +859,7 @@ export const buildCRMListingQuery = ({
       ...similarCommercials,
       sale: true,
       remove_count: true,
-      has_images: true,
+      // has_images: true,
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Sold'] },
     }
@@ -872,7 +872,7 @@ export const buildCRMListingQuery = ({
       archive: {
         $ne: true,
       },
-      has_images: true,
+      // has_images: true,
       // coordinates query fields
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
@@ -883,7 +883,7 @@ export const buildCRMListingQuery = ({
       rent: true,
       lt_rental: true,
       remove_count: true,
-      has_images: true,
+      // has_images: true,
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
@@ -893,7 +893,7 @@ export const buildCRMListingQuery = ({
       rent: true,
       st_rental: true,
       remove_count: true,
-      has_images: true,
+      // has_images: true,
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
@@ -902,7 +902,7 @@ export const buildCRMListingQuery = ({
       ...similarCommercials,
       sale: true,
       remove_count: true,
-      has_images: true,
+      // has_images: true,
       // coordinates query fields
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
@@ -918,7 +918,7 @@ export const buildCRMListingQuery = ({
       featured: true,
       sale: true,
       remove_count: true,
-      has_images: true,
+      // has_images: true,
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
@@ -927,7 +927,7 @@ export const buildCRMListingQuery = ({
       ...similarCommercials,
       ...CRM_COORDINATE_QUERY_FIELDS,
       remove_count: true,
-      has_images: true,
+      // has_images: true,
     }
   }
   let mergedQuery = mergeCRMQueryObjects(baseQuery, filterQuery)
@@ -939,7 +939,6 @@ export const buildCRMListingQuery = ({
     }
   }
 
-  console.log(':::mergedQuery:::', mergedQuery)
   return {
     options: mergeCRMListingOptions(paginationOptions, sortParams),
     query: mergedQuery,

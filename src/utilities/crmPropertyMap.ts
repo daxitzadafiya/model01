@@ -101,7 +101,7 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
       ...similarCommercials,
       sale: true,
       archived: { $ne: true },
-      has_images: true,
+      // has_images: true,
       status: { $in: [...MAP_SOLD_STATUSES] },
     }
   }
@@ -128,7 +128,7 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
     return {
       ...similarCommercials,
       archived: { $ne: true },
-      has_images: true,
+      // has_images: true,
     }
   }
 
@@ -136,7 +136,7 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
     ...similarCommercials,
     sale: true,
     archived: { $ne: true },
-    has_images: true,
+    // has_images: true,
     status: { $in: [...MAP_AVAILABLE_STATUSES] },
   }
 
@@ -160,7 +160,7 @@ export const normalizeMapFindAllQuery = (
     withSimilarCommercialsDefault({
       ...rest,
       archived: { $ne: true },
-      has_images: true,
+      // has_images: true,
     }),
   )
 
@@ -226,7 +226,7 @@ export const buildCRMMapQuery = ({
           ...getSimilarCommercialsQuery(),
           sale: true,
           archived: { $ne: true },
-          has_images: true,
+          // has_images: true,
         },
         parsedBase,
       )

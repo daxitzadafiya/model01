@@ -20,8 +20,9 @@ const DEFAULT_PAGE_SIZE = 9
 const DEFAULT_SORT_OPTIONS = DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions
 
 export const PropertyListBlock = ({ listingPreset, pageSize, searchParams, ...rest }: Props) => {
-  const preset = (listingPreset ?? 'forSale') as NonNullable<PropertyListBlockClientProps['listingPreset']>
-  console.log(':::preset:::', preset)
+  const preset = (listingPreset ?? 'forSale') as NonNullable<
+    PropertyListBlockClientProps['listingPreset']
+  >
   const resolvedPageSize = Math.max(1, pageSize ?? DEFAULT_PAGE_SIZE)
   const listPage = parsePropertyListPage(searchParams)
   const defaultSort = DEFAULT_SORT_OPTIONS[0]?.value ?? 'recent'

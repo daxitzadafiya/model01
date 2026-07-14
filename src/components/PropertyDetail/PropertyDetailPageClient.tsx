@@ -21,9 +21,7 @@ import {
 } from '@/utilities/crmSimilarProperties'
 import type { Form } from '@/payload-types'
 import { normalizeCRMListProperty, normalizeCRMProperty } from '@/utilities/crmProperties'
-import {
-  parseCRMPropertyBookings,
-} from '@/utilities/crmHoliday'
+import { parseCRMPropertyBookings } from '@/utilities/crmHoliday'
 import { parseRentalSeasons } from '@/utilities/holidayRentalPricing'
 import {
   extractPropertyInquiryContext,
@@ -182,7 +180,6 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
 
         void (async () => {
           try {
-            console.log('fetching similar properties')
             const similarRaw = await fetchCRMSimilarProperties({
               property: raw,
               limit: 5,
@@ -220,7 +217,15 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
     void load()
 
     return () => controller.abort()
-  }, [slug, activeLocale, holidayArrival, holidayDeparture, holidayGuests, forQuery, hasHolidaySearchParams])
+  }, [
+    slug,
+    activeLocale,
+    holidayArrival,
+    holidayDeparture,
+    holidayGuests,
+    forQuery,
+    hasHolidaySearchParams,
+  ])
 
   if (loading) return <PropertyDetailSkeleton />
 

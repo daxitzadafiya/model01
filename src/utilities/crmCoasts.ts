@@ -108,7 +108,6 @@ export async function fetchCRMCities(
 ): Promise<CRMCityOption[]> {
   if (!locationGroupKeys.length) return []
 
-  console.log('fetchCRMCities:::locationGroupKeys >>>>', locationGroupKeys)
   const response = await fetch('/api/crm/location-group-cities', {
     method: 'POST',
     signal: init?.signal,
