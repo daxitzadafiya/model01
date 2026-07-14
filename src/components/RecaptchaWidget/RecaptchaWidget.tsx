@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import { toGoogleHl } from '@/utilities/googleLocale'
 
@@ -11,6 +11,10 @@ type Props = {
   onReadyChange?: (ready: boolean) => void
   onError?: (message: string | null) => void
 }
+
+/** Google reCAPTCHA v2 checkbox fixed size. */
+const RECAPTCHA_WIDTH = 304
+const RECAPTCHA_HEIGHT = 78
 
 declare global {
   interface Window {
@@ -55,9 +59,13 @@ function loadRecaptchaScript(googleHl: string): Promise<void> {
     if (window.grecaptcha) return Promise.resolve()
     return new Promise((resolve, reject) => {
       existing.addEventListener('load', () => resolve(), { once: true })
-      existing.addEventListener('error', () => reject(new Error('reCAPTCHA script failed to load')), {
-        once: true,
-      })
+      existing.addEventListener(
+        'error',
+        () => reject(new Error('reCAPTCHA script failed to load')),
+        {
+          once: true,
+        },
+      )
     })
   }
 
@@ -81,11 +89,13 @@ export const RecaptchaWidget: React.FC<Props> = ({
   onError,
 }) => {
   const googleHl = toGoogleHl(locale)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<number | null>(null)
   const onTokenChangeRef = useRef(onTokenChange)
   const onReadyChangeRef = useRef(onReadyChange)
   const onErrorRef = useRef(onError)
+  const [scale, setScale] = useState(1)
 
   useEffect(() => {
     onTokenChangeRef.current = onTokenChange
@@ -98,6 +108,22 @@ export const RecaptchaWidget: React.FC<Props> = ({
   useEffect(() => {
     onErrorRef.current = onError
   }, [onError])
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current
+    if (!wrapper || typeof ResizeObserver === 'undefined') return
+
+    const updateScale = () => {
+      const width = wrapper.clientWidth
+      if (width <= 0) return
+      setScale(Math.min(1, width / RECAPTCHA_WIDTH))
+    }
+
+    updateScale()
+    const observer = new ResizeObserver(updateScale)
+    observer.observe(wrapper)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     onTokenChangeRef.current('')
@@ -150,7 +176,9 @@ export const RecaptchaWidget: React.FC<Props> = ({
       } catch (error) {
         console.error('Failed to render reCAPTCHA widget', error)
         widgetIdRef.current = null
-        onErrorRef.current?.('reCAPTCHA could not be loaded. Please refresh the page and try again.')
+        onErrorRef.current?.(
+          'reCAPTCHA could not be loaded. Please refresh the page and try again.',
+        )
       }
     }
 
@@ -161,7 +189,9 @@ export const RecaptchaWidget: React.FC<Props> = ({
         runWhenGrecaptchaReady(renderWidget)
       } catch (error) {
         console.error('Failed to load reCAPTCHA script', error)
-        onErrorRef.current?.('reCAPTCHA could not be loaded. Please refresh the page and try again.')
+        onErrorRef.current?.(
+          'reCAPTCHA could not be loaded. Please refresh the page and try again.',
+        )
       }
     }
 
@@ -178,5 +208,21 @@ export const RecaptchaWidget: React.FC<Props> = ({
     }
   }, [siteKey, googleHl])
 
-  return <div ref={containerRef} />
+  return (
+    <div
+      ref={wrapperRef}
+      className="w-full max-w-full overflow-hidden"
+      style={{ height: RECAPTCHA_HEIGHT * scale }}
+    >
+      <div
+        ref={containerRef}
+        className="origin-top-left"
+        style={{
+          width: RECAPTCHA_WIDTH,
+          transform: scale < 1 ? `scale(${scale})` : undefined,
+          transformOrigin: 'top left',
+        }}
+      />
+    </div>
+  )
 }

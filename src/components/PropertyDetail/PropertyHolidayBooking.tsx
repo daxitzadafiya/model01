@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import { CalendarDays, Check, Lock, Loader2, Users } from 'lucide-react'
+import { AlertCircle, CalendarDays, Check, Lock, Loader2, Users } from 'lucide-react'
 
 import { PropertyHolidayCalendar } from '@/components/PropertyDetail/PropertyHolidayCalendar'
 import { GUEST_OPTIONS } from '@/components/PropertyList/filterOptions'
@@ -23,7 +23,15 @@ import {
   parseRentalSeasons,
   type CRMPropertyBooking,
 } from '@/utilities/holidayRentalPricing'
-import { useTranslation } from '@/utilities/translateClient'
+import {
+  useFormFieldInvalidEmailMessage,
+  useFormFieldRequiredMessage,
+  useTranslation,
+} from '@/utilities/translateClient'
+
+const EMAIL_PATTERN = /^\S[^\s@]*@\S+$/
+const PRIVACY_POLICY_VALIDATION_KEY = 'form.validation.privacyPolicy.required'
+const PRIVACY_POLICY_VALIDATION_FALLBACK = 'You must accept the Privacy Policy to continue.'
 
 type Props = {
   propertyReference: string
@@ -43,6 +51,14 @@ type BookingFormState = {
   email: string
   mobile: string
   message: string
+}
+
+type BookingFieldErrors = {
+  dates?: string
+  forename?: string
+  email?: string
+  mobile?: string
+  terms?: string
 }
 
 const defaultFormState = (): BookingFormState => ({
@@ -118,6 +134,10 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
     'propertyDetail.holiday.selectDatesHint',
     'Select arrival and departure dates to see the rental price.',
   )
+  const datesRequiredMessage = useTranslation(
+    'propertyDetail.holiday.datesRequired',
+    'Select dates is required',
+  )
   const unavailableHint = useTranslation(
     'propertyDetail.holiday.unavailableHint',
     'Selected dates are not available. Please choose different dates.',
@@ -134,10 +154,6 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
     'propertyDetail.holiday.requiredError',
     'Please complete all required fields and select valid dates.',
   )
-  const termsError = useTranslation(
-    'propertyDetail.holiday.termsError',
-    'Please accept the privacy policy and terms before submitting.',
-  )
   const termsLabel = useTranslation(
     'propertyDetail.holiday.termsLabel',
     'I confirm that I have reviewed and accepted the Privacy Policy.',
@@ -153,12 +169,21 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
   const checkInLabel = useTranslation('propertyDetail.holiday.checkIn', 'Check-in')
   const checkOutLabel = useTranslation('propertyDetail.holiday.checkOut', 'Check-out')
   const yourDetailsLabel = useTranslation('propertyDetail.holiday.yourDetails', 'Your details')
+  const forenameRequiredMessage = useFormFieldRequiredMessage('forename', firstNameLabel)
+  const emailRequiredMessage = useFormFieldRequiredMessage('email', emailLabel)
+  const emailInvalidMessage = useFormFieldInvalidEmailMessage('email')
+  const mobileRequiredMessage = useFormFieldRequiredMessage('phone', phoneLabel)
+  const termsAcceptanceError = useTranslation(
+    PRIVACY_POLICY_VALIDATION_KEY,
+    PRIVACY_POLICY_VALIDATION_FALLBACK,
+  )
 
   const guestOptions = useMemo(() => GUEST_OPTIONS.filter((option) => option.value !== 'any'), [])
 
   const resolvedGuests = guests && guests !== 'any' ? guests : '2'
 
   const [form, setForm] = useState<BookingFormState>(() => defaultFormState())
+  const [fieldErrors, setFieldErrors] = useState<BookingFieldErrors>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -170,16 +195,10 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
   const locale = useSiteLocale()
 
   const recaptchaRequiredMessage = useTranslation(
-    'form.validation.recaptcha.required',
-    'Please complete the reCAPTCHA verification.',
-  )
-  const recaptchaHint = useTranslation(
     'form.validation.recaptcha.hint',
     'Please verify you are not a robot.',
   )
-
   const [recaptchaToken, setRecaptchaToken] = useState('')
-  const [isRecaptchaReady, setIsRecaptchaReady] = useState(false)
   const [recaptchaLoadError, setRecaptchaLoadError] = useState<string | null>(null)
   const [recaptchaValidationError, setRecaptchaValidationError] = useState<string | null>(null)
   const [recaptchaResetKey, setRecaptchaResetKey] = useState(0)
@@ -201,25 +220,68 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
   const meetsMinimumStay =
     !quote?.minimumPeriod || !quote?.nights || quote.nights >= quote.minimumPeriod
 
-  const canSubmit =
-    Boolean(
-      propertyReference &&
-      form.forename.trim() &&
-      form.email.trim() &&
-      form.mobile.trim() &&
-      arrival &&
-      departure &&
-      quote &&
-      datesAvailable &&
-      meetsMinimumStay,
-    ) && !submitting
-
-  const canSubmitWithRestrictions =
-    canSubmit && termsAccepted && (!recaptchaConfigured || Boolean(recaptchaToken))
+  const clearFieldError = (key: keyof BookingFieldErrors) => {
+    setFieldErrors((current) => {
+      if (!current[key]) return current
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+  }
 
   const handleFieldChange = (key: keyof BookingFormState, value: string) => {
     setForm((current) => ({ ...current, [key]: value }))
     setError(null)
+    if (key === 'forename' || key === 'email' || key === 'mobile') {
+      clearFieldError(key)
+    }
+  }
+
+  const handleTermsChange = (checked: boolean) => {
+    setTermsAccepted(checked)
+    if (checked) clearFieldError('terms')
+  }
+
+  const handleArrivalChange = (value: string) => {
+    onArrivalChange(value)
+    clearFieldError('dates')
+    setError(null)
+  }
+
+  const handleDepartureChange = (value: string) => {
+    onDepartureChange(value)
+    clearFieldError('dates')
+    setError(null)
+  }
+
+  const validateDetails = (): boolean => {
+    const next: BookingFieldErrors = {}
+
+    if (!arrival || !departure) {
+      next.dates = datesRequiredMessage
+    }
+
+    if (!form.forename.trim()) {
+      next.forename = forenameRequiredMessage
+    }
+
+    const emailValue = form.email.trim()
+    if (!emailValue) {
+      next.email = emailRequiredMessage
+    } else if (!EMAIL_PATTERN.test(emailValue)) {
+      next.email = emailInvalidMessage
+    }
+
+    if (!form.mobile.trim()) {
+      next.mobile = mobileRequiredMessage
+    }
+
+    if (!termsAccepted) {
+      next.terms = termsAcceptanceError
+    }
+
+    setFieldErrors(next)
+    return Object.keys(next).length === 0
   }
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -227,17 +289,18 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
     setRecaptchaValidationError(null)
     setError(null)
 
-    if (!termsAccepted) {
-      setError(termsError)
-      return
-    }
+    const detailsValid = validateDetails()
+    const recaptchaMissing = recaptchaConfigured && !recaptchaToken
 
-    if (recaptchaConfigured && !recaptchaToken) {
+    if (recaptchaMissing) {
       setRecaptchaValidationError(recaptchaRequiredMessage)
+    }
+
+    if (!detailsValid || recaptchaMissing) {
       return
     }
 
-    if (!canSubmitWithRestrictions || !quote) {
+    if (!propertyReference || !quote || !datesAvailable || !meetsMinimumStay) {
       setError(requiredError)
       return
     }
@@ -318,13 +381,14 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
           bookings={bookings}
           arrival={arrival}
           departure={departure}
-          onArrivalChange={onArrivalChange}
-          onDepartureChange={onDepartureChange}
+          onArrivalChange={handleArrivalChange}
+          onDepartureChange={handleDepartureChange}
           compact
           showTitle={false}
           showLegend
           legendVariant="availability"
         />
+        {fieldErrors.dates && <div className="mt-2 text-red-500 text-sm">{fieldErrors.dates}</div>}
       </div>
 
       {(arrival || departure) && (
@@ -388,7 +452,11 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 border-t border-outline-variant/15 pt-4">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 border-t border-outline-variant/15 pt-4"
+        noValidate
+      >
         <p className="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant">
           {yourDetailsLabel}
         </p>
@@ -396,15 +464,18 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="mb-1 ml-1 block font-label-sm text-label-sm uppercase text-on-surface-variant">
-              {firstNameLabel}
+              {firstNameLabel} *
             </span>
             <input
-              required
               type="text"
               value={form.forename}
               onChange={(event) => handleFieldChange('forename', event.target.value)}
-              className="w-full rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface focus:border-tertiary focus:ring-0"
+              placeholder={firstNameLabel}
+              className="w-full rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:border-tertiary focus:ring-0"
             />
+            {fieldErrors.forename && (
+              <div className="mt-2 text-red-500 text-sm">{fieldErrors.forename}</div>
+            )}
           </label>
           <label className="block">
             <span className="mb-1 ml-1 block font-label-sm text-label-sm uppercase text-on-surface-variant">
@@ -414,35 +485,42 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
               type="text"
               value={form.surname}
               onChange={(event) => handleFieldChange('surname', event.target.value)}
-              className="w-full rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface focus:border-tertiary focus:ring-0"
+              placeholder={lastNameLabel}
+              className="w-full rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:border-tertiary focus:ring-0"
             />
           </label>
         </div>
 
         <label className="block">
           <span className="mb-1 ml-1 block font-label-sm text-label-sm uppercase text-on-surface-variant">
-            {emailLabel}
+            {emailLabel} *
           </span>
           <input
-            required
             type="email"
             value={form.email}
             onChange={(event) => handleFieldChange('email', event.target.value)}
-            className="w-full rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface focus:border-tertiary focus:ring-0"
+            placeholder={emailLabel}
+            className="w-full rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:border-tertiary focus:ring-0"
           />
+          {fieldErrors.email && (
+            <div className="mt-2 text-red-500 text-sm">{fieldErrors.email}</div>
+          )}
         </label>
 
         <label className="block">
           <span className="mb-1 ml-1 block font-label-sm text-label-sm uppercase text-on-surface-variant">
-            {phoneLabel}
+            {phoneLabel} *
           </span>
           <input
-            required
             type="tel"
             value={form.mobile}
             onChange={(event) => handleFieldChange('mobile', event.target.value)}
-            className="w-full rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface focus:border-tertiary focus:ring-0"
+            placeholder={phoneLabel}
+            className="w-full rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:border-tertiary focus:ring-0"
           />
+          {fieldErrors.mobile && (
+            <div className="mt-2 text-red-500 text-sm">{fieldErrors.mobile}</div>
+          )}
         </label>
 
         <label className="block">
@@ -453,7 +531,8 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
             rows={3}
             value={form.message}
             onChange={(event) => handleFieldChange('message', event.target.value)}
-            className="w-full resize-y rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface focus:border-tertiary focus:ring-0"
+            placeholder={messageLabel}
+            className="w-full resize-y rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:border-tertiary focus:ring-0"
           />
         </label>
 
@@ -465,7 +544,7 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
             <CheckboxUi
               id="holiday-terms-checkbox"
               checked={termsAccepted}
-              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+              onCheckedChange={(checked) => handleTermsChange(checked === true)}
               aria-label={termsLabel}
             />
             <span className="text-body-sm text-on-surface leading-relaxed">
@@ -473,23 +552,28 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
               {renderTermsCheckboxLabel(termsLabel, privacyPolicyLabel)}
             </span>
           </label>
+          {fieldErrors.terms && (
+            <p className="mt-2 flex items-start gap-1.5 text-red-500 text-sm">
+              <AlertCircle className="shrink-0" size={16} strokeWidth={2} />
+              <span>{fieldErrors.terms}</span>
+            </p>
+          )}
         </div>
 
         {recaptchaConfigured && (
-          <div className={`space-y-2 mt-3 ${submitting ? 'pointer-events-none opacity-60' : ''}`}>
+          <div className={`mt-3 w-full max-w-full space-y-2 ${submitting ? 'pointer-events-none opacity-60' : ''}`}>
             <RecaptchaWidget
               key={`${locale}-${recaptchaResetKey}`}
               locale={locale}
               siteKey={recaptchaSiteKey}
               onError={setRecaptchaLoadError}
-              onReadyChange={setIsRecaptchaReady}
-              onTokenChange={setRecaptchaToken}
+              onTokenChange={(token) => {
+                setRecaptchaToken(token)
+                if (token) setRecaptchaValidationError(null)
+              }}
             />
             {recaptchaLoadError && (
               <p className="font-body-sm text-body-sm text-error">{recaptchaLoadError}</p>
-            )}
-            {isRecaptchaReady && !recaptchaToken && (
-              <p className="font-body-sm text-body-sm text-on-surface-variant">{recaptchaHint}</p>
             )}
             {recaptchaValidationError && (
               <p className="mt-2 text-red-500 text-sm">{recaptchaValidationError}</p>
@@ -501,7 +585,7 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
 
         <button
           type="submit"
-          disabled={!canSubmitWithRestrictions}
+          disabled={submitting}
           aria-busy={submitting}
           className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-tertiary px-8 py-4 font-label-nav text-label-nav text-white transition ${
             submitting

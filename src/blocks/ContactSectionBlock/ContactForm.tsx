@@ -69,10 +69,6 @@ export const ContactForm: React.FC<Props> = ({
   const locale = useSiteLocale()
   const deferredLocale = useDeferredSiteLocale()
   const recaptchaRequiredMessage = useTranslation(
-    'form.validation.recaptcha.required',
-    'Please complete the reCAPTCHA verification.',
-  )
-  const recaptchaHint = useTranslation(
     'form.validation.recaptcha.hint',
     'Please verify you are not a robot.',
   )
@@ -83,7 +79,6 @@ export const ContactForm: React.FC<Props> = ({
     submitButtonLabel || 'Connect now',
   )
   const [recaptchaToken, setRecaptchaToken] = useState('')
-  const [isRecaptchaReady, setIsRecaptchaReady] = useState(false)
   const [recaptchaLoadError, setRecaptchaLoadError] = useState<string | null>(null)
   const [recaptchaValidationError, setRecaptchaValidationError] = useState<string | null>(null)
   const [recaptchaResetKey, setRecaptchaResetKey] = useState(0)
@@ -284,20 +279,19 @@ export const ContactForm: React.FC<Props> = ({
           </fieldset>
 
           {deferredLocale && recaptchaConfigured && !hasSubmitted && (
-            <div className={`space-y-2 mt-4 ${isLoading ? 'pointer-events-none opacity-60' : ''}`}>
+            <div className={`mt-4 w-full max-w-full space-y-2 ${isLoading ? 'pointer-events-none opacity-60' : ''}`}>
               <RecaptchaWidget
                 key={`${deferredLocale}-${recaptchaResetKey}`}
                 locale={deferredLocale}
                 onError={setRecaptchaLoadError}
-                onReadyChange={setIsRecaptchaReady}
-                onTokenChange={setRecaptchaToken}
+                onTokenChange={(token) => {
+                  setRecaptchaToken(token)
+                  if (token) setRecaptchaValidationError(null)
+                }}
                 siteKey={recaptchaSiteKey}
               />
               {recaptchaLoadError && (
                 <p className="font-body-sm text-body-sm text-error">{recaptchaLoadError}</p>
-              )}
-              {isRecaptchaReady && !recaptchaToken && (
-                <p className="font-body-sm text-body-sm text-on-surface-variant">{recaptchaHint}</p>
               )}
               {recaptchaValidationError && (
                 <p className="mt-2 text-red-500 text-sm">{recaptchaValidationError}</p>
