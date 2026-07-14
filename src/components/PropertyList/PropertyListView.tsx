@@ -116,7 +116,6 @@ const PropertyListViewInner: React.FC<Props> = ({
 
   const { favoriteIds } = usePropertyFavorites()
   const isFavoritesList = listingPreset === 'favorites'
-  console.log(':::isFavoritesList:::', isFavoritesList)
   const filtersAreApplied = hasAppliedPropertyFilters(appliedFilters)
 
   const sortOptionsForUrl = sortOptions.length ? sortOptions : FALLBACK_SORT_OPTIONS
@@ -432,11 +431,19 @@ const PropertyListViewInner: React.FC<Props> = ({
       ...filters,
       ...nextFilters,
     })
+    const nextFiltersApplied = hasAppliedPropertyFilters(normalized)
+    // Drop hero-pending mode so Clear can return to the default server listing.
+    // Leaving this true after empty filters skips the default fetch and keeps stale results.
+    setPendingFiltersApplied(false)
     setFilters(normalized)
     setAppliedFilters(normalized)
     setPage(1)
     setLoading(true)
-    if (isServerManaged) {
+
+    const willBeServerManaged =
+      serverManaged && !isFavoritesList && !nextFiltersApplied && sort === defaultListSort
+
+    if (willBeServerManaged || isServerManaged) {
       router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
     }
   }
