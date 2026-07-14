@@ -983,11 +983,13 @@ export function normalizeCRMProperty(
 ): NormalizedCRMProperty {
   property = unwrapCRMPropertyRecord(property)
 
-  const propertyAttachments = Array.isArray(property.property_attachments)
-    ? property.property_attachments
-    : Array.isArray(property.attachments)
-      ? property.attachments
-      : []
+  const propertyAttachments =
+    Array.isArray(property.property_attachments) && property.property_attachments.length > 0
+      ? property.property_attachments
+      : Array.isArray(property.attachments) && property.attachments.length > 0
+        ? property.attachments
+        : []
+
   const images = Array.isArray(property.images) ? property.images : []
 
   const imageSize = options.attachmentImageSize ?? PROPERTY_DETAIL_IMAGE_SIZE
