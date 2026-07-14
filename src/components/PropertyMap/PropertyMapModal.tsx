@@ -106,15 +106,7 @@ export const PropertyMapModal: React.FC<Props> = ({
 
     void load()
     return () => controller.abort()
-  }, [
-    open,
-    settingsLoading,
-    listingPreset,
-    mapFiltersKey,
-    favoriteIdsKey,
-    settings.mapFetchLimit,
-    loadErrorFallback,
-  ])
+  }, [open, settingsLoading, listingPreset, mapFiltersKey, favoriteIdsKey, settings.mapFetchLimit])
 
   const handleMarkerClick = useCallback(
     (point: MapPropertyPoint) => {

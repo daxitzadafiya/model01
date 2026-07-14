@@ -3568,7 +3568,7 @@ export interface PropertyMap {
     large?: string | null;
   };
   /**
-   * Number of properties requested per CRM page when loading map markers.
+   * Maximum number of properties to fetch in a single CRM request when loading map markers.
    */
   mapFetchLimit?: number | null;
   updatedAt?: string | null;

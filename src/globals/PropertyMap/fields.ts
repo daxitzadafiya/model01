@@ -108,12 +108,13 @@ export const propertyMapFields: Field[] = [
   {
     name: 'mapFetchLimit',
     type: 'number',
-    label: 'Map fetch page size',
-    defaultValue: 10,
+    label: 'Map fetch limit',
+    defaultValue: 5000,
     min: 1,
-    max: 100,
+    max: 10000000,
     admin: {
-      description: 'Number of properties requested per CRM page when loading map markers.',
+      description:
+        'Maximum number of properties to fetch in a single CRM request when loading map markers.',
     },
   },
 ]

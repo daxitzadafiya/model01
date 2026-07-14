@@ -76,7 +76,7 @@ export const normalizeMapPropertyPoint = (
 
 export { CRM_PROPERTY_ATTACHMENTS_POPULATE as MAP_FIND_ALL_POPULATE } from '@/utilities/crmProperties'
 
-/** CRM find-all pagination + sort + populate — matches Optima map API expectations. */
+/** CRM find-all page/limit + sort + populate — matches Optima map API expectations. */
 export const buildCRMMapOptions = (
   page: number,
   limit: number,
@@ -256,7 +256,7 @@ export async function fetchCRMMapProperties({
   crmQueryJson,
   filters = {},
   restrictToFavoriteIds,
-  pageSize = 10,
+  pageSize = 5000,
   signal,
 }: {
   preset: CRMListingPreset
@@ -274,54 +274,43 @@ export async function fetchCRMMapProperties({
   const baseUrl = config.apiUrl.replace(/\/+$/, '')
   const endpoint = `${baseUrl}/commercial_properties/find-all?user=${encodeURIComponent(config.userKey)}&latLang=1&selectedFields=1`
 
-  const allPoints: MapPropertyPoint[] = []
-  const seen = new Set<string>()
-  let page = 1
-  let total = 0
-  let hasMore = true
+  const body = buildCRMMapQuery({
+    preset,
+    crmQueryJson,
+    filters,
+    restrictToFavoriteIds,
+    page: 1,
+    pageSize,
+  })
 
-  while (hasMore) {
-    const body = buildCRMMapQuery({
-      preset,
-      crmQueryJson,
-      filters,
-      restrictToFavoriteIds,
-      page,
-      pageSize,
-    })
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    cache: 'no-store',
+    signal,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
 
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      cache: 'no-store',
-      signal,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
-    if (!response.ok) {
-      throw new Error(`CRM map API failed (${response.status})`)
-    }
-
-    const data = (await response.json()) as unknown
-    const list = extractCRMList(data)
-    total = extractCRMTotal(data, list.length)
-
-    for (const item of list) {
-      const point = normalizeMapPropertyPoint(item)
-      if (!point) continue
-
-      const key = `${point.id}:${point.reference}`
-      if (seen.has(key)) continue
-      seen.add(key)
-      allPoints.push(point)
-    }
-
-    if (list.length < pageSize || allPoints.length >= total) {
-      hasMore = false
-    } else {
-      page += 1
-    }
+  if (!response.ok) {
+    throw new Error(`CRM map API failed (${response.status})`)
   }
 
-  return { properties: allPoints, total }
+  const data = (await response.json()) as unknown
+  const list = extractCRMList(data)
+  const total = extractCRMTotal(data, list.length)
+
+  const properties: MapPropertyPoint[] = []
+  const seen = new Set<string>()
+
+  for (const item of list) {
+    const point = normalizeMapPropertyPoint(item)
+    if (!point) continue
+
+    const key = `${point.id}:${point.reference}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    properties.push(point)
+  }
+
+  return { properties, total }
 }

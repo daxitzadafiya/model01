@@ -25,7 +25,7 @@ const DEFAULT_SETTINGS: PropertyMapSettings = {
   drawInstructionText: 'Draw A Shape Around The Region(S) You Would Like To Search',
   drawButtonLabel: 'Draw your area on the map',
   clusterColors: { small: '#5e5e5c', medium: '#755b00', large: '#000000' },
-  mapFetchLimit: 10,
+  mapFetchLimit: 5000,
 }
 
 export function normalizePropertyMapSettings(
@@ -61,7 +61,7 @@ export function normalizePropertyMapSettings(
       large: doc.clusterColors?.large?.trim() || DEFAULT_SETTINGS.clusterColors.large,
     },
     mapFetchLimit:
-      typeof doc.mapFetchLimit === 'number' && doc.mapFetchLimit >= 100
+      typeof doc.mapFetchLimit === 'number' && doc.mapFetchLimit >= 1
         ? doc.mapFetchLimit
         : DEFAULT_SETTINGS.mapFetchLimit,
   }
