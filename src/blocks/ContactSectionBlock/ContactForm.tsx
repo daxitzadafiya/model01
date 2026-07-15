@@ -31,6 +31,7 @@ type Props = {
   resubmitButtonLabel?: string | null
   successTitle?: string | null
   successSubtitle?: string | null
+  successThanks?: string | null
   /** Merged into the submission payload (e.g. property inquiry CRM fields). */
   hiddenFields?: Record<string, HiddenFieldValue>
   /** Overrides default values for visible form fields by field name. */
@@ -50,6 +51,7 @@ export const ContactForm: React.FC<Props> = ({
   resubmitButtonLabel,
   successTitle,
   successSubtitle,
+  successThanks,
   hiddenFields,
   defaultFieldValues,
   singleColumn = false,
@@ -149,7 +151,7 @@ export const ContactForm: React.FC<Props> = ({
               <Check size={30} strokeWidth={2.5} />
             </div>
 
-            {(successTitle || successSubtitle) && (
+            {(successTitle || successSubtitle || successThanks) && (
               <div className="mx-auto max-w-md">
                 {successTitle && (
                   <h3 className="font-headline-md text-headline-md text-primary">{successTitle}</h3>
@@ -157,6 +159,11 @@ export const ContactForm: React.FC<Props> = ({
                 {successSubtitle && (
                   <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
                     {successSubtitle}
+                  </p>
+                )}
+                {successThanks && (
+                  <p className="mt-3 font-body-md text-body-md text-on-surface-variant">
+                    {successThanks}
                   </p>
                 )}
               </div>

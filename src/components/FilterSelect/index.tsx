@@ -28,6 +28,8 @@ type BaseProps = {
   disabled?: boolean
   /** Prefer opening above the trigger (use for bottom-row modal fields). */
   menuPlacement?: FloatingMenuPlacement
+  /** Custom class name for the custom input */
+  customInputClassName?: string
 }
 
 export type FilterSelectSingleProps = BaseProps & {
@@ -69,6 +71,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
     triggerClassName,
     disabled = false,
     menuPlacement = 'auto',
+    customInputClassName = '',
   } = props
 
   const generatedId = useId()
@@ -247,7 +250,10 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
         }
       }}
       placeholder={singleProps?.customPlaceholder ?? 'Enter number'}
-      className="min-w-0 w-full bg-transparent border-0 p-0 pr-8 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-0"
+      className={cn(
+        'min-w-0 w-full bg-transparent border-0 p-0 pr-8 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-0',
+        customInputClassName,
+      )}
       aria-label={`${label} — custom value`}
     />
   ) : (

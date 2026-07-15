@@ -62,6 +62,10 @@ export const PropertyDetailInquiryForm: React.FC<Props> = ({
     'propertyDetail.inquiry.successSubtitlePrefix',
     'Our team will contact you shortly about',
   )
+  const successThanks = useTranslation(
+    'propertyDetail.inquiry.successThanks',
+    'Thanks for connecting',
+  )
   const trustNote = useTranslation(
     'propertyDetail.inquiry.trustNote',
     'By clicking submit, you agree to our privacy policy and terms.',
@@ -104,6 +108,7 @@ export const PropertyDetailInquiryForm: React.FC<Props> = ({
         singleColumn
         submitLabelOverride={submitLabel}
         successSubtitle={`${successSubtitlePrefix} ${propertyTitle}.`}
+        successThanks={successThanks}
         successTitle={successTitle}
         trustNote={trustNote}
       />

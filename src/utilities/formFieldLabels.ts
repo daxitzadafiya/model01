@@ -10,12 +10,21 @@ export const FIELD_LABEL_KEYS: Record<string, { key: string; fallback: string }>
   lastname: { key: 'form.field.lastName', fallback: 'Last name' },
   email: { key: 'form.field.email', fallback: 'Email' },
   phone: { key: 'form.field.phone', fallback: 'Phone number' },
+  mobile: { key: 'form.field.phone', fallback: 'Phone number' },
   mobile_phone: { key: 'form.field.phone', fallback: 'Phone number' },
   'phone-number': { key: 'form.field.phone', fallback: 'Phone number' },
   phone_number: { key: 'form.field.phone', fallback: 'Phone number' },
   subject: { key: 'form.field.subject', fallback: 'Subject' },
   message: { key: 'form.field.message', fallback: 'Message' },
   property: { key: 'form.field.property', fallback: 'Property' },
+  guests: { key: 'form.field.guests', fallback: 'Guests' },
+  arrival: { key: 'form.field.arrival', fallback: 'Arrival Date and time' },
+  departure: { key: 'form.field.departure', fallback: 'Departure Date and time' },
+  language: { key: 'form.field.language', fallback: 'Language' },
+  submissionLocale: { key: 'form.field.language', fallback: 'Language' },
+  enquiry_type: { key: 'form.field.enquiryType', fallback: 'Enquiry type' },
+  price: { key: 'form.field.price', fallback: 'Price' },
+  prop_ref: { key: 'form.field.propRef', fallback: 'Prop. Ref' },
 }
 
 export function normalizeFieldName(fieldName: string): string {

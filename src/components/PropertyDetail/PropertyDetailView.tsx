@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { MapPin } from 'lucide-react'
 
 import {
@@ -33,7 +33,7 @@ import {
   formatHolidayStayNightlyRate,
   formatHolidayStayTotalSummary,
 } from '@/utilities/holidayRentalPricing'
-import { parseHolidayGuestCount } from '@/utilities/crmHoliday'
+import { parseHolidayGuestCount, resolveMaxHolidayGuests, clampHolidayGuestCount } from '@/utilities/crmHoliday'
 import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
@@ -53,6 +53,8 @@ type Props = {
   isHolidayRental?: boolean
   rentalSeasons?: RentalSeason[]
   bookings?: CRMPropertyBooking[]
+  bookingsRefreshing?: boolean
+  onRefreshBookings?: () => Promise<void>
   holidayArrival?: string
   holidayDeparture?: string
   holidayGuests?: string
@@ -104,6 +106,8 @@ export const PropertyDetailView: React.FC<Props> = ({
   isHolidayRental = false,
   rentalSeasons = [],
   bookings = [],
+  bookingsRefreshing = false,
+  onRefreshBookings,
   holidayArrival = '',
   holidayDeparture = '',
   holidayGuests = '2',
@@ -130,15 +134,24 @@ export const PropertyDetailView: React.FC<Props> = ({
   const [liveDeparture, setLiveDeparture] = useState(holidayDeparture)
   const [liveGuests, setLiveGuests] = useState(holidayGuests)
 
+  const maxGuests = resolveMaxHolidayGuests(property.sleeps)
+
+  useEffect(() => {
+    const next = String(
+      clampHolidayGuestCount(parseHolidayGuestCount(liveGuests), maxGuests),
+    )
+    if (next !== liveGuests) setLiveGuests(next)
+  }, [liveGuests, maxGuests])
+
   const liveHolidayQuote = useMemo(() => {
     if (!isHolidayRental || !liveArrival || !liveDeparture) return null
     return calculateHolidayRentalQuote({
       seasons: rentalSeasons,
       checkIn: liveArrival,
       checkOut: liveDeparture,
-      guests: parseHolidayGuestCount(liveGuests),
+      guests: clampHolidayGuestCount(parseHolidayGuestCount(liveGuests), maxGuests),
     })
-  }, [isHolidayRental, liveArrival, liveDeparture, liveGuests, rentalSeasons])
+  }, [isHolidayRental, liveArrival, liveDeparture, liveGuests, maxGuests, rentalSeasons])
 
   const specItems = [
     property.sqft
@@ -249,6 +262,7 @@ export const PropertyDetailView: React.FC<Props> = ({
               bookings={bookings}
               arrival={liveArrival}
               departure={liveDeparture}
+              refreshing={bookingsRefreshing}
             />
           )}
         </div>
@@ -257,14 +271,17 @@ export const PropertyDetailView: React.FC<Props> = ({
           {isHolidayRental && property.reference ? (
             <PropertyHolidayBooking
               propertyReference={property.reference}
+              propertyTitle={property.title}
               rentalSeasons={rentalSeasons}
               bookings={bookings}
+              sleeps={property.sleeps}
               arrival={liveArrival}
               departure={liveDeparture}
               guests={liveGuests}
               onArrivalChange={setLiveArrival}
               onDepartureChange={setLiveDeparture}
               onGuestsChange={setLiveGuests}
+              onRefreshBookings={onRefreshBookings}
             />
           ) : (
             <PropertyDetailInquiryForm

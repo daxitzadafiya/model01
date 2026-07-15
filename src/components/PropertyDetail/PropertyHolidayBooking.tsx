@@ -1,28 +1,32 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import { AlertCircle, CalendarDays, Check, Lock, Loader2, Users } from 'lucide-react'
+import { AlertCircle, CalendarDays, Check, CircleArrowRight, Lock, Loader2, Users, Clock } from 'lucide-react'
 
 import { PropertyHolidayCalendar } from '@/components/PropertyDetail/PropertyHolidayCalendar'
-import { GUEST_OPTIONS } from '@/components/PropertyList/filterOptions'
-import { FilterSelect } from '@/components/FilterSelect'
+import { COUNT_FILTER_OTHER_VALUE, GUEST_OPTIONS } from '@/components/PropertyList/filterOptions'
+import { CountFilterField } from '@/components/PropertyList/CountFilterField'
 import { RecaptchaWidget } from '@/components/RecaptchaWidget/RecaptchaWidget'
 import { Checkbox as CheckboxUi } from '@/components/ui/checkbox'
 import { CMSLink } from '@/components/Link'
 import { useIntegrationsSettings } from '@/hooks/useIntegrationsSettings'
-import { parseHolidayGuestCount } from '@/utilities/crmHoliday'
+import {
+  clampHolidayGuestCount,
+  MIN_HOLIDAY_GUESTS,
+  parseHolidayGuestCount,
+  resolveMaxHolidayGuests,
+} from '@/utilities/crmHoliday'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 import {
   calculateHolidayRentalQuote,
   formatEuro,
-  formatHolidayStayNightlyRate,
-  formatHolidayStayTotalSummary,
   isRangeAvailable,
   getBlockedDateKeys,
   parseDateOnly,
   parseRentalSeasons,
   type CRMPropertyBooking,
 } from '@/utilities/holidayRentalPricing'
+import { HOLIDAY_CHECK_IN_HOUR, HOLIDAY_CHECK_OUT_HOUR } from '@/utilities/holidayStayTimes'
 import {
   useFormFieldInvalidEmailMessage,
   useFormFieldRequiredMessage,
@@ -35,14 +39,19 @@ const PRIVACY_POLICY_VALIDATION_FALLBACK = 'You must accept the Privacy Policy t
 
 type Props = {
   propertyReference: string
+  propertyTitle: string
   rentalSeasons: ReturnType<typeof parseRentalSeasons>
   bookings?: CRMPropertyBooking[]
+  /** CRM `sleeps` — max guests (falls back to 25). */
+  sleeps?: number
   arrival: string
   departure: string
   guests: string
   onArrivalChange: (value: string) => void
   onDepartureChange: (value: string) => void
   onGuestsChange: (value: string) => void
+  /** Soft-refresh CRM bookings after a successful enquiry. */
+  onRefreshBookings?: () => Promise<void>
 }
 
 type BookingFormState = {
@@ -80,6 +89,17 @@ const formatDisplayDate = (value: string) => {
   })
 }
 
+const formatTime = (value: string, hour: number) => {
+  const date = parseDateOnly(value)
+  if (!date) return '—'
+  date.setHours(hour, 0, 0, 0)
+  return date.toLocaleTimeString('en-GB', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
 function renderTermsCheckboxLabel(label: string, privacyPolicyLabel: string) {
   if (!privacyPolicyLabel) return label
 
@@ -105,18 +125,22 @@ function renderTermsCheckboxLabel(label: string, privacyPolicyLabel: string) {
 
 export const PropertyHolidayBooking: React.FC<Props> = ({
   propertyReference,
+  propertyTitle,
   rentalSeasons,
   bookings = [],
+  sleeps,
   arrival,
   departure,
   guests,
   onArrivalChange,
   onDepartureChange,
   onGuestsChange,
+  onRefreshBookings,
 }) => {
   const heading = useTranslation('propertyDetail.holiday.heading', 'Book Your Stay')
   const selectDatesTitle = useTranslation('propertyDetail.holiday.selectDatesTitle', 'Select dates')
   const guestsLabel = useTranslation('propertyList.filters.guests', 'Guests')
+  const needMoreLabel = useTranslation('propertyList.filters.needMore', 'Need More')
   const firstNameLabel = useTranslation('propertyDetail.holiday.firstName', 'First Name')
   const lastNameLabel = useTranslation('propertyDetail.holiday.lastName', 'Last Name')
   const emailLabel = useTranslation('propertyDetail.holiday.email', 'Email')
@@ -124,12 +148,33 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
   const messageLabel = useTranslation('propertyDetail.holiday.message', 'Message')
   const submitLabel = useTranslation('propertyDetail.holiday.submit', 'Enquire / Book')
   const submittingLabel = useTranslation('propertyDetail.holiday.submitting', 'Sending enquiry…')
-  const successTitle = useTranslation('propertyDetail.holiday.successTitle', 'Enquiry Sent')
-  const successSubtitle = useTranslation(
-    'propertyDetail.holiday.successSubtitle',
-    'Our team will confirm availability and contact you shortly.',
+  const successTitle = useTranslation('propertyDetail.inquiry.successTitle', 'Request Received')
+  const successSubtitlePrefix = useTranslation(
+    'propertyDetail.inquiry.successSubtitlePrefix',
+    'Our team will contact you shortly about',
+  )
+  const successThanks = useTranslation(
+    'propertyDetail.inquiry.successThanks',
+    'Thanks for connecting',
+  )
+  const resubmitButtonLabel = useTranslation(
+    'propertyDetail.inquiry.resubmitButton',
+    'Send another inquiry',
   )
   const nightsLabel = useTranslation('propertyDetail.holiday.nights', 'nights')
+  const priceLabel = useTranslation('propertyDetail.holiday.price', 'Price')
+  const perPersonPerNightLabel = useTranslation(
+    'propertyDetail.holiday.perPersonPerNight',
+    'Per Person Per Night',
+  )
+  const totalNightsLabel = useTranslation(
+    'propertyDetail.holiday.totalNights',
+    'total {nights} nights',
+  )
+  const maximumPersonsLabel = useTranslation(
+    'propertyDetail.holiday.maximumPersons',
+    'Maximum {count} Persons',
+  )
   const selectDatesHint = useTranslation(
     'propertyDetail.holiday.selectDatesHint',
     'Select arrival and departure dates to see the rental price.',
@@ -178,9 +223,62 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
     PRIVACY_POLICY_VALIDATION_FALLBACK,
   )
 
-  const guestOptions = useMemo(() => GUEST_OPTIONS.filter((option) => option.value !== 'any'), [])
+  const maxGuests = resolveMaxHolidayGuests(sleeps)
+  const guestsCustomPlaceholder = useTranslation(
+    'propertyList.filters.guestsCustomPlaceholder',
+    `1–${maxGuests}`,
+  )
 
-  const resolvedGuests = guests && guests !== 'any' ? guests : '2'
+  const guestOptions = useMemo(() => {
+    const presets = GUEST_OPTIONS.filter((option) => {
+      if (option.value === 'any' || option.value === COUNT_FILTER_OTHER_VALUE) return false
+      const count = Number(option.value)
+      return Number.isFinite(count) && count >= MIN_HOLIDAY_GUESTS && count <= maxGuests
+    })
+    return [...presets, { value: COUNT_FILTER_OTHER_VALUE, label: needMoreLabel }]
+  }, [maxGuests, needMoreLabel])
+
+  const resolvedGuestCount = clampHolidayGuestCount(
+    parseHolidayGuestCount(guests && guests !== 'any' ? guests : '2'),
+    maxGuests,
+  )
+
+  const isPresetGuestCount = (count: number) =>
+    guestOptions.some((option) => option.value === String(count))
+
+  // Booking only stores a numeric guests string — keep a separate "Need More" mode
+  // so selecting other does not immediately snap back onto a preset (e.g. "2").
+  const [guestsCustomMode, setGuestsCustomMode] = useState(
+    () => !isPresetGuestCount(resolvedGuestCount),
+  )
+  const [guestsCustomDraft, setGuestsCustomDraft] = useState(() =>
+    isPresetGuestCount(resolvedGuestCount) ? '' : String(resolvedGuestCount),
+  )
+
+  const guestsSelectValue = guestsCustomMode ? COUNT_FILTER_OTHER_VALUE : String(resolvedGuestCount)
+  const guestsCustomValue = guestsCustomMode ? guestsCustomDraft : ''
+
+  const handleGuestsSelectChange = (value: string) => {
+    if (value === COUNT_FILTER_OTHER_VALUE) {
+      setGuestsCustomMode(true)
+      setGuestsCustomDraft(String(resolvedGuestCount))
+      return
+    }
+    setGuestsCustomMode(false)
+    setGuestsCustomDraft('')
+    onGuestsChange(value)
+  }
+
+  const handleGuestsCustomChange = (value: string) => {
+    const digits = value.replace(/\D/g, '')
+    if (!digits) {
+      setGuestsCustomDraft('')
+      return
+    }
+    const clamped = String(clampHolidayGuestCount(Number(digits), maxGuests))
+    setGuestsCustomDraft(clamped)
+    onGuestsChange(clamped)
+  }
 
   const [form, setForm] = useState<BookingFormState>(() => defaultFormState())
   const [fieldErrors, setFieldErrors] = useState<BookingFieldErrors>({})
@@ -211,9 +309,9 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
       seasons: rentalSeasons,
       checkIn: arrival,
       checkOut: departure,
-      guests: parseHolidayGuestCount(resolvedGuests),
+      guests: resolvedGuestCount,
     })
-  }, [arrival, departure, resolvedGuests, rentalSeasons])
+  }, [arrival, departure, resolvedGuestCount, rentalSeasons])
 
   const datesAvailable = arrival && departure ? isRangeAvailable(blocked, arrival, departure) : true
 
@@ -318,10 +416,12 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
           surname: form.surname.trim(),
           email: form.email.trim(),
           mobile: form.mobile.trim(),
-          guests: parseHolidayGuestCount(resolvedGuests),
+          guests: resolvedGuestCount,
           message: form.message.trim(),
           arrival,
           departure,
+          locale,
+          price: quote?.totalPrice,
           recaptchaToken,
           terms_accepted: termsAccepted,
         }),
@@ -332,6 +432,11 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
         throw new Error(payload?.error ?? `Booking failed (${response.status})`)
       }
 
+      // Refresh CRM bookings before success so the availability calendar updates immediately.
+      await onRefreshBookings?.()
+
+      onArrivalChange('')
+      onDepartureChange('')
       setSubmitted(true)
     } catch (submitError) {
       console.error('Holiday booking enquiry failed', submitError)
@@ -343,6 +448,27 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
   }
 
   if (submitted) {
+    const successSubtitle = propertyTitle.trim()
+      ? `${successSubtitlePrefix} ${propertyTitle.trim()}.`
+      : `${successSubtitlePrefix}.`
+
+    const handleSendAnotherEnquiry = () => {
+      setForm(defaultFormState())
+      setFieldErrors({})
+      setError(null)
+      setTermsAccepted(false)
+      setRecaptchaToken('')
+      setRecaptchaLoadError(null)
+      setRecaptchaValidationError(null)
+      setRecaptchaResetKey((key) => key + 1)
+      setGuestsCustomMode(false)
+      setGuestsCustomDraft('')
+      onArrivalChange('')
+      onDepartureChange('')
+      onGuestsChange('2')
+      setSubmitted(false)
+    }
+
     return (
       <div className="max-lg:static max-lg:top-auto rounded-xl border border-outline-variant/20 bg-white p-4 shadow-2xl sm:p-6 lg:sticky lg:top-32">
         <div className="relative overflow-hidden rounded-2xl border border-outline-variant/40 bg-white px-6 py-10 md:px-8 md:py-12">
@@ -354,14 +480,32 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-tertiary text-white shadow-sm">
               <Check size={30} strokeWidth={2.5} />
             </div>
-            {successTitle && (
-              <h3 className="font-headline-md text-headline-md text-primary">{successTitle}</h3>
-            )}
-            {successSubtitle && (
+
+            <div className="mx-auto max-w-md">
+              {successTitle && (
+                <h3 className="font-headline-md text-headline-md text-primary">{successTitle}</h3>
+              )}
               <p className="mt-2 font-body-md text-body-md text-on-surface-variant">
                 {successSubtitle}
               </p>
-            )}
+              {successThanks && (
+                <p className="mt-3 font-body-md text-body-md text-on-surface-variant">
+                  {successThanks}
+                </p>
+              )}
+            </div>
+
+            <div className="mx-auto mt-6 h-px w-full max-w-md bg-outline-variant/50" />
+            <div className="mt-6 flex justify-center">
+              <button
+                className="inline-flex items-center gap-2 rounded-full cursor-pointer border border-tertiary/50 px-8 py-3 font-label-nav text-label-nav uppercase tracking-[0.14em] text-tertiary transition hover:bg-tertiary hover:text-white"
+                type="button"
+                onClick={handleSendAnotherEnquiry}
+              >
+                <CircleArrowRight size={16} strokeWidth={2} />
+                {resubmitButtonLabel}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -392,7 +536,7 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
       </div>
 
       {(arrival || departure) && (
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-outline-variant/25 bg-outline-variant/25">
+        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-outline-variant/25 bg-outline-variant/25">
           <div className="bg-white px-3 py-2.5">
             <p className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-on-surface-variant">
               {checkInLabel}
@@ -400,6 +544,10 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
             <p className="flex items-center gap-2 text-body-sm font-medium text-on-surface">
               <CalendarDays size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
               {arrival ? formatDisplayDate(arrival) : '—'}
+            </p>
+            <p className="mt-1 flex items-center gap-2 text-body-sm font-medium text-on-surface">
+              <Clock size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
+              {arrival ? formatTime(arrival, HOLIDAY_CHECK_IN_HOUR) : '—'}
             </p>
           </div>
           <div className="bg-white px-3 py-2.5">
@@ -410,18 +558,29 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
               <CalendarDays size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
               {departure ? formatDisplayDate(departure) : '—'}
             </p>
+            <p className="mt-1 flex items-center gap-2 text-body-sm font-medium text-on-surface">
+              <Clock size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
+              {departure ? formatTime(departure, HOLIDAY_CHECK_OUT_HOUR) : '—'}
+            </p>
           </div>
         </div>
       )}
 
-      <FilterSelect
+      <p className="flex items-center gap-2 text-body-sm font-medium text-on-surface">
+        <Users size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
+        {maximumPersonsLabel.replace('{count}', String(maxGuests))}
+      </p>
+
+      <CountFilterField
         label={guestsLabel}
         id="holiday-booking-guests"
         icon={<Users size={20} strokeWidth={1.75} />}
         options={guestOptions}
-        value={resolvedGuests}
-        onChange={onGuestsChange}
-        className="w-full"
+        value={guestsSelectValue}
+        customValue={guestsCustomValue}
+        onChange={handleGuestsSelectChange}
+        onCustomChange={handleGuestsCustomChange}
+        customPlaceholder={guestsCustomPlaceholder}
       />
 
       <div
@@ -430,16 +589,26 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
         }`}
       >
         {quote ? (
-          <div className="space-y-1">
-            <p className="text-[22px] font-semibold leading-tight text-tertiary">
-              {formatHolidayStayNightlyRate(quote)}
-            </p>
-            <p className="text-body-sm text-on-surface-variant">
-              {quote.nights} {nightsLabel} · {formatHolidayStayTotalSummary(quote)}
-            </p>
-            <p className="text-label-sm text-on-surface-variant/80">
-              Total rental: {formatEuro(quote.totalPrice)}
-            </p>
+          <div className="space-y-3">
+            <p className="font-headline-sm text-headline-sm text-primary">{priceLabel}:</p>
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-body-sm text-on-surface-variant">
+                  {perPersonPerNightLabel}
+                </span>
+                <span className="shrink-0 text-body-sm font-semibold text-on-surface">
+                  {formatEuro(Math.round(quote.perPersonPerNight))}
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-body-sm text-on-surface-variant">
+                  {totalNightsLabel.replace('{nights}', String(quote.nights))}
+                </span>
+                <span className="shrink-0 text-body-sm font-semibold text-tertiary">
+                  {formatEuro(quote.totalPrice)}
+                </span>
+              </div>
+            </div>
             {!datesAvailable && <p className="pt-1 text-body-sm text-red-600">{unavailableHint}</p>}
             {!meetsMinimumStay && quote.minimumPeriod && (
               <p className="pt-1 text-body-sm text-red-600">
@@ -561,7 +730,9 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
         </div>
 
         {recaptchaConfigured && (
-          <div className={`mt-3 w-full max-w-full space-y-2 ${submitting ? 'pointer-events-none opacity-60' : ''}`}>
+          <div
+            className={`mt-3 w-full max-w-full space-y-2 ${submitting ? 'pointer-events-none opacity-60' : ''}`}
+          >
             <RecaptchaWidget
               key={`${locale}-${recaptchaResetKey}`}
               locale={locale}

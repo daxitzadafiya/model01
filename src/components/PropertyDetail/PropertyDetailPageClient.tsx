@@ -2,13 +2,16 @@
 
 import { notFound, useSearchParams } from 'next/navigation'
 import { useParams } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { PropertyDetailView } from '@/components/PropertyDetail/PropertyDetailView'
 import { Skeleton } from '@/components/ui/skeleton'
 import { normalizeCRMAmenities, normalizeCRMPropertyEnergy } from '@/utilities/crmAmenities'
 import { fetchCRMPropertyDetail } from '@/utilities/crmPropertyDetail'
-import { takePropertyDetailFetchStatus } from '@/utilities/propertyDetailFetchStatus'
+import {
+  resolvePropertyDetailFetchStatuses,
+  takePropertyDetailFetchStatus,
+} from '@/utilities/propertyDetailFetchStatus'
 import {
   parsePropertyDetailForQuery,
   resolvePropertyDetailHolidayMode,
@@ -92,14 +95,48 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
   const [isHolidayRental, setIsHolidayRental] = useState(false)
   const [rentalSeasons, setRentalSeasons] = useState<ReturnType<typeof parseRentalSeasons>>([])
   const [bookings, setBookings] = useState<ReturnType<typeof parseCRMPropertyBookings>>([])
+  const [bookingsRefreshing, setBookingsRefreshing] = useState(false)
 
   const slug = decodeURIComponent(params.slug ?? '')
+
+  /** Soft-refresh holiday bookings/calendar without remounting the whole page. */
+  const refreshBookings = useCallback(async () => {
+    const reference = extractReferenceFromSlug(slug)
+    if (!reference) return
+
+    setBookingsRefreshing(true)
+    try {
+      const statuses = resolvePropertyDetailFetchStatuses({
+        crmStatus: property?.crmStatus,
+        statusBadgeLabel: property?.statusBadgeLabel,
+      })
+      let raw = await fetchCRMPropertyDetail(reference, { statuses })
+      if (!raw && !statuses?.length) {
+        raw = await fetchCRMPropertyDetail(reference, { statuses: ['Sold'] })
+      }
+      if (!raw) return
+
+      setBookings(parseCRMPropertyBookings(raw))
+      setRentalSeasons(parseRentalSeasons(raw))
+    } catch (error) {
+      console.error('Failed to refresh holiday bookings', error)
+    } finally {
+      setBookingsRefreshing(false)
+    }
+  }, [property?.crmStatus, property?.statusBadgeLabel, slug])
   const holidayArrival = searchParams.get('periodFrom')?.trim() ?? ''
   const holidayDeparture = searchParams.get('periodTo')?.trim() ?? ''
-  const holidayGuests = searchParams.get('guests')?.trim() || '2'
+  const guestsParam = searchParams.get('guests')?.trim() ?? ''
+  const guestsCustomParam = searchParams.get('guestsCustom')?.trim() ?? ''
+  const holidayGuests =
+    guestsParam === 'other' && guestsCustomParam
+      ? guestsCustomParam
+      : guestsParam || '2'
   const forQuery = searchParams.get('for')?.trim() ?? ''
   const hasHolidaySearchParams = Boolean(
-    holidayArrival || holidayDeparture || (holidayGuests && holidayGuests !== '2'),
+    holidayArrival ||
+      holidayDeparture ||
+      (holidayGuests && holidayGuests !== '2'),
   )
 
   useEffect(() => {
@@ -250,6 +287,8 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
       isHolidayRental={isHolidayRental}
       rentalSeasons={rentalSeasons}
       bookings={bookings}
+      bookingsRefreshing={bookingsRefreshing}
+      onRefreshBookings={refreshBookings}
       holidayArrival={holidayArrival}
       holidayDeparture={holidayDeparture}
       holidayGuests={holidayGuests}

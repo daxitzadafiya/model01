@@ -205,9 +205,9 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({
             'mx-auto flex items-center justify-center rounded-full transition-colors',
             cellSize,
             disabled
-              ? 'cursor-not-allowed text-on-surface-variant/25'
+              ? 'text-on-surface-variant/25 cursor-not-allowed'
               : 'cursor-pointer text-on-surface-variant hover:bg-tertiary/20 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tertiary/30',
-            inRange && 'bg-tertiary/15 text-primary hover:bg-tertiary/25',
+            inRange && 'bg-tertiary/15 text-primary hover:bg-tertiary/25 cursor-not-allowed',
             (selectedFrom || selectedTo) && 'bg-primary text-white hover:bg-primary/90',
           )
 

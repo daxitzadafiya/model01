@@ -15,6 +15,8 @@ type Props = {
   icon?: React.ReactNode
   customPlaceholder?: string
   id?: string
+  triggerClassName?: string
+  customInputClassName?: string
 }
 
 export const CountFilterField: React.FC<Props> = ({
@@ -27,6 +29,8 @@ export const CountFilterField: React.FC<Props> = ({
   icon,
   customPlaceholder = 'Enter number',
   id,
+  triggerClassName,
+  customInputClassName,
 }) => {
   const handleChange = (next: string) => {
     onChange(next)
@@ -45,6 +49,8 @@ export const CountFilterField: React.FC<Props> = ({
       customValue={customValue}
       onCustomValueChange={onCustomChange}
       customPlaceholder={customPlaceholder}
+      triggerClassName={triggerClassName}
+      customInputClassName={customInputClassName}
     />
   )
 }

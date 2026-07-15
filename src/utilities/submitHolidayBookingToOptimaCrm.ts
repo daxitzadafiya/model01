@@ -4,16 +4,19 @@
  * @see https://my3.optima-crm.com/yiiapp/frontend/web/index.php?r=bookings/create-booking
  */
 import { getFromCRMContactWithQueryUsingUserKey } from '@/utilities/crmApi.server'
-import { dateKeyToUnixSeconds } from '@/utilities/holidayRentalPricing'
+import {
+  arrivalDateKeyToUnixSeconds,
+  departureDateKeyToUnixSeconds,
+} from '@/utilities/holidayStayTimes'
 
 export type CreateHolidayBookingInput = {
   property_reference: string
   email: string
   forename: string
   mobile: string
-  /** Check-in date (`YYYY-MM-DD`) — converted to Unix seconds for CRM. */
+  /** Check-in date (`YYYY-MM-DD`) — converted to Unix seconds at 15:00 Europe/Athens for CRM. */
   arrival: string
-  /** Check-out date (`YYYY-MM-DD`) — converted to Unix seconds for CRM. */
+  /** Check-out date (`YYYY-MM-DD`) — converted to Unix seconds at 11:00 Europe/Athens for CRM. */
   departure: string
   surname?: string
   guests?: number
@@ -73,8 +76,8 @@ export function validateCreateHolidayBookingInput(
     return 'A valid email address is required'
   }
 
-  const arrival = dateKeyToUnixSeconds(arrivalDate)
-  const departure = dateKeyToUnixSeconds(departureDate)
+  const arrival = arrivalDateKeyToUnixSeconds(arrivalDate)
+  const departure = departureDateKeyToUnixSeconds(departureDate)
 
   if (arrival == null || departure == null || departure <= arrival) {
     return 'Invalid arrival or departure dates'
@@ -84,8 +87,8 @@ export function validateCreateHolidayBookingInput(
 }
 
 function buildCreateBookingSearchParams(input: CreateHolidayBookingInput): URLSearchParams {
-  const arrival = dateKeyToUnixSeconds(pickString(input.arrival))!
-  const departure = dateKeyToUnixSeconds(pickString(input.departure))!
+  const arrival = arrivalDateKeyToUnixSeconds(pickString(input.arrival))!
+  const departure = departureDateKeyToUnixSeconds(pickString(input.departure))!
 
   const params = new URLSearchParams({
     email: pickString(input.email),

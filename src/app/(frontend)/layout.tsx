@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
@@ -35,28 +35,48 @@ import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { resolveThemeCustomCSS } from '@/globals/Theme/siteThemeTokens.mjs'
 import { getServerSideURL } from '@/utilities/getURL'
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { locale } = await getActiveLocale()
+export const viewport: Viewport = {
+  colorScheme: 'light',
+}
+
+export async function generateMetadata(): Promise<Metadata> {
   const logoData = await getCachedGlobal('logo', 1)()
   const favicon = getFaviconSource(logoData)
+
+  return {
+    metadataBase: new URL(getServerSideURL()),
+    icons: {
+      icon: [{ url: favicon }],
+    },
+    openGraph: mergeOpenGraph(),
+    twitter: {
+      card: 'summary_large_image',
+      creator: '@payloadcms',
+    },
+  }
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const { locale } = await getActiveLocale()
   const [optimaCrmSettings, integrationsSettings] = await Promise.all([
     getOptimaCrmSettings(),
     getPublicIntegrationsSettings(),
   ])
 
   return (
-    <html className={cn(GeistSans.variable, GeistMono.variable, outfit.variable, ebGaramond.variable)} lang={locale} suppressHydrationWarning>
-      <head>
-        <meta content="light" name="color-scheme" />
-        <link href={favicon} rel="icon" sizes="any" />
+    <html
+      className={cn(GeistSans.variable, GeistMono.variable, outfit.variable, ebGaramond.variable)}
+      lang={locale}
+      suppressHydrationWarning
+    >
+      <body>
+        {/* Use precedence so React/Next hoist these into <head> consistently (no manual <head> tag). */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
+          precedence="medium"
         />
-        {/* Site-wide CSS variables from Theme global (falls back to default palette) */}
         <ThemeStyles />
-      </head>
-      <body>
         <Providers
           optimaCrmSettings={optimaCrmSettings}
           integrationsSettings={integrationsSettings}
@@ -69,15 +89,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </body>
     </html>
   )
-}
-
-export const metadata: Metadata = {
-  metadataBase: new URL(getServerSideURL()),
-  openGraph: mergeOpenGraph(),
-  twitter: {
-    card: 'summary_large_image',
-    creator: '@payloadcms',
-  },
 }
 
 async function ThemeStyles() {
@@ -94,5 +105,10 @@ async function ThemeStyles() {
     console.error('Error fetching Theme global:', error)
   }
 
-  return <style dangerouslySetInnerHTML={{ __html: resolveThemeCustomCSS(customCSS) }} />
+  // Normalize CRLF so SSR/client style text stays identical.
+  const css = resolveThemeCustomCSS(customCSS).replace(/\r\n/g, '\n')
+
+  return (
+    <style href="site-theme" precedence="high" dangerouslySetInnerHTML={{ __html: css }} />
+  )
 }

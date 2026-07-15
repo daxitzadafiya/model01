@@ -41,6 +41,7 @@ export const normalizePropertyListFilters = (
   periodFrom: filters.periodFrom?.trim() ?? '',
   periodTo: filters.periodTo?.trim() ?? '',
   guests: filters.guests && filters.guests !== 'any' ? filters.guests : 'any',
+  guestsCustom: filters.guestsCustom?.trim() ?? '',
   totalBudget: filters.totalBudget && filters.totalBudget !== 'any' ? filters.totalBudget : 'any',
 })
 
@@ -131,6 +132,7 @@ export const serializePropertyFiltersToSearchParams = (
   if (filters.periodFrom?.trim()) params.set('periodFrom', filters.periodFrom.trim())
   if (filters.periodTo?.trim()) params.set('periodTo', filters.periodTo.trim())
   if (filters.guests && filters.guests !== 'any') params.set('guests', filters.guests)
+  if (filters.guestsCustom?.trim()) params.set('guestsCustom', filters.guestsCustom.trim())
   if (filters.totalBudget && filters.totalBudget !== 'any') {
     params.set('totalBudget', filters.totalBudget)
   }
@@ -193,6 +195,9 @@ export const parsePropertyFiltersFromSearchParams = (
   const guests = searchParams.get('guests')
   if (guests) filters.guests = guests
 
+  const guestsCustom = searchParams.get('guestsCustom')
+  if (guestsCustom) filters.guestsCustom = guestsCustom
+
   const totalBudget = searchParams.get('totalBudget')
   if (totalBudget) filters.totalBudget = totalBudget
 
@@ -208,7 +213,7 @@ export const buildPropertyListUrl = (path: string, filters: PropertyListFilters)
 /** Append holiday search params to a property detail href when present. */
 export const appendHolidayParamsToHref = (
   href: string | undefined,
-  filters: Pick<PropertyListFilters, 'periodFrom' | 'periodTo' | 'guests'>,
+  filters: Pick<PropertyListFilters, 'periodFrom' | 'periodTo' | 'guests' | 'guestsCustom'>,
 ): string | undefined => {
   if (!href) return href
 
@@ -224,6 +229,7 @@ export const appendHolidayParamsToHref = (
     periodFrom: filters.periodFrom,
     periodTo: filters.periodTo,
     guests: filters.guests,
+    guestsCustom: filters.guestsCustom,
   })
 
   const qs = params.toString()

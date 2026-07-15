@@ -46,6 +46,7 @@ import {
   listingPresetToDetailContext,
   type PropertyDetailListingContext,
 } from '@/utilities/propertyDetailListingContext'
+import { resolveHolidayGuestsFilterCount } from '@/utilities/crmHoliday'
 import {
   buildPropertyListListingHref,
   parseOrderbyEntriesFromSearchParams,
@@ -198,6 +199,10 @@ const PropertyListViewInner: React.FC<Props> = ({
   const properties = useMemo(() => {
     const listingMode = resolveListingModeFromPreset(listingPreset)
     const isHolidayList = listingPreset === 'forHoliday' || hasHolidayListingFilters(appliedFilters)
+    const holidayGuestCount = resolveHolidayGuestsFilterCount(
+      appliedFilters.guests,
+      appliedFilters.guestsCustom,
+    )
 
     return rawProperties.map((raw) =>
       normalizeCRMListProperty(raw, activeLocale, {
@@ -205,7 +210,7 @@ const PropertyListViewInner: React.FC<Props> = ({
         holidayListing: isHolidayList,
         holidayPeriodFrom: appliedFilters.periodFrom,
         holidayPeriodTo: appliedFilters.periodTo,
-        holidayGuests: appliedFilters.guests,
+        holidayGuests: holidayGuestCount != null ? String(holidayGuestCount) : undefined,
       }),
     )
   }, [activeLocale, appliedFilters, listingPreset, rawProperties])
@@ -284,7 +289,10 @@ const PropertyListViewInner: React.FC<Props> = ({
   /** Hero search → listing: sessionStorage filters (client fetch only). */
   useEffect(() => {
     const pending = takePendingPropertyListFilters()
-    if (pending) {
+    // Default/empty hero searches must stay on the server-rendered listing.
+    // Treating them as "pending" disables server mode without triggering a
+    // client fetch (filtersAreApplied is false), which yields 0 results.
+    if (pending && hasAppliedPropertyFilters(pending)) {
       setPendingFiltersApplied(true)
       setFilters(pending)
       setAppliedFilters(pending)
@@ -294,6 +302,8 @@ const PropertyListViewInner: React.FC<Props> = ({
       setRawProperties([])
       setTotal(0)
       setLoading(true)
+    } else if (pending) {
+      clearPendingPropertyListFilters()
     }
     stripPropertyFilterSearchParams()
     setFiltersHydrated(true)

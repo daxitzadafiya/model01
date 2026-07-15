@@ -2,7 +2,10 @@
  * Server proxy for Optima CRM `bookings/create-booking` (holiday rental enquiries).
  */
 import { NextResponse } from 'next/server'
+import { getPayload } from 'payload'
 
+import configPromise from '@payload-config'
+import { sendHolidayBookingNotificationEmail } from '@/email/sendNotificationEmail'
 import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { getIntegrationsSettings } from '@/settings/integrations/server'
 import { verifyRecaptchaToken } from '@/utilities/verifyRecaptcha'
@@ -12,9 +15,12 @@ import {
 } from '@/utilities/submitHolidayBookingToOptimaCrm'
 
 export async function POST(request: Request) {
-  let body: CreateHolidayBookingInput
+  let body: CreateHolidayBookingInput & { locale?: string; price?: number | string }
   try {
-    body = (await request.json()) as CreateHolidayBookingInput
+    body = (await request.json()) as CreateHolidayBookingInput & {
+      locale?: string
+      price?: number | string
+    }
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
@@ -65,16 +71,42 @@ export async function POST(request: Request) {
 
   // These restriction fields are only for our server-side gatekeeping.
   // They must not be forwarded to Optima CRM.
-  const { terms_accepted: _termsAccepted, recaptchaToken: _recaptchaToken, ...crmBody } = body
+  const {
+    terms_accepted: _termsAccepted,
+    recaptchaToken: _recaptchaToken,
+    locale: submissionLocale,
+    price: submissionPrice,
+    ...crmBody
+  } = body
 
   // NOTE: Currently we skip Optima account/lead creation
   // and create only the booking record.
   const result = await submitHolidayBookingToOptimaCrm(crmBody)
 
-  console.log('BOOKING RESULT', result)
-
   if (!result.ok) {
     return NextResponse.json({ error: result.message }, { status: result.status })
+  }
+
+  try {
+    const payload = await getPayload({ config: configPromise })
+    await sendHolidayBookingNotificationEmail({
+      payload,
+      input: {
+        property_reference: crmBody.property_reference,
+        forename: crmBody.forename,
+        surname: crmBody.surname,
+        email: crmBody.email,
+        mobile: crmBody.mobile,
+        arrival: crmBody.arrival,
+        departure: crmBody.departure,
+        guests: crmBody.guests,
+        message: crmBody.message,
+        locale: typeof submissionLocale === 'string' ? submissionLocale : undefined,
+        price: submissionPrice,
+      },
+    })
+  } catch (error) {
+    console.error('[CRM create-booking] email notification failed', error)
   }
 
   return NextResponse.json({

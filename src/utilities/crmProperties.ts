@@ -16,9 +16,13 @@ import {
 import {
   HOLIDAY_SELECT_DATES_LABEL,
   isHolidayRentalProperty,
+  resolveHolidayGuestsFilterCount,
   resolveHolidayPriceDisplay,
 } from '@/utilities/crmHoliday'
-import { dateKeyToUnixSeconds } from '@/utilities/holidayRentalPricing'
+import {
+  arrivalDateKeyToUnixSeconds,
+  departureDateKeyToUnixSeconds,
+} from '@/utilities/holidayStayTimes'
 import { parseCountFilterValue, resolveHolidayBudgetRange } from '@/utilities/propertyFilterParsing'
 
 export type CRMListingPreset =
@@ -58,8 +62,13 @@ export type PropertyListFilters = {
   periodFrom?: string
   /** Holiday rental departure date (YYYY-MM-DD) → CRM `rental_period_to` (unix seconds) */
   periodTo?: string
-  /** Number of guests for holiday rentals (UI only — not sent to CRM list API yet) */
+  /**
+   * Guest count → CRM `sleeps: { $exists: true, $gte: N }` (omit when `any`).
+   * Use `guestsCustom` when value is `other`.
+   */
   guests?: string
+  /** Custom guest count when `guests` is `other` (clamped 1–25). */
+  guestsCustom?: string
   /** Total budget range → CRM `period_seasons_price_from/to` */
   totalBudget?: string
 }
@@ -68,6 +77,7 @@ export const hasHolidayListingFilters = (filters?: PropertyListFilters): boolean
   Boolean(
     filters?.periodFrom?.trim() ||
     filters?.periodTo?.trim() ||
+    (filters?.guests && filters.guests !== 'any') ||
     (filters?.totalBudget && filters.totalBudget !== 'any'),
   )
 
@@ -89,6 +99,8 @@ export type NormalizedListProperty = {
   propertyType?: string
   beds?: number
   baths?: number
+  /** Holiday rental capacity from CRM `sleeps` (max guests). */
+  sleeps?: number
   sqft?: number | string
   price: string
   priceValue?: number
@@ -700,17 +712,22 @@ export const buildFilterQuery = (
   }
 
   if (filters.periodFrom?.trim()) {
-    const arrivalTs = dateKeyToUnixSeconds(filters.periodFrom.trim())
+    const arrivalTs = arrivalDateKeyToUnixSeconds(filters.periodFrom.trim())
     if (arrivalTs != null) query.rental_period_from = arrivalTs
   }
 
   if (filters.periodTo?.trim()) {
-    const departureTs = dateKeyToUnixSeconds(filters.periodTo.trim())
+    const departureTs = departureDateKeyToUnixSeconds(filters.periodTo.trim())
     if (departureTs != null) query.rental_period_to = departureTs
   }
 
   if (filters.periodFrom?.trim() && filters.periodTo?.trim()) {
     query.booking_search = 1
+  }
+
+  const guestCount = resolveHolidayGuestsFilterCount(filters.guests, filters.guestsCustom)
+  if (guestCount != null) {
+    query.sleeps = { $exists: true, $gte: guestCount }
   }
 
   const holidayBudget = resolveHolidayBudgetRange(filters.totalBudget)
@@ -1039,6 +1056,7 @@ export function normalizeCRMProperty(
 
   const beds = pickNumber(property.bedrooms) ?? pickNumber(property.beds)
   const baths = pickNumber(property.bathrooms) ?? pickNumber(property.baths)
+  const sleeps = pickNumber(property.sleeps)
   const size =
     pickNumber(property.built) ??
     pickNumber(property.m2_built) ??
@@ -1144,6 +1162,7 @@ export function normalizeCRMProperty(
     propertySubtype: localized.propertySubtype || undefined,
     beds,
     baths,
+    sleeps: sleeps != null && sleeps > 0 ? sleeps : undefined,
     sqft: sizeWithUnit,
     price: resolvedPrice,
     priceValue: isHolidayProperty ? holidayPriceValue : priceValue,

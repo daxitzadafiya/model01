@@ -330,18 +330,3 @@ export const isRangeAvailable = (
 
   return true
 }
-
-export const dateKeyToUnixSeconds = (value: string): number | undefined => {
-  // Treat `YYYY-MM-DD` as UTC midnight to avoid timezone-related off-by-one shifts.
-  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/)
-  if (!match) return undefined
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return undefined
-  if (month < 1 || month > 12 || day < 1 || day > 31) return undefined
-  const isoUtcMidnight = `${match[1]}-${match[2]}-${match[3]}T00:00:00Z`
-  const parsed = Date.parse(isoUtcMidnight)
-  if (!Number.isFinite(parsed)) return undefined
-  return Math.floor(parsed / 1000)
-}

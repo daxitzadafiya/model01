@@ -14,10 +14,51 @@ import {
 export const isHolidayRentalProperty = (property: Record<string, unknown>): boolean =>
   isCRMTruthy(property.st_rental)
 
+/** Minimum guests selectable for holiday search / booking. */
+export const MIN_HOLIDAY_GUESTS = 1
+/** Fallback max when property `sleeps` is missing or 0. */
+export const DEFAULT_MAX_HOLIDAY_GUESTS = 25
+
+/** Max guests for a stay: property `sleeps` when > 0, otherwise 25. */
+export const resolveMaxHolidayGuests = (sleeps?: number | null): number => {
+  if (sleeps != null && Number.isFinite(sleeps) && sleeps > 0) {
+    return Math.floor(sleeps)
+  }
+  return DEFAULT_MAX_HOLIDAY_GUESTS
+}
+
+/** Clamp a guest count into `1…maxGuests`. */
+export const clampHolidayGuestCount = (value: number, maxGuests: number): number => {
+  const max = Math.max(MIN_HOLIDAY_GUESTS, Math.floor(maxGuests))
+  if (!Number.isFinite(value) || value < MIN_HOLIDAY_GUESTS) return MIN_HOLIDAY_GUESTS
+  return Math.min(Math.floor(value), max)
+}
+
 export const parseHolidayGuestCount = (guests?: string): number => {
   if (!guests || guests === 'any') return 2
   const parsed = parseInt(guests.replace(/\D/g, ''), 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 2
+}
+
+/**
+ * Resolve listing guest filter to a CRM `$gte` sleeps value.
+ * Custom ("other") values are clamped to 1–{@link DEFAULT_MAX_HOLIDAY_GUESTS}.
+ */
+export const resolveHolidayGuestsFilterCount = (
+  guests?: string,
+  guestsCustom?: string,
+): number | undefined => {
+  if (!guests || guests === 'any') return undefined
+
+  if (guests === 'other') {
+    const parsed = parseInt(guestsCustom?.replace(/\D/g, '') ?? '', 10)
+    if (!Number.isFinite(parsed) || parsed < MIN_HOLIDAY_GUESTS) return undefined
+    return clampHolidayGuestCount(parsed, DEFAULT_MAX_HOLIDAY_GUESTS)
+  }
+
+  const parsed = parseInt(guests.replace(/\D/g, ''), 10)
+  if (!Number.isFinite(parsed) || parsed < MIN_HOLIDAY_GUESTS) return undefined
+  return clampHolidayGuestCount(parsed, DEFAULT_MAX_HOLIDAY_GUESTS)
 }
 
 export type HolidayPriceVariant = 'listing' | 'detail'

@@ -116,7 +116,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({
   })
 
   const navButtonClass =
-    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary disabled:pointer-events-none disabled:opacity-30'
+    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors cursor-pointer hover:bg-surface-container-low hover:text-primary disabled:cursor-not-allowed disabled:opacity-30'
 
   const days = useMemo(() => {
     const year = monthDate.getFullYear()
@@ -163,7 +163,9 @@ const MonthGrid: React.FC<MonthGridProps> = ({
         </div>
       ) : (
         showMonthLabel && (
-          <p className="mb-2 text-center font-label-sm text-label-sm text-on-surface">{monthLabel}</p>
+          <p className="mb-2 text-center font-label-sm text-label-sm text-on-surface">
+            {monthLabel}
+          </p>
         )
       )}
       <div className="mb-1 grid grid-cols-7">
@@ -196,7 +198,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({
           } else if (isBlocked && !isEndpoint) {
             if (blockedStatus === 'enquiry') {
               buttonClass +=
-                ' cursor-default bg-amber-100/90 text-amber-900/70 line-through decoration-amber-700/40'
+                ' cursor-not-allowed bg-amber-100/90 text-amber-900/70 line-through decoration-amber-700/40'
             } else if (blockedStatus === 'booked') {
               buttonClass +=
                 ' cursor-default bg-red-100/80 text-red-900/60 line-through decoration-red-700/40'
@@ -217,7 +219,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({
               buttonClass += ' hover:bg-tertiary/20'
             }
           } else if (interactive) {
-            buttonClass += ' text-on-surface hover:bg-surface-container-low'
+            buttonClass += ' cursor-pointer text-on-surface hover:bg-surface-container-low'
           } else {
             buttonClass += ' text-on-surface'
           }
@@ -374,7 +376,7 @@ export const PropertyHolidayCalendar: React.FC<Props> = ({
             aria-label="Previous month"
             disabled={!canGoPrev}
             onClick={handlePrevMonth}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary disabled:pointer-events-none disabled:opacity-30"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full cursor-pointer text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary disabled:pointer-events-none disabled:opacity-30"
           >
             <ChevronLeft size={18} strokeWidth={2} />
           </button>
@@ -392,7 +394,7 @@ export const PropertyHolidayCalendar: React.FC<Props> = ({
             type="button"
             aria-label="Next month"
             onClick={handleNextMonth}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full cursor-pointer text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary"
           >
             <ChevronRight size={18} strokeWidth={2} />
           </button>

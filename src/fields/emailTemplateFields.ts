@@ -86,7 +86,7 @@ export function emailTemplateFields(defaults?: EmailTemplateFieldDefaults): Fiel
       defaultValue: defaults?.subject,
       admin: {
         description:
-          'Email subject line. Use {{reference}} to insert the property reference on inquiry emails. Switch locale in the admin bar to edit each language.',
+          'Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.',
       },
     },
     {
@@ -97,7 +97,7 @@ export function emailTemplateFields(defaults?: EmailTemplateFieldDefaults): Fiel
       defaultValue: defaults?.content,
       admin: {
         description:
-          'Design the full email like a document. Use {{reference}} anywhere in the body to insert the property reference on inquiry emails. Switch locale in the admin bar for other languages.',
+          'Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.',
       },
       editor: emailTemplateEditor,
     },

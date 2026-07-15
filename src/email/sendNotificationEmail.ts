@@ -1,1 +1,4 @@
-export { sendFormSubmissionNotificationEmail } from '@/email/formSubmissionEmail'
+export {
+  sendFormSubmissionNotificationEmail,
+  sendHolidayBookingNotificationEmail,
+} from '@/email/formSubmissionEmail'

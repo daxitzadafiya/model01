@@ -195,9 +195,7 @@ export const GUEST_OPTIONS = [
   { value: '3', label: '3 Guests' },
   { value: '4', label: '4 Guests' },
   { value: '5', label: '5 Guests' },
-  { value: '6', label: '6 Guests' },
-  { value: '8', label: '8 Guests' },
-  { value: '10', label: '10+ Guests' },
+  { value: COUNT_FILTER_OTHER_VALUE, label: 'Need More' },
 ] as const
 
 export const HOLIDAY_BUDGET_OPTIONS = [
@@ -266,6 +264,7 @@ export const EMPTY_PROPERTY_FILTERS = {
   periodFrom: '',
   periodTo: '',
   guests: 'any',
+  guestsCustom: '',
   totalBudget: 'any',
 } as const
 
@@ -286,6 +285,7 @@ type PropertyFiltersShape = {
   periodFrom?: string
   periodTo?: string
   guests?: string
+  guestsCustom?: string
   totalBudget?: string
 }
 

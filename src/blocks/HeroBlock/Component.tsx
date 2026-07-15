@@ -1,18 +1,21 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Banknote, ChevronDown, Globe, Home, Search, Users } from 'lucide-react'
 import type { Page } from '@/payload-types'
 import { FilterSelect } from '@/components/FilterSelect'
 import { CoastCityFilterFields } from '@/components/CoastCityFilterFields'
 import DateRangePickerField from '@/components/PropertyList/DateRangePickerField'
+import { CountFilterField } from '@/components/PropertyList/CountFilterField'
 import { CMSLink, getCMSLinkHref } from '@/components/Link'
 import { HeroBackground } from '@/blocks/HeroBlock/HeroBackground'
 import { HeroWeather } from '@/blocks/HeroBlock/HeroWeather'
 import {
   applyPriceRangeValue,
+  COUNT_FILTER_OTHER_VALUE,
   EMPTY_PROPERTY_FILTERS,
+  hasAppliedPropertyFilters,
   parseCountryFilter,
   parsePropertyTypeFilter,
   resolvePriceRangeValue,
@@ -22,13 +25,18 @@ import {
   useHolidayBudgetOptions,
   usePriceRangeOptions,
 } from '@/components/PropertyList/useFilterOptionLabels'
-import { savePendingPropertyListFilters } from '@/components/PropertyList/propertyFilterUrl'
+import {
+  clearPendingPropertyListFilters,
+  normalizePropertyListFilters,
+  savePendingPropertyListFilters,
+} from '@/components/PropertyList/propertyFilterUrl'
 import { useCRMCoasts } from '@/hooks/useCRMCoasts'
 import { useCRMCountries } from '@/hooks/useCRMCountries'
 import { useCRMCities } from '@/hooks/useCRMCities'
 import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
 import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
 import type { CRMListingPreset, PropertyListFilters } from '@/utilities/crmProperties'
+import { DEFAULT_MAX_HOLIDAY_GUESTS, MIN_HOLIDAY_GUESTS } from '@/utilities/crmHoliday'
 import { resolveDefaultCountryKeys } from '@/utilities/crmCountries'
 import { useTranslation } from '@/utilities/translateClient'
 import { useReveal } from '@/utilities/useReveal'
@@ -107,6 +115,11 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   const periodRangeLabel = useTranslation('propertyList.filters.periodRange', 'Stay period')
   const guestsLabel = useTranslation('propertyList.filters.guests', 'Guests')
   const totalBudgetLabel = useTranslation('propertyList.filters.totalBudget', 'Total Budget')
+  const needMoreLabel = useTranslation('propertyList.filters.needMore', 'Need More')
+  const guestsCustomPlaceholder = useTranslation(
+    'propertyList.filters.guestsCustomPlaceholder',
+    `1–${DEFAULT_MAX_HOLIDAY_GUESTS} Guests`,
+  )
   const searchLabel = useTranslation('propertyList.filters.search', 'Search')
   const scrollLabel = useTranslation('hero.scrollIndicator', 'SCROLL')
 
@@ -122,6 +135,12 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   const priceRangeOptions = usePriceRangeOptions()
   const guestOptions = useGuestOptions()
   const holidayBudgetOptions = useHolidayBudgetOptions()
+
+  const guestsWithOther = useMemo(() => {
+    const hasOther = guestOptions.some((option) => option.value === COUNT_FILTER_OTHER_VALUE)
+    if (hasOther) return guestOptions
+    return [...guestOptions, { value: COUNT_FILTER_OTHER_VALUE, label: needMoreLabel }]
+  }, [guestOptions, needMoreLabel])
 
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions(filterDataPreset)
@@ -144,25 +163,32 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     priceRangeOptions,
   )
 
+  const defaultCountryAppliedRef = useRef(false)
+
   const resetFiltersForTab = useCallback(
     (tab: HeroPropertyTab) => {
       const nextFilters: PropertyListFilters = { ...EMPTY_PROPERTY_FILTERS }
       if (tab === 'sale' && countries.length) {
         nextFilters.country = resolveDefaultCountryKeys(defaultCountry, countries)
+        defaultCountryAppliedRef.current = true
       }
       setSearchFilters(nextFilters)
     },
     [countries, defaultCountry],
   )
 
+  // Apply CMS default country once when countries load — do not re-apply after the
+  // user clears the selection (they may want "All Countries").
   useEffect(() => {
-    if (activeTab === 'sale' && countries.length && !searchFilters.country?.length) {
-      const defaultKeys = resolveDefaultCountryKeys(defaultCountry, countries)
-      if (defaultKeys.length) {
-        setSearchFilters((prev) => ({ ...prev, country: defaultKeys }))
-      }
-    }
-  }, [activeTab, countries, defaultCountry, searchFilters.country?.length])
+    if (defaultCountryAppliedRef.current || activeTab !== 'sale' || !countries.length) return
+    const defaultKeys = resolveDefaultCountryKeys(defaultCountry, countries)
+    defaultCountryAppliedRef.current = true
+    if (!defaultKeys.length) return
+    setSearchFilters((prev) => {
+      if (prev.country?.length) return prev
+      return { ...prev, country: defaultKeys }
+    })
+  }, [activeTab, countries, defaultCountry])
 
   const handleTabChange = (tab: HeroPropertyTab) => {
     setActiveTab(tab)
@@ -174,6 +200,21 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     value: PropertyListFilters[keyof PropertyListFilters],
   ) => {
     setSearchFilters((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleGuestsCustomChange = (value: string) => {
+    const digits = value.replace(/\D/g, '')
+    if (!digits) {
+      handleSearchFilterChange('guestsCustom', '')
+      return
+    }
+    const parsed = Number(digits)
+    if (!Number.isFinite(parsed)) {
+      handleSearchFilterChange('guestsCustom', '')
+      return
+    }
+    const clamped = Math.min(Math.max(parsed, MIN_HOLIDAY_GUESTS), DEFAULT_MAX_HOLIDAY_GUESTS)
+    handleSearchFilterChange('guestsCustom', String(clamped))
   }
 
   const handlePriceRangeChange = (range: string) => {
@@ -188,10 +229,17 @@ const HeroBlockContent: React.FC<Props> = (props) => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    savePendingPropertyListFilters({
+    const nextFilters = normalizePropertyListFilters({
       ...EMPTY_PROPERTY_FILTERS,
       ...searchFilters,
     })
+    // Only hand filters to the listing page when something is actually set.
+    // Empty defaults should use the page's server-rendered listing.
+    if (hasAppliedPropertyFilters(nextFilters)) {
+      savePendingPropertyListFilters(nextFilters)
+    } else {
+      clearPendingPropertyListFilters()
+    }
     router.push(searchResultsPath)
   }
 
@@ -328,14 +376,18 @@ const HeroBlockContent: React.FC<Props> = (props) => {
                       openDirection="up"
                       panelClassName="rounded-2xl border border-white/20 bg-surface shadow-2xl"
                     />
-                    <FilterSelect
+                    <CountFilterField
                       label={guestsLabel}
                       id="hero-search-guests"
                       icon={<Users size={20} strokeWidth={1.75} />}
-                      options={guestOptions}
+                      options={guestsWithOther}
                       value={searchFilters.guests ?? 'any'}
+                      customValue={searchFilters.guestsCustom ?? ''}
                       onChange={(value) => handleSearchFilterChange('guests', value)}
+                      onCustomChange={handleGuestsCustomChange}
+                      customPlaceholder={guestsCustomPlaceholder}
                       triggerClassName={heroSearchFieldClassName}
+                      customInputClassName="text-white placeholder:text-white/90"
                     />
                     <FilterSelect
                       label={totalBudgetLabel}

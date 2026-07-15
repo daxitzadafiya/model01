@@ -137,7 +137,7 @@ export const EmailSettings: GlobalConfig = {
                   label: 'Notification recipient',
                   admin: {
                     description:
-                      'Where contact and property inquiry notifications are delivered (your team inbox).',
+                      'Where contact, property inquiry, and holiday booking notifications are delivered (your team inbox).',
                   },
                 },
               ],
@@ -180,6 +180,20 @@ export const EmailSettings: GlobalConfig = {
                   },
                   fields: emailTemplateFields({
                     subject: 'Enquiry about property (Ref: {{reference}})',
+                    content: defaultClientConfirmationContent,
+                  }),
+                },
+                {
+                  name: 'holidayBooking',
+                  type: 'group',
+                  label: 'Holiday rental booking',
+                  admin: {
+                    condition: (_, siblingData) => Boolean(siblingData?.enabled),
+                    description:
+                      'Thank-you email after a holiday rental booking enquiry. Use {{reference}}, {{arrival}}, {{departure}}, and {{guests}} in the subject or body.',
+                  },
+                  fields: emailTemplateFields({
+                    subject: 'Holiday booking enquiry (Ref: {{reference}})',
                     content: defaultClientConfirmationContent,
                   }),
                 },

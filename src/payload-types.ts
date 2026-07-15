@@ -3756,7 +3756,7 @@ export interface EmailSetting {
   };
   notifications: {
     /**
-     * Where contact and property inquiry notifications are delivered (your team inbox).
+     * Where contact, property inquiry, and holiday booking notifications are delivered (your team inbox).
      */
     recipientAddress: string;
   };
@@ -3764,11 +3764,11 @@ export interface EmailSetting {
     enabled?: boolean | null;
     contact?: {
       /**
-       * Email subject line. Use {{reference}} to insert the property reference on inquiry emails. Switch locale in the admin bar to edit each language.
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
        */
       subject: string;
       /**
-       * Design the full email like a document. Use {{reference}} anywhere in the body to insert the property reference on inquiry emails. Switch locale in the admin bar for other languages.
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
        */
       content?: {
         root: {
@@ -3788,11 +3788,38 @@ export interface EmailSetting {
     };
     propertyInquiry?: {
       /**
-       * Email subject line. Use {{reference}} to insert the property reference on inquiry emails. Switch locale in the admin bar to edit each language.
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
        */
       subject: string;
       /**
-       * Design the full email like a document. Use {{reference}} anywhere in the body to insert the property reference on inquiry emails. Switch locale in the admin bar for other languages.
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
+       */
+      content?: {
+        root: {
+          type: string;
+          children: {
+            type: any;
+            version: number;
+            [k: string]: unknown;
+          }[];
+          direction: ('ltr' | 'rtl') | null;
+          format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+          indent: number;
+          version: number;
+        };
+        [k: string]: unknown;
+      } | null;
+    };
+    /**
+     * Thank-you email after a holiday rental booking enquiry. Use {{reference}}, {{arrival}}, {{departure}}, and {{guests}} in the subject or body.
+     */
+    holidayBooking?: {
+      /**
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
+       */
+      subject: string;
+      /**
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
        */
       content?: {
         root: {
@@ -4261,6 +4288,12 @@ export interface EmailSettingsSelect<T extends boolean = true> {
               content?: T;
             };
         propertyInquiry?:
+          | T
+          | {
+              subject?: T;
+              content?: T;
+            };
+        holidayBooking?:
           | T
           | {
               subject?: T;

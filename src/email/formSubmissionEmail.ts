@@ -14,6 +14,7 @@ import {
   COMMERCIAL_PROFILE_TYPE_ONE_FIELD,
   COMMERCIAL_PROFILE_TYPE_TWO_FIELD,
 } from '@/utilities/propertyInquiry'
+import { HOLIDAY_CHECK_IN_HOUR, HOLIDAY_CHECK_OUT_HOUR } from '@/utilities/holidayStayTimes'
 import { t } from '@/utilities/translate'
 
 type SubmissionField = {
@@ -21,7 +22,7 @@ type SubmissionField = {
   value: string | boolean | number | null | undefined
 }
 
-type NotificationTemplate = 'contact' | 'propertyInquiry'
+type NotificationTemplate = 'contact' | 'propertyInquiry' | 'holidayBooking'
 
 type NotificationField = {
   label: string
@@ -41,6 +42,7 @@ type SendNotificationEmailArgs = {
   propertyReference?: string
   subjectSuffix?: string
   clientEmail?: string
+  templateVariables?: Record<string, string>
 }
 
 const INTERNAL_FIELDS = new Set([
@@ -83,6 +85,11 @@ const TEMPLATE_DEFAULTS: Record<
     name: 'New Property Inquiry',
     intro: 'A new property inquiry has been received from your website.',
   },
+  holidayBooking: {
+    subject: 'New Holiday Booking Enquiry',
+    name: 'New Holiday Booking Enquiry',
+    intro: 'A new holiday rental booking enquiry has been received from your website.',
+  },
 }
 
 const CLIENT_TEMPLATE_DEFAULTS: Record<NotificationTemplate, { subject: string }> = {
@@ -91,6 +98,9 @@ const CLIENT_TEMPLATE_DEFAULTS: Record<NotificationTemplate, { subject: string }
   },
   propertyInquiry: {
     subject: 'Enquiry about property (Ref: {{reference}})',
+  },
+  holidayBooking: {
+    subject: 'Holiday booking enquiry (Ref: {{reference}})',
   },
 }
 
@@ -291,6 +301,7 @@ async function sendNotificationEmail({
   propertyReference,
   subjectSuffix,
   clientEmail,
+  templateVariables: extraTemplateVariables,
 }: SendNotificationEmailArgs): Promise<void> {
   const settings = await getEmailSettings()
   if (!isEmailConfigured(settings)) return
@@ -330,6 +341,7 @@ async function sendNotificationEmail({
 
   const templateVariables = {
     reference: propertyReference ?? '',
+    ...extraTemplateVariables,
   }
 
   const teamSubject = applyTemplateVariables(defaults.subject, templateVariables)
@@ -423,12 +435,21 @@ export async function sendFormSubmissionNotificationEmail({
   )
 
   const languageField = {
-    label: await resolveFieldLabel(payload, 'submissionLocale', formDefinition, locale),
+    label: await resolveFieldLabel(payload, 'language', formDefinition, locale),
     value: locale,
   }
 
   if (!fields.some((field) => field.label === languageField.label)) {
     fields.push(languageField)
+  }
+
+  if (isPropertyInquiry) {
+    const transactionType = getSubmissionValue(submissionData, 'transaction_types')
+    const enquiryType = resolveEnquiryTypeLabel(transactionType || 'Buy')
+    fields.push({
+      label: await resolveFieldLabel(payload, 'enquiry_type', formDefinition, locale),
+      value: enquiryType,
+    })
   }
 
   const propertyReference = isPropertyInquiry
@@ -443,5 +464,147 @@ export async function sendFormSubmissionNotificationEmail({
     propertyReference,
     subjectSuffix: formTitle,
     clientEmail: getClientEmail(submissionData),
+  })
+}
+
+export type HolidayBookingEmailInput = {
+  property_reference: string
+  forename: string
+  email: string
+  mobile: string
+  arrival: string
+  departure: string
+  surname?: string
+  guests?: number
+  message?: string
+  locale?: string
+  /** Total rental quote amount for the selected stay (optional). */
+  price?: number | string
+}
+
+/** Maps CRM / form transaction types to the enquiry-type label shown in emails. */
+export function resolveEnquiryTypeLabel(transactionType?: string): string {
+  const normalized = transactionType?.trim().toLowerCase() ?? ''
+  if (normalized === 'buy' || normalized === 'sale') return 'Sale Property'
+  if (
+    normalized === 'short term rental' ||
+    normalized === 'short-term rental' ||
+    normalized === 'holiday' ||
+    normalized === 'holiday rental'
+  ) {
+    return 'Holiday Property'
+  }
+  if (
+    normalized === 'long term rental' ||
+    normalized === 'long-term rental' ||
+    normalized === 'rent'
+  ) {
+    return 'Long Term Property'
+  }
+  return transactionType?.trim() || 'Holiday Property'
+}
+
+function padTimeHour(hour: number): string {
+  return `${String(hour).padStart(2, '0')}:00`
+}
+
+function formatHolidayDateTimeForEmail(value: string, hour: number): string {
+  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return value.trim()
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  if (!Number.isFinite(date.getTime())) return value.trim()
+  const datePart = date.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+  return `${datePart} at ${padTimeHour(hour)}`
+}
+
+function formatHolidayPriceForEmail(price?: number | string): string {
+  if (typeof price === 'number' && Number.isFinite(price) && price > 0) {
+    return `€${Math.round(price).toLocaleString('en-US')}`
+  }
+  if (typeof price === 'string') {
+    const trimmed = price.trim()
+    if (!trimmed) return ''
+    if (trimmed.startsWith('€')) return trimmed
+    const numeric = Number(trimmed.replace(/[^\d.-]/g, ''))
+    if (Number.isFinite(numeric) && numeric > 0) {
+      return `€${Math.round(numeric).toLocaleString('en-US')}`
+    }
+    return trimmed
+  }
+  return ''
+}
+
+/** Team notification + client thank-you for holiday rental booking enquiries. */
+export async function sendHolidayBookingNotificationEmail({
+  payload,
+  input,
+}: {
+  payload: Payload
+  input: HolidayBookingEmailInput
+}): Promise<void> {
+  const locale = input.locale?.trim().toLowerCase() || 'en'
+  const propertyReference = input.property_reference.trim()
+  const forename = input.forename.trim()
+  const surname = input.surname?.trim() ?? ''
+  const email = input.email.trim()
+  const mobile = input.mobile.trim()
+  const arrival = input.arrival.trim()
+  const departure = input.departure.trim()
+  const message = input.message?.trim() ?? ''
+  const guests =
+    typeof input.guests === 'number' && Number.isFinite(input.guests) && input.guests > 0
+      ? String(Math.floor(input.guests))
+      : ''
+  const priceDisplay = formatHolidayPriceForEmail(input.price)
+  const enquiryType = resolveEnquiryTypeLabel('short term rental')
+
+  const arrivalDisplay = formatHolidayDateTimeForEmail(arrival, HOLIDAY_CHECK_IN_HOUR)
+  const departureDisplay = formatHolidayDateTimeForEmail(departure, HOLIDAY_CHECK_OUT_HOUR)
+
+  // Field order matches the ops checklist for holiday booking enquiry emails.
+  // Prop. Ref is rendered via the dedicated property-reference callout.
+  const rawFields: Array<{ field: string; value: string }> = [
+    { field: 'forename', value: forename },
+    { field: 'surname', value: surname },
+    { field: 'email', value: email },
+    { field: 'mobile', value: mobile },
+    { field: 'language', value: locale },
+    { field: 'enquiry_type', value: enquiryType },
+    { field: 'arrival', value: arrivalDisplay },
+    { field: 'departure', value: departureDisplay },
+    { field: 'guests', value: guests },
+    { field: 'message', value: message },
+    { field: 'price', value: priceDisplay },
+  ]
+
+  const fields = await Promise.all(
+    rawFields
+      .filter((entry) => Boolean(entry.value))
+      .map(async (entry) => ({
+        label: await resolveFieldLabel(payload, entry.field, null, locale),
+        value: entry.value,
+      })),
+  )
+
+  await sendNotificationEmail({
+    payload,
+    locale,
+    template: 'holidayBooking',
+    fields,
+    propertyReference,
+    subjectSuffix: 'Holiday rental',
+    clientEmail: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : undefined,
+    templateVariables: {
+      arrival: arrivalDisplay,
+      departure: departureDisplay,
+      guests,
+      price: priceDisplay,
+      enquiry_type: enquiryType,
+    },
   })
 }
