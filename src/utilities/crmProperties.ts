@@ -69,7 +69,11 @@ export type PropertyListFilters = {
   guests?: string
   /** Custom guest count when `guests` is `other` (clamped 1–25). */
   guestsCustom?: string
-  /** Total budget range → CRM `period_seasons_price_from/to` */
+  /**
+   * Total budget range.
+   * Budget only → CRM `period_seasons_price` / `_from` / `_to`.
+   * With a complete stay period → CRM `rental_new_price` (`"min, max"`) plus period dates.
+   */
   totalBudget?: string
 }
 
@@ -711,6 +715,8 @@ export const buildFilterQuery = (
     query.bathrooms = bathroomCount
   }
 
+  const hasCompleteStayPeriod = Boolean(filters.periodFrom?.trim() && filters.periodTo?.trim())
+
   if (filters.periodFrom?.trim()) {
     const arrivalTs = arrivalDateKeyToUnixSeconds(filters.periodFrom.trim())
     if (arrivalTs != null) query.rental_period_from = arrivalTs
@@ -721,7 +727,7 @@ export const buildFilterQuery = (
     if (departureTs != null) query.rental_period_to = departureTs
   }
 
-  if (filters.periodFrom?.trim() && filters.periodTo?.trim()) {
+  if (hasCompleteStayPeriod) {
     query.booking_search = 1
   }
 
@@ -732,9 +738,15 @@ export const buildFilterQuery = (
 
   const holidayBudget = resolveHolidayBudgetRange(filters.totalBudget)
   if (holidayBudget) {
-    query.period_seasons_price = true
-    query.period_seasons_price_from = holidayBudget[0]
-    query.period_seasons_price_to = holidayBudget[1]
+    if (hasCompleteStayPeriod) {
+      // Stay + budget: filter by calculated rental total for the selected dates.
+      query.rental_new_price = `${holidayBudget[0]}, ${holidayBudget[1]}`
+    } else {
+      // Budget only: filter against seasonal price bands (no stay dates).
+      query.period_seasons_price = true
+      query.period_seasons_price_from = holidayBudget[0]
+      query.period_seasons_price_to = holidayBudget[1]
+    }
   }
 
   return query
