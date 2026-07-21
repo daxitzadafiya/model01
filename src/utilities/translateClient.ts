@@ -4,6 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 
 import {
   getFieldInvalidEmailValidationMapping,
+  getFieldInvalidPhoneValidationMapping,
   getFieldLabelMapping,
   getFieldRequiredValidationMapping,
 } from '@/utilities/formFieldLabels'
@@ -98,6 +99,11 @@ export function useFormFieldRequiredMessage(fieldName: string, labelFromForm?: s
 
 export function useFormFieldInvalidEmailMessage(fieldName: string): string {
   const { key, fallback } = getFieldInvalidEmailValidationMapping(fieldName)
+  return useTranslation(key, fallback)
+}
+
+export function useFormFieldInvalidPhoneMessage(fieldName: string): string {
+  const { key, fallback } = getFieldInvalidPhoneValidationMapping(fieldName)
   return useTranslation(key, fallback)
 }
 

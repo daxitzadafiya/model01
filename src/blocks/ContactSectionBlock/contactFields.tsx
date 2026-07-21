@@ -8,9 +8,10 @@ import type {
 import type { Control, FieldErrorsImpl } from 'react-hook-form'
 import type { UseFormRegister } from 'react-hook-form'
 import { Controller } from 'react-hook-form'
-import { AlertCircle, Globe, Mail, MessageSquare, Phone, Tag, User } from 'lucide-react'
+import { AlertCircle, Globe, Mail, MessageSquare, Tag, User } from 'lucide-react'
 import React from 'react'
 import { Error } from '@/blocks/Form/Error'
+import { PhoneInputField } from '@/components/PhoneInput/PhoneInputField'
 import { Checkbox as CheckboxUi } from '@/components/ui/checkbox'
 import { cn } from '@/utilities/ui'
 import {
@@ -22,8 +23,10 @@ import {
 } from '@/components/ui/select'
 import { countryOptions } from '@/blocks/Form/Country/options'
 import { CMSLink } from '@/components/Link'
+import { buildPhoneValidationRules } from '@/utilities/phoneValidationRules'
 import {
   useFormFieldInvalidEmailMessage,
+  useFormFieldInvalidPhoneMessage,
   useFormFieldLabel,
   useFormFieldRequiredMessage,
   useTranslation,
@@ -49,12 +52,68 @@ type BaseFieldProps = {
   defaultValue?: string
 }
 
+type PhoneFieldProps = BaseFieldProps & {
+  control: Control
+}
+
 function fieldHint(name: string, label?: string): string {
   return `${name} ${label ?? ''}`.toLowerCase()
 }
 
 function isPhoneField(name: string, label?: string): boolean {
   return /phone|mobile|tel|cell|cellphone/.test(fieldHint(name, label))
+}
+
+function ContactPhoneField({
+  name,
+  label,
+  required,
+  errors,
+  control,
+  defaultValue,
+}: PhoneFieldProps) {
+  const translatedLabel = useFormFieldLabel(name, label)
+  const requiredMessage = useFormFieldRequiredMessage(name, label)
+  const invalidPhoneMessage = useFormFieldInvalidPhoneMessage(name)
+
+  return (
+    <div>
+      {translatedLabel && (
+        <label className={labelClassName} htmlFor={name}>
+          {translatedLabel}
+          {required && ' *'}
+        </label>
+      )}
+      <Controller
+        control={control}
+        defaultValue={defaultValue ?? ''}
+        name={name}
+        rules={buildPhoneValidationRules({
+          required,
+          requiredMessage,
+          invalidPhoneMessage,
+        })}
+        render={({ field: { onChange, value, onBlur }, fieldState: { error } }) => (
+          <>
+            <PhoneInputField
+              id={name}
+              invalid={Boolean(error)}
+              name={name}
+              placeholder={translatedLabel}
+              showValidation={Boolean(error)}
+              value={value}
+              variant="contact"
+              onBlur={onBlur}
+              onChange={onChange}
+            />
+            {error?.message && (
+              <div className="mt-2 text-red-500 text-sm">{String(error.message)}</div>
+            )}
+          </>
+        )}
+      />
+    </div>
+  )
 }
 
 function ContactFieldWrapper({
@@ -85,28 +144,40 @@ function ContactFieldWrapper({
   )
 }
 
-export const ContactTextField: React.FC<BaseFieldProps> = ({
+export const ContactTextField: React.FC<
+  BaseFieldProps & { control?: Control }
+> = ({
   name,
   label,
   required,
   errors,
   register,
+  control,
   defaultValue,
 }) => {
   const phoneField = isPhoneField(name, label)
+
+  if (phoneField && control) {
+    return (
+      <ContactPhoneField
+        control={control}
+        defaultValue={defaultValue}
+        errors={errors}
+        label={label}
+        name={name}
+        register={register}
+        required={required}
+      />
+    )
+  }
+
   const translatedLabel = useFormFieldLabel(name, label)
   const requiredMessage = useFormFieldRequiredMessage(name, label)
 
   return (
     <ContactFieldWrapper
       errors={errors}
-      icon={
-        phoneField ? (
-          <Phone size={18} strokeWidth={2} />
-        ) : (
-          <User size={18} strokeWidth={2} />
-        )
-      }
+      icon={<User size={18} strokeWidth={2} />}
       label={translatedLabel}
       name={name}
       register={register}
@@ -117,7 +188,7 @@ export const ContactTextField: React.FC<BaseFieldProps> = ({
         defaultValue={defaultValue}
         id={name}
         placeholder={translatedLabel}
-        type={phoneField ? 'tel' : 'text'}
+        type="text"
         {...register(name, { required: required ? requiredMessage : false })}
       />
     </ContactFieldWrapper>
@@ -163,37 +234,9 @@ export const ContactEmailField: React.FC<BaseFieldProps> = ({
   )
 }
 
-export const ContactNumberField: React.FC<BaseFieldProps> = ({
-  name,
-  label,
-  required,
-  errors,
-  register,
-  defaultValue,
-}) => {
-  const translatedLabel = useFormFieldLabel(name, label)
-  const requiredMessage = useFormFieldRequiredMessage(name, label)
-
-  return (
-    <ContactFieldWrapper
-      errors={errors}
-      icon={<Phone size={18} strokeWidth={2} />}
-      label={translatedLabel}
-      name={name}
-      register={register}
-      required={required}
-    >
-      <input
-        className={inputClassName}
-        defaultValue={defaultValue}
-        id={name}
-        placeholder={translatedLabel}
-        type="tel"
-        {...register(name, { required: required ? requiredMessage : false })}
-      />
-    </ContactFieldWrapper>
-  )
-}
+export const ContactNumberField: React.FC<PhoneFieldProps> = (props) => (
+  <ContactPhoneField {...props} />
+)
 
 export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> = ({
   name,

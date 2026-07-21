@@ -17,6 +17,7 @@ import { useDeferredSiteLocale } from '@/utilities/useDeferredSiteLocale'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 import { contactFields } from './contactFields'
+import { formatPhoneE164 } from '@/utilities/phoneValidation'
 
 type HiddenFieldValue = string | boolean
 
@@ -135,7 +136,15 @@ export const ContactForm: React.FC<Props> = ({
     }
 
     setRecaptchaValidationError(null)
-    onSubmit(data)
+
+    const normalizedData = { ...data }
+    for (const [key, value] of Object.entries(normalizedData)) {
+      if (typeof value === 'string' && /phone|mobile|tel/i.test(key)) {
+        normalizedData[key] = formatPhoneE164(value) || value
+      }
+    }
+
+    onSubmit(normalizedData)
   }
 
   return (

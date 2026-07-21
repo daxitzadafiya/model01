@@ -93,3 +93,16 @@ export function getFieldInvalidEmailValidationMapping(fieldName: string): {
     fallback: 'Please enter a valid email address',
   }
 }
+
+export function getFieldInvalidPhoneValidationMapping(fieldName: string): {
+  key: string
+  fallback: string
+} {
+  const mapped = resolveKnownFieldLabel(fieldName)
+  const label = mapped?.fallback ?? 'Phone number'
+
+  return {
+    key: `form.validation.${normalizeFieldName(fieldName)}.invalidPhone`,
+    fallback: `Please enter a valid ${label.toLowerCase()}`,
+  }
+}

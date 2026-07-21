@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react'
 import { AlertCircle, CalendarDays, Check, CircleArrowRight, Lock, Loader2, Users, Clock } from 'lucide-react'
 
 import { PropertyHolidayCalendar } from '@/components/PropertyDetail/PropertyHolidayCalendar'
+import { PhoneInputField } from '@/components/PhoneInput/PhoneInputField'
 import { COUNT_FILTER_OTHER_VALUE, GUEST_OPTIONS } from '@/components/PropertyList/filterOptions'
 import { CountFilterField } from '@/components/PropertyList/CountFilterField'
 import { RecaptchaWidget } from '@/components/RecaptchaWidget/RecaptchaWidget'
@@ -29,9 +30,12 @@ import {
 import { HOLIDAY_CHECK_IN_HOUR, HOLIDAY_CHECK_OUT_HOUR } from '@/utilities/holidayStayTimes'
 import {
   useFormFieldInvalidEmailMessage,
+  useFormFieldInvalidPhoneMessage,
   useFormFieldRequiredMessage,
   useTranslation,
 } from '@/utilities/translateClient'
+import { formatPhoneE164 } from '@/utilities/phoneValidation'
+import { validatePhoneValue } from '@/utilities/phoneValidationRules'
 
 const EMAIL_PATTERN = /^\S[^\s@]*@\S+$/
 const PRIVACY_POLICY_VALIDATION_KEY = 'form.validation.privacyPolicy.required'
@@ -218,6 +222,7 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
   const emailRequiredMessage = useFormFieldRequiredMessage('email', emailLabel)
   const emailInvalidMessage = useFormFieldInvalidEmailMessage('email')
   const mobileRequiredMessage = useFormFieldRequiredMessage('phone', phoneLabel)
+  const mobileInvalidMessage = useFormFieldInvalidPhoneMessage('phone')
   const termsAcceptanceError = useTranslation(
     PRIVACY_POLICY_VALIDATION_KEY,
     PRIVACY_POLICY_VALIDATION_FALLBACK,
@@ -370,8 +375,13 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
       next.email = emailInvalidMessage
     }
 
-    if (!form.mobile.trim()) {
-      next.mobile = mobileRequiredMessage
+    const mobileError = validatePhoneValue(form.mobile, {
+      required: true,
+      requiredMessage: mobileRequiredMessage,
+      invalidPhoneMessage: mobileInvalidMessage,
+    })
+    if (mobileError) {
+      next.mobile = mobileError
     }
 
     if (!termsAccepted) {
@@ -415,7 +425,7 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
           forename: form.forename.trim(),
           surname: form.surname.trim(),
           email: form.email.trim(),
-          mobile: form.mobile.trim(),
+          mobile: formatPhoneE164(form.mobile.trim()),
           guests: resolvedGuestCount,
           message: form.message.trim(),
           arrival,
@@ -680,12 +690,15 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
           <span className="mb-1 ml-1 block font-label-sm text-label-sm uppercase text-on-surface-variant">
             {phoneLabel} *
           </span>
-          <input
-            type="tel"
-            value={form.mobile}
-            onChange={(event) => handleFieldChange('mobile', event.target.value)}
+          <PhoneInputField
+            id="holiday-mobile"
+            invalid={Boolean(fieldErrors.mobile)}
+            name="mobile"
             placeholder={phoneLabel}
-            className="w-full rounded-lg border border-transparent bg-surface-container-low px-3 py-3 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:border-tertiary focus:ring-0"
+            showValidation={Boolean(fieldErrors.mobile)}
+            value={form.mobile}
+            variant="holiday"
+            onChange={(value) => handleFieldChange('mobile', value)}
           />
           {fieldErrors.mobile && (
             <div className="mt-2 text-red-500 text-sm">{fieldErrors.mobile}</div>
