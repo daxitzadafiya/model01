@@ -5,6 +5,7 @@ import {
   type PropertyListInitialData,
 } from '@/components/PropertyList/PropertyListServerData'
 import { extractImageOrigin } from '@/components/PropertyList/propertyListImagePreload'
+import { getLocale } from '@/i18n/getLocale'
 import { DEFAULT_PROPERTY_FILTER_OPTIONS } from '@/utilities/propertyFilterOptions.shared'
 import type { CRMListingPreset } from '@/utilities/crmProperties'
 import { fetchPropertyListServerData } from '@/utilities/propertyListServer'
@@ -37,12 +38,14 @@ export async function PropertyListBlockData({
 
   if (preset !== 'favorites') {
     try {
+      const locale = await getLocale()
       const fetched = await fetchPropertyListServerData({
         preset,
         pageSize: resolvedPageSize,
         page,
         sortValue,
         orderbyEntries,
+        locale,
       })
       if (fetched) initialData = fetched
     } catch (error) {

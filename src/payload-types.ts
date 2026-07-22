@@ -1055,11 +1055,11 @@ export interface PropertyListBlock {
   breadcrumbParentHref?: string | null;
   pageTitle?: string | null;
   resultsLabel?: string | null;
-  listingPreset: 'forSale' | 'forRent' | 'forHoliday' | 'favorites' | 'sold' | 'featured' | 'seaView';
+  listingPreset: 'forSale' | 'forRent' | 'forHoliday' | 'projects' | 'favorites' | 'sold' | 'featured' | 'seaView';
   pageSize?: number | null;
   showFilters?: boolean | null;
   /**
-   * Adds a map icon in the filter bar that opens the property map modal.
+   * Adds a map icon in the filter bar that opens the map modal. For Projects, markers load from constructions with latlng=true (same filters), then area search filters by selected project IDs.
    */
   showMap?: boolean | null;
   forceSoldBadge?: boolean | null;
@@ -3879,6 +3879,10 @@ export interface OptimaCrmSetting {
     imageUrl: string;
     commercialImageBase: string;
     /**
+     * Base URL for construction/project document files.
+     */
+    constructionsImageBase: string;
+    /**
      * Optima agency ID for commercial images.
      */
     agencyId: string;
@@ -4324,6 +4328,7 @@ export interface OptimaCrmSettingsSelect<T extends boolean = true> {
         imageUrlWithoutResize?: T;
         imageUrl?: T;
         commercialImageBase?: T;
+        constructionsImageBase?: T;
         agencyId?: T;
         propertyResizeBase?: T;
         siteId?: T;

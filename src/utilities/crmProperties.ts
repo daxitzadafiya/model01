@@ -9,6 +9,7 @@ import {
 } from '@/utilities/optimaImage'
 import { isCRMTruthy, resolveCRMPropertyLocalizedTexts } from '@/utilities/localizedValue'
 import {
+  resolveProjectDetailHref,
   resolvePropertyDetailHref,
   resolvePropertyListingMode,
   type PropertyListingMode,
@@ -34,6 +35,7 @@ export type CRMListingPreset =
   | 'seaView'
   | 'custom'
   | 'favorites'
+  | 'projects'
 
 export type PropertyListSort = string
 
@@ -58,6 +60,10 @@ export type PropertyListFilters = {
   features?: string[]
   /** Property references selected via map polygon draw */
   mapReferences?: string[]
+  /** Projects: delivery months (1 = key ready / handover) → phase_built_year */
+  delivery?: string
+  /** Projects: max sea distance in meters → distances_sea */
+  distanceToSea?: string
   /** Holiday rental arrival date (YYYY-MM-DD) → CRM `rental_period_from` (unix seconds) */
   periodFrom?: string
   /** Holiday rental departure date (YYYY-MM-DD) → CRM `rental_period_to` (unix seconds) */
@@ -302,6 +308,7 @@ export const extractCRMList = (payload: unknown): Record<string, unknown>[] => {
       'items',
       'commercial_properties',
       'properties',
+      'constructions',
     ]
 
     for (const key of knownCollections) {
@@ -985,6 +992,8 @@ export type NormalizeCRMPropertyOptions = {
   maxGalleryImages?: number
   /** Sale vs rent URL map — defaults from CRM `sale` / `rent` flags. */
   listingMode?: PropertyListingMode
+  /** When true, use `/project-details` hrefs and phase price ranges (projects list only). */
+  projectListing?: boolean
   /** Holiday rental listing — hide sale price until dates are selected. */
   holidayListing?: boolean
   holidayPeriodFrom?: string
@@ -1061,16 +1070,25 @@ export function normalizeCRMProperty(
 
   const propertyTitle =
     localized.title ||
+    pickString(property.project_name) ||
     pickString(property.display_name) ||
     pickString(property.name) ||
     localized.propertyType ||
     'Property'
 
-  const beds = pickNumber(property.bedrooms) ?? pickNumber(property.beds)
-  const baths = pickNumber(property.bathrooms) ?? pickNumber(property.baths)
+  const beds =
+    pickNumber(property.bedrooms) ??
+    pickNumber(property.bedrooms_from) ??
+    pickNumber(property.beds)
+  const baths =
+    pickNumber(property.bathrooms) ??
+    pickNumber(property.bathrooms_from) ??
+    pickNumber(property.baths)
   const sleeps = pickNumber(property.sleeps)
   const size =
     pickNumber(property.built) ??
+    pickNumber(property.built_size_from) ??
+    pickNumber(property.built_from) ??
     pickNumber(property.m2_built) ??
     pickNumber(property.covered_area) ??
     pickNumber(property.internal_area) ??
@@ -1097,6 +1115,16 @@ export function normalizeCRMProperty(
       ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(rawPrice)
       : pickString(rawPrice)
 
+  const phaseLow =
+    pickNumber(property.phase_low_price_from) ?? pickNumber(property.price_from)
+  const phaseHigh =
+    pickNumber(property.phase_heigh_price_from) ??
+    pickNumber(property.phase_high_price_from) ??
+    pickNumber(property.price_to)
+  // Only route to /project-details when explicitly on the projects list — commercial rows
+  // may have `project: true` or phase price fields without being a construction listing.
+  const isProjectEntity = options.projectListing === true
+
   let resolvedPrice = options.emptyPriceWhenMissing ? '' : 'Price on request'
   let holidayPriceSummary: string | undefined
   let holidayPriceValue: number | undefined
@@ -1112,6 +1140,24 @@ export function normalizeCRMProperty(
     resolvedPrice = holidayPrice.label
     holidayPriceSummary = holidayPrice.summary
     holidayPriceValue = holidayPrice.nightlyRate ?? holidayPrice.quote?.dailyPrice ?? undefined
+  } else if (isProjectEntity && (phaseLow != null || phaseHigh != null)) {
+    const low = phaseLow != null && phaseLow > 0 ? phaseLow : undefined
+    const high = phaseHigh != null && phaseHigh > 0 ? phaseHigh : undefined
+    if (low != null && high != null && high !== low) {
+      const lowLabel = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(low)
+      const highLabel = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(high)
+      resolvedPrice = options.currencySymbolAfter
+        ? `${lowLabel} – ${highLabel} €`
+        : `€${lowLabel} – €${highLabel}`
+    } else if (low != null) {
+      const lowLabel = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(low)
+      resolvedPrice = options.currencySymbolAfter ? `${lowLabel} €` : `€${lowLabel}`
+    } else if (high != null) {
+      const highLabel = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(high)
+      resolvedPrice = options.currencySymbolAfter ? `${highLabel} €` : `€${highLabel}`
+    } else if (hasPriceOnDemand) {
+      resolvedPrice = 'Price on demand'
+    }
   } else if (isLongTermRentalProperty) {
     if (hasPriceOnDemand) {
       resolvedPrice = 'Price on demand'
@@ -1152,9 +1198,11 @@ export function normalizeCRMProperty(
   const crmStatus = pickString(property.status) || undefined
   const id = pickString(property._id) || pickString(property.id)
 
-  let detailHref = resolvePropertyDetailHref(property, locale, {
-    listingMode: options.listingMode ?? resolvePropertyListingMode(property),
-  })
+  let detailHref = isProjectEntity
+    ? resolveProjectDetailHref(property, locale)
+    : resolvePropertyDetailHref(property, locale, {
+        listingMode: options.listingMode ?? resolvePropertyListingMode(property),
+      })
 
   return {
     id,
@@ -1163,8 +1211,8 @@ export function normalizeCRMProperty(
     isNewListing: Boolean(property.featured),
     statusBadgeLabel,
     crmStatus,
-    location: localized.location || 'Greece',
-    city: localized.city || undefined,
+    location: localized.location || pickString(property.city_name) || 'Greece',
+    city: localized.city || pickString(property.city_name) || undefined,
     region: localized.region || undefined,
     reference,
     detailHref,
@@ -1177,7 +1225,11 @@ export function normalizeCRMProperty(
     sleeps: sleeps != null && sleeps > 0 ? sleeps : undefined,
     sqft: sizeWithUnit,
     price: resolvedPrice,
-    priceValue: isHolidayProperty ? holidayPriceValue : priceValue,
+    priceValue: isHolidayProperty
+      ? holidayPriceValue
+      : isProjectEntity
+        ? (phaseLow ?? priceValue)
+        : priceValue,
     holidayPriceSummary,
     createdAt: pickString(property.created_at) || pickString(property.createdAt),
   }

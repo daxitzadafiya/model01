@@ -1,6 +1,6 @@
 import { getLocalizedText, isCRMTruthy } from '@/utilities/localizedValue'
 
-export type CRMPropertyVideoKind = 'youtube' | 'matterport' | 'iframe'
+export type CRMPropertyVideoKind = 'youtube' | 'matterport' | 'iframe' | 'file'
 
 export type CRMPropertyVideoItem = {
   embedUrl: string
@@ -61,6 +61,9 @@ const toMatterportEmbedUrl = (url: string): string => {
   }
 }
 
+const isDirectVideoFileUrl = (url: string): boolean =>
+  /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url)
+
 const resolveEmbedFromUrl = (
   sourceUrl: string,
 ): { embedUrl: string; kind: CRMPropertyVideoKind } | undefined => {
@@ -73,9 +76,13 @@ const resolveEmbedFromUrl = (
     return { embedUrl: toMatterportEmbedUrl(sourceUrl), kind: 'matterport' }
   }
 
+  if (isDirectVideoFileUrl(sourceUrl)) {
+    return { embedUrl: sourceUrl, kind: 'file' }
+  }
+
   try {
     const parsed = new URL(sourceUrl)
-    if (parsed.protocol === 'https:') {
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
       return { embedUrl: sourceUrl, kind: 'iframe' }
     }
   } catch {
@@ -128,17 +135,40 @@ export const resolveCRMPropertyVideos = (
   property: Record<string, unknown>,
   locale: string,
 ): CRMPropertyVideoItem[] => {
-  const videos = property.videos
-  if (!Array.isArray(videos)) return []
+  const candidates: unknown[] = []
+
+  if (Array.isArray(property.videos)) candidates.push(...property.videos)
+
+  const nested = property.property
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    const nestedVideos = (nested as Record<string, unknown>).videos
+    if (Array.isArray(nestedVideos)) candidates.push(...nestedVideos)
+  }
+
+  const raw = property._raw
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const rawRecord = raw as Record<string, unknown>
+    if (Array.isArray(rawRecord.videos)) candidates.push(...rawRecord.videos)
+    const rawProperty = rawRecord.property
+    if (rawProperty && typeof rawProperty === 'object' && !Array.isArray(rawProperty)) {
+      const rawVideos = (rawProperty as Record<string, unknown>).videos
+      if (Array.isArray(rawVideos)) candidates.push(...rawVideos)
+    }
+  }
 
   const results: CRMPropertyVideoItem[] = []
+  const seen = new Set<string>()
 
-  for (const entry of videos) {
+  for (const entry of candidates) {
     const sourceUrl = resolveVideoUrlFromEntry(entry, locale)
     if (!sourceUrl) continue
 
     const embed = resolveEmbedFromUrl(sourceUrl)
     if (!embed) continue
+
+    const dedupeKey = `${embed.kind}:${embed.embedUrl}`
+    if (seen.has(dedupeKey)) continue
+    seen.add(dedupeKey)
 
     const videoEntry = entry as Record<string, unknown>
 

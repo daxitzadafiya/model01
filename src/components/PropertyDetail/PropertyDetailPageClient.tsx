@@ -8,6 +8,7 @@ import { PropertyDetailView } from '@/components/PropertyDetail/PropertyDetailVi
 import { Skeleton } from '@/components/ui/skeleton'
 import { normalizeCRMAmenities, normalizeCRMPropertyEnergy } from '@/utilities/crmAmenities'
 import { fetchCRMPropertyDetail } from '@/utilities/crmPropertyDetail'
+import { fetchCRMProjectDetail } from '@/utilities/crmProjects'
 import {
   resolvePropertyDetailFetchStatuses,
   takePropertyDetailFetchStatus,
@@ -32,6 +33,7 @@ import {
 } from '@/utilities/propertyInquiry'
 import { PROPERTY_DETAIL_IMAGE_SIZE } from '@/utilities/optimaImage'
 import { resolveCRMPropertyVideos } from '@/utilities/crmPropertyVideo'
+import { resolveCRMPropertyDocuments } from '@/utilities/crmPropertyDocuments'
 import { buildPropertyBrochurePdfUrl } from '@/utilities/propertyBrochure'
 import { extractReferenceFromSlug } from '@/utilities/propertyUrl'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
@@ -70,12 +72,18 @@ function PropertyDetailSkeleton() {
 
 type Props = {
   contactForm?: Form | null
+  /** `project` uses constructions/view-by-ref and skips similar commercial properties. */
+  entityType?: 'property' | 'project'
 }
 
-export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
+export const PropertyDetailPageClient: React.FC<Props> = ({
+  contactForm,
+  entityType = 'property',
+}) => {
   const params = useParams<{ slug: string }>()
   const searchParams = useSearchParams()
   const activeLocale = useSiteLocale()
+  const isProject = entityType === 'project'
   const [loading, setLoading] = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
 
@@ -91,6 +99,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
   const [showSimilarSoldBadge, setShowSimilarSoldBadge] = useState(false)
   const [brochureUrl, setBrochureUrl] = useState<string | undefined>()
   const [videos, setVideos] = useState<ReturnType<typeof resolveCRMPropertyVideos>>([])
+  const [documents, setDocuments] = useState<ReturnType<typeof resolveCRMPropertyDocuments>>([])
   const [inquiry, setInquiry] = useState<PropertyInquiryContext>({})
   const [isHolidayRental, setIsHolidayRental] = useState(false)
   const [rentalSeasons, setRentalSeasons] = useState<ReturnType<typeof parseRentalSeasons>>([])
@@ -101,6 +110,8 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
 
   /** Soft-refresh holiday bookings/calendar without remounting the whole page. */
   const refreshBookings = useCallback(async () => {
+    if (isProject) return
+
     const reference = extractReferenceFromSlug(slug)
     if (!reference) return
 
@@ -123,7 +134,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
     } finally {
       setBookingsRefreshing(false)
     }
-  }, [property?.crmStatus, property?.statusBadgeLabel, slug])
+  }, [isProject, property?.crmStatus, property?.statusBadgeLabel, slug])
   const holidayArrival = searchParams.get('periodFrom')?.trim() ?? ''
   const holidayDeparture = searchParams.get('periodTo')?.trim() ?? ''
   const guestsParam = searchParams.get('guests')?.trim() ?? ''
@@ -163,19 +174,29 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
       setNotFoundState(false)
 
       try {
-        const statuses = takePropertyDetailFetchStatus(reference)
-        let raw = await fetchCRMPropertyDetail(reference, {
-          statuses,
-          init: { signal: controller.signal },
-        })
-        if (controller.signal.aborted) return
+        let raw: Record<string, unknown> | null = null
 
-        if (!raw && !statuses?.length) {
-          raw = await fetchCRMPropertyDetail(reference, {
-            statuses: ['Sold'],
+        if (isProject) {
+          raw = await fetchCRMProjectDetail(reference, {
+            locale: activeLocale,
             init: { signal: controller.signal },
           })
           if (controller.signal.aborted) return
+        } else {
+          const statuses = takePropertyDetailFetchStatus(reference)
+          raw = await fetchCRMPropertyDetail(reference, {
+            statuses,
+            init: { signal: controller.signal },
+          })
+          if (controller.signal.aborted) return
+
+          if (!raw && !statuses?.length) {
+            raw = await fetchCRMPropertyDetail(reference, {
+              statuses: ['Sold'],
+              init: { signal: controller.signal },
+            })
+            if (controller.signal.aborted) return
+          }
         }
 
         if (!raw) {
@@ -183,12 +204,15 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
           return
         }
 
-        const isHolidayDetail = resolvePropertyDetailHolidayMode(listingContext, raw, {
-          hasHolidaySearchParams,
-        })
+        const isHolidayDetail = isProject
+          ? false
+          : resolvePropertyDetailHolidayMode(listingContext, raw, {
+              hasHolidaySearchParams,
+            })
 
         const normalized = normalizeCRMProperty(raw, activeLocale, {
           attachmentImageSize: PROPERTY_DETAIL_IMAGE_SIZE,
+          projectListing: isProject,
           holidayListing: isHolidayDetail,
           holidayPeriodFrom: holidayArrival,
           holidayPeriodTo: holidayDeparture,
@@ -198,11 +222,17 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
 
         setProperty(normalized)
         setIsHolidayRental(isHolidayDetail)
-        setRentalSeasons(parseRentalSeasons(raw))
-        setBookings(parseCRMPropertyBookings(raw))
+        setRentalSeasons(isProject ? [] : parseRentalSeasons(raw))
+        setBookings(isProject ? [] : parseCRMPropertyBookings(raw))
         setInquiry(extractPropertyInquiryContext(raw, normalized, listingContext))
-        setBrochureUrl(buildPropertyBrochurePdfUrl(raw, activeLocale))
+        setBrochureUrl(isProject ? undefined : buildPropertyBrochurePdfUrl(raw, activeLocale))
         setVideos(resolveCRMPropertyVideos(raw, activeLocale))
+        setDocuments(
+          resolveCRMPropertyDocuments(raw, {
+            locale: activeLocale,
+            context: isProject ? 'construction' : 'property',
+          }),
+        )
         setAmenities(normalizeCRMAmenities(raw))
         setEnergy(normalizeCRMPropertyEnergy(raw))
         setLatitude(pickNumber(raw.latitude) ?? pickNumber(raw.lat))
@@ -210,41 +240,46 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
 
         document.title = `${normalized.title} | Roumpos Real Estate`
 
-        const similarListingContext = resolveSimilarListingContext(raw)
-        setShowSimilarSoldBadge(isSimilarPropertySold(raw))
-        setSimilarPropertiesLoading(true)
+        setShowSimilarSoldBadge(false)
         setRelatedProperties([])
+        setSimilarPropertiesLoading(false)
 
-        void (async () => {
-          try {
-            const similarRaw = await fetchCRMSimilarProperties({
-              property: raw,
-              limit: 5,
-              listingContext: similarListingContext,
-              signal: controller.signal,
-            })
+        if (!isProject) {
+          const similarListingContext = resolveSimilarListingContext(raw)
+          setShowSimilarSoldBadge(isSimilarPropertySold(raw))
+          setSimilarPropertiesLoading(true)
 
-            if (!controller.signal.aborted) {
-              setRelatedProperties(
-                similarRaw.map((item) =>
-                  normalizeCRMListProperty(item, activeLocale, {
-                    listingMode: similarListingContext === 'rent' ? 'rent' : 'sale',
-                  }),
-                ),
-              )
+          void (async () => {
+            try {
+              const similarRaw = await fetchCRMSimilarProperties({
+                property: raw,
+                limit: 5,
+                listingContext: similarListingContext,
+                signal: controller.signal,
+              })
+
+              if (!controller.signal.aborted) {
+                setRelatedProperties(
+                  similarRaw.map((item) =>
+                    normalizeCRMListProperty(item, activeLocale, {
+                      listingMode: similarListingContext === 'rent' ? 'rent' : 'sale',
+                    }),
+                  ),
+                )
+              }
+            } catch (similarError) {
+              if ((similarError as Error).name !== 'AbortError') {
+                console.error('Failed to load similar properties', similarError)
+                if (!controller.signal.aborted) setRelatedProperties([])
+              }
+            } finally {
+              if (!controller.signal.aborted) setSimilarPropertiesLoading(false)
             }
-          } catch (similarError) {
-            if ((similarError as Error).name !== 'AbortError') {
-              console.error('Failed to load similar properties', similarError)
-              if (!controller.signal.aborted) setRelatedProperties([])
-            }
-          } finally {
-            if (!controller.signal.aborted) setSimilarPropertiesLoading(false)
-          }
-        })()
+          })()
+        }
       } catch (error) {
         if ((error as Error).name === 'AbortError') return
-        console.error('Failed to load property detail', error)
+        console.error(`Failed to load ${isProject ? 'project' : 'property'} detail`, error)
         setNotFoundState(true)
       } finally {
         if (!controller.signal.aborted) setLoading(false)
@@ -262,6 +297,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
     holidayGuests,
     forQuery,
     hasHolidaySearchParams,
+    isProject,
   ])
 
   if (loading) return <PropertyDetailSkeleton />
@@ -282,6 +318,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({ contactForm }) => {
       showSimilarSoldBadge={showSimilarSoldBadge}
       brochureUrl={brochureUrl}
       videos={videos}
+      documents={documents}
       latitude={latitude}
       longitude={longitude}
       isHolidayRental={isHolidayRental}

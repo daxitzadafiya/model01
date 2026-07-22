@@ -138,23 +138,17 @@ export const parseFeaturesFilter = (value?: string | string[]): string[] => {
 }
 
 export const DELIVERY_OPTIONS = [
-  { value: '', label: 'Delivery date' },
-  { value: '1', label: 'Handover' },
-  { value: '3', label: '3 months' },
-  { value: '6', label: '6 months' },
-  { value: '12', label: '12 months' },
-  { value: '18', label: '18 months' },
-  { value: '60', label: '18 months or older' },
+  { value: 'any', label: 'Any delivery' },
+  { value: '1', label: 'Key ready' },
+  { value: '12', label: 'Less than 12 months' },
+  { value: '240', label: 'More than 12 months' },
 ] as const
 
 export const DISTANCE_OPTIONS = [
-  { value: '', label: 'Distance to the sea' },
-  { value: '600', label: 'Less than 600 m' },
+  { value: 'any', label: 'Distance to the sea' },
   { value: '1000', label: 'Less than 1 km' },
-  { value: '3000', label: 'Less than 3 km' },
-  { value: '6000', label: 'Less than 6 km' },
-  { value: '12000', label: 'Less than 12 km' },
-  { value: '1000000', label: 'Indifferent' },
+  { value: '5000', label: 'Less than 5 km' },
+  { value: '99000', label: 'More than 5 km' },
 ] as const
 
 export const SORT_OPTIONS = [
@@ -240,6 +234,8 @@ export const hasAppliedPropertyFilters = (filters: PropertyListFilters): boolean
     isCountFilterActive(filters.bathrooms, filters.bathroomsCustom) ||
     filters.features?.length ||
     filters.mapReferences?.length ||
+    (filters.delivery && filters.delivery !== 'any') ||
+    (filters.distanceToSea && filters.distanceToSea !== 'any') ||
     filters.periodFrom?.trim() ||
     filters.periodTo?.trim() ||
     (filters.guests && filters.guests !== 'any') ||
@@ -261,6 +257,8 @@ export const EMPTY_PROPERTY_FILTERS = {
   bathroomsCustom: '',
   features: [] as string[],
   mapReferences: [] as string[],
+  delivery: 'any',
+  distanceToSea: 'any',
   periodFrom: '',
   periodTo: '',
   guests: 'any',
@@ -282,6 +280,8 @@ type PropertyFiltersShape = {
   bathroomsCustom?: string
   features?: string | string[]
   mapReferences?: string[]
+  delivery?: string
+  distanceToSea?: string
   periodFrom?: string
   periodTo?: string
   guests?: string
@@ -301,6 +301,8 @@ export const hasActivePropertyFilters = (filters: PropertyFiltersShape): boolean
   if (isCountFilterActive(filters.bathrooms, filters.bathroomsCustom)) return true
   if (parseFeaturesFilter(filters.features).length > 0) return true
   if (filters.mapReferences?.length) return true
+  if (filters.delivery && filters.delivery !== 'any') return true
+  if (filters.distanceToSea && filters.distanceToSea !== 'any') return true
   if (filters.periodFrom?.trim()) return true
   if (filters.periodTo?.trim()) return true
   if (filters.guests && filters.guests !== 'any') return true

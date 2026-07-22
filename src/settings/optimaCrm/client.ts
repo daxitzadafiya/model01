@@ -22,6 +22,7 @@ export function getRuntimeOptimaImageConfig(): OptimaImageConfig {
     imageUrlWithoutResize: source.imageUrlWithoutResize,
     imageUrl: source.imageUrl,
     commercialImageBase: source.commercialImageBase,
+    constructionsImageBase: source.constructionsImageBase,
     agencyId: source.agencyId,
     propertyResizeBase: source.propertyResizeBase,
     siteId: source.siteId,

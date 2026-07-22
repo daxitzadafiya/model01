@@ -29,6 +29,12 @@ import {
   type CRMListingPreset,
   type PropertyListFilters,
 } from '@/utilities/crmProperties'
+import {
+  buildCRMProjectsQuery,
+  fetchCRMProjects,
+  normalizeCRMProject,
+} from '@/utilities/crmProjects'
+import { ProjectCard } from '@/components/ProjectCard'
 import { hasMapAreaReferences } from '@/utilities/propertyMapFilters'
 import { DEFAULT_PROPERTY_FILTER_OPTIONS } from '@/utilities/propertyFilterOptions.shared'
 import { EMPTY_PROPERTY_FILTERS, hasAppliedPropertyFilters } from './filterOptions'
@@ -199,6 +205,7 @@ const PropertyListViewInner: React.FC<Props> = ({
   const properties = useMemo(() => {
     const listingMode = resolveListingModeFromPreset(listingPreset)
     const isHolidayList = listingPreset === 'forHoliday' || hasHolidayListingFilters(appliedFilters)
+    const isProjectsList = listingPreset === 'projects'
     const holidayGuestCount = resolveHolidayGuestsFilterCount(
       appliedFilters.guests,
       appliedFilters.guestsCustom,
@@ -207,6 +214,7 @@ const PropertyListViewInner: React.FC<Props> = ({
     return rawProperties.map((raw) =>
       normalizeCRMListProperty(raw, activeLocale, {
         listingMode,
+        projectListing: isProjectsList,
         holidayListing: isHolidayList,
         holidayPeriodFrom: appliedFilters.periodFrom,
         holidayPeriodTo: appliedFilters.periodTo,
@@ -214,6 +222,11 @@ const PropertyListViewInner: React.FC<Props> = ({
       }),
     )
   }, [activeLocale, appliedFilters, listingPreset, rawProperties])
+
+  const projects = useMemo(() => {
+    if (listingPreset !== 'projects') return []
+    return rawProperties.map((raw) => normalizeCRMProject(raw, activeLocale))
+  }, [activeLocale, listingPreset, rawProperties])
 
   const detailListingContext: PropertyDetailListingContext | undefined =
     listingPresetToDetailContext(listingPreset)
@@ -253,6 +266,17 @@ const PropertyListViewInner: React.FC<Props> = ({
     'propertyList.emptyState.noPropertiesDescription',
     'We could not find any listings for this selection. Try adjusting your filters or check again soon.',
   )
+  const noProjectsTitle = useTranslation(
+    'propertyList.emptyState.noProjectsTitle',
+    'No projects found',
+  )
+  const noProjectsDescription = useTranslation(
+    'propertyList.emptyState.noProjectsDescription',
+    'We could not find any projects for this selection. Try adjusting your filters or check again soon.',
+  )
+  const isProjectsList = listingPreset === 'projects'
+  const emptyResultsTitle = isProjectsList ? noProjectsTitle : noPropertiesTitle
+  const emptyResultsDescription = isProjectsList ? noProjectsDescription : noPropertiesDescription
 
   /** Apply server-rendered listing (page, sort, properties). */
   useEffect(() => {
@@ -340,37 +364,58 @@ const PropertyListViewInner: React.FC<Props> = ({
       if (showSkeleton) setLoading(true)
 
       try {
-        const usePostListing = shouldUseCRMPropertiesPost({
-          filters: appliedFilters,
-          preset: listingPreset,
-          favoriteIds: isFavoritesList ? favoriteIds : undefined,
-        })
-        const listingBody = buildCRMListingQuery({
-          preset: listingPreset,
-          page,
-          pageSize,
-          filters: appliedFilters,
-          restrictToFavoriteIds: isFavoritesList ? favoriteIds : undefined,
-          sortParams: stableSortParams,
-        })
-        const postReason = isFavoritesList
-          ? 'favorites'
-          : hasMapAreaReferences(appliedFilters)
-            ? 'map-area'
-            : listingPreset === 'forHoliday' || hasHolidayListingFilters(appliedFilters)
-              ? 'holiday'
-              : undefined
-        const result = usePostListing
-          ? await fetchCRMPropertiesPost({
-              body: listingBody,
-              signal: controller.signal,
-              reason: postReason,
-            })
-          : await fetchCRMProperties({ body: listingBody, signal: controller.signal })
-        if (controller.signal.aborted || generation !== fetchGenerationRef.current) return
+        if (listingPreset === 'projects') {
+          const listingBody = buildCRMProjectsQuery({
+            page,
+            pageSize,
+            filters: appliedFilters,
+            sortParams: stableSortParams,
+          })
+          const result = await fetchCRMProjects({
+            body: listingBody,
+            signal: controller.signal,
+            locale: activeLocale,
+            projectIds: hasMapAreaReferences(appliedFilters)
+              ? appliedFilters.mapReferences
+              : undefined,
+          })
+          if (controller.signal.aborted || generation !== fetchGenerationRef.current) return
 
-        setRawProperties(result.properties as Record<string, unknown>[])
-        setTotal(result.total)
+          setRawProperties(result.properties as Record<string, unknown>[])
+          setTotal(result.total)
+        } else {
+          const usePostListing = shouldUseCRMPropertiesPost({
+            filters: appliedFilters,
+            preset: listingPreset,
+            favoriteIds: isFavoritesList ? favoriteIds : undefined,
+          })
+          const listingBody = buildCRMListingQuery({
+            preset: listingPreset,
+            page,
+            pageSize,
+            filters: appliedFilters,
+            restrictToFavoriteIds: isFavoritesList ? favoriteIds : undefined,
+            sortParams: stableSortParams,
+          })
+          const postReason = isFavoritesList
+            ? 'favorites'
+            : hasMapAreaReferences(appliedFilters)
+              ? 'map-area'
+              : listingPreset === 'forHoliday' || hasHolidayListingFilters(appliedFilters)
+                ? 'holiday'
+                : undefined
+          const result = usePostListing
+            ? await fetchCRMPropertiesPost({
+                body: listingBody,
+                signal: controller.signal,
+                reason: postReason,
+              })
+            : await fetchCRMProperties({ body: listingBody, signal: controller.signal })
+          if (controller.signal.aborted || generation !== fetchGenerationRef.current) return
+
+          setRawProperties(result.properties as Record<string, unknown>[])
+          setTotal(result.total)
+        }
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
           console.error('Failed to load property list', error)
@@ -387,6 +432,7 @@ const PropertyListViewInner: React.FC<Props> = ({
     void load()
     return () => controller.abort()
   }, [
+    activeLocale,
     appliedFilters,
     favoriteIds,
     filtersHydrated,
@@ -556,6 +602,17 @@ const PropertyListViewInner: React.FC<Props> = ({
             <PropertyCardSkeleton key={i} animationDelay={(i % 3) * 0.12} />
           ))}
         </div>
+      ) : listingPreset === 'projects' && projects.length > 0 ? (
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+          {projects.map((project) => (
+            <ProjectCard
+              key={project.id ?? project.reference ?? project.title}
+              projectId={project.id}
+              href={project.detailHref}
+              project={project}
+            />
+          ))}
+        </section>
       ) : properties.length > 0 ? (
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {properties.map((property) => (
@@ -603,12 +660,12 @@ const PropertyListViewInner: React.FC<Props> = ({
             title={
               isFavoritesList
                 ? emptyStateNoResultsTitle || noMatchingFavoritesTitle
-                : noPropertiesTitle
+                : emptyStateNoResultsTitle || emptyResultsTitle
             }
             description={
               isFavoritesList
                 ? emptyStateNoResultsDescription || noMatchingFavoritesDescription
-                : noPropertiesDescription
+                : emptyStateNoResultsDescription || emptyResultsDescription
             }
             tone="surface"
           />

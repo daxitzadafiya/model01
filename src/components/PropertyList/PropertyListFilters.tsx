@@ -63,6 +63,7 @@ export const PropertyListFilters: React.FC<Props> = ({
   const priceRange = resolvePriceRangeValue(filters.minPrice, filters.maxPrice, priceRangeOptions)
   const showClearFilters = hasActivePropertyFilters(appliedFilters)
   const isHolidayList = listingPreset === 'forHoliday'
+  const isProjectsList = listingPreset === 'projects'
 
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
@@ -81,6 +82,10 @@ export const PropertyListFilters: React.FC<Props> = ({
     'More filters',
   )
   const searchByMapLabel = useTranslation('propertyList.filters.searchByMap', 'Search By Map')
+  const projectReferencePlaceholder = useTranslation(
+    'propertyList.filters.reference.projectPlaceholder',
+    'Ref or project name…',
+  )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -227,6 +232,8 @@ export const PropertyListFilters: React.FC<Props> = ({
           cities={cities}
           citiesLoading={citiesLoading}
           showCountryFilter={listingPreset === 'forSale'}
+          referencePlaceholder={isProjectsList ? projectReferencePlaceholder : undefined}
+          showProjectFilters={isProjectsList}
         />
       )}
     </>

@@ -16,6 +16,7 @@ import {
   type CRMListingPreset,
   type PropertyListFilters,
 } from '@/utilities/crmProperties'
+import { buildCRMProjectsSearchParams } from '@/utilities/crmProjects'
 
 const MAP_AVAILABLE_STATUSES = ['Available', 'Under Offer'] as const
 const MAP_SOLD_STATUSES = ['Sold'] as const
@@ -313,4 +314,75 @@ export async function fetchCRMMapProperties({
   }
 
   return { properties, total }
+}
+
+/**
+ * Project/construction map markers via Yii constructions?latlng=true (+ current filters).
+ * Matches gestali Developments::findAll(...&latlng=true).
+ */
+export async function fetchCRMMapProjects({
+  filters = {},
+  pageSize = 100,
+  signal,
+  locale = 'en',
+}: {
+  filters?: PropertyListFilters
+  pageSize?: number
+  signal?: AbortSignal
+  locale?: string
+}): Promise<{ properties: MapPropertyPoint[]; total: number }> {
+  const params = buildCRMProjectsSearchParams({
+    page: 1,
+    pageSize: Math.max(1, pageSize),
+    filters,
+    latlng: true,
+  })
+
+  const response = await fetch('/api/crm/constructions', {
+    method: 'POST',
+    cache: 'no-store',
+    signal,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      _yiiSearchParams: params.toString(),
+      locale,
+      latlng: true,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`CRM project map API failed (${response.status})`)
+  }
+
+  const data = (await response.json()) as unknown
+  const asRecord = data && typeof data === 'object' ? (data as Record<string, unknown>) : null
+  const list = Array.isArray(asRecord?.properties)
+    ? (asRecord.properties as Record<string, unknown>[])
+    : []
+
+  const properties: MapPropertyPoint[] = []
+  const seen = new Set<string>()
+
+  for (const item of list) {
+    if (!item || typeof item !== 'object') continue
+    const point =
+      'lat' in item && 'lng' in item
+        ? ({
+            id: String((item as MapPropertyPoint).id ?? (item as MapPropertyPoint).reference),
+            reference: String((item as MapPropertyPoint).reference ?? (item as MapPropertyPoint).id),
+            lat: Number((item as MapPropertyPoint).lat),
+            lng: Number((item as MapPropertyPoint).lng),
+          } satisfies MapPropertyPoint)
+        : normalizeMapPropertyPoint(item as Record<string, unknown>)
+
+    if (!point || !Number.isFinite(point.lat) || !Number.isFinite(point.lng)) continue
+    if (point.lat === 0 && point.lng === 0) continue
+
+    const key = `${point.id}:${point.reference}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    properties.push(point)
+  }
+
+  return { properties, total: properties.length }
 }

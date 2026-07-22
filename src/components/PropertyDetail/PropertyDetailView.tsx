@@ -18,7 +18,9 @@ import { PropertyDetailMap } from '@/components/PropertyDetail/PropertyDetailMap
 import { PropertyDetailRelated } from '@/components/PropertyDetail/PropertyDetailRelated'
 import { PropertyDetailSpecs } from '@/components/PropertyDetail/PropertyDetailSpecs'
 import { PropertyDetailVideo } from '@/components/PropertyDetail/PropertyDetailVideo'
+import { PropertyDetailDocuments } from '@/components/PropertyDetail/PropertyDetailDocuments'
 import type { CRMAmenity, CRMPropertyEnergy } from '@/utilities/crmAmenities'
+import type { CRMPropertyDocumentGroup } from '@/utilities/crmPropertyDocuments'
 import type { CRMPropertyVideoItem } from '@/utilities/crmPropertyVideo'
 import type { Form } from '@/payload-types'
 import {
@@ -47,6 +49,7 @@ type Props = {
   showSimilarSoldBadge?: boolean
   brochureUrl?: string
   videos?: CRMPropertyVideoItem[]
+  documents?: CRMPropertyDocumentGroup[]
   latitude?: number
   longitude?: number
   portfolioHref?: string
@@ -100,6 +103,7 @@ export const PropertyDetailView: React.FC<Props> = ({
   showSimilarSoldBadge = false,
   brochureUrl,
   videos = [],
+  documents = [],
   latitude,
   longitude,
   portfolioHref,
@@ -257,6 +261,7 @@ export const PropertyDetailView: React.FC<Props> = ({
         <div className="lg:col-span-2">
           <PropertyDetailAmenities amenities={amenities} />
           <PropertyDetailEnergy energy={energy ?? { isEmpty: true }} />
+          <PropertyDetailDocuments groups={documents} />
           {isHolidayRental && (
             <PropertyHolidayAvailabilityPanel
               bookings={bookings}

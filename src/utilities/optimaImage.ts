@@ -126,6 +126,14 @@ const getAttachmentModelName = (attachment: PropertyAttachment) => {
   }
 }
 
+function resolveImageBaseForModel(modelName: string): string {
+  const config = getRuntimeOptimaImageConfig()
+  if (modelName === 'constructions_images') {
+    return stripTrailingSlash(config.constructionsImageBase)
+  }
+  return stripTrailingSlash(config.commercialImageBase)
+}
+
 const getAttachmentFileType = (attachment: PropertyAttachment): string => {
   if (typeof attachment.file_type === 'string' && attachment.file_type.trim()) {
     return attachment.file_type.trim().toLowerCase()
@@ -166,7 +174,7 @@ export const buildPropertyAttachmentImageUrl = (
     return `${resizeBaseWithModel}/${modelId}/${imageSize}/${fileName}`
   }
 
-  const comImg = stripTrailingSlash(getRuntimeOptimaImageConfig().commercialImageBase)
+  const comImg = resolveImageBaseForModel(modelName)
   const comImgWithModel = comImg.endsWith(`/${modelName}`) ? comImg : `${comImg}/${modelName}`
   return `${comImgWithModel}/${modelId}/${fileName}`
 }

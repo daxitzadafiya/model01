@@ -19,6 +19,7 @@ import {
   useMaxPriceOptions,
   useMinPriceOptions,
 } from './useFilterOptionLabels'
+import { DELIVERY_OPTIONS, DISTANCE_OPTIONS } from './filterOptions'
 import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
@@ -37,6 +38,10 @@ type Props = {
   coastsLoading?: boolean
   cities: CRMCityOption[]
   citiesLoading?: boolean
+  /** Override reference field placeholder (e.g. projects: Ref or project name) */
+  referencePlaceholder?: string
+  /** Show delivery + distance-to-sea filters (projects listing). */
+  showProjectFilters?: boolean
 }
 
 const labelClass = 'font-label-sm text-label-sm uppercase text-on-surface-variant'
@@ -80,13 +85,16 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   coastsLoading = false,
   cities,
   citiesLoading = false,
+  referencePlaceholder: referencePlaceholderProp,
+  showProjectFilters = false,
 }) => {
   const moreFiltersLabel = useTranslation('propertyList.filters.moreFilters', 'More Filters')
   const referenceLabel = useTranslation('propertyList.filters.reference', 'Reference')
-  const referencePlaceholder = useTranslation(
+  const referencePlaceholderDefault = useTranslation(
     'propertyList.filters.reference.placeholder',
     'Reference...',
   )
+  const referencePlaceholder = referencePlaceholderProp || referencePlaceholderDefault
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
@@ -110,6 +118,11 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
     'Close filters',
   )
   const closeAriaLabel = useTranslation('propertyList.filters.closeAria', 'Close')
+  const deliveryDateLabel = useTranslation('propertyList.filters.deliveryDate', 'Delivery date')
+  const distanceToSeaLabel = useTranslation(
+    'propertyList.filters.distanceToSea',
+    'Distance to the sea',
+  )
   const bedroomOptions = useBedroomOptions()
   const bathroomOptions = useBathroomOptions()
   const minPriceOptions = useMinPriceOptions()
@@ -282,6 +295,35 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                 icon={<Sparkles {...filterFieldIcon} />}
               />
             </div>
+
+            {showProjectFilters && (
+              <>
+                <div className="min-w-0">
+                  <ModalFieldSelect
+                    label={deliveryDateLabel}
+                    value={filters.delivery ?? 'any'}
+                    options={DELIVERY_OPTIONS.map((opt) => ({
+                      value: opt.value,
+                      label: opt.label,
+                    }))}
+                    onChange={(v) => onChange('delivery', v)}
+                    icon={<Tag {...filterFieldIcon} />}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <ModalFieldSelect
+                    label={distanceToSeaLabel}
+                    value={filters.distanceToSea ?? 'any'}
+                    options={DISTANCE_OPTIONS.map((opt) => ({
+                      value: opt.value,
+                      label: opt.label,
+                    }))}
+                    onChange={(v) => onChange('distanceToSea', v)}
+                    icon={<Globe {...filterFieldIcon} />}
+                  />
+                </div>
+              </>
+            )}
 
             {showCountryFilter && (
               <div className="min-w-0 sm:col-span-1">

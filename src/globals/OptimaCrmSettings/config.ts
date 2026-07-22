@@ -100,6 +100,15 @@ export const OptimaCrmSettings: GlobalConfig = {
           defaultValue: 'https://images.optima-crm.com/commercial_images',
         },
         {
+          name: 'constructionsImageBase',
+          type: 'text',
+          required: true,
+          defaultValue: 'https://images.optima-crm.com/constructions_images',
+          admin: {
+            description: 'Base URL for construction/project document files.',
+          },
+        },
+        {
           name: 'agencyId',
           type: 'text',
           required: true,

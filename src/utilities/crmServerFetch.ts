@@ -74,6 +74,17 @@ function nodeRequest(
 }
 
 export async function crmServerFetch(url: string, init?: RequestInit): Promise<Response> {
+  const method = (init?.method ?? 'GET').toUpperCase()
+  const hasBody = init?.body != null && init.body !== ''
+
+  // Optima constructions map-area filter (gestali/pedro Developments::findAll) sends
+  // JSON `{ project_ids }` on a GET — PHP curl allows this; undici/fetch does not.
+  if (hasBody && (method === 'GET' || method === 'HEAD')) {
+    console.log('crmServerFetch:::url (GET+body) >>>>', url)
+    console.log('Body >>>>', init?.body)
+    return nodeRequest(url, init ?? {}, !shouldAllowInsecureCrmTls())
+  }
+
   if (!shouldAllowInsecureCrmTls()) {
     return fetch(url, init)
   }

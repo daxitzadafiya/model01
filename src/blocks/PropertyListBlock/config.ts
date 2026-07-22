@@ -56,6 +56,7 @@ export const PropertyListBlock: Block = {
         { label: 'Property for Sale', value: 'forSale' },
         { label: 'Property for Rent', value: 'forRent' },
         { label: 'Holiday Rentals', value: 'forHoliday' },
+        { label: 'Projects', value: 'projects' },
         { label: 'Favorites', value: 'favorites' },
         { label: 'Sold Properties', value: 'sold' },
         { label: 'Featured Properties', value: 'featured' },
@@ -82,7 +83,8 @@ export const PropertyListBlock: Block = {
       label: 'Show map search',
       defaultValue: false,
       admin: {
-        description: 'Adds a map icon in the filter bar that opens the property map modal.',
+        description:
+          'Adds a map icon in the filter bar that opens the map modal. For Projects, markers load from constructions with latlng=true (same filters), then area search filters by selected project IDs.',
         condition: (_, siblingData) => siblingData?.showFilters !== false,
       },
     },

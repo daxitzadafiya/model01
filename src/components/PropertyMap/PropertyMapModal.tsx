@@ -5,7 +5,11 @@ import { X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 import { usePropertyMapSettings } from '@/hooks/usePropertyMapSettings'
-import { fetchCRMMapProperties, type MapPropertyPoint } from '@/utilities/crmPropertyMap'
+import {
+  fetchCRMMapProjects,
+  fetchCRMMapProperties,
+  type MapPropertyPoint,
+} from '@/utilities/crmPropertyMap'
 import type { CRMListingPreset, PropertyListFilters } from '@/utilities/crmProperties'
 import { filtersForMapMarkers } from '@/utilities/propertyMapFilters'
 import { appendListingContextToDetailHref } from '@/components/PropertyList/propertyFilterUrl'
@@ -14,6 +18,7 @@ import {
   listingPresetToDetailContext,
   stashPropertyDetailListingContext,
 } from '@/utilities/propertyDetailListingContext'
+import { PROJECT_DETAILS_PATH, PROPERTY_DETAILS_PATH } from '@/utilities/propertyUrl'
 import { useTranslation } from '@/utilities/translateClient'
 
 import { PropertyMapView } from './PropertyMapView'
@@ -81,13 +86,20 @@ export const PropertyMapModal: React.FC<Props> = ({
       setError(null)
 
       try {
-        const result = await fetchCRMMapProperties({
-          preset: listingPreset,
-          filters: mapFilters,
-          restrictToFavoriteIds: favoriteIds?.length ? favoriteIds : undefined,
-          pageSize: settings.mapFetchLimit,
-          signal: controller.signal,
-        })
+        const result =
+          listingPreset === 'projects'
+            ? await fetchCRMMapProjects({
+                filters: mapFilters,
+                pageSize: Math.max(100, settings.mapFetchLimit || 100),
+                signal: controller.signal,
+              })
+            : await fetchCRMMapProperties({
+                preset: listingPreset,
+                filters: mapFilters,
+                restrictToFavoriteIds: favoriteIds?.length ? favoriteIds : undefined,
+                pageSize: settings.mapFetchLimit,
+                signal: controller.signal,
+              })
 
         if (controller.signal.aborted || generation !== fetchGenerationRef.current) return
         setPoints(result.properties)
@@ -110,8 +122,13 @@ export const PropertyMapModal: React.FC<Props> = ({
 
   const handleMarkerClick = useCallback(
     (point: MapPropertyPoint) => {
-      const reference = String(point.reference)
+      const reference = String(point.reference || point.id)
       const listingContext = listingPresetToDetailContext(listingPreset)
+
+      if (listingPreset === 'projects') {
+        router.push(`${PROJECT_DETAILS_PATH}/_${encodeURIComponent(reference)}`)
+        return
+      }
 
       if (listingPreset === 'sold') {
         stashPropertyDetailFetchStatus(reference, ['Sold'])
@@ -121,20 +138,32 @@ export const PropertyMapModal: React.FC<Props> = ({
       }
 
       const href = appendListingContextToDetailHref(
-        `/property-details/_${reference}`,
+        `${PROPERTY_DETAILS_PATH}/_${reference}`,
         listingContext,
       )
-      router.push(href ?? `/property-details/_${reference}`)
+      router.push(href ?? `${PROPERTY_DETAILS_PATH}/_${reference}`)
     },
     [listingPreset, router],
   )
 
   const handleDrawApply = useCallback(
     (references: string[]) => {
-      onDrawApply?.(references)
+      if (listingPreset === 'projects') {
+        const selected = new Set(references)
+        const projectIds = [
+          ...new Set(
+            points
+              .filter((point) => selected.has(point.reference) || selected.has(point.id))
+              .map((point) => point.id),
+          ),
+        ]
+        onDrawApply?.(projectIds.length > 0 ? projectIds : references)
+      } else {
+        onDrawApply?.(references)
+      }
       onClose()
     },
-    [onClose, onDrawApply],
+    [listingPreset, onClose, onDrawApply, points],
   )
 
   if (!open) return null

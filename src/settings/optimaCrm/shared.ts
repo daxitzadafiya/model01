@@ -19,6 +19,7 @@ export type ResolvedOptimaCrmSettings = {
   imageUrlWithoutResize: string
   imageUrl: string
   commercialImageBase: string
+  constructionsImageBase: string
   agencyId: string
   propertyResizeBase: string
   siteId: string
@@ -30,6 +31,7 @@ export type OptimaImageConfig = Pick<
   | 'imageUrlWithoutResize'
   | 'imageUrl'
   | 'commercialImageBase'
+  | 'constructionsImageBase'
   | 'agencyId'
   | 'propertyResizeBase'
   | 'siteId'
@@ -39,6 +41,7 @@ export const IMAGE_DEFAULTS: OptimaImageConfig = {
   imageUrlWithoutResize: 'https://images.optima-crm.com/cms_medias/',
   imageUrl: 'https://images.optima-crm.com/resize/cms_medias/',
   commercialImageBase: 'https://images.optima-crm.com/commercial_images',
+  constructionsImageBase: 'https://images.optima-crm.com/constructions_images',
   agencyId: '',
   propertyResizeBase: 'https://images.optima-crm.com/resize/',
   siteId: '237',
@@ -92,6 +95,7 @@ export function resolveOptimaCrmSettingsFromGlobal(
   const images = doc?.images
   const properties = doc?.properties
   const defaults = EMPTY_OPTIMA_CRM_SETTINGS
+  const imageRecord = (images ?? {}) as Record<string, unknown>
 
   return {
     apiUrl: pickString(api?.apiUrl, defaults.apiUrl),
@@ -108,6 +112,10 @@ export function resolveOptimaCrmSettingsFromGlobal(
     ),
     imageUrl: pickString(images?.imageUrl, defaults.imageUrl),
     commercialImageBase: pickString(images?.commercialImageBase, defaults.commercialImageBase),
+    constructionsImageBase: pickString(
+      imageRecord.constructionsImageBase,
+      defaults.constructionsImageBase,
+    ),
     agencyId: pickString(images?.agencyId, defaults.agencyId),
     propertyResizeBase: pickString(images?.propertyResizeBase, defaults.propertyResizeBase),
     siteId: pickString(images?.siteId, defaults.siteId),

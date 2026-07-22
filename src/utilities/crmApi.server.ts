@@ -121,6 +121,8 @@ export async function getFromCRMContactWithQueryUsingUserKey(
   const queryString = searchParams.toString()
   const url = queryString ? `${endpoint}&${queryString}` : endpoint
 
+  // When `init.body` is set (e.g. constructions `{ project_ids }`), crmServerFetch
+  // uses Node http so GET+body works like PHP curl in gestali/pedro.
   return crmServerFetch(url, {
     ...init,
     method: 'GET',
@@ -144,6 +146,7 @@ export async function getFromCRM(
   const queryString = searchParams.toString()
   const url = queryString ? `${endpoint}&${queryString}` : endpoint
 
+  console.log('------[GET FROM CRM - URL]------', url)
   return crmServerFetch(url, {
     ...init,
     method: 'GET',
@@ -155,6 +158,7 @@ export async function postToCRMWithUserKey(
   path: string,
   body: Record<string, unknown>,
   init?: Omit<RequestInit, 'method' | 'body'>,
+  searchParams?: URLSearchParams,
 ): Promise<Response> {
   const settings = await getOptimaCrmSettings()
   const apiUrl = settings.apiUrl.trim()
@@ -168,7 +172,9 @@ export async function postToCRMWithUserKey(
 
   const baseUrl = apiUrl.replace(/\/+$/, '')
   const resource = path.replace(/^\//, '')
-  const endpoint = `${baseUrl}/${resource}?user=${encodeURIComponent(userKey)}`
+  const params = new URLSearchParams(searchParams)
+  if (!params.has('user')) params.set('user', userKey)
+  const endpoint = `${baseUrl}/${resource}?${params.toString()}`
   const { headers, ...restInit } = init ?? {}
 
   return crmServerFetch(endpoint, {
