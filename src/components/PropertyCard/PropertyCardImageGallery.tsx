@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Media as PayloadMedia } from '@/payload-types'
 
@@ -13,6 +14,10 @@ type Props = {
   imageUrl?: string
   imageUrls?: string[]
   imgClassName?: string
+  /** When set, clicking the image (not slider controls / drag) opens the detail page */
+  href?: string
+  /** Stash listing context before navigating to the detail page */
+  onNavigate?: () => void
   /** Notifies parent (e.g. Properties block) to pause outer carousel auto-play */
   onInteract?: () => void
 }
@@ -144,8 +149,11 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
   imageUrl,
   imageUrls,
   imgClassName = 'w-full h-full object-cover',
+  href,
+  onNavigate,
   onInteract,
 }) => {
+  const router = useRouter()
   const rootRef = useRef<HTMLDivElement>(null)
   const dragStartXRef = useRef<number | null>(null)
   const dragOffsetRef = useRef(0)
@@ -402,13 +410,20 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
     [activeIndex, onInteract, prepareSlide, resetDrag, slideWidth, startTransition],
   )
 
+  const navigateToDetail = useCallback(() => {
+    if (!href) return
+    onNavigate?.()
+    router.push(href)
+  }, [href, onNavigate, router])
+
   const handleGalleryPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (!hasMultiple || isTransitioning || !isInView) return
       if (event.pointerType === 'mouse' && event.button !== 0) return
       if ((event.target as HTMLElement).closest('button')) return
 
-      event.preventDefault()
+      // Avoid preventDefault here so a tap still generates a click (detail navigation).
+      // touch-action: none keeps the page from scrolling while swiping the slider.
       event.stopPropagation()
 
       onInteract?.()
@@ -432,13 +447,13 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
         return
       }
 
-      event.preventDefault()
       event.stopPropagation()
 
       let delta = event.clientX - dragStartXRef.current
 
       if (Math.abs(delta) > DRAG_CLICK_THRESHOLD) {
         didDragRef.current = true
+        event.preventDefault()
       }
 
       if (activeIndex === 0 && delta > 0) {
@@ -464,8 +479,10 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (activePointerIdRef.current !== event.pointerId) return
 
-      event.preventDefault()
       event.stopPropagation()
+      if (didDragRef.current) {
+        event.preventDefault()
+      }
 
       if (event.currentTarget.hasPointerCapture(event.pointerId)) {
         event.currentTarget.releasePointerCapture(event.pointerId)
@@ -482,14 +499,52 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
 
   const handleGalleryClickCapture = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!didDragRef.current) return
+      if ((event.target as HTMLElement).closest('button')) return
+
+      if (didDragRef.current) {
+        event.preventDefault()
+        event.stopPropagation()
+        didDragRef.current = false
+        return
+      }
+
+      if (!href) return
 
       event.preventDefault()
       event.stopPropagation()
-      didDragRef.current = false
+      navigateToDetail()
     },
-    [],
+    [href, navigateToDetail],
   )
+
+  const handleStaticImageClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!href) return
+      if ((event.target as HTMLElement).closest('button')) return
+      event.preventDefault()
+      navigateToDetail()
+    },
+    [href, navigateToDetail],
+  )
+
+  const handleImageKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!href) return
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      event.preventDefault()
+      navigateToDetail()
+    },
+    [href, navigateToDetail],
+  )
+
+  const detailLinkProps = href
+    ? {
+        role: 'link' as const,
+        tabIndex: 0,
+        onKeyDown: handleImageKeyDown,
+        'aria-label': title,
+      }
+    : {}
 
   const handleTrackTransitionEnd = useCallback(
     (event: React.TransitionEvent<HTMLDivElement>) => {
@@ -517,7 +572,12 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
 
   if (imageResource) {
     return (
-      <div ref={rootRef} className={wrapperClass}>
+      <div
+        ref={rootRef}
+        className={`${wrapperClass}${href ? ' cursor-pointer' : ''}`}
+        onClick={handleStaticImageClick}
+        {...detailLinkProps}
+      >
         {isInView ? (
           <Media
             resource={imageResource}
@@ -533,7 +593,12 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
 
   if (slides.length === 0) {
     return (
-      <div ref={rootRef} className={wrapperClass}>
+      <div
+        ref={rootRef}
+        className={`${wrapperClass}${href ? ' cursor-pointer' : ''}`}
+        onClick={handleStaticImageClick}
+        {...detailLinkProps}
+      >
         <PropertyImagePlaceholder className="group-hover:scale-[1.02] transition-transform duration-700" />
       </div>
     )
@@ -541,7 +606,12 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
 
   if (!hasMultiple) {
     return (
-      <div ref={rootRef} className={wrapperClass}>
+      <div
+        ref={rootRef}
+        className={`${wrapperClass}${href ? ' cursor-pointer' : ''}`}
+        onClick={handleStaticImageClick}
+        {...detailLinkProps}
+      >
         {isInView && loadedSlideIndices.has(0) ? (
           <img
             src={slides[0]}
@@ -572,6 +642,7 @@ export const PropertyCardImageGallery: React.FC<Props> = ({
       onPointerUp={handleGalleryPointerEnd}
       onPointerCancel={handleGalleryPointerEnd}
       onClickCapture={handleGalleryClickCapture}
+      {...detailLinkProps}
     >
       <div
         className={`flex h-full w-full ease-in-out ${isDragging ? '' : 'transition-transform'}`}

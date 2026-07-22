@@ -236,6 +236,8 @@ export const PropertyCard: React.FC<Props> = ({
           imageResource={property.imageResource}
           imageUrl={property.imageUrl}
           imageUrls={property.imageUrls}
+          href={href}
+          onNavigate={handleDetailNavigate}
           onInteract={onCardEngage}
         />
         {propertyId != null && propertyId !== '' && (
