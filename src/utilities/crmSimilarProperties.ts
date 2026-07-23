@@ -1,9 +1,14 @@
-import { CRM_PROPERTY_ATTACHMENTS_POPULATE } from '@/utilities/crmProperties'
-import { extractCRMList, fetchCRMPropertiesPost } from '@/utilities/crmProperties'
+import {
+  CRM_COORDINATE_QUERY_FIELDS,
+  CRM_PROPERTY_ATTACHMENTS_POPULATE,
+  extractCRMList,
+  fetchCRMPropertiesPost,
+} from '@/utilities/crmProperties'
 import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import { isCRMTruthy } from '@/utilities/localizedValue'
+import type { PropertyDetailListingContext } from '@/utilities/propertyDetailListingContext'
 
-export type SimilarListingContext = 'sale' | 'rent'
+export type SimilarListingContext = 'sale' | 'rent' | 'holiday'
 
 const SIMILAR_AVAILABLE_STATUSES = ['Available', 'Under Offer'] as const
 
@@ -32,10 +37,33 @@ const isSeasonActive = (periodFrom: unknown, periodTo: unknown, nowMs: number): 
   return nowMs >= fromMs && nowMs <= toMs
 }
 
+/** Map detail-page listing context → similar-properties query mode. */
+export const similarContextFromDetailListing = (
+  listingContext?: PropertyDetailListingContext,
+): SimilarListingContext | undefined => {
+  switch (listingContext) {
+    case 'forHoliday':
+      return 'holiday'
+    case 'forRent':
+      return 'rent'
+    case 'forSale':
+    case 'forSold':
+      return 'sale'
+    default:
+      return undefined
+  }
+}
+
 export const resolveSimilarListingContext = (
   property: Record<string, unknown>,
+  pageListingContext?: PropertyDetailListingContext,
 ): SimilarListingContext => {
-  if (isCRMTruthy(property.rent)) return 'rent'
+  const fromPage = similarContextFromDetailListing(pageListingContext)
+  if (fromPage) return fromPage
+
+  // Holiday listings also set `rent`; prefer `st_rental` so similar stays in holiday pool.
+  if (isCRMTruthy(property.st_rental)) return 'holiday'
+  if (isCRMTruthy(property.rent) || isCRMTruthy(property.lt_rental)) return 'rent'
   return 'sale'
 }
 
@@ -133,6 +161,8 @@ export const buildCRMSimilarPropertiesQuery = ({
 
   const query: Record<string, unknown> = {
     ...similarCommercials,
+    remove_count: true,
+    ...CRM_COORDINATE_QUERY_FIELDS,
     archived: { $ne: true },
     // has_images: true,
     status: { $in: [...SIMILAR_AVAILABLE_STATUSES] },
@@ -143,8 +173,12 @@ export const buildCRMSimilarPropertiesQuery = ({
     if (priceMax > 0) {
       query.current_price = { $gte: priceMin, $lte: priceMax }
     }
+  } else if (context === 'holiday') {
+    query.rent = true
+    query.st_rental = true
   } else {
     query.rent = true
+    query.lt_rental = true
     if (priceMax > 0) {
       query.rental_price = { $gte: priceMin, $lte: priceMax }
     }

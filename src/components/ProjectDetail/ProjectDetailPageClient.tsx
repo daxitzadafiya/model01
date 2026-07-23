@@ -11,7 +11,9 @@ import {
   fetchCRMProjectRelatedProperties,
   normalizeCRMProject,
   PROPERTY_DETAIL_IMAGE_SIZE,
+  type NormalizedCRMProject,
 } from '@/utilities/crmProjects'
+import { fetchCRMSimilarProjects } from '@/utilities/crmSimilarProjects'
 import { resolveCRMPropertyDocuments } from '@/utilities/crmPropertyDocuments'
 import type { Form } from '@/payload-types'
 import {
@@ -57,6 +59,8 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
   const [inquiry, setInquiry] = useState<PropertyInquiryContext>({})
   const [latitude, setLatitude] = useState<number | undefined>()
   const [longitude, setLongitude] = useState<number | undefined>()
+  const [relatedProjects, setRelatedProjects] = useState<NormalizedCRMProject[]>([])
+  const [similarProjectsLoading, setSimilarProjectsLoading] = useState(false)
 
   const slug = decodeURIComponent(params.slug ?? '')
 
@@ -79,6 +83,8 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
     const load = async () => {
       setLoading(true)
       setNotFoundState(false)
+      setRelatedProjects([])
+      setSimilarProjectsLoading(false)
 
       try {
         const raw = await fetchCRMProjectDetail(reference, {
@@ -123,6 +129,26 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
         setLatitude(normalized.latitude)
         setLongitude(normalized.longitude)
         document.title = `${normalized.title} | Roumpos Real Estate`
+
+        setSimilarProjectsLoading(true)
+        void (async () => {
+          try {
+            const similar = await fetchCRMSimilarProjects({
+              project: normalized.raw ?? raw,
+              limit: 5,
+              locale: activeLocale,
+              signal: controller.signal,
+            })
+            if (!controller.signal.aborted) setRelatedProjects(similar)
+          } catch (similarError) {
+            if ((similarError as Error).name !== 'AbortError') {
+              console.error('Failed to load similar projects', similarError)
+              if (!controller.signal.aborted) setRelatedProjects([])
+            }
+          } finally {
+            if (!controller.signal.aborted) setSimilarProjectsLoading(false)
+          }
+        })()
       } catch (error) {
         if ((error as Error).name === 'AbortError') return
         console.error('Failed to load project detail', error)
@@ -149,6 +175,8 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
       documents={documents}
       latitude={latitude}
       longitude={longitude}
+      relatedProjects={relatedProjects}
+      similarProjectsLoading={similarProjectsLoading}
     />
   )
 }

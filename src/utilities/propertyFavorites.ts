@@ -1,7 +1,10 @@
 export const PROPERTY_FAVORITES_COOKIE = 'horizon-property-favorites'
+export const PROJECT_FAVORITES_COOKIE = 'horizon-project-favorites'
 export const PROPERTY_FAVORITES_MAX_AGE_DAYS = 365
 
 export type FavoritePropertyId = string | number
+/** Alias — same CRM id shape for constructions / projects. */
+export type FavoriteProjectId = FavoritePropertyId
 
 export function sameFavoriteId(a: FavoritePropertyId, b: FavoritePropertyId): boolean {
   return String(a) === String(b)
@@ -65,22 +68,38 @@ export function parseFavoriteIds(raw: string | null | undefined): FavoriteProper
   }
 }
 
-export function readFavoriteIdsFromDocument(): FavoritePropertyId[] {
+function readFavoriteIdsFromCookie(cookieName: string): FavoritePropertyId[] {
   if (typeof document === 'undefined') return []
 
-  const escaped = PROPERTY_FAVORITES_COOKIE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const escaped = cookieName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`))
   if (!match?.[1]) return []
 
   return parseFavoriteIds(match[1])
 }
 
-export function writeFavoriteIdsToDocument(ids: FavoritePropertyId[]): void {
+function writeFavoriteIdsToCookie(cookieName: string, ids: FavoritePropertyId[]): void {
   if (typeof document === 'undefined') return
 
   const maxAge = PROPERTY_FAVORITES_MAX_AGE_DAYS * 24 * 60 * 60
   const value = serializeFavoriteIds(ids)
-  document.cookie = `${PROPERTY_FAVORITES_COOKIE}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
+  document.cookie = `${cookieName}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
+}
+
+export function readFavoriteIdsFromDocument(): FavoritePropertyId[] {
+  return readFavoriteIdsFromCookie(PROPERTY_FAVORITES_COOKIE)
+}
+
+export function writeFavoriteIdsToDocument(ids: FavoritePropertyId[]): void {
+  writeFavoriteIdsToCookie(PROPERTY_FAVORITES_COOKIE, ids)
+}
+
+export function readProjectFavoriteIdsFromDocument(): FavoriteProjectId[] {
+  return readFavoriteIdsFromCookie(PROJECT_FAVORITES_COOKIE)
+}
+
+export function writeProjectFavoriteIdsToDocument(ids: FavoriteProjectId[]): void {
+  writeFavoriteIdsToCookie(PROJECT_FAVORITES_COOKIE, ids)
 }
 
 export function toggleFavoriteId(

@@ -11,16 +11,26 @@ import { useTranslation } from '@/utilities/translateClient'
 
 type FavoriteButtonProps = {
   propertyId?: FavoritePropertyId | null
+  /** Projects use a separate favorites cookie. */
+  kind?: 'property' | 'project'
   className?: string
   size?: 'default' | 'compact' | 'responsive'
 }
 
 export const PropertyDetailFavoriteButton: React.FC<FavoriteButtonProps> = ({
   propertyId,
+  kind = 'property',
   className = '',
   size = 'default',
 }) => {
-  const { isFavorite, toggleFavorite } = usePropertyFavorites()
+  const {
+    isFavorite: isPropertyFavorite,
+    toggleFavorite: togglePropertyFavorite,
+    isProjectFavorite,
+    toggleProjectFavorite,
+  } = usePropertyFavorites()
+  const isFavorite = kind === 'project' ? isProjectFavorite : isPropertyFavorite
+  const toggleFavorite = kind === 'project' ? toggleProjectFavorite : togglePropertyFavorite
   const favorited = propertyId != null && propertyId !== '' && isFavorite(propertyId)
   const addToFavoritesLabel = useTranslation(
     'propertyList.card.addToFavorites',

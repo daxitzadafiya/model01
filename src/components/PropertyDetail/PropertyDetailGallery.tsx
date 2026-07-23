@@ -389,7 +389,7 @@ export const PropertyDetailGallery: React.FC<Props> = ({ images, title, badgeLab
 
         {badgeLabel && (
           <div className="absolute top-4 right-4 z-20">
-            <span className="bg-red-600/90 backdrop-blur-md px-4 py-1 text-white font-label-sm text-label-sm tracking-widest rounded-xl">
+            <span className="bg-red-600/90 backdrop-blur-md px-4 py-1 text-white font-label-sm text-label-sm tracking-widest uppercase rounded-xl">
               {badgeLabel}
             </span>
           </div>

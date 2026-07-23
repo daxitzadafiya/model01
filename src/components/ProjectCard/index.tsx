@@ -6,15 +6,15 @@ import { ArrowRight, Bath, Bed, Clock, Heart, KeyRound, Plane, Ruler, Waves } fr
 
 import { PropertyCardImageGallery } from '@/components/PropertyCard/PropertyCardImageGallery'
 import { formatPropertyAreaDisplay } from '@/components/PropertyCard'
-import { usePropertyFavorites } from '@/providers/PropertyFavorites'
-import type { FavoritePropertyId } from '@/utilities/propertyFavorites'
+import { useProjectFavorites } from '@/providers/PropertyFavorites'
+import type { FavoriteProjectId } from '@/utilities/propertyFavorites'
 import type { NormalizedCRMProject, ProjectPhaseInfo } from '@/utilities/crmProjects'
 import { useTranslation } from '@/utilities/translateClient'
 import { cn } from '@/utilities/ui'
 
 type Props = {
   project: NormalizedCRMProject
-  projectId?: FavoritePropertyId | null
+  projectId?: FavoriteProjectId | null
   href?: string
   className?: string
   style?: React.CSSProperties
@@ -66,14 +66,16 @@ function PhaseRow({
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between gap-2">
         <p className="font-body-sm text-body-sm text-on-surface">
-          {phaseLabel} {phase.constructionPhase} {fromLabel}{' '}
+          {phaseLabel} {phase.constructionPhase}
           {phase.priceFromLabel ? (
-            <span className="font-body-md text-body-md font-bold text-primary">
-              {phase.priceFromLabel} €
-            </span>
-          ) : (
-            <span className="text-on-surface-variant">—</span>
-          )}
+            <>
+              {' '}
+              {fromLabel}{' '}
+              <span className="font-body-md text-body-md font-bold text-primary">
+                {phase.priceFromLabel} €
+              </span>
+            </>
+          ) : null}
         </p>
         {phase.quantity != null && (
           <span className="font-label-sm text-label-sm text-on-surface-variant whitespace-nowrap">
@@ -93,7 +95,7 @@ export const ProjectCard: React.FC<Props> = ({
   className = '',
   style,
 }) => {
-  const { isFavorite, toggleFavorite } = usePropertyFavorites()
+  const { isFavorite, toggleFavorite } = useProjectFavorites()
   const favorited = projectId != null && projectId !== '' && isFavorite(projectId)
   const [showAllPhases, setShowAllPhases] = useState(false)
 
@@ -192,7 +194,7 @@ export const ProjectCard: React.FC<Props> = ({
           )}
         </div>
       ) : (
-        <div className="flex justify-between items-center gap-3">
+          <div className="flex justify-between items-center gap-3">
           <div className="flex gap-4 text-secondary font-label-sm text-label-sm">
             {project.beds != null && project.beds > 0 && (
               <span className="flex items-center gap-1">
@@ -213,9 +215,11 @@ export const ProjectCard: React.FC<Props> = ({
               </span>
             )}
           </div>
-          <span className="font-body-md text-body-md font-bold text-primary text-right">
-            {project.price}
-          </span>
+          {project.price ? (
+            <span className="font-body-md text-body-md font-bold text-primary text-right">
+              {project.price}
+            </span>
+          ) : null}
         </div>
       )}
 

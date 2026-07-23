@@ -11,16 +11,27 @@ import React, {
 
 import {
   readFavoriteIdsFromDocument,
+  readProjectFavoriteIdsFromDocument,
   toggleFavoriteId,
   writeFavoriteIdsToDocument,
+  writeProjectFavoriteIdsToDocument,
+  type FavoriteProjectId,
   type FavoritePropertyId,
 } from '@/utilities/propertyFavorites'
 
 type PropertyFavoritesContextValue = {
+  /** @deprecated Prefer `propertyFavoriteIds` — kept for existing property callers. */
   favoriteIds: FavoritePropertyId[]
+  propertyFavoriteIds: FavoritePropertyId[]
+  projectFavoriteIds: FavoriteProjectId[]
+  propertyCount: number
+  projectCount: number
+  /** Combined badge count (properties + projects). */
   count: number
   isFavorite: (id: FavoritePropertyId | undefined | null) => boolean
+  isProjectFavorite: (id: FavoriteProjectId | undefined | null) => boolean
   toggleFavorite: (id: FavoritePropertyId) => void
+  toggleProjectFavorite: (id: FavoriteProjectId) => void
 }
 
 const PropertyFavoritesContext = createContext<PropertyFavoritesContextValue | null>(null)
@@ -28,36 +39,67 @@ const PropertyFavoritesContext = createContext<PropertyFavoritesContextValue | n
 export const PropertyFavoritesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [favoriteIds, setFavoriteIds] = useState<FavoritePropertyId[]>([])
+  const [propertyFavoriteIds, setPropertyFavoriteIds] = useState<FavoritePropertyId[]>([])
+  const [projectFavoriteIds, setProjectFavoriteIds] = useState<FavoriteProjectId[]>([])
 
   useEffect(() => {
-    setFavoriteIds(readFavoriteIdsFromDocument())
+    setPropertyFavoriteIds(readFavoriteIdsFromDocument())
+    setProjectFavoriteIds(readProjectFavoriteIdsFromDocument())
   }, [])
 
   const isFavorite = useCallback(
     (id: FavoritePropertyId | undefined | null) => {
       if (id === undefined || id === null || id === '') return false
-      return favoriteIds.some((entry) => String(entry) === String(id))
+      return propertyFavoriteIds.some((entry) => String(entry) === String(id))
     },
-    [favoriteIds],
+    [propertyFavoriteIds],
+  )
+
+  const isProjectFavorite = useCallback(
+    (id: FavoriteProjectId | undefined | null) => {
+      if (id === undefined || id === null || id === '') return false
+      return projectFavoriteIds.some((entry) => String(entry) === String(id))
+    },
+    [projectFavoriteIds],
   )
 
   const toggleFavorite = useCallback((id: FavoritePropertyId) => {
-    setFavoriteIds((prev) => {
+    setPropertyFavoriteIds((prev) => {
       const next = toggleFavoriteId(prev, id)
       writeFavoriteIdsToDocument(next)
       return next
     })
   }, [])
 
+  const toggleProjectFavorite = useCallback((id: FavoriteProjectId) => {
+    setProjectFavoriteIds((prev) => {
+      const next = toggleFavoriteId(prev, id)
+      writeProjectFavoriteIdsToDocument(next)
+      return next
+    })
+  }, [])
+
   const value = useMemo(
     () => ({
-      favoriteIds,
-      count: favoriteIds.length,
+      favoriteIds: propertyFavoriteIds,
+      propertyFavoriteIds,
+      projectFavoriteIds,
+      propertyCount: propertyFavoriteIds.length,
+      projectCount: projectFavoriteIds.length,
+      count: propertyFavoriteIds.length + projectFavoriteIds.length,
       isFavorite,
+      isProjectFavorite,
       toggleFavorite,
+      toggleProjectFavorite,
     }),
-    [favoriteIds, isFavorite, toggleFavorite],
+    [
+      propertyFavoriteIds,
+      projectFavoriteIds,
+      isFavorite,
+      isProjectFavorite,
+      toggleFavorite,
+      toggleProjectFavorite,
+    ],
   )
 
   return (
@@ -73,4 +115,26 @@ export function usePropertyFavorites(): PropertyFavoritesContextValue {
     throw new Error('usePropertyFavorites must be used within PropertyFavoritesProvider')
   }
   return context
+}
+
+/** Project-only favorites helpers (same provider). */
+export function useProjectFavorites(): {
+  favoriteIds: FavoriteProjectId[]
+  count: number
+  isFavorite: (id: FavoriteProjectId | undefined | null) => boolean
+  toggleFavorite: (id: FavoriteProjectId) => void
+} {
+  const {
+    projectFavoriteIds,
+    projectCount,
+    isProjectFavorite,
+    toggleProjectFavorite,
+  } = usePropertyFavorites()
+
+  return {
+    favoriteIds: projectFavoriteIds,
+    count: projectCount,
+    isFavorite: isProjectFavorite,
+    toggleFavorite: toggleProjectFavorite,
+  }
 }

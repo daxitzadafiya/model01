@@ -24,7 +24,6 @@ import type { CRMPropertyDocumentGroup } from '@/utilities/crmPropertyDocuments'
 import type { CRMPropertyVideoItem } from '@/utilities/crmPropertyVideo'
 import type { Form } from '@/payload-types'
 import {
-  resolveCRMStatusBadgeLabel,
   type NormalizedCRMProperty,
   type NormalizedListProperty,
 } from '@/utilities/crmProperties'
@@ -128,11 +127,19 @@ export const PropertyDetailView: React.FC<Props> = ({
   const propertyTypeLabel = useTranslation('propertyDetail.specs.propertyType', 'Property Type')
   const homeLabel = useTranslation('homeLabel', 'Home')
   const propertiesLabel = useTranslation('propertiesLabel', 'Properties')
+  const soldBadgeLabel = useTranslation('propertyList.card.sold', 'Sold')
+  const reservedBadgeLabel = useTranslation('propertyList.card.reserved', 'Reserved')
   const listHref = portfolioHref || '/'
   const selectDatesLabel = useTranslation(
     'propertyDetail.holiday.selectDatesForPrice',
     'Select dates to view price',
   )
+  const statusBadgeDisplay =
+    property.statusBadgeLabel === 'SOLD'
+      ? soldBadgeLabel
+      : property.statusBadgeLabel === 'RESERVED'
+        ? reservedBadgeLabel
+        : undefined
 
   const [liveArrival, setLiveArrival] = useState(holidayArrival)
   const [liveDeparture, setLiveDeparture] = useState(holidayDeparture)
@@ -187,7 +194,7 @@ export const PropertyDetailView: React.FC<Props> = ({
           <PropertyDetailGallery
             images={property.imageUrls ?? (property.imageUrl ? [property.imageUrl] : [])}
             title={property.title}
-            badgeLabel={resolveCRMStatusBadgeLabel(property.statusBadgeLabel)}
+            badgeLabel={statusBadgeDisplay}
           />
         </div>
 

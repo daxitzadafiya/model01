@@ -118,11 +118,19 @@ export const PropertyCard: React.FC<Props> = ({
   const favorited = propertyId != null && propertyId !== '' && isFavorite(propertyId)
   const viewPropertyLabel = useTranslation('propertyList.filters.viewProperty', 'View Property')
   const refPrefixLabel = useTranslation('propertyList.card.refPrefix', 'Ref:')
+  const soldBadgeLabel = useTranslation('propertyList.card.sold', 'Sold')
+  const reservedBadgeLabel = useTranslation('propertyList.card.reserved', 'Reserved')
   const addToFavoritesLabel = useTranslation('propertyList.card.addToFavorites', 'Add to favorites')
   const removeFromFavoritesLabel = useTranslation(
     'propertyList.card.removeFromFavorites',
     'Remove from favorites',
   )
+  const statusBadgeDisplay =
+    statusBadgeLabel === 'SOLD'
+      ? soldBadgeLabel
+      : statusBadgeLabel === 'RESERVED'
+        ? reservedBadgeLabel
+        : undefined
   const handleFavoritePointer = (event: React.SyntheticEvent<HTMLButtonElement>) => {
     event.preventDefault()
     event.stopPropagation()
@@ -198,7 +206,7 @@ export const PropertyCard: React.FC<Props> = ({
           </span>
         </div>
         <span className="font-body-md text-body-md font-bold text-primary text-right">
-          <span className="block">{property.price}</span>
+          {property.price ? <span className="block">{property.price}</span> : null}
           {property.priceSubtext && (
             <span className="block text-label-sm font-label-sm font-normal text-on-surface-variant mt-0.5">
               {property.priceSubtext}
@@ -255,9 +263,9 @@ export const PropertyCard: React.FC<Props> = ({
             />
           </button>
         )}
-        {statusBadgeLabel && (
-          <div className="absolute top-4 right-4 bg-red-600/90 backdrop-blur-md px-4 py-1 text-white font-label-sm text-label-sm tracking-widest rounded-xl">
-            {statusBadgeLabel}
+        {statusBadgeDisplay && (
+          <div className="absolute top-4 right-4 bg-red-600/90 backdrop-blur-md px-4 py-1 text-white font-label-sm text-label-sm tracking-widest uppercase rounded-xl">
+            {statusBadgeDisplay}
           </div>
         )}
       </div>

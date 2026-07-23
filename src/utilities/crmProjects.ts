@@ -46,6 +46,12 @@ const pickNumber = (candidate: unknown): number | undefined => {
 const formatPriceAmount = (value: number): string =>
   new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)
 
+/** CRM often sends `0` when price is unknown — treat as missing for display. */
+const pickPositivePrice = (value: unknown): number | undefined => {
+  const n = pickNumber(value)
+  return n != null && n > 0 ? n : undefined
+}
+
 /** Round distance for display: whole numbers without decimals, else up to 1 decimal. */
 const formatDistanceNumber = (value: number): string => {
   const rounded = Math.round(value * 10) / 10
@@ -237,7 +243,7 @@ function parsePhaseInfos(source: Record<string, unknown>): ProjectPhaseInfo[] {
   for (const item of phaseWise) {
     if (!item || typeof item !== 'object') continue
     const row = item as Record<string, unknown>
-    const priceFrom = pickNumber(row.current_price) ?? pickNumber(row.price_from)
+    const priceFrom = pickPositivePrice(row.current_price) ?? pickPositivePrice(row.price_from)
     const quantity =
       pickNumber(row.available_properties_count) ??
       pickNumber(row.quantaty) ??
@@ -380,7 +386,7 @@ function parseRelatedProjectProperty(
     garage = isCRMTruthy((rel.parking as Record<string, unknown>).garage)
   }
 
-  const price = pickNumber(rel.current_price) ?? pickNumber(rel.price)
+  const price = pickPositivePrice(rel.current_price) ?? pickPositivePrice(rel.price)
   const reference =
     pickString(String(rel.reference ?? '')) ||
     pickString(String(rel.id ?? '')) ||
@@ -583,11 +589,11 @@ export function mapConstructionToPropertyRecord(
   const attachments = normalizeConstructionAttachments(attachmentsRaw)
 
   const phaseLow =
-    pickNumber(source.phase_low_price_from) ?? pickNumber(source.price_from)
+    pickPositivePrice(source.phase_low_price_from) ?? pickPositivePrice(source.price_from)
   const phaseHigh =
-    pickNumber(source.phase_heigh_price_from) ??
-    pickNumber(source.phase_high_price_from) ??
-    pickNumber(source.price_to)
+    pickPositivePrice(source.phase_heigh_price_from) ??
+    pickPositivePrice(source.phase_high_price_from) ??
+    pickPositivePrice(source.price_to)
 
   const bedrooms =
     pickNumber(source.bedrooms) ??
@@ -681,9 +687,9 @@ export function normalizeCRMProject(
     : []
   const imageUrls = getPublishedPropertyAttachmentImages(attachments, imageSize)
 
-  const phaseLow = pickNumber(mapped.phase_low_price_from)
-  const phaseHigh = pickNumber(mapped.phase_heigh_price_from)
-  let price = 'Price on request'
+  const phaseLow = pickPositivePrice(mapped.phase_low_price_from)
+  const phaseHigh = pickPositivePrice(mapped.phase_heigh_price_from)
+  let price = ''
   let priceValue = phaseLow
   if (phaseLow != null && phaseHigh != null && phaseHigh !== phaseLow) {
     price = `€${formatPriceAmount(phaseLow)} – €${formatPriceAmount(phaseHigh)}`

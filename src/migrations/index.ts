@@ -28,6 +28,7 @@ import * as migration_20260702_125500_property_filters_bathrooms from './2026070
 import * as migration_20260703_170000_hero_block_search_tabs from './20260703_170000_hero_block_search_tabs'
 import * as migration_20260706_120000_property_filters_holiday from './20260706_120000_property_filters_holiday'
 import * as migration_20260715_140000_email_holiday_booking_template from './20260715_140000_email_holiday_booking_template'
+import * as migration_20260723_100000_footer_powered_by from './20260723_100000_footer_powered_by'
 
 export const migrations = [
   {
@@ -179,5 +180,10 @@ export const migrations = [
     up: migration_20260715_140000_email_holiday_booking_template.up,
     down: migration_20260715_140000_email_holiday_booking_template.down,
     name: '20260715_140000_email_holiday_booking_template',
+  },
+  {
+    up: migration_20260723_100000_footer_powered_by.up,
+    down: migration_20260723_100000_footer_powered_by.down,
+    name: '20260723_100000_footer_powered_by',
   },
 ]

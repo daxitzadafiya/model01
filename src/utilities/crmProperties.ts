@@ -1110,10 +1110,12 @@ export function normalizeCRMProperty(
     property.price ?? property.current_price ?? property.sale_price ?? property.list_price
   const hasPriceOnDemand = isPriceOnDemandEnabled(property.price_on_demand)
   const priceValue = typeof rawPrice === 'number' ? rawPrice : pickNumber(rawPrice)
-  const formattedRawPrice =
-    typeof rawPrice === 'number'
+  const hasPositivePrice = priceValue != null && priceValue > 0
+  const formattedRawPrice = hasPositivePrice
+    ? typeof rawPrice === 'number'
       ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(rawPrice)
       : pickString(rawPrice)
+    : undefined
 
   const phaseLow =
     pickNumber(property.phase_low_price_from) ?? pickNumber(property.price_from)
@@ -1188,6 +1190,9 @@ export function normalizeCRMProperty(
     resolvedPrice = 'Price on demand'
   } else if (formattedRawPrice) {
     resolvedPrice = options.currencySymbolAfter ? `${formattedRawPrice} €` : `€${formattedRawPrice}`
+  } else if (priceValue === 0) {
+    // CRM often uses 0 for "no price" — hide instead of showing €0
+    resolvedPrice = ''
   }
 
   const referenceRaw = property.reference

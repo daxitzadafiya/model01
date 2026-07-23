@@ -285,6 +285,11 @@ export const seed = async ({
           { icon: 'security' },
         ],
         copyrightText: 'ALL RIGHTS RESERVED.',
+        poweredBy: {
+          text: 'Powered by',
+          linkLabel: 'Optima-CRM',
+          url: 'https://optima-crm.com',
+        },
         legalLinks: [
           { link: { type: 'custom', label: 'Privacy Policy', url: '#' } },
           { link: { type: 'custom', label: 'Terms of Service', url: '#' } },

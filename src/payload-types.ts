@@ -3299,6 +3299,8 @@ export interface Header {
   createdAt?: string | null;
 }
 /**
+ * Edit localized footer copy in English; other locales update via DeepL on save when DeepL is enabled.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "footer".
  */
@@ -3366,6 +3368,23 @@ export interface Footer {
    * Localized “all rights reserved” phrase only. The footer adds ©, year, and app name from Logo → App Name automatically.
    */
   copyrightText?: string | null;
+  /**
+   * Shown next to the copyright in the bottom bar. The link label opens the URL in a new window. Edit in English; other locales update via DeepL on save.
+   */
+  poweredBy?: {
+    /**
+     * Text before the link (e.g. Powered by). Leave empty to hide this line.
+     */
+    text?: string | null;
+    /**
+     * Hyperlink label (e.g. Optima-CRM).
+     */
+    linkLabel?: string | null;
+    /**
+     * Opens in a new window.
+     */
+    url?: string | null;
+  };
   /**
    * Legal and policy links shown in the bottom bar.
    */
@@ -4061,6 +4080,13 @@ export interface FooterSelect<T extends boolean = true> {
         id?: T;
       };
   copyrightText?: T;
+  poweredBy?:
+    | T
+    | {
+        text?: T;
+        linkLabel?: T;
+        url?: T;
+      };
   legalLinks?:
     | T
     | {

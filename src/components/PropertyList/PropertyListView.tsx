@@ -62,6 +62,7 @@ import {
 } from './propertyListUrl'
 import type { PropertyListInitialData } from './PropertyListServerData'
 import { useTranslation } from '@/utilities/translateClient'
+import { cn } from '@/utilities/ui'
 
 export type { PropertyListInitialData } from './PropertyListServerData'
 
@@ -85,6 +86,18 @@ type Props = {
 const DEFAULT_PAGE_SIZE = 9
 const FALLBACK_SORT_OPTIONS = DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions
 const FALLBACK_DEFAULT_SORT = FALLBACK_SORT_OPTIONS[0]?.value ?? 'recent'
+
+export type FavoritesListTab = 'properties' | 'projects'
+
+export const FAVORITES_TAB_QUERY_KEY = 'fav'
+
+export function parseFavoritesListTab(
+  searchParams: URLSearchParams | { get: (key: string) => string | null },
+): FavoritesListTab {
+  const raw = searchParams.get(FAVORITES_TAB_QUERY_KEY)?.trim().toLowerCase()
+  if (raw === 'projects' || raw === 'project') return 'projects'
+  return 'properties'
+}
 
 export const PropertyListView: React.FC<Props> = (props) => (
   <PropertyFilterOptionsProvider>
@@ -121,8 +134,16 @@ const PropertyListViewInner: React.FC<Props> = ({
   const [appliedFilters, setAppliedFilters] = useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
   const [mapModalOpen, setMapModalOpen] = useState(false)
 
-  const { favoriteIds } = usePropertyFavorites()
+  const { propertyFavoriteIds, projectFavoriteIds, propertyCount, projectCount } =
+    usePropertyFavorites()
   const isFavoritesList = listingPreset === 'favorites'
+  const favoritesTab = useMemo(
+    () => (isFavoritesList ? parseFavoritesListTab(searchParams) : 'properties'),
+    [isFavoritesList, searchParams],
+  )
+  const isFavoritesProjectsTab = isFavoritesList && favoritesTab === 'projects'
+  const isFavoritesPropertiesTab = isFavoritesList && favoritesTab === 'properties'
+  const activeFavoriteIds = isFavoritesProjectsTab ? projectFavoriteIds : propertyFavoriteIds
   const filtersAreApplied = hasAppliedPropertyFilters(appliedFilters)
 
   const sortOptionsForUrl = sortOptions.length ? sortOptions : FALLBACK_SORT_OPTIONS
@@ -153,10 +174,17 @@ const PropertyListViewInner: React.FC<Props> = ({
   const showSkeleton =
     loading || (isServerManaged && isNavigating) || (isServerManaged && !serverDataReady)
 
-  const filterPreset = isFavoritesList ? 'forSale' : listingPreset
-  const mapEnabled = showMap === true
-  const hasFavoriteIds = favoriteIds.length > 0
-  const favoriteIdsKey = JSON.stringify(favoriteIds)
+  const filterPreset: CRMListingPreset = isFavoritesProjectsTab
+    ? 'projects'
+    : isFavoritesList
+      ? 'forSale'
+      : listingPreset
+  const filtersListingPreset: CRMListingPreset = isFavoritesProjectsTab
+    ? 'projects'
+    : listingPreset
+  const mapEnabled = showMap === true && !isFavoritesProjectsTab
+  const hasFavoriteIds = activeFavoriteIds.length > 0
+  const favoriteIdsKey = JSON.stringify(activeFavoriteIds)
 
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions(filterPreset)
@@ -183,13 +211,27 @@ const PropertyListViewInner: React.FC<Props> = ({
   const orderbyStrippedRef = useRef(false)
 
   const displayTotal =
-    isFavoritesList && hasFavoriteIds && !filtersAreApplied ? favoriteIds.length : total
+    isFavoritesList && hasFavoriteIds && !filtersAreApplied
+      ? activeFavoriteIds.length
+      : total
   const totalPages = Math.max(1, Math.ceil(displayTotal / pageSize))
 
   const getListingHref = useCallback(
-    (updates: { page?: number; sort?: string | null }) =>
-      buildPropertyListListingHref(pathname, updates, searchParams, sortOptionsForUrl),
-    [pathname, searchParams, sortOptionsForUrl],
+    (updates: { page?: number; sort?: string | null; fav?: FavoritesListTab | null }) => {
+      const href = buildPropertyListListingHref(pathname, updates, searchParams, sortOptionsForUrl)
+      if (!isFavoritesList || updates.fav === undefined) return href
+
+      const [path, query = ''] = href.split('?')
+      const params = new URLSearchParams(query)
+      if (updates.fav === null) {
+        params.delete(FAVORITES_TAB_QUERY_KEY)
+      } else {
+        params.set(FAVORITES_TAB_QUERY_KEY, updates.fav)
+      }
+      const qs = params.toString()
+      return qs ? `${path}?${qs}` : path
+    },
+    [isFavoritesList, pathname, searchParams, sortOptionsForUrl],
   )
 
   const navigateServerListing = useCallback(
@@ -203,9 +245,10 @@ const PropertyListViewInner: React.FC<Props> = ({
   )
 
   const properties = useMemo(() => {
+    if (isFavoritesProjectsTab || listingPreset === 'projects') return []
+
     const listingMode = resolveListingModeFromPreset(listingPreset)
     const isHolidayList = listingPreset === 'forHoliday' || hasHolidayListingFilters(appliedFilters)
-    const isProjectsList = listingPreset === 'projects'
     const holidayGuestCount = resolveHolidayGuestsFilterCount(
       appliedFilters.guests,
       appliedFilters.guestsCustom,
@@ -214,19 +257,19 @@ const PropertyListViewInner: React.FC<Props> = ({
     return rawProperties.map((raw) =>
       normalizeCRMListProperty(raw, activeLocale, {
         listingMode,
-        projectListing: isProjectsList,
+        projectListing: false,
         holidayListing: isHolidayList,
         holidayPeriodFrom: appliedFilters.periodFrom,
         holidayPeriodTo: appliedFilters.periodTo,
         holidayGuests: holidayGuestCount != null ? String(holidayGuestCount) : undefined,
       }),
     )
-  }, [activeLocale, appliedFilters, listingPreset, rawProperties])
+  }, [activeLocale, appliedFilters, isFavoritesProjectsTab, listingPreset, rawProperties])
 
   const projects = useMemo(() => {
-    if (listingPreset !== 'projects') return []
+    if (listingPreset !== 'projects' && !isFavoritesProjectsTab) return []
     return rawProperties.map((raw) => normalizeCRMProject(raw, activeLocale))
-  }, [activeLocale, listingPreset, rawProperties])
+  }, [activeLocale, isFavoritesProjectsTab, listingPreset, rawProperties])
 
   const detailListingContext: PropertyDetailListingContext | undefined =
     listingPresetToDetailContext(listingPreset)
@@ -237,6 +280,12 @@ const PropertyListViewInner: React.FC<Props> = ({
     'propertyList.results.extraordinaryProperties',
     'extraordinary properties',
   )
+  const projectsResultsLabel = useTranslation('propertyList.results.projects', 'projects')
+  const favoritesPropertiesTabLabel = useTranslation(
+    'favorites.tabs.properties',
+    'Property Favorites',
+  )
+  const favoritesProjectsTabLabel = useTranslation('favorites.tabs.projects', 'Project Favorites')
   const favoritesEyebrow = useTranslation('propertyList.emptyState.favoritesEyebrow', 'Favorites')
   const collectionsEyebrow = useTranslation(
     'propertyList.emptyState.collectionsEyebrow',
@@ -250,6 +299,14 @@ const PropertyListViewInner: React.FC<Props> = ({
     'propertyList.emptyState.noFavoritesDescription',
     "You haven't favorited any properties yet. Browse our listings and tap the heart on any property to save it here.",
   )
+  const noProjectFavoritesTitle = useTranslation(
+    'propertyList.emptyState.noProjectFavoritesTitle',
+    'No project favorites yet',
+  )
+  const noProjectFavoritesDescription = useTranslation(
+    'propertyList.emptyState.noProjectFavoritesDescription',
+    "You haven't favorited any projects yet. Browse our projects and tap the heart on any project to save it here.",
+  )
   const noMatchingFavoritesTitle = useTranslation(
     'propertyList.emptyState.noMatchingFavoritesTitle',
     'No matching favorites',
@@ -257,6 +314,10 @@ const PropertyListViewInner: React.FC<Props> = ({
   const noMatchingFavoritesDescription = useTranslation(
     'propertyList.emptyState.noMatchingFavoritesDescription',
     'None of your saved properties match these filters. Try adjusting your search or add more favorites from our listings.',
+  )
+  const noMatchingProjectFavoritesDescription = useTranslation(
+    'propertyList.emptyState.noMatchingProjectFavoritesDescription',
+    'None of your saved projects match these filters. Try adjusting your search or add more favorites from our projects.',
   )
   const noPropertiesTitle = useTranslation(
     'propertyList.emptyState.noPropertiesTitle',
@@ -274,9 +335,21 @@ const PropertyListViewInner: React.FC<Props> = ({
     'propertyList.emptyState.noProjectsDescription',
     'We could not find any projects for this selection. Try adjusting your filters or check again soon.',
   )
-  const isProjectsList = listingPreset === 'projects'
+  const isProjectsList = listingPreset === 'projects' || isFavoritesProjectsTab
   const emptyResultsTitle = isProjectsList ? noProjectsTitle : noPropertiesTitle
   const emptyResultsDescription = isProjectsList ? noProjectsDescription : noPropertiesDescription
+  const resolvedResultsLabel = isFavoritesProjectsTab
+    ? projectsResultsLabel
+    : resultsLabel || defaultResultsLabel
+  const emptyFavoritesTitle = isFavoritesProjectsTab
+    ? noProjectFavoritesTitle
+    : emptyStateNoFavoritesTitle || noFavoritesTitle
+  const emptyFavoritesDescription = isFavoritesProjectsTab
+    ? noProjectFavoritesDescription
+    : emptyStateNoFavoritesDescription || noFavoritesDescription
+  const emptyMatchingFavoritesDescription = isFavoritesProjectsTab
+    ? noMatchingProjectFavoritesDescription
+    : emptyStateNoResultsDescription || noMatchingFavoritesDescription
 
   /** Apply server-rendered listing (page, sort, properties). */
   useEffect(() => {
@@ -337,7 +410,7 @@ const PropertyListViewInner: React.FC<Props> = ({
   useEffect(() => {
     if (!filtersHydrated || isServerManaged) return
 
-    if (isFavoritesList && favoriteIds.length === 0) {
+    if (isFavoritesList && activeFavoriteIds.length === 0) {
       setRawProperties([])
       setTotal(0)
       setLoading(false)
@@ -348,7 +421,7 @@ const PropertyListViewInner: React.FC<Props> = ({
       sort !== defaultListSort ||
       filtersAreApplied ||
       hasMapAreaReferences(appliedFilters) ||
-      (isFavoritesList && favoriteIds.length > 0)
+      (isFavoritesList && activeFavoriteIds.length > 0)
 
     if (!sortTriggersClientFetch) {
       setLoading(false)
@@ -364,7 +437,7 @@ const PropertyListViewInner: React.FC<Props> = ({
       if (showSkeleton) setLoading(true)
 
       try {
-        if (listingPreset === 'projects') {
+        if (listingPreset === 'projects' || isFavoritesProjectsTab) {
           const listingBody = buildCRMProjectsQuery({
             page,
             pageSize,
@@ -375,9 +448,11 @@ const PropertyListViewInner: React.FC<Props> = ({
             body: listingBody,
             signal: controller.signal,
             locale: activeLocale,
-            projectIds: hasMapAreaReferences(appliedFilters)
-              ? appliedFilters.mapReferences
-              : undefined,
+            projectIds: isFavoritesProjectsTab
+              ? activeFavoriteIds.map(String)
+              : hasMapAreaReferences(appliedFilters)
+                ? appliedFilters.mapReferences
+                : undefined,
           })
           if (controller.signal.aborted || generation !== fetchGenerationRef.current) return
 
@@ -387,17 +462,17 @@ const PropertyListViewInner: React.FC<Props> = ({
           const usePostListing = shouldUseCRMPropertiesPost({
             filters: appliedFilters,
             preset: listingPreset,
-            favoriteIds: isFavoritesList ? favoriteIds : undefined,
+            favoriteIds: isFavoritesPropertiesTab ? activeFavoriteIds : undefined,
           })
           const listingBody = buildCRMListingQuery({
             preset: listingPreset,
             page,
             pageSize,
             filters: appliedFilters,
-            restrictToFavoriteIds: isFavoritesList ? favoriteIds : undefined,
+            restrictToFavoriteIds: isFavoritesPropertiesTab ? activeFavoriteIds : undefined,
             sortParams: stableSortParams,
           })
-          const postReason = isFavoritesList
+          const postReason = isFavoritesPropertiesTab
             ? 'favorites'
             : hasMapAreaReferences(appliedFilters)
               ? 'map-area'
@@ -432,11 +507,14 @@ const PropertyListViewInner: React.FC<Props> = ({
     void load()
     return () => controller.abort()
   }, [
+    activeFavoriteIds,
     activeLocale,
     appliedFilters,
-    favoriteIds,
+    favoriteIdsKey,
     filtersHydrated,
     isFavoritesList,
+    isFavoritesProjectsTab,
+    isFavoritesPropertiesTab,
     isServerManaged,
     listingPreset,
     page,
@@ -460,19 +538,34 @@ const PropertyListViewInner: React.FC<Props> = ({
       return
     }
 
-    if (favoriteIds.length === 0) {
+    if (activeFavoriteIds.length === 0) {
       setRawProperties([])
       setTotal(0)
       setLoading(false)
       return
     }
 
-    const lastValidPage = Math.max(1, Math.ceil(favoriteIds.length / pageSize))
+    const lastValidPage = Math.max(1, Math.ceil(activeFavoriteIds.length / pageSize))
     if (page > lastValidPage) {
       pageAdjustedByFavoritesSyncRef.current = true
       setPage(lastValidPage)
     }
-  }, [favoriteIdsKey, isFavoritesList, isServerManaged, page, pageSize])
+  }, [activeFavoriteIds.length, favoriteIdsKey, isFavoritesList, isServerManaged, page, pageSize])
+
+  /** Favorites: reset page/filters when switching Property / Project tabs. */
+  const favoritesTabRef = useRef(favoritesTab)
+  useEffect(() => {
+    if (!isFavoritesList) return
+    if (favoritesTabRef.current === favoritesTab) return
+    favoritesTabRef.current = favoritesTab
+    setFilters(EMPTY_PROPERTY_FILTERS)
+    setAppliedFilters(EMPTY_PROPERTY_FILTERS)
+    setPendingFiltersApplied(false)
+    setPage(1)
+    setRawProperties([])
+    setTotal(0)
+    setLoading(true)
+  }, [favoritesTab, isFavoritesList])
 
   const handleFilterChange = (
     key: keyof PropertyListFilters,
@@ -542,21 +635,72 @@ const PropertyListViewInner: React.FC<Props> = ({
   }
 
   const resultsText = useMemo(() => {
-    const label = resultsLabel || defaultResultsLabel
     return (
       <>
         {showingLabel}{' '}
         <span className="font-bold text-on-surface">{showSkeleton ? '…' : displayTotal}</span>{' '}
-        {label}
+        {resolvedResultsLabel}
       </>
     )
-  }, [displayTotal, showSkeleton, resultsLabel, showingLabel, defaultResultsLabel])
+  }, [displayTotal, showSkeleton, resolvedResultsLabel, showingLabel])
+
+  const handleFavoritesTabChange = (nextTab: FavoritesListTab) => {
+    if (nextTab === favoritesTab) return
+    startTransition(() => {
+      router.replace(getListingHref({ page: 1, fav: nextTab }), { scroll: false })
+    })
+  }
 
   return (
     <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12">
+      {isFavoritesList && (
+        <div
+          role="tablist"
+          aria-label="Favorites"
+          className="mb-8 flex flex-wrap gap-6 border-b border-outline-variant/40"
+        >
+          {(
+            [
+              {
+                id: 'properties' as const,
+                label: favoritesPropertiesTabLabel,
+                count: propertyCount,
+              },
+              {
+                id: 'projects' as const,
+                label: favoritesProjectsTabLabel,
+                count: projectCount,
+              },
+            ] as const
+          ).map((tab) => {
+            const selected = favoritesTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                aria-label={`${tab.label} (${tab.count})`}
+                id={`favorites-tab-${tab.id}`}
+                onClick={() => handleFavoritesTabChange(tab.id)}
+                className={cn(
+                  'relative -mb-px pb-3 font-body-md text-body-md transition-colors',
+                  selected
+                    ? 'text-primary border-b-2 border-primary font-semibold'
+                    : 'text-on-surface-variant hover:text-on-surface border-b-2 border-transparent',
+                )}
+              >
+                {tab.label}
+                <span className="ml-1.5 tabular-nums">({tab.count})</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {showFilters !== false && (
         <FiltersBar
-          listingPreset={listingPreset}
+          listingPreset={filtersListingPreset}
           filters={filters}
           appliedFilters={appliedFilters}
           onChange={handleFilterChange}
@@ -591,8 +735,8 @@ const PropertyListViewInner: React.FC<Props> = ({
         <div className="mb-20">
           <SectionEmptyState
             eyebrow={favoritesEyebrow}
-            title={emptyStateNoFavoritesTitle || noFavoritesTitle}
-            description={emptyStateNoFavoritesDescription || noFavoritesDescription}
+            title={emptyFavoritesTitle}
+            description={emptyFavoritesDescription}
             tone="surface"
           />
         </div>
@@ -602,7 +746,7 @@ const PropertyListViewInner: React.FC<Props> = ({
             <PropertyCardSkeleton key={i} animationDelay={(i % 3) * 0.12} />
           ))}
         </div>
-      ) : listingPreset === 'projects' && projects.length > 0 ? (
+      ) : isProjectsList && projects.length > 0 ? (
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {projects.map((project) => (
             <ProjectCard
@@ -664,7 +808,7 @@ const PropertyListViewInner: React.FC<Props> = ({
             }
             description={
               isFavoritesList
-                ? emptyStateNoResultsDescription || noMatchingFavoritesDescription
+                ? emptyMatchingFavoritesDescription
                 : emptyStateNoResultsDescription || emptyResultsDescription
             }
             tone="surface"
@@ -685,7 +829,7 @@ const PropertyListViewInner: React.FC<Props> = ({
           onClose={() => setMapModalOpen(false)}
           listingPreset={listingPreset}
           appliedFilters={appliedFilters}
-          favoriteIds={isFavoritesList ? favoriteIds : undefined}
+          favoriteIds={isFavoritesPropertiesTab ? activeFavoriteIds : undefined}
           onDrawApply={handleMapDrawApply}
         />
       )}

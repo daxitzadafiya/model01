@@ -245,7 +245,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
         setSimilarPropertiesLoading(false)
 
         if (!isProject) {
-          const similarListingContext = resolveSimilarListingContext(raw)
+          const similarListingContext = resolveSimilarListingContext(raw, listingContext)
           setShowSimilarSoldBadge(isSimilarPropertySold(raw))
           setSimilarPropertiesLoading(true)
 
@@ -262,7 +262,11 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
                 setRelatedProperties(
                   similarRaw.map((item) =>
                     normalizeCRMListProperty(item, activeLocale, {
-                      listingMode: similarListingContext === 'rent' ? 'rent' : 'sale',
+                      listingMode:
+                        similarListingContext === 'rent' || similarListingContext === 'holiday'
+                          ? 'rent'
+                          : 'sale',
+                      holidayListing: similarListingContext === 'holiday',
                     }),
                   ),
                 )

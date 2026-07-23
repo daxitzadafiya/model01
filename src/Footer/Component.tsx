@@ -8,7 +8,12 @@ import { CMSLink } from '@/components/Link'
 import { Logo } from '@/components/Logo/Logo'
 import { getLogoSources } from '@/components/Logo/getLogoSources'
 import { DEFAULT_APP_NAME, getAppName } from '@/utilities/getAppName'
-import { DEFAULT_RIGHTS_RESERVED } from '@/Footer/formatCopyright'
+import {
+  DEFAULT_POWERED_BY_LINK_LABEL,
+  DEFAULT_POWERED_BY_TEXT,
+  DEFAULT_POWERED_BY_URL,
+  DEFAULT_RIGHTS_RESERVED,
+} from '@/Footer/formatCopyright'
 import { SocialIcon } from '@/components/SocialIcon'
 
 export async function Footer() {
@@ -29,6 +34,11 @@ export async function Footer() {
   const certificationsTitle = footerData?.certificationsTitle ?? 'CERTIFICATIONS'
   const certifications = footerData?.certifications ?? []
   const rightsReserved = footerData?.copyrightText ?? DEFAULT_RIGHTS_RESERVED
+  const poweredByText = footerData?.poweredBy?.text ?? DEFAULT_POWERED_BY_TEXT
+  const poweredByLinkLabel =
+    footerData?.poweredBy?.linkLabel ?? DEFAULT_POWERED_BY_LINK_LABEL
+  const poweredByUrl = footerData?.poweredBy?.url?.trim() || DEFAULT_POWERED_BY_URL
+  const showPoweredBy = Boolean(poweredByText.trim() && poweredByLinkLabel.trim())
   const legalLinks = footerData?.legalLinks ?? []
 
   return (
@@ -142,11 +152,28 @@ export async function Footer() {
         </div>
       </div>
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-12 md:mt-20 pt-6 md:pt-8 border-t border-on-primary-fixed-variant/20 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-        {rightsReserved && (
-          <p className="font-label-sm text-label-sm text-on-primary-fixed-variant uppercase">
-            © {new Date().getFullYear()} <span className='text-tertiary'>{appName || DEFAULT_APP_NAME}</span>. {rightsReserved || DEFAULT_RIGHTS_RESERVED}
-          </p>
-        )}
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1">
+          {rightsReserved && (
+            <p className="font-label-sm text-label-sm text-on-primary-fixed-variant uppercase">
+              © {new Date().getFullYear()}{' '}
+              <span className="text-tertiary">{appName || DEFAULT_APP_NAME}</span>.{' '}
+              {rightsReserved || DEFAULT_RIGHTS_RESERVED}
+            </p>
+          )}
+          {showPoweredBy && (
+            <p className="font-label-sm text-label-sm text-on-primary-fixed-variant">
+              {poweredByText.trim()}{' '}
+              <a
+                className="text-tertiary hover:text-surface-bright transition-colors"
+                href={poweredByUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {poweredByLinkLabel.trim()}
+              </a>
+            </p>
+          )}
+        </div>
         {legalLinks.length > 0 && (
           <div className="flex flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 md:gap-6 font-label-sm text-label-sm text-white">
             {legalLinks.map(({ link }, i) => (

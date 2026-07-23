@@ -16,6 +16,7 @@ import { PropertyDetailSpecs } from '@/components/PropertyDetail/PropertyDetailS
 import { PropertyDetailVideo } from '@/components/PropertyDetail/PropertyDetailVideo'
 import { ProjectDetailAvailability } from '@/components/ProjectDetail/ProjectDetailAvailability'
 import { ProjectDetailDocuments } from '@/components/ProjectDetail/ProjectDetailDocuments'
+import { ProjectDetailRelated } from '@/components/ProjectDetail/ProjectDetailRelated'
 import type { CRMAmenity } from '@/utilities/crmAmenities'
 import type { CRMPropertyDocumentGroup } from '@/utilities/crmPropertyDocuments'
 import type { CRMPropertyVideoItem } from '@/utilities/crmPropertyVideo'
@@ -34,6 +35,8 @@ type Props = {
   latitude?: number
   longitude?: number
   portfolioHref?: string
+  relatedProjects?: NormalizedCRMProject[]
+  similarProjectsLoading?: boolean
 }
 
 const renderDescription = (description?: string) => {
@@ -75,6 +78,8 @@ export const ProjectDetailView: React.FC<Props> = ({
   latitude,
   longitude,
   portfolioHref = '/projects',
+  relatedProjects = [],
+  similarProjectsLoading = false,
 }) => {
   const homeLabel = useTranslation('homeLabel', 'Home')
   const projectsLabel = useTranslation('projectDetail.breadcrumb.projects', 'Projects')
@@ -153,7 +158,11 @@ export const ProjectDetailView: React.FC<Props> = ({
               {project.title}
             </h1>
             {project.id && (
-              <PropertyDetailFavoriteButton propertyId={project.id} size="responsive" />
+              <PropertyDetailFavoriteButton
+                propertyId={project.id}
+                kind="project"
+                size="responsive"
+              />
             )}
           </div>
 
@@ -272,6 +281,8 @@ export const ProjectDetailView: React.FC<Props> = ({
           description={project.reference ? `${refPrefixLabel} ${project.reference}` : undefined}
         />
       )}
+
+      <ProjectDetailRelated projects={relatedProjects} loading={similarProjectsLoading} />
     </main>
   )
 }

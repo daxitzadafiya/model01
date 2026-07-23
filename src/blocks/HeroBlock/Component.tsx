@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Banknote, ChevronDown, Globe, Home, Search, Users } from 'lucide-react'
+import { Banknote, ChevronDown, Globe, Home, Search, Users, X } from 'lucide-react'
 import type { Page } from '@/payload-types'
 import { FilterSelect } from '@/components/FilterSelect'
 import { CoastCityFilterFields } from '@/components/CoastCityFilterFields'
@@ -70,6 +70,9 @@ const heroSearchFieldClassName =
 const heroSearchButtonClassName =
   'w-full h-[46px] md:h-[50px] bg-tertiary hover:bg-tertiary-container transition-colors duration-300 text-white rounded-lg cursor-pointer font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg md:justify-self-end'
 
+const heroMobileOpenButtonClassName =
+  'w-full h-[52px] bg-tertiary hover:bg-tertiary-container active:scale-[0.98] transition-all duration-300 text-white rounded-xl cursor-pointer font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl touch-manipulation'
+
 const heroDateFieldClassName =
   'w-full pl-10 pr-3 py-3 bg-white/20 backdrop-blur-sm border border-white/30 focus:border-white/60 focus:ring-0 rounded-lg font-body-md text-body-md text-white transition-colors [color-scheme:dark]'
 
@@ -81,6 +84,8 @@ const heroGridClassName: Record<HeroPropertyTab, string> = {
   rental: 'grid-cols-1 md:grid-cols-5',
   holiday: 'grid-cols-1 md:grid-cols-6',
 }
+
+const heroMobileGridClassName = 'grid-cols-1'
 
 const HeroBlockContent: React.FC<Props> = (props) => {
   const {
@@ -121,10 +126,14 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     `1–${DEFAULT_MAX_HOLIDAY_GUESTS} Guests`,
   )
   const searchLabel = useTranslation('propertyList.filters.search', 'Search')
+  const openSearchLabel = useTranslation('hero.searchOpen', 'Search properties')
+  const closeSearchLabel = useTranslation('hero.searchClose', 'Close search')
+  const searchFiltersTitle = useTranslation('hero.searchFiltersTitle', 'Search filters')
   const scrollLabel = useTranslation('hero.scrollIndicator', 'SCROLL')
 
   const initialTab = (defaultPropertyTab ?? 'sale') as HeroPropertyTab
   const [activeTab, setActiveTab] = useState<HeroPropertyTab>(initialTab)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [searchFilters, setSearchFilters] = useState<PropertyListFilters>({
     ...EMPTY_PROPERTY_FILTERS,
   })
@@ -240,8 +249,26 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     } else {
       clearPendingPropertyListFilters()
     }
+    setMobileSearchOpen(false)
     router.push(searchResultsPath)
   }
+
+  useEffect(() => {
+    if (!mobileSearchOpen) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileSearchOpen(false)
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileSearchOpen])
 
   const linkProps =
     ctaLink && getCMSLinkHref(ctaLink)
@@ -253,6 +280,171 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     { id: 'rental', label: rentalTabLabel },
     { id: 'holiday', label: holidayTabLabel },
   ]
+
+  const renderSearchFields = (options: {
+    idPrefix: string
+    dateOpenDirection?: 'up' | 'down'
+    gridClassName: string
+  }) => (
+    <div className={cn('grid gap-3 md:gap-4 p-3.5 md:p-6 items-end', options.gridClassName)}>
+      {activeTab === 'sale' && (
+        <FilterSelect
+          mode="multi"
+          label={countryLabel}
+          id={`${options.idPrefix}-country`}
+          icon={<Globe size={20} strokeWidth={1.75} />}
+          options={countryOptions}
+          value={parseCountryFilter(searchFilters.country)}
+          onChange={(value) => handleSearchFilterChange('country', value)}
+          emptyLabel={countriesLoading ? loadingCountriesLabel : allCountriesLabel}
+          disabled={countriesLoading}
+          triggerClassName={heroSearchFieldClassName}
+        />
+      )}
+
+      <CoastCityFilterFields
+        coast={searchFilters.coast}
+        city={searchFilters.city}
+        onCoastChange={(value) => handleSearchFilterChange('coast', value)}
+        onCityChange={(value) => handleSearchFilterChange('city', value)}
+        coasts={coasts}
+        coastsLoading={coastsLoading}
+        cities={cities}
+        citiesLoading={citiesLoading}
+        coastId={`${options.idPrefix}-coast`}
+        cityId={`${options.idPrefix}-city`}
+        triggerClassName={heroSearchFieldClassName}
+      />
+
+      {(activeTab === 'sale' || activeTab === 'rental') && (
+        <>
+          <FilterSelect
+            mode="multi"
+            label={propertyTypeLabel}
+            id={`${options.idPrefix}-type`}
+            icon={<Home size={20} strokeWidth={1.75} />}
+            options={propertyTypeOptions}
+            value={parsePropertyTypeFilter(searchFilters.propertyType)}
+            onChange={(value) => handleSearchFilterChange('propertyType', value)}
+            emptyLabel={propertyTypeLoading ? loadingTypesLabel : allPropertiesLabel}
+            disabled={propertyTypeLoading}
+            triggerClassName={heroSearchFieldClassName}
+          />
+
+          <FilterSelect
+            label={priceRangeLabel}
+            id={`${options.idPrefix}-price`}
+            icon={<Banknote size={20} strokeWidth={1.75} />}
+            options={priceRangeOptions}
+            value={priceRange}
+            onChange={handlePriceRangeChange}
+            triggerClassName={heroSearchFieldClassName}
+          />
+        </>
+      )}
+
+      {activeTab === 'holiday' && (
+        <>
+          <DateRangePickerField
+            id={`${options.idPrefix}-period-range`}
+            label={periodRangeLabel}
+            periodFrom={searchFilters.periodFrom ?? ''}
+            periodTo={searchFilters.periodTo ?? ''}
+            onPeriodFromChange={(value) => handleSearchFilterChange('periodFrom', value)}
+            onPeriodToChange={(value) => handleSearchFilterChange('periodTo', value)}
+            triggerClassName={heroDateFieldClassName}
+            labelClassName="font-label-sm text-label-sm uppercase text-white/75 ml-1 mb-1 block"
+            iconClassName="text-tertiary pointer-events-none"
+            openDirection={options.dateOpenDirection ?? 'up'}
+            panelClassName="rounded-2xl border border-white/20 bg-surface shadow-2xl"
+          />
+          <CountFilterField
+            label={guestsLabel}
+            id={`${options.idPrefix}-guests`}
+            icon={<Users size={20} strokeWidth={1.75} />}
+            options={guestsWithOther}
+            value={searchFilters.guests ?? 'any'}
+            customValue={searchFilters.guestsCustom ?? ''}
+            onChange={(value) => handleSearchFilterChange('guests', value)}
+            onCustomChange={handleGuestsCustomChange}
+            customPlaceholder={guestsCustomPlaceholder}
+            triggerClassName={heroSearchFieldClassName}
+            customInputClassName="text-white placeholder:text-white/90"
+          />
+          <FilterSelect
+            label={totalBudgetLabel}
+            id={`${options.idPrefix}-budget`}
+            icon={<Banknote size={20} strokeWidth={1.75} />}
+            options={holidayBudgetOptions}
+            value={searchFilters.totalBudget ?? 'any'}
+            onChange={(value) => handleSearchFilterChange('totalBudget', value)}
+            triggerClassName={heroSearchFieldClassName}
+          />
+        </>
+      )}
+
+      <button type="submit" className={heroSearchButtonClassName}>
+        <Search size={16} />
+        {searchLabel}
+      </button>
+    </div>
+  )
+
+  const renderSearchTabs = (layout: 'desktop' | 'mobile') => (
+    <div
+      className={cn(
+        'flex flex-col gap-2 border-b border-white/20 px-4 py-2.5 md:px-6 md:py-3',
+        layout === 'desktop' && 'sm:flex-row sm:items-center sm:justify-between sm:gap-4',
+        layout === 'mobile' && 'gap-3',
+      )}
+    >
+      {layout === 'mobile' && (
+        <div className="flex items-center justify-between gap-3">
+          <h2
+            id="hero-mobile-search-title"
+            className="font-label-nav text-label-nav uppercase tracking-widest text-white"
+          >
+            {searchFiltersTitle}
+          </h2>
+          <button
+            type="button"
+            onClick={() => setMobileSearchOpen(false)}
+            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/10 text-white transition-colors hover:bg-white/20"
+            aria-label={closeSearchLabel}
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
+      <div
+        className={cn(
+          'flex w-full flex-col gap-1 rounded-xl border border-white/20 bg-black/15 p-1.5',
+          layout === 'desktop' &&
+            'sm:w-auto md:inline-flex md:w-fit md:flex-row md:flex-wrap md:items-center md:gap-1 md:rounded-full md:p-1',
+        )}
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => handleTabChange(tab.id)}
+            className={cn(
+              'w-full cursor-pointer rounded-full px-4 py-2.5 text-left font-label-nav text-label-nav uppercase transition-all touch-manipulation',
+              layout === 'desktop' && 'md:w-auto md:rounded-full md:px-5 md:py-2 md:text-center',
+              activeTab === tab.id
+                ? 'bg-tertiary text-white shadow-md'
+                : 'text-white/75 hover:bg-white/15 hover:text-white',
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div className={cn(layout === 'desktop' && 'py-0.5 sm:py-0')}>
+        <HeroWeather />
+      </div>
+    </div>
+  )
 
   return (
     <div ref={ref} className="relative">
@@ -273,141 +465,70 @@ const HeroBlockContent: React.FC<Props> = (props) => {
         </div>
 
         {showSearch && (
-          <div
-            className={`absolute bottom-[6%] md:bottom-[8%] left-0 right-0 z-30 ${heroContainerClassName}`}
-          >
-            <form onSubmit={handleSearchSubmit} className={heroSearchFormClassName}>
-              <div className="flex flex-col gap-2 border-b border-white/20 px-4 py-2.5 md:px-6 md:py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                <div className="flex w-full flex-col gap-1 rounded-xl border border-white/20 bg-black/15 p-1.5 sm:w-auto md:inline-flex md:w-fit md:flex-row md:flex-wrap md:items-center md:gap-1 md:rounded-full md:p-1">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => handleTabChange(tab.id)}
-                      className={cn(
-                        'w-full cursor-pointer rounded-full px-4 py-2.5 text-left font-label-nav text-label-nav uppercase transition-all md:w-auto md:rounded-full md:px-5 md:py-2 md:text-center',
-                        activeTab === tab.id
-                          ? 'bg-tertiary text-white shadow-md'
-                          : 'text-white/75 hover:bg-white/15 hover:text-white',
-                      )}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="py-0.5 sm:py-0">
-                  <HeroWeather />
-                </div>
-              </div>
-              <div
-                className={cn(
-                  'grid gap-3 md:gap-4 p-3.5 md:p-6 items-end',
-                  heroGridClassName[activeTab],
-                )}
+          <>
+            {/* Desktop / tablet inline glass search bar */}
+            <div
+              className={`absolute bottom-[6%] md:bottom-[8%] left-0 right-0 z-30 hidden md:block ${heroContainerClassName}`}
+            >
+              <form onSubmit={handleSearchSubmit} className={heroSearchFormClassName}>
+                {renderSearchTabs('desktop')}
+                {renderSearchFields({
+                  idPrefix: 'hero-search',
+                  dateOpenDirection: 'up',
+                  gridClassName: heroGridClassName[activeTab],
+                })}
+              </form>
+            </div>
+
+            {/* Mobile: open-search button */}
+            <div
+              className={`absolute bottom-[6%] left-0 right-0 z-30 md:hidden ${heroContainerClassName}`}
+            >
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(true)}
+                className={heroMobileOpenButtonClassName}
+                aria-haspopup="dialog"
+                aria-expanded={mobileSearchOpen}
               >
-                {activeTab === 'sale' && (
-                  <FilterSelect
-                    mode="multi"
-                    label={countryLabel}
-                    id="hero-search-country"
-                    icon={<Globe size={20} strokeWidth={1.75} />}
-                    options={countryOptions}
-                    value={parseCountryFilter(searchFilters.country)}
-                    onChange={(value) => handleSearchFilterChange('country', value)}
-                    emptyLabel={countriesLoading ? loadingCountriesLabel : allCountriesLabel}
-                    disabled={countriesLoading}
-                    triggerClassName={heroSearchFieldClassName}
-                  />
-                )}
+                <Search size={18} />
+                {openSearchLabel}
+              </button>
+            </div>
 
-                <CoastCityFilterFields
-                  coast={searchFilters.coast}
-                  city={searchFilters.city}
-                  onCoastChange={(value) => handleSearchFilterChange('coast', value)}
-                  onCityChange={(value) => handleSearchFilterChange('city', value)}
-                  coasts={coasts}
-                  coastsLoading={coastsLoading}
-                  cities={cities}
-                  citiesLoading={citiesLoading}
-                  coastId="hero-search-coast"
-                  cityId="hero-search-city"
-                  triggerClassName={heroSearchFieldClassName}
+            {/* Mobile: glass filter modal */}
+            {mobileSearchOpen && (
+              <div
+                className="fixed inset-0 z-100 flex items-end justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(4.5rem,env(safe-area-inset-top))] md:hidden"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="hero-mobile-search-title"
+              >
+                <button
+                  type="button"
+                  aria-label={closeSearchLabel}
+                  className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+                  onClick={() => setMobileSearchOpen(false)}
                 />
-
-                {(activeTab === 'sale' || activeTab === 'rental') && (
-                  <>
-                    <FilterSelect
-                      mode="multi"
-                      label={propertyTypeLabel}
-                      id="hero-search-type"
-                      icon={<Home size={20} strokeWidth={1.75} />}
-                      options={propertyTypeOptions}
-                      value={parsePropertyTypeFilter(searchFilters.propertyType)}
-                      onChange={(value) => handleSearchFilterChange('propertyType', value)}
-                      emptyLabel={propertyTypeLoading ? loadingTypesLabel : allPropertiesLabel}
-                      disabled={propertyTypeLoading}
-                      triggerClassName={heroSearchFieldClassName}
-                    />
-
-                    <FilterSelect
-                      label={priceRangeLabel}
-                      id="hero-search-price"
-                      icon={<Banknote size={20} strokeWidth={1.75} />}
-                      options={priceRangeOptions}
-                      value={priceRange}
-                      onChange={handlePriceRangeChange}
-                      triggerClassName={heroSearchFieldClassName}
-                    />
-                  </>
-                )}
-
-                {activeTab === 'holiday' && (
-                  <>
-                    <DateRangePickerField
-                      id="hero-search-period-range"
-                      label={periodRangeLabel}
-                      periodFrom={searchFilters.periodFrom ?? ''}
-                      periodTo={searchFilters.periodTo ?? ''}
-                      onPeriodFromChange={(value) => handleSearchFilterChange('periodFrom', value)}
-                      onPeriodToChange={(value) => handleSearchFilterChange('periodTo', value)}
-                      triggerClassName={heroDateFieldClassName}
-                      labelClassName="font-label-sm text-label-sm uppercase text-white/75 ml-1 mb-1 block"
-                      iconClassName="text-tertiary pointer-events-none"
-                      openDirection="up"
-                      panelClassName="rounded-2xl border border-white/20 bg-surface shadow-2xl"
-                    />
-                    <CountFilterField
-                      label={guestsLabel}
-                      id="hero-search-guests"
-                      icon={<Users size={20} strokeWidth={1.75} />}
-                      options={guestsWithOther}
-                      value={searchFilters.guests ?? 'any'}
-                      customValue={searchFilters.guestsCustom ?? ''}
-                      onChange={(value) => handleSearchFilterChange('guests', value)}
-                      onCustomChange={handleGuestsCustomChange}
-                      customPlaceholder={guestsCustomPlaceholder}
-                      triggerClassName={heroSearchFieldClassName}
-                      customInputClassName="text-white placeholder:text-white/90"
-                    />
-                    <FilterSelect
-                      label={totalBudgetLabel}
-                      id="hero-search-budget"
-                      icon={<Banknote size={20} strokeWidth={1.75} />}
-                      options={holidayBudgetOptions}
-                      value={searchFilters.totalBudget ?? 'any'}
-                      onChange={(value) => handleSearchFilterChange('totalBudget', value)}
-                      triggerClassName={heroSearchFieldClassName}
-                    />
-                  </>
-                )}
-
-                <button type="submit" className={heroSearchButtonClassName}>
-                  <Search size={16} />
-                  {searchLabel}
-                </button>
+                <form
+                  onSubmit={handleSearchSubmit}
+                  className={cn(
+                    heroSearchFormClassName,
+                    'relative z-10 flex max-h-full w-full max-w-lg flex-col overflow-hidden',
+                  )}
+                >
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                    {renderSearchTabs('mobile')}
+                    {renderSearchFields({
+                      idPrefix: 'hero-mobile-search',
+                      dateOpenDirection: 'down',
+                      gridClassName: heroMobileGridClassName,
+                    })}
+                  </div>
+                </form>
               </div>
-            </form>
-          </div>
+            )}
+          </>
         )}
         <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden flex-col items-center animate-bounce text-white/70">
           <span className="font-label-sm text-label-sm mb-2">{scrollLabel}</span>
