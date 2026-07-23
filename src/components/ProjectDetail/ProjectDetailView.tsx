@@ -282,7 +282,7 @@ export const ProjectDetailView: React.FC<Props> = ({
         />
       )}
 
-      <ProjectDetailRelated projects={relatedProjects} loading={similarProjectsLoading} />
+      {/* <ProjectDetailRelated projects={relatedProjects} loading={similarProjectsLoading} /> */}
     </main>
   )
 }
