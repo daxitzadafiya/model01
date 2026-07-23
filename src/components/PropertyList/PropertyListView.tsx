@@ -27,6 +27,7 @@ import {
   normalizeCRMListProperty,
   resolveListingModeFromPreset,
   type CRMListingPreset,
+  type NormalizedListProperty,
   type PropertyListFilters,
 } from '@/utilities/crmProperties'
 import {
@@ -49,7 +50,8 @@ import {
   appendListingContextToDetailHref,
 } from './propertyFilterUrl'
 import {
-  listingPresetToDetailContext,
+  listingContextToListingMode,
+  resolvePropertyDetailListingContext,
   type PropertyDetailListingContext,
 } from '@/utilities/propertyDetailListingContext'
 import { resolveHolidayGuestsFilterCount } from '@/utilities/crmHoliday'
@@ -245,34 +247,42 @@ const PropertyListViewInner: React.FC<Props> = ({
   )
 
   const properties = useMemo(() => {
-    if (isFavoritesProjectsTab || listingPreset === 'projects') return []
+    if (isFavoritesProjectsTab || listingPreset === 'projects') {
+      return [] as Array<
+        NormalizedListProperty & { listingContext?: PropertyDetailListingContext }
+      >
+    }
 
-    const listingMode = resolveListingModeFromPreset(listingPreset)
-    const isHolidayList = listingPreset === 'forHoliday' || hasHolidayListingFilters(appliedFilters)
     const holidayGuestCount = resolveHolidayGuestsFilterCount(
       appliedFilters.guests,
       appliedFilters.guestsCustom,
     )
+    const presetHolidayList =
+      listingPreset === 'forHoliday' || hasHolidayListingFilters(appliedFilters)
 
-    return rawProperties.map((raw) =>
-      normalizeCRMListProperty(raw, activeLocale, {
+    return rawProperties.map((raw) => {
+      const listingContext = resolvePropertyDetailListingContext(listingPreset, raw)
+      const listingMode =
+        listingContextToListingMode(listingContext) ?? resolveListingModeFromPreset(listingPreset)
+      const isHolidayList = listingContext === 'forHoliday' || presetHolidayList
+
+      const normalized = normalizeCRMListProperty(raw, activeLocale, {
         listingMode,
         projectListing: false,
         holidayListing: isHolidayList,
         holidayPeriodFrom: appliedFilters.periodFrom,
         holidayPeriodTo: appliedFilters.periodTo,
         holidayGuests: holidayGuestCount != null ? String(holidayGuestCount) : undefined,
-      }),
-    )
+      })
+
+      return { ...normalized, listingContext }
+    })
   }, [activeLocale, appliedFilters, isFavoritesProjectsTab, listingPreset, rawProperties])
 
   const projects = useMemo(() => {
     if (listingPreset !== 'projects' && !isFavoritesProjectsTab) return []
     return rawProperties.map((raw) => normalizeCRMProject(raw, activeLocale))
   }, [activeLocale, isFavoritesProjectsTab, listingPreset, rawProperties])
-
-  const detailListingContext: PropertyDetailListingContext | undefined =
-    listingPresetToDetailContext(listingPreset)
 
   const sortByLabel = useTranslation('propertyList.filters.sortBy', 'Sort by')
   const showingLabel = useTranslation('propertyList.results.showing', 'Showing')
@@ -759,43 +769,46 @@ const PropertyListViewInner: React.FC<Props> = ({
         </section>
       ) : properties.length > 0 ? (
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-          {properties.map((property) => (
-            <PropertyCard
-              key={property.id ?? property.reference ?? property.title}
-              propertyId={property.id}
-              href={appendListingContextToDetailHref(
-                property.detailHref,
-                detailListingContext,
-                appliedFilters,
-              )}
-              detailListingContext={detailListingContext}
-              property={{
-                imageUrl: property.imageUrl,
-                imageUrls: property.imageUrls,
-                location: property.location,
-                city: property.city,
-                reference: property.reference,
-                title: property.title,
-                beds: property.beds,
-                baths: property.baths,
-                sqft: property.sqft,
-                price: property.price,
-                priceSubtext: property.holidayPriceSummary,
-                statusBadgeLabel: property.statusBadgeLabel,
-              }}
-              statusBadgeLabel={resolvePropertyCardStatusBadge({
-                statusBadgeLabel: property.statusBadgeLabel,
-                forceSoldBadge: Boolean(forceSoldBadge),
-                useCrmStatus: true,
-              })}
-              detailFetchStatuses={resolvePropertyDetailFetchStatuses({
-                crmStatus: property.crmStatus,
-                statusBadgeLabel: property.statusBadgeLabel,
-                forceSold: Boolean(forceSoldBadge),
-              })}
-              variant="surface"
-            />
-          ))}
+          {properties.map((property) => {
+            const cardListingContext = property.listingContext
+            return (
+              <PropertyCard
+                key={property.id ?? property.reference ?? property.title}
+                propertyId={property.id}
+                href={appendListingContextToDetailHref(
+                  property.detailHref,
+                  cardListingContext,
+                  cardListingContext === 'forHoliday' ? appliedFilters : undefined,
+                )}
+                detailListingContext={cardListingContext}
+                property={{
+                  imageUrl: property.imageUrl,
+                  imageUrls: property.imageUrls,
+                  location: property.location,
+                  city: property.city,
+                  reference: property.reference,
+                  title: property.title,
+                  beds: property.beds,
+                  baths: property.baths,
+                  sqft: property.sqft,
+                  price: property.price,
+                  priceSubtext: property.holidayPriceSummary,
+                  statusBadgeLabel: property.statusBadgeLabel,
+                }}
+                statusBadgeLabel={resolvePropertyCardStatusBadge({
+                  statusBadgeLabel: property.statusBadgeLabel,
+                  forceSoldBadge: Boolean(forceSoldBadge),
+                  useCrmStatus: true,
+                })}
+                detailFetchStatuses={resolvePropertyDetailFetchStatuses({
+                  crmStatus: property.crmStatus,
+                  statusBadgeLabel: property.statusBadgeLabel,
+                  forceSold: Boolean(forceSoldBadge),
+                })}
+                variant="surface"
+              />
+            )
+          })}
         </section>
       ) : (
         <div className="mb-20">

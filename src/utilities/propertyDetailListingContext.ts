@@ -52,6 +52,36 @@ export function listingPresetToDetailContext(
   }
 }
 
+/**
+ * Infer detail `?for=` context from CRM flags when the list preset is mixed
+ * (favorites) or otherwise does not imply sale / rent / holiday.
+ * Prefer `st_rental` over long-term `rent` — holiday listings often set both.
+ */
+export function resolveDetailListingContextFromProperty(
+  property: Record<string, unknown>,
+): PropertyDetailListingContext | undefined {
+  if (isCRMTruthy(property.st_rental)) return 'forHoliday'
+  if (isCRMTruthy(property.lt_rental) || isCRMTruthy(property.rent)) return 'forRent'
+  if (isCRMTruthy(property.sale)) return 'forSale'
+  return undefined
+}
+
+/** Preset context when available; otherwise infer from the property record. */
+export function resolvePropertyDetailListingContext(
+  preset: string | undefined,
+  property: Record<string, unknown>,
+): PropertyDetailListingContext | undefined {
+  return listingPresetToDetailContext(preset) ?? resolveDetailListingContextFromProperty(property)
+}
+
+export function listingContextToListingMode(
+  listingContext: PropertyDetailListingContext | undefined,
+): 'sale' | 'rent' | undefined {
+  if (listingContext === 'forHoliday' || listingContext === 'forRent') return 'rent'
+  if (listingContext === 'forSale' || listingContext === 'forSold') return 'sale'
+  return undefined
+}
+
 /** Parse `?for=` on property detail URLs (`holiday_rental`, `rental`, `sales`, `sold`). */
 export function parsePropertyDetailForQuery(
   value: string | null | undefined,
