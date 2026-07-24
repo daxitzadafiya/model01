@@ -5,6 +5,8 @@ import type { User } from '@/payload-types'
 
 /**
  * Ensures the website admin user exists with the admin role.
+ * Only creates the admin if it does not already exist.
+ * It will NOT overwrite the password or other fields on every startup.
  */
 export async function ensureAdminUser(payload: Payload): Promise<void> {
   const { email, password } = getAdminCredentials()
@@ -21,6 +23,14 @@ export async function ensureAdminUser(payload: Payload): Promise<void> {
     },
   })
 
+  payload.logger.info('Existing admin user...')
+  console.dir(existing, { depth: null })
+
+  if (existing.docs.length > 0) {
+    payload.logger.info('Admin already exists. Skipping creation.')
+    return
+  }
+
   const adminData: Pick<User, 'email' | 'name' | 'password' | 'roles'> = {
     email,
     name: 'Admin',
@@ -28,23 +38,12 @@ export async function ensureAdminUser(payload: Payload): Promise<void> {
     roles: ['admin'],
   }
 
-  payload.logger.info('Existing admin user...')
-  console.dir(existing, { depth: null })
+  payload.logger.info('Creating admin...')
 
-  if (existing.docs.length === 0) {
-    payload.logger.info('Creating admin...')
-    await payload.create({
-      collection: 'users',
-      data: adminData,
-    })
-    return
-  }
-
-  payload.logger.info('Updating admin...')
-
-  await payload.update({
+  await payload.create({
     collection: 'users',
-    id: existing.docs[0].id,
     data: adminData,
   })
+
+  payload.logger.info('Admin user created successfully.')
 }
