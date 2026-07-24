@@ -9,6 +9,8 @@ import type { User } from '@/payload-types'
 export async function ensureAdminUser(payload: Payload): Promise<void> {
   const { email, password } = getAdminCredentials()
 
+  payload.logger.info('Checking admin user...')
+
   const existing = await payload.find({
     collection: 'users',
     limit: 1,
@@ -26,13 +28,19 @@ export async function ensureAdminUser(payload: Payload): Promise<void> {
     roles: ['admin'],
   }
 
+  payload.logger.info('Existing admin user...')
+  console.dir(existing, { depth: null })
+
   if (existing.docs.length === 0) {
+    payload.logger.info('Creating admin...')
     await payload.create({
       collection: 'users',
       data: adminData,
     })
     return
   }
+
+  payload.logger.info('Updating admin...')
 
   await payload.update({
     collection: 'users',

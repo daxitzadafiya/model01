@@ -54,10 +54,18 @@ export default buildConfig({
 
   email: emailAdapter,
   onInit: async (payload) => {
+    payload.logger.info('=== onInit called ===')
+    payload.logger.info(`DATABASE_URL: ${process.env.DATABASE_URL}`)
+    payload.logger.info(`ADMIN_EMAIL: ${process.env.ADMIN_EMAIL}`)
+    payload.logger.info(`ADMIN_PASSWORD length: ${process.env.ADMIN_PASSWORD?.length}`)
+    payload.logger.info(`NODE_ENV: ${process.env.NODE_ENV}`)
+    payload.logger.info(`ADMIN_PASSWORD length: ${process.env.ADMIN_PASSWORD}`)
+
     // Skip during `next build` — workers initialize Payload in parallel and SQLite locks
     if (process.env.NEXT_PHASE === 'phase-production-build') return
 
     if (hasAdminCredentials()) {
+      payload.logger.info('=== hasAdminCredentials ===')
       await ensureAdminUser(payload)
     }
   },
