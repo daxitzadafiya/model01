@@ -132,13 +132,13 @@ export async function buildLayoutPatches(
     const targetBlock = targetLayout ? findBlockById(targetLayout, sourceBlock.id) : undefined
 
     const sourceStrings = collectBlockStringFingerprints(sourceBlock)
-    const previousStrings = previousBlock ? collectBlockStringFingerprints(previousBlock) : new Map()
+    const previousStrings = previousBlock
+      ? collectBlockStringFingerprints(previousBlock)
+      : new Map()
     const targetStrings = targetBlock ? collectBlockStringFingerprints(targetBlock) : new Map()
 
     const sourceRichText = collectBlockRichTextValues(sourceBlock)
-    const previousRichText = previousBlock
-      ? collectBlockRichTextValues(previousBlock)
-      : new Map()
+    const previousRichText = previousBlock ? collectBlockRichTextValues(previousBlock) : new Map()
     const targetRichText = targetBlock ? collectBlockRichTextValues(targetBlock) : new Map()
 
     const blockPatches = new Map<string, LayoutFieldPatch>()

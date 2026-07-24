@@ -84,11 +84,15 @@ export async function autoTranslatePageLayout({
       targetDoc = null
     }
 
-    const baseLayout = targetDoc?.layout ?? sourceLayout
+    // Use the real target locale layout for "already translated?" checks.
+    // Falling back to sourceLayout here would treat English copy as existing
+    // translations and skip filling empty locales.
+    const targetLayout = targetDoc?.layout ?? null
+    const baseLayout = targetLayout ?? sourceLayout
     const patches = await buildLayoutPatches(
       sourceLayout,
       previousDoc?.layout,
-      baseLayout,
+      targetLayout,
       translate,
       targetLocale,
     )

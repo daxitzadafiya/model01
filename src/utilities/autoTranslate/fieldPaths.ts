@@ -181,19 +181,89 @@ function walkCollectRichText(
   return walkCollectRichText(nextNode, rest, nextPrefix)
 }
 
-function descendOrCreate(current: unknown, key: string): Record<string, unknown> | null {
-  if (!current || typeof current !== 'object' || Array.isArray(current)) return null
+/**
+ * Walk one path token while preparing to set a value.
+ * When the next token is an array selector, preserves existing arrays
+ * instead of replacing them with `{}` (which broke stats[].label patches).
+ */
+function descendForSet(
+  current: unknown,
+  token: PathToken,
+  nextToken: PathToken | undefined,
+): unknown | null {
+  if (token.type === 'key') {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) return null
 
-  const record = current as Record<string, unknown>
-  const next = record[key]
+    const record = current as Record<string, unknown>
+    const existing = record[token.name]
 
-  if (next && typeof next === 'object' && !Array.isArray(next)) {
-    return next as Record<string, unknown>
+    if (nextToken?.type === 'array') {
+      if (Array.isArray(existing)) return existing
+
+      if (existing == null) {
+        const created: Record<string, unknown>[] = []
+        record[token.name] = created
+        return created
+      }
+
+      return null
+    }
+
+    if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
+      return existing
+    }
+
+    if (Array.isArray(existing)) return null
+
+    const created: Record<string, unknown> = {}
+    record[token.name] = created
+    return created
   }
 
+  if (!Array.isArray(current)) return null
+
+  const existingItem = resolveArrayItem(current, token.selector)
+  if (existingItem) return existingItem
+
   const created: Record<string, unknown> = {}
-  record[key] = created
+  const asIndex = Number(token.selector)
+
+  if (Number.isInteger(asIndex) && asIndex >= 0 && String(asIndex) === token.selector) {
+    while (current.length < asIndex) {
+      current.push({})
+    }
+    current[asIndex] = created
+  } else {
+    created.id = token.selector
+    current.push(created)
+  }
+
   return created
+}
+
+function setAtCanonicalPath(
+  root: Record<string, unknown>,
+  canonicalPath: string,
+  value: unknown,
+): boolean {
+  const tokens = tokenizeCanonicalPath(canonicalPath)
+  if (tokens.length === 0) return false
+
+  let current: unknown = root
+
+  for (let index = 0; index < tokens.length - 1; index++) {
+    const next = descendForSet(current, tokens[index], tokens[index + 1])
+    if (next == null) return false
+    current = next
+  }
+
+  const last = tokens[tokens.length - 1]
+  if (last.type !== 'key' || !current || typeof current !== 'object' || Array.isArray(current)) {
+    return false
+  }
+
+  ;(current as Record<string, unknown>)[last.name] = value
+  return true
 }
 
 export function setLocalizedString(
@@ -201,32 +271,7 @@ export function setLocalizedString(
   canonicalPath: string,
   value: string,
 ): boolean {
-  const tokens = tokenizeCanonicalPath(canonicalPath)
-  if (tokens.length === 0) return false
-
-  let current: unknown = root
-
-  for (let index = 0; index < tokens.length - 1; index++) {
-    const token = tokens[index]
-
-    if (token.type === 'key') {
-      const next = descendOrCreate(current, token.name)
-      if (!next) return false
-      current = next
-      continue
-    }
-
-    if (!Array.isArray(current)) return false
-    current = resolveArrayItem(current, token.selector)
-  }
-
-  const last = tokens[tokens.length - 1]
-  if (last.type !== 'key' || !current || typeof current !== 'object' || Array.isArray(current)) {
-    return false
-  }
-
-  ;(current as Record<string, unknown>)[last.name] = value
-  return true
+  return setAtCanonicalPath(root, canonicalPath, value)
 }
 
 export function setLocalizedRichText(
@@ -234,32 +279,7 @@ export function setLocalizedRichText(
   canonicalPath: string,
   value: Record<string, unknown>,
 ): boolean {
-  const tokens = tokenizeCanonicalPath(canonicalPath)
-  if (tokens.length === 0) return false
-
-  let current: unknown = root
-
-  for (let index = 0; index < tokens.length - 1; index++) {
-    const token = tokens[index]
-
-    if (token.type === 'key') {
-      const next = descendOrCreate(current, token.name)
-      if (!next) return false
-      current = next
-      continue
-    }
-
-    if (!Array.isArray(current)) return false
-    current = resolveArrayItem(current, token.selector)
-  }
-
-  const last = tokens[tokens.length - 1]
-  if (last.type !== 'key' || !current || typeof current !== 'object' || Array.isArray(current)) {
-    return false
-  }
-
-  ;(current as Record<string, unknown>)[last.name] = value
-  return true
+  return setAtCanonicalPath(root, canonicalPath, value)
 }
 
 export function indexLocalizedStrings(

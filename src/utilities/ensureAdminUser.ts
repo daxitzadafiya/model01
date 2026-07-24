@@ -24,8 +24,6 @@ export async function ensureAdminUser(payload: Payload): Promise<void> {
   })
 
   payload.logger.info('Existing admin user...')
-  console.dir(existing, { depth: null })
-
   if (existing.docs.length > 0) {
     payload.logger.info('Admin already exists. Skipping creation.')
     return

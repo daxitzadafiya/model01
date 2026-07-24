@@ -1,12 +1,17 @@
-import type { CollectionAfterChangeHook } from 'payload'
+import type { CollectionAfterChangeHook, PayloadRequest } from 'payload'
 
 import { defaultLocale } from '@/i18n/locales'
 import type { Post } from '@/payload-types'
 import { enqueueAutoTranslate } from '@/utilities/autoTranslate/autoTranslateQueue'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
-import { documentLocalizedFieldsChanged } from '@/utilities/autoTranslate/documentTranslate'
+import { documentHasSourceTranslatableContent } from '@/utilities/autoTranslate/documentTranslate'
 import { POST_FIELD_REGISTRY } from '@/utilities/autoTranslate/postFieldRegistry'
 import { runDeferredPostAutoTranslate } from '@/utilities/autoTranslate/runDeferredPostAutoTranslate'
+
+function isAutosaveRequest(req: PayloadRequest): boolean {
+  const value = req.query?.autosave
+  return value === true || value === 'true'
+}
 
 export const autoTranslatePostContent: CollectionAfterChangeHook<Post> = async ({
   doc,
@@ -15,14 +20,14 @@ export const autoTranslatePostContent: CollectionAfterChangeHook<Post> = async (
   context,
 }) => {
   if (isAutoTranslating(context)) return doc
+  if (isAutosaveRequest(req)) return doc
 
   const sourceLocale = (req.locale ?? defaultLocale).trim().toLowerCase()
   if (sourceLocale !== defaultLocale) return doc
 
   if (
-    !documentLocalizedFieldsChanged(
+    !documentHasSourceTranslatableContent(
       doc as unknown as Record<string, unknown>,
-      previousDoc as unknown as Record<string, unknown> | undefined,
       POST_FIELD_REGISTRY,
     )
   ) {
