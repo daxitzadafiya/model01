@@ -72,7 +72,9 @@ export type HolidayPriceDisplay = {
 }
 
 export const HOLIDAY_SELECT_DATES_LABEL = 'Select dates for price'
-export const HOLIDAY_PRICE_ON_DEMAND_LABEL = 'Price on demand'
+/** Canonical English label — translate at display time via `useTranslation`. */
+export const PRICE_ON_DEMAND_LABEL = 'Price on demand'
+export const HOLIDAY_PRICE_ON_DEMAND_LABEL = PRICE_ON_DEMAND_LABEL
 
 /** Active `rental_seasons` nightly rate for a given date (defaults to today). */
 export const resolveSeasonNightlyRateForDate = (

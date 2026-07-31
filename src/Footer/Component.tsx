@@ -4,8 +4,10 @@ import Link from 'next/link'
 import React from 'react'
 import { Mail, MapPin, Phone } from 'lucide-react'
 
-import { CMSLink } from '@/components/Link'
+import { CMSLink, getCMSLinkHref } from '@/components/Link'
 import { Logo } from '@/components/Logo/Logo'
+import { Media } from '@/components/Media'
+import { SocialIcon } from '@/components/SocialIcon'
 import { getLogoSources } from '@/components/Logo/getLogoSources'
 import { DEFAULT_APP_NAME, getAppName } from '@/utilities/getAppName'
 import {
@@ -14,7 +16,7 @@ import {
   DEFAULT_POWERED_BY_URL,
   DEFAULT_RIGHTS_RESERVED,
 } from '@/Footer/formatCopyright'
-import { SocialIcon } from '@/components/SocialIcon'
+import type { Media as MediaType } from '@/payload-types'
 
 export async function Footer() {
   const { locale } = await getActiveLocale()
@@ -33,6 +35,8 @@ export async function Footer() {
   const contact = footerData?.contact
   const certificationsTitle = footerData?.certificationsTitle ?? 'CERTIFICATIONS'
   const certifications = footerData?.certifications ?? []
+  const certificationsHref = getCMSLinkHref(footerData?.certificationsLink ?? {})
+  const certificationsNewTab = Boolean(footerData?.certificationsLink?.newTab)
   const rightsReserved = footerData?.copyrightText ?? DEFAULT_RIGHTS_RESERVED
   const poweredByText = footerData?.poweredBy?.text ?? DEFAULT_POWERED_BY_TEXT
   const poweredByLinkLabel =
@@ -42,18 +46,14 @@ export async function Footer() {
   const legalLinks = footerData?.legalLinks ?? []
 
   return (
-    <footer className="bg-primary py-12 md:py-16 text-on-primary-fixed reveal active">
+    <footer className="bg-primary py-12 md:py-16 text-on-primary reveal active">
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 md:gap-gutter">
         <div className="sm:col-span-2 md:col-span-1">
           <Link className="inline-block mb-4 md:mb-8" href="/">
-            <Logo
-              className="max-w-[14rem] sm:max-w-[16rem] md:max-w-[19rem]"
-              onDarkBackground
-              sources={logoSources}
-            />
+            <Logo placement="footer" onDarkBackground sources={logoSources} />
           </Link>
           {tagline && (
-            <p className="font-body-md text-body-md text-on-primary-fixed-variant mb-6 md:mb-8 max-w-md">
+            <p className="font-body-md text-body-md text-on-primary mb-6 md:mb-8 max-w-md">
               {tagline}
             </p>
           )}
@@ -84,7 +84,7 @@ export async function Footer() {
               {navItems.map(({ link }, i) => (
                 <li key={i}>
                   <CMSLink
-                    className="hover:text-tertiary transition-colors text-white"
+                    className="hover:text-tertiary transition-colors text-on-primary"
                     {...link}
                   />
                 </li>
@@ -101,7 +101,7 @@ export async function Footer() {
           {(contact?.phone || contact?.email || contact?.address) && (
             <ul className="space-y-3 md:space-y-4 font-body-md text-body-md">
               {contact?.phone && (
-                <li className="flex items-center gap-3 text-white">
+                <li className="flex items-center gap-3 text-on-primary">
                   <Phone className="text-tertiary shrink-0" size={18} strokeWidth={2} />
                   <a
                     className="hover:text-surface-bright transition-colors"
@@ -112,7 +112,7 @@ export async function Footer() {
                 </li>
               )}
               {contact?.email && (
-                <li className="flex items-center gap-3 text-white">
+                <li className="flex items-center gap-3 text-on-primary">
                   <Mail className="text-tertiary shrink-0" size={18} strokeWidth={2} />
                   <a
                     className="hover:text-surface-bright transition-colors"
@@ -123,7 +123,7 @@ export async function Footer() {
                 </li>
               )}
               {contact?.address && (
-                <li className="flex items-start gap-3 text-white">
+                <li className="flex items-start gap-3 text-on-primary">
                   <MapPin className="text-tertiary shrink-0" size={18} strokeWidth={2} />
                   {contact.address}
                 </li>
@@ -138,30 +138,58 @@ export async function Footer() {
             </h4>
           )}
           {certifications.length > 0 && (
-            <div className="flex flex-wrap gap-4">
-              {certifications.map(({ icon, id }, i) => (
-                <div
-                  key={id || i}
-                  className="bg-white/10 w-14 h-14 md:w-16 md:h-16 rounded flex items-center justify-center opacity-50 grayscale text-white"
-                >
-                  <SocialIcon className="text-white" name={icon} size={24} />
-                </div>
-              ))}
+            <div className="grid grid-cols-2 gap-3 w-full">
+              {certifications.map(({ image, label, id }, i) => {
+                const media = typeof image === 'object' && image !== null ? (image as MediaType) : null
+                if (!media) return null
+
+                const alt = label || media.alt || 'Certification'
+                const badge = (
+                  <div className="relative aspect-4/3 w-full overflow-hidden rounded-sm bg-white shadow-sm transition-opacity hover:opacity-90">
+                    <Media
+                      resource={media}
+                      alt={alt}
+                      fill
+                      imgClassName=""
+                      className="absolute inset-0"
+                    />
+                  </div>
+                )
+
+                if (!certificationsHref) {
+                  return (
+                    <div key={id || i}>{badge}</div>
+                  )
+                }
+
+                return (
+                  <Link
+                    key={id || i}
+                    href={certificationsHref}
+                    target={certificationsNewTab ? '_blank' : undefined}
+                    rel={certificationsNewTab ? 'noopener noreferrer' : undefined}
+                    aria-label={alt}
+                    className="block"
+                  >
+                    {badge}
+                  </Link>
+                )
+              })}
             </div>
           )}
         </div>
       </div>
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-12 md:mt-20 pt-6 md:pt-8 border-t border-on-primary-fixed-variant/20 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-12 md:mt-20 pt-6 md:pt-8 border-t border-on-primary/20 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
         <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1">
           {rightsReserved && (
-            <p className="font-label-sm text-label-sm text-on-primary-fixed-variant uppercase">
+            <p className="font-label-sm text-label-sm text-on-primary uppercase">
               © {new Date().getFullYear()}{' '}
               <span className="text-tertiary">{appName || DEFAULT_APP_NAME}</span>.{' '}
               {rightsReserved || DEFAULT_RIGHTS_RESERVED}
             </p>
           )}
           {showPoweredBy && (
-            <p className="font-label-sm text-label-sm text-on-primary-fixed-variant">
+            <p className="font-label-sm text-label-sm text-on-primary">
               {poweredByText.trim()}{' '}
               <a
                 className="text-tertiary hover:text-surface-bright transition-colors"
@@ -175,7 +203,7 @@ export async function Footer() {
           )}
         </div>
         {legalLinks.length > 0 && (
-          <div className="flex flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 md:gap-6 font-label-sm text-label-sm text-white">
+          <div className="flex flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 md:gap-6 font-label-sm text-label-sm text-on-primary">
             {legalLinks.map(({ link }, i) => (
               <CMSLink key={i} className="hover:text-tertiary" {...link} />
             ))}

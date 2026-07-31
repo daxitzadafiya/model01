@@ -240,6 +240,7 @@ const MapContent: React.FC<Props> = ({ locations, center, defaultZoom = 6, heigh
   const activeLocationRef = useRef<ContactOfficeLocation | null>(null)
   const pinnedLocationKeyRef = useRef<string | null>(null)
   const suppressMapClickRef = useRef(false)
+  const mapSectionRef = useRef<HTMLDivElement>(null)
 
   const zoom = typeof defaultZoom === 'number' && Number.isFinite(defaultZoom) ? defaultZoom : 6
 
@@ -314,8 +315,30 @@ const MapContent: React.FC<Props> = ({ locations, center, defaultZoom = 6, heigh
     }
   }, [closeLocation])
 
+  // Close pin/hover popup when the map leaves the viewport (e.g. user scrolls up).
+  useEffect(() => {
+    const el = mapSectionRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) {
+          closeLocation()
+        }
+      },
+      { threshold: 0, rootMargin: '0px' },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [closeLocation])
+
   return (
-    <div style={{ height: height ?? 500 }} className="relative isolate w-full overflow-hidden">
+    <div
+      ref={mapSectionRef}
+      style={{ height: height ?? 500 }}
+      className="relative isolate w-full overflow-hidden"
+    >
       <Map
         defaultCenter={center}
         defaultZoom={zoom}

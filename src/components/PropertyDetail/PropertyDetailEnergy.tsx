@@ -6,6 +6,8 @@ import { PropertyDetailIcon } from '@/components/PropertyDetail/PropertyDetailIc
 import {
   ENERGY_GRADE_STYLES,
   ENERGY_GRADES,
+  ENERGY_NOT_AVAILABLE_LABEL,
+  ENERGY_PENDING_LABEL,
   type CRMPropertyEnergy,
   type EnergyGrade,
   type EnergyGradeStyle,
@@ -66,7 +68,11 @@ const EnergyGradeBar: React.FC<EnergyGradeBarProps> = ({ grade, style, isActive 
 
 export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
   const heading = useTranslation('propertyDetail.energy.heading', 'Energy Efficiency')
-  const pendingLabel = useTranslation('propertyDetail.energy.pending', 'Pending')
+  const pendingLabel = useTranslation('propertyDetail.energy.pending', ENERGY_PENDING_LABEL)
+  const notAvailableLabel = useTranslation(
+    'propertyDetail.energy.notAvailable',
+    ENERGY_NOT_AVAILABLE_LABEL,
+  )
   const ratingScaleLabel = useTranslation(
     'propertyDetail.energy.ratingScale',
     'Energy Rating Scale',
@@ -85,6 +91,13 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
 
   const consumption = formatMetric(energy.consumption)
   const emissions = formatMetric(energy.emissions)
+  const emptyStatusRaw = energy.statusMessage || energy.certificate
+  const emptyStatusDisplay =
+    emptyStatusRaw === ENERGY_PENDING_LABEL
+      ? pendingLabel
+      : emptyStatusRaw === ENERGY_NOT_AVAILABLE_LABEL
+        ? notAvailableLabel
+        : emptyStatusRaw || pendingLabel
 
   return (
     <div className="mt-24 border-t border-outline-variant/30 pt-12">
@@ -94,7 +107,7 @@ export const PropertyDetailEnergy: React.FC<Props> = ({ energy }) => {
         {energy.isEmpty ? (
           <div className="py-10 text-center">
             <p className="text-label-sm font-label-sm uppercase tracking-[0.2em] text-on-surface-variant">
-              {energy.statusMessage || energy.certificate || pendingLabel}
+              {emptyStatusDisplay}
             </p>
           </div>
         ) : (

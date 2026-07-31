@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
-import { Outfit, EB_Garamond } from 'next/font/google'
+import { EB_Garamond, Outfit } from 'next/font/google'
 import React from 'react'
 
 const outfit = Outfit({
@@ -19,6 +19,8 @@ const ebGaramond = EB_Garamond({
 })
 
 import { CookieConsent } from '@/components/CookieConsent'
+import { VirtualAssistantScript } from '@/components/VirtualAssistantScript'
+import { WhatsAppFloatingButton } from '@/components/WhatsAppFloatingButton'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
@@ -33,6 +35,7 @@ import { getCachedGlobal } from '@/utilities/getGlobals'
 import { getPublicIntegrationsSettings } from '@/settings/integrations/server'
 import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { resolveThemeCustomCSS } from '@/globals/Theme/siteThemeTokens.mjs'
+import { resolveThemeFontVars } from '@/globals/Theme/googleFonts'
 import { getServerSideURL } from '@/utilities/getURL'
 
 export const viewport: Viewport = {
@@ -85,6 +88,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {children}
           <Footer />
           <CookieConsent />
+          <WhatsAppFloatingButton settings={integrationsSettings.whatsapp} />
+          <VirtualAssistantScript settings={integrationsSettings.virtualAssistant} />
         </Providers>
       </body>
     </html>
@@ -94,6 +99,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 async function ThemeStyles() {
   const payload = await getPayload({ config: configPromise })
   let customCSS: string | null = null
+  let fontMode: string | null = null
+  let googleFonts: Array<{ family?: string | null; active?: boolean | null }> | null = null
 
   try {
     const theme = await payload.findGlobal({
@@ -101,14 +108,27 @@ async function ThemeStyles() {
       depth: 0,
     })
     customCSS = theme.customCSS ?? null
+    fontMode = theme.fontMode ?? null
+    googleFonts = theme.googleFonts ?? null
   } catch (error) {
     console.error('Error fetching Theme global:', error)
   }
 
   // Normalize CRLF so SSR/client style text stays identical.
   const css = resolveThemeCustomCSS(customCSS).replace(/\r\n/g, '\n')
+  const resolvedFonts = resolveThemeFontVars({ fontMode, googleFonts })
+  const fontCSS = `:root {\n  --font-theme-body: ${resolvedFonts.body};\n  --font-theme-headline: ${resolvedFonts.headline};\n}\n`
 
   return (
-    <style href="site-theme" precedence="high" dangerouslySetInnerHTML={{ __html: css }} />
+    <>
+      {resolvedFonts.stylesheetUrl ? (
+        <link href={resolvedFonts.stylesheetUrl} rel="stylesheet" precedence="high" />
+      ) : null}
+      <style
+        href="site-theme"
+        precedence="high"
+        dangerouslySetInnerHTML={{ __html: `${fontCSS}${css}` }}
+      />
+    </>
   )
 }

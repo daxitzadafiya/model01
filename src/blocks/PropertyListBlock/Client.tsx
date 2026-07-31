@@ -3,7 +3,7 @@
 import React, { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
-import type { Page } from '@/payload-types'
+import type { Form, Page } from '@/payload-types'
 
 import { PropertyListView } from '@/components/PropertyList/PropertyListView'
 import {
@@ -16,7 +16,9 @@ import type { CRMListingPreset } from '@/utilities/crmProperties'
 export type PropertyListBlockClientProps = Extract<
   Page['layout'][0],
   { blockType: 'propertyListBlock' }
->
+> & {
+  contactForm?: Form | null
+}
 
 type Props = PropertyListBlockClientProps & {
   children: React.ReactNode
@@ -39,6 +41,7 @@ export const PropertyListBlockClient: React.FC<Props> = ({
   emptyStateNoResultsTitle,
   emptyStateNoResultsDescription,
   listingKey = '',
+  contactForm,
   children,
 }) => {
   const preset = (listingPreset ?? 'forSale') as CRMListingPreset
@@ -94,6 +97,7 @@ export const PropertyListBlockClient: React.FC<Props> = ({
           initialData={initialData}
           listingKey={listingKey}
           serverManaged={preset !== 'favorites'}
+          contactForm={contactForm}
         />
         {children}
       </PropertyListServerDataProvider>

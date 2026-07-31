@@ -39,6 +39,14 @@ type Props = {
   defaultFieldValues?: Record<string, string>
   /** Stack all fields in a single column (property detail sidebar). */
   singleColumn?: boolean
+  /** Field names to skip rendering (still send via hiddenFields if provided). */
+  omitFields?: string[]
+  /** Hide the form title/heading (e.g. when the parent modal already has one). */
+  hideHeading?: boolean
+  /** Skip the form's confirmationMessage rich text (avoids duplicating custom success copy). */
+  hideConfirmationMessage?: boolean
+  /** Tighter spacing for modal layouts. */
+  compact?: boolean
 }
 
 export const ContactForm: React.FC<Props> = ({
@@ -56,6 +64,10 @@ export const ContactForm: React.FC<Props> = ({
   hiddenFields,
   defaultFieldValues,
   singleColumn = false,
+  omitFields,
+  hideHeading = false,
+  hideConfirmationMessage = false,
+  compact = false,
 }) => {
   const {
     id: formID,
@@ -150,14 +162,26 @@ export const ContactForm: React.FC<Props> = ({
   return (
     <FormProvider {...formMethods}>
       {!isLoading && hasSubmitted && confirmationType === 'message' && (
-        <div className="relative overflow-hidden rounded-2xl border border-outline-variant/40 bg-white px-6 py-10 md:px-8 md:py-12">
+        <div
+          className={
+            compact
+              ? 'relative overflow-hidden rounded-xl border border-outline-variant/40 bg-white px-4 py-6'
+              : 'relative overflow-hidden rounded-2xl border border-outline-variant/40 bg-white px-6 py-10 md:px-8 md:py-12'
+          }
+        >
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-tertiary/5 to-transparent" />
           <div className="pointer-events-none absolute -right-12 bottom-0 h-44 w-44 rounded-full border-22 border-tertiary/10" />
           <div className="pointer-events-none absolute -left-16 -bottom-14 h-36 w-56 rounded-[100%] border border-tertiary/10" />
 
           <div className="relative z-10 text-center">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-tertiary text-white shadow-sm">
-              <Check size={30} strokeWidth={2.5} />
+            <div
+              className={
+                compact
+                  ? 'mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-tertiary text-white shadow-sm'
+                  : 'mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-tertiary text-white shadow-sm'
+              }
+            >
+              <Check size={compact ? 24 : 30} strokeWidth={2.5} />
             </div>
 
             {(successTitle || successSubtitle || successThanks) && (
@@ -178,7 +202,7 @@ export const ContactForm: React.FC<Props> = ({
               </div>
             )}
 
-            {confirmationMessage && (
+            {!hideConfirmationMessage && confirmationMessage && (
               <RichText
                 className="mx-auto mt-3 max-w-md [&_h1]:font-headline-md [&_h1]:text-headline-md [&_h1]:text-primary [&_h2]:font-headline-md [&_h2]:text-headline-md [&_h2]:text-primary [&_p]:mt-2 [&_p]:font-body-md [&_p]:text-body-md [&_p]:text-on-surface-variant"
                 data={confirmationMessage}
@@ -188,8 +212,14 @@ export const ContactForm: React.FC<Props> = ({
 
             {enableResubmit && (
               <>
-                <div className="mx-auto mt-6 h-px w-full max-w-md bg-outline-variant/50" />
-                <div className="mt-6 flex justify-center">
+                <div
+                  className={
+                    compact
+                      ? 'mx-auto mt-4 h-px w-full max-w-md bg-outline-variant/50'
+                      : 'mx-auto mt-6 h-px w-full max-w-md bg-outline-variant/50'
+                  }
+                />
+                <div className={compact ? 'mt-4 flex justify-center' : 'mt-6 flex justify-center'}>
                   <button
                     className="inline-flex items-center gap-2 rounded-full cursor-pointer border border-tertiary/50 px-8 py-3 font-label-nav text-label-nav uppercase tracking-[0.14em] text-tertiary transition hover:bg-tertiary hover:text-white"
                     type="button"
@@ -207,7 +237,7 @@ export const ContactForm: React.FC<Props> = ({
       {!hasSubmitted && (
         <form
           key={locale}
-          className="space-y-5"
+          className={compact ? 'space-y-3' : 'space-y-5'}
           id={String(formID)}
           onSubmit={handleSubmit(handleContactSubmit)}
         >
@@ -216,18 +246,25 @@ export const ContactForm: React.FC<Props> = ({
               {eyebrow}
             </p>
           )}
-          {(heading || formTitle) && (
-            <h3 className="font-headline-md text-headline-md text-primary text-center">
-              {heading || translatedFormTitle}
-            </h3>
-          )}
-
-          {(description || heading || formTitle) && (
-            <div className="h-px w-full bg-outline-variant/60" />
+          {!hideHeading && (heading || formTitle) && (
+            <>
+              <h3 className="font-headline-md text-headline-md text-primary text-center">
+                {heading || translatedFormTitle}
+              </h3>
+              {!compact && <div className="h-px w-full bg-outline-variant/60" />}
+            </>
           )}
 
           {description && (
-            <p className="font-body-md text-body-md text-on-surface-variant">{description}</p>
+            <p
+              className={
+                compact
+                  ? 'font-body-sm text-body-sm text-on-surface-variant'
+                  : 'font-body-md text-body-md text-on-surface-variant'
+              }
+            >
+              {description}
+            </p>
           )}
 
           {error && (
@@ -242,12 +279,20 @@ export const ContactForm: React.FC<Props> = ({
           <fieldset
             key={locale}
             className={`m-0 min-w-0 border-0 p-0 ${
-              singleColumn ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-1 gap-4 md:grid-cols-2'
+              singleColumn
+                ? compact
+                  ? 'grid grid-cols-1 gap-2.5'
+                  : 'grid grid-cols-1 gap-4'
+                : compact
+                  ? 'grid grid-cols-1 gap-2.5 md:grid-cols-2'
+                  : 'grid grid-cols-1 gap-4 md:grid-cols-2'
             }`}
             disabled={isLoading}
           >
             {formFields?.map((field, index) => {
               const fieldName = 'name' in field ? field.name : undefined
+              if (fieldName && omitFields?.includes(fieldName)) return null
+
               const fieldDefaultValue =
                 fieldName && defaultFieldValues ? defaultFieldValues[fieldName] : undefined
               const resolvedField =
@@ -295,7 +340,9 @@ export const ContactForm: React.FC<Props> = ({
           </fieldset>
 
           {deferredLocale && recaptchaConfigured && !hasSubmitted && (
-            <div className={`mt-4 w-full max-w-full space-y-2 ${isLoading ? 'pointer-events-none opacity-60' : ''}`}>
+            <div
+              className={`w-full max-w-full space-y-2 ${compact ? 'mt-1' : 'mt-4'} ${isLoading ? 'pointer-events-none opacity-60' : ''}`}
+            >
               <RecaptchaWidget
                 key={`${deferredLocale}-${recaptchaResetKey}`}
                 locale={deferredLocale}
@@ -318,7 +365,9 @@ export const ContactForm: React.FC<Props> = ({
           <button
             aria-busy={isLoading}
             disabled={isLoading}
-            className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-tertiary px-8 py-4 font-label-nav text-label-nav text-white transition ${
+            className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-tertiary font-label-nav text-label-nav text-white transition ${
+              compact ? 'px-6 py-3' : 'px-8 py-4'
+            } ${
               isLoading
                 ? 'cursor-not-allowed opacity-80'
                 : 'cursor-pointer active:scale-95 hover:opacity-90'

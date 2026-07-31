@@ -5,7 +5,7 @@ export type PropertyDetailListingContext = 'forSale' | 'forRent' | 'forHoliday' 
 
 export const PROPERTY_DETAIL_FOR_QUERY_KEY = 'for'
 
-const STORAGE_KEY = 'roumpos:property-detail-listing-context'
+const STORAGE_KEY = 'app:property-detail-listing-context'
 
 const FOR_QUERY_TO_CONTEXT: Record<string, PropertyDetailListingContext> = {
   holiday_rental: 'forHoliday',

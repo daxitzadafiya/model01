@@ -54,9 +54,13 @@ export const parseCityFilter = (value?: string | string[]): string[] => {
 }
 
 export const parseCountryFilter = (value?: string | string[]): string[] => {
-  if (Array.isArray(value)) return value.filter((key) => key && key !== 'all' && key !== 'any')
-  if (value && value !== 'all' && value !== 'any') return [value]
-  return []
+  const keys = Array.isArray(value)
+    ? value.filter((key) => key && key !== 'all' && key !== 'any')
+    : value && value !== 'all' && value !== 'any'
+      ? [value]
+      : []
+  // CRM location-groups only accepts a single country.
+  return keys.slice(0, 1)
 }
 
 export const isCoastFilterActive = (coast?: string[]) => parseCoastFilter(coast).length > 0

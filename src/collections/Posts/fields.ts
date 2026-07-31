@@ -1,5 +1,6 @@
 import type { Field } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
 import {
   BlocksFeature,
   FixedToolbarFeature,
@@ -21,17 +22,18 @@ import {
 } from '@payloadcms/plugin-seo/fields'
 import { slugField } from 'payload'
 
-const EN_ONLY_DEEPL_HINT =
-  'Edit in English only. Other languages refresh via DeepL when English changes on save.'
-
 export const postFields: Field[] = [
   {
     name: 'title',
     type: 'text',
     required: true,
     localized: true,
+    label: a('admin.posts.fields.title', 'Title'),
     admin: {
-      description: EN_ONLY_DEEPL_HINT,
+      description: a(
+        'admin.posts.fields.enOnlyDeepLHint',
+        'Edit in English only. Other languages refresh via DeepL when English changes on save.',
+      ),
     },
   },
   {
@@ -42,16 +44,20 @@ export const postFields: Field[] = [
           {
             name: 'subtitle',
             type: 'textarea',
-            label: 'Subtitle',
+            label: a('admin.posts.fields.subtitle', 'Subtitle'),
             localized: true,
             admin: {
-              description: `Short summary shown on knowledge base cards. If empty, the SEO meta description is used instead. ${EN_ONLY_DEEPL_HINT}`,
+              description: a(
+                'admin.posts.fields.subtitleDescription',
+                'Short summary shown on knowledge base cards. If empty, the SEO meta description is used instead. Edit in English only. Other languages refresh via DeepL when English changes on save.',
+              ),
             },
           },
           {
             name: 'heroImage',
             type: 'upload',
             relationTo: 'media',
+            label: a('admin.posts.fields.heroImage', 'Hero Image'),
           },
           {
             name: 'content',
@@ -72,17 +78,21 @@ export const postFields: Field[] = [
             label: false,
             required: true,
             admin: {
-              description: EN_ONLY_DEEPL_HINT,
+              description: a(
+                'admin.posts.fields.enOnlyDeepLHint',
+                'Edit in English only. Other languages refresh via DeepL when English changes on save.',
+              ),
             },
           },
         ],
-        label: 'Content',
+        label: a('admin.posts.tabs.content', 'Content'),
       },
       {
         fields: [
           {
             name: 'relatedPosts',
             type: 'relationship',
+            label: a('admin.posts.fields.relatedPosts', 'Related Posts'),
             admin: {
               position: 'sidebar',
             },
@@ -99,6 +109,7 @@ export const postFields: Field[] = [
           {
             name: 'categories',
             type: 'relationship',
+            label: a('admin.posts.fields.categories', 'Categories'),
             admin: {
               position: 'sidebar',
             },
@@ -106,11 +117,11 @@ export const postFields: Field[] = [
             relationTo: 'categories',
           },
         ],
-        label: 'Meta',
+        label: a('admin.posts.tabs.meta', 'Meta'),
       },
       {
         name: 'meta',
-        label: 'SEO',
+        label: a('admin.posts.tabs.seo', 'SEO'),
         fields: [
           OverviewField({
             titlePath: 'meta.title',
@@ -136,6 +147,7 @@ export const postFields: Field[] = [
   {
     name: 'publishedAt',
     type: 'date',
+    label: a('admin.posts.fields.publishedAt', 'Published At'),
     admin: {
       date: {
         pickerAppearance: 'dayAndTime',
@@ -156,6 +168,7 @@ export const postFields: Field[] = [
   {
     name: 'authors',
     type: 'relationship',
+    label: a('admin.posts.fields.authors', 'Authors'),
     admin: {
       position: 'sidebar',
     },
@@ -165,6 +178,7 @@ export const postFields: Field[] = [
   {
     name: 'populatedAuthors',
     type: 'array',
+    label: a('admin.posts.fields.populatedAuthors', 'Populated Authors'),
     access: {
       update: () => false,
     },
@@ -176,12 +190,26 @@ export const postFields: Field[] = [
       {
         name: 'id',
         type: 'text',
+        label: a('admin.posts.fields.populatedAuthorId', 'ID'),
       },
       {
         name: 'name',
         type: 'text',
+        label: a('admin.posts.fields.populatedAuthorName', 'Name'),
       },
     ],
   },
-  slugField(),
+  slugField({
+    overrides: (field) => {
+      for (const sub of field.fields) {
+        if ('name' in sub && sub.name === 'slug') {
+          sub.label = a('admin.posts.fields.slug', 'Slug')
+        }
+        if ('name' in sub && sub.name === 'generateSlug') {
+          sub.label = a('admin.posts.fields.generateSlug', 'Generate slug')
+        }
+      }
+      return field
+    },
+  }),
 ]

@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
+import { a } from '@/utilities/adminI18n'
 import { invalidateEmailTransportCache } from '@/email/dynamicEmailTransport'
 import { defaultClientConfirmationContent } from '@/email/defaultClientConfirmationContent'
 import { emailTemplateFields } from '@/fields/emailTemplateFields'
@@ -8,22 +9,24 @@ import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
 export const EmailSettings: GlobalConfig = {
   slug: 'emailSettings',
-  label: 'Email settings',
+  label: a('admin.emailSettings.label', 'Email settings'),
   access: {
     read: authenticated,
     update: authenticated,
   },
   admin: {
-    description:
+    description: a(
+      'admin.emailSettings.description',
       'SMTP credentials, notification recipient, and client confirmation email templates.',
-    group: 'Settings',
+    ),
+    group: a('admin.groups.settings', 'Settings'),
   },
   fields: [
     {
       name: 'enabled',
       type: 'checkbox',
       defaultValue: false,
-      label: 'Enable email sending',
+      label: a('admin.emailSettings.enabled', 'Enable email sending'),
     },
     {
       type: 'tabs',
@@ -32,11 +35,12 @@ export const EmailSettings: GlobalConfig = {
       },
       tabs: [
         {
-          label: 'SMTP & delivery',
+          label: a('admin.emailSettings.tabs.smtpDelivery', 'SMTP & delivery'),
           fields: [
             {
               name: 'smtp',
               type: 'group',
+              label: a('admin.emailSettings.smtp', 'SMTP'),
               fields: [
                 {
                   type: 'row',
@@ -45,9 +49,13 @@ export const EmailSettings: GlobalConfig = {
                       name: 'host',
                       type: 'text',
                       required: true,
+                      label: a('admin.emailSettings.smtp.host', 'Host'),
                       admin: {
                         width: '70%',
-                        description: 'SMTP server hostname (e.g. smtp.gmail.com).',
+                        description: a(
+                          'admin.emailSettings.smtp.host.description',
+                          'SMTP server hostname (e.g. smtp.gmail.com).',
+                        ),
                       },
                     },
                     {
@@ -55,6 +63,7 @@ export const EmailSettings: GlobalConfig = {
                       type: 'number',
                       defaultValue: 587,
                       required: true,
+                      label: a('admin.emailSettings.smtp.port', 'Port'),
                       admin: {
                         width: '30%',
                       },
@@ -65,10 +74,12 @@ export const EmailSettings: GlobalConfig = {
                   name: 'secure',
                   type: 'checkbox',
                   defaultValue: false,
-                  label: 'Use TLS',
+                  label: a('admin.emailSettings.smtp.secure', 'Use TLS'),
                   admin: {
-                    description:
+                    description: a(
+                      'admin.emailSettings.smtp.secure.description',
                       'Enable for implicit TLS on port 465. Leave off for STARTTLS on port 587.',
+                    ),
                   },
                 },
                 {
@@ -78,18 +89,26 @@ export const EmailSettings: GlobalConfig = {
                       name: 'user',
                       type: 'text',
                       required: true,
+                      label: a('admin.emailSettings.smtp.user', 'User'),
                       admin: {
                         width: '50%',
-                        description: 'SMTP username (e.g. your email address for Gmail).',
+                        description: a(
+                          'admin.emailSettings.smtp.user.description',
+                          'SMTP username (e.g. your email address for Gmail).',
+                        ),
                       },
                     },
                     {
                       name: 'password',
                       type: 'text',
                       required: true,
+                      label: a('admin.emailSettings.smtp.password', 'Password'),
                       admin: {
                         width: '50%',
-                        description: 'SMTP password or app-specific password.',
+                        description: a(
+                          'admin.emailSettings.smtp.password.description',
+                          'SMTP password or app-specific password.',
+                        ),
                       },
                     },
                   ],
@@ -99,6 +118,7 @@ export const EmailSettings: GlobalConfig = {
             {
               name: 'sender',
               type: 'group',
+              label: a('admin.emailSettings.sender', 'Sender'),
               fields: [
                 {
                   type: 'row',
@@ -107,9 +127,13 @@ export const EmailSettings: GlobalConfig = {
                       name: 'fromAddress',
                       type: 'email',
                       required: true,
+                      label: a('admin.emailSettings.sender.fromAddress', 'From Address'),
                       admin: {
                         width: '50%',
-                        description: 'From address shown on outgoing emails.',
+                        description: a(
+                          'admin.emailSettings.sender.fromAddress.description',
+                          'From address shown on outgoing emails.',
+                        ),
                       },
                     },
                     {
@@ -117,9 +141,13 @@ export const EmailSettings: GlobalConfig = {
                       type: 'text',
                       required: true,
                       defaultValue: 'Horizon Estates',
+                      label: a('admin.emailSettings.sender.fromName', 'From Name'),
                       admin: {
                         width: '50%',
-                        description: 'From name shown on outgoing emails.',
+                        description: a(
+                          'admin.emailSettings.sender.fromName.description',
+                          'From name shown on outgoing emails.',
+                        ),
                       },
                     },
                   ],
@@ -134,10 +162,12 @@ export const EmailSettings: GlobalConfig = {
                   name: 'recipientAddress',
                   type: 'email',
                   required: true,
-                  label: 'Notification recipient',
+                  label: a('admin.emailSettings.notifications.recipientAddress', 'Notification recipient'),
                   admin: {
-                    description:
+                    description: a(
+                      'admin.emailSettings.notifications.recipientAddress.description',
                       'Where contact, property inquiry, and holiday booking notifications are delivered (your team inbox).',
+                    ),
                   },
                 },
               ],
@@ -145,9 +175,11 @@ export const EmailSettings: GlobalConfig = {
           ],
         },
         {
-          label: 'Customize client email template',
-          description:
+          label: a('admin.emailSettings.tabs.clientTemplate', 'Customize client email template'),
+          description: a(
+            'admin.emailSettings.tabs.clientTemplate.description',
             'Automated thank-you email sent to the visitor after form submission. Use the locale switcher in the admin bar to edit English, Spanish, German, and other languages — like the language tabs in your CRM.',
+          ),
           fields: [
             {
               name: 'clientConfirmation',
@@ -157,12 +189,15 @@ export const EmailSettings: GlobalConfig = {
                   name: 'enabled',
                   type: 'checkbox',
                   defaultValue: true,
-                  label: 'Send confirmation email to client',
+                  label: a(
+                    'admin.emailSettings.clientConfirmation.enabled',
+                    'Send confirmation email to client',
+                  ),
                 },
                 {
                   name: 'contact',
                   type: 'group',
-                  label: 'Contact form',
+                  label: a('admin.emailSettings.clientConfirmation.contact', 'Contact form'),
                   admin: {
                     condition: (_, siblingData) => Boolean(siblingData?.enabled),
                   },
@@ -174,7 +209,7 @@ export const EmailSettings: GlobalConfig = {
                 {
                   name: 'propertyInquiry',
                   type: 'group',
-                  label: 'Property inquiry',
+                  label: a('admin.emailSettings.clientConfirmation.propertyInquiry', 'Property inquiry'),
                   admin: {
                     condition: (_, siblingData) => Boolean(siblingData?.enabled),
                   },
@@ -186,14 +221,38 @@ export const EmailSettings: GlobalConfig = {
                 {
                   name: 'holidayBooking',
                   type: 'group',
-                  label: 'Holiday rental booking',
+                  label: a(
+                    'admin.emailSettings.clientConfirmation.holidayBooking',
+                    'Holiday rental booking',
+                  ),
                   admin: {
                     condition: (_, siblingData) => Boolean(siblingData?.enabled),
-                    description:
+                    description: a(
+                      'admin.emailSettings.clientConfirmation.holidayBooking.description',
                       'Thank-you email after a holiday rental booking enquiry. Use {{reference}}, {{arrival}}, {{departure}}, and {{guests}} in the subject or body.',
+                    ),
                   },
                   fields: emailTemplateFields({
                     subject: 'Holiday booking enquiry (Ref: {{reference}})',
+                    content: defaultClientConfirmationContent,
+                  }),
+                },
+                {
+                  name: 'saveSearch',
+                  type: 'group',
+                  label: a(
+                    'admin.emailSettings.clientConfirmation.saveSearch',
+                    'Save search',
+                  ),
+                  admin: {
+                    condition: (_, siblingData) => Boolean(siblingData?.enabled),
+                    description: a(
+                      'admin.emailSettings.clientConfirmation.saveSearch.description',
+                      'Thank-you email after a visitor saves a property search. Edit subject and body per locale like the other confirmation templates.',
+                    ),
+                  },
+                  fields: emailTemplateFields({
+                    subject: 'Thank you for saving your search',
                     content: defaultClientConfirmationContent,
                   }),
                 },

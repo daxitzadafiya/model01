@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
 import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
@@ -10,6 +11,10 @@ import { postFields } from './fields'
 
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
+  labels: {
+    singular: a('admin.posts.singular', 'Post'),
+    plural: a('admin.posts.plural', 'Posts'),
+  },
   access: {
     create: authenticated,
     delete: authenticated,

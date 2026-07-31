@@ -25,6 +25,8 @@ export const FIELD_LABEL_KEYS: Record<string, { key: string; fallback: string }>
   enquiry_type: { key: 'form.field.enquiryType', fallback: 'Enquiry type' },
   price: { key: 'form.field.price', fallback: 'Price' },
   prop_ref: { key: 'form.field.propRef', fallback: 'Prop. Ref' },
+  search_criteria: { key: 'form.field.searchCriteria', fallback: 'Search criteria' },
+  save_search: { key: 'form.field.saveSearch', fallback: 'Save search' },
 }
 
 export function normalizeFieldName(fieldName: string): string {

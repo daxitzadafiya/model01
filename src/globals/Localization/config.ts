@@ -6,12 +6,19 @@ import {
   localeCodes,
   type Locale,
 } from '@/i18n/locales'
+import { a, aString } from '@/utilities/adminI18n'
 
 import { revalidateLocalization } from './hooks/revalidateLocalization'
+import { syncAdminLocaleOnDefaultChange } from './hooks/syncAdminLocaleOnDefaultChange'
 
 const contentLocaleOptions = cmsLocales.map(({ code, label }) => ({
-  label: `${label} (${code})`,
+  label: a(`admin.localization.contentLocale.${code}`, `${label} (${code})`),
   value: code,
+}))
+
+const flagOptions = flagCountryOptions.map(({ label, value }) => ({
+  label: a(`admin.localization.flag.${value}`, label),
+  value,
 }))
 
 function getSelectOptionValue(option: Option): string {
@@ -22,22 +29,97 @@ function getSelectOptionValue(option: Option): string {
 
 export const Localization: GlobalConfig = {
   slug: 'localization',
-  label: 'Localization',
+  label: a('admin.localization.label', 'Localization'),
   access: {
     read: () => true,
   },
   admin: {
-    description:
-      'Languages listed here appear on the website switcher and in the admin “Locale” menu (top right). Content locale must exist in src/i18n/locales.ts. Add a row per language, then save.',
+    description: a(
+      'admin.localization.description',
+      'Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save.',
+    ),
   },
   fields: [
     {
+      name: 'syncAdminLocaleOnSave',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/globals/Localization/SyncAdminLocaleOnSave#SyncAdminLocaleOnSave',
+        },
+      },
+    },
+    {
+      name: 'defaultLocale',
+      type: 'select',
+      label: a('admin.localization.defaultLocale', 'Default language'),
+      required: true,
+      defaultValue: 'en',
+      options: contentLocaleOptions,
+      filterOptions: ({ options, data }): Option[] => {
+        const languages =
+          (data as { languages?: { locale?: string; enabled?: boolean | null; label?: string }[] } | null)
+            ?.languages ?? []
+
+        const allowed = new Set(
+          languages
+            .filter((row) => row?.enabled !== false && row?.locale)
+            .map((row) => String(row.locale)),
+        )
+
+        // Until Site languages are added, keep the full CMS pool so the field is usable.
+        if (allowed.size === 0) return options
+
+        return options.filter((option) => allowed.has(getSelectOptionValue(option)))
+      },
+      admin: {
+        description: a(
+          'admin.localization.defaultLocale.description',
+          'Shown to first-time visitors (before they pick a language). Options come from Site languages below with “Show on site” enabled.',
+        ),
+      },
+      validate: (value: string | null | undefined, { data, req }: { data: Record<string, unknown>; req?: { i18n?: { language?: string } } }) => {
+        const lang = req?.i18n?.language
+        if (!value || !localeCodes.includes(value as Locale)) {
+          return aString(
+            'admin.localization.validate.defaultLocaleInvalid',
+            `Choose a valid locale code (${localeCodes.join(', ')}).`,
+            lang,
+          )
+        }
+
+        const languages = (data as { languages?: { locale?: string; enabled?: boolean | null }[] })
+          ?.languages
+
+        if (!Array.isArray(languages) || languages.length === 0) return true
+
+        const match = languages.find((row) => row?.locale === value)
+        if (!match) {
+          return aString(
+            'admin.localization.validate.defaultLocaleNotInSiteLanguages',
+            'Default language must be one of the Site languages listed below.',
+            lang,
+          )
+        }
+        if (match.enabled === false) {
+          return aString(
+            'admin.localization.validate.defaultLocaleMustBeEnabled',
+            'Default language must have “Show on site” enabled.',
+            lang,
+          )
+        }
+        return true
+      },
+    },
+    {
       name: 'languages',
       type: 'array',
-      label: 'Site languages',
+      label: a('admin.localization.languages', 'Site languages'),
       admin: {
-        description:
+        description: a(
+          'admin.localization.languages.description',
           'Add languages with + Add Language. Content locale must be a code from the list (not a display name like "Deutsch").',
+        ),
         initCollapsed: false,
       },
       defaultValue: [
@@ -60,13 +142,13 @@ export const Localization: GlobalConfig = {
         {
           name: 'enabled',
           type: 'checkbox',
-          label: 'Show on site',
+          label: a('admin.localization.languages.enabled', 'Show on site'),
           defaultValue: true,
         },
         {
           name: 'locale',
           type: 'select',
-          label: 'Content locale',
+          label: a('admin.localization.languages.locale', 'Content locale'),
           required: true,
           options: contentLocaleOptions,
           filterOptions: ({ options, data, siblingData }) => {
@@ -83,11 +165,18 @@ export const Localization: GlobalConfig = {
             })
           },
           admin: {
-            description: `CMS code (not the display name). Pool: ${localeCodes.join(', ')} — only codes you add in src/i18n/locales.ts.`,
+            description: a(
+              'admin.localization.languages.locale.description',
+              `CMS code (not the display name). Pool: ${localeCodes.join(', ')} — only codes you add in src/i18n/locales.ts.`,
+            ),
           },
-          validate: (value: string | null | undefined) => {
+          validate: (value: string | null | undefined, { req }: { req?: { i18n?: { language?: string } } }) => {
             if (!value || !localeCodes.includes(value as Locale)) {
-              return `Choose a valid locale code (${localeCodes.join(', ')}). Display names belong in "Display name", not here.`
+              return aString(
+                'admin.localization.validate.localeInvalid',
+                `Choose a valid locale code (${localeCodes.join(', ')}). Display names belong in "Display name", not here.`,
+                req?.i18n?.language,
+              )
             }
             return true
           },
@@ -95,31 +184,37 @@ export const Localization: GlobalConfig = {
         {
           name: 'label',
           type: 'text',
-          label: 'Display name',
+          label: a('admin.localization.languages.displayName', 'Display name'),
           required: true,
           admin: {
-            description: 'Menu label (e.g. En - UK, Deutsch, Ελληνικά)',
+            description: a(
+              'admin.localization.languages.displayName.description',
+              'Menu label (e.g. En - UK, Deutsch, Ελληνικά)',
+            ),
           },
         },
         {
           name: 'shortCode',
           type: 'text',
-          label: 'Short code',
+          label: a('admin.localization.languages.shortCode', 'Short code'),
           required: true,
           maxLength: 6,
           admin: {
-            description: 'Header badge (e.g. EN, DE, EL)',
+            description: a(
+              'admin.localization.languages.shortCode.description',
+              'Header badge (e.g. EN, DE, EL)',
+            ),
           },
         },
         {
           name: 'flag',
           type: 'select',
-          label: 'Flag',
+          label: a('admin.localization.languages.flag', 'Flag'),
           required: true,
-          options: [...flagCountryOptions],
+          options: flagOptions,
         },
       ],
-      validate: (rows) => {
+      validate: (rows, { req }: { req?: { i18n?: { language?: string } } }) => {
         if (!rows || !Array.isArray(rows)) return true
 
         const seen = new Set<string>()
@@ -127,7 +222,11 @@ export const Localization: GlobalConfig = {
           const code = (row as { locale?: string | null })?.locale
           if (!code) continue
           if (seen.has(code)) {
-            return `Each language must use a different Content locale. Duplicate: ${code}`
+            return aString(
+              'admin.localization.validate.duplicateLocale',
+              `Each language must use a different Content locale. Duplicate: ${code}`,
+              req?.i18n?.language,
+            )
           }
           seen.add(code)
         }
@@ -141,25 +240,39 @@ export const Localization: GlobalConfig = {
         const languages = data?.languages
         if (!Array.isArray(languages)) return data
 
+        const normalizedLanguages = languages.map((row) => {
+          if (!row?.locale) return row
+          const code = String(row.locale)
+          if (localeCodes.includes(code as Locale)) return row
+
+          const byLabel = cmsLocales.find(
+            (l) => l.label.toLowerCase() === code.toLowerCase(),
+          )
+          if (byLabel) {
+            return { ...row, locale: byLabel.code }
+          }
+
+          return row
+        })
+
+        let defaultLocaleValue = data?.defaultLocale
+        if (typeof defaultLocaleValue === 'string') {
+          const enabledCodes = normalizedLanguages
+            .filter((row) => row?.enabled !== false && row?.locale)
+            .map((row) => String(row.locale))
+
+          if (enabledCodes.length > 0 && !enabledCodes.includes(defaultLocaleValue)) {
+            defaultLocaleValue = enabledCodes[0]
+          }
+        }
+
         return {
           ...data,
-          languages: languages.map((row) => {
-            if (!row?.locale) return row
-            const code = String(row.locale)
-            if (localeCodes.includes(code as Locale)) return row
-
-            const byLabel = cmsLocales.find(
-              (l) => l.label.toLowerCase() === code.toLowerCase(),
-            )
-            if (byLabel) {
-              return { ...row, locale: byLabel.code }
-            }
-
-            return row
-          }),
+          defaultLocale: defaultLocaleValue,
+          languages: normalizedLanguages,
         }
       },
     ],
-    afterChange: [revalidateLocalization],
+    afterChange: [syncAdminLocaleOnDefaultChange, revalidateLocalization],
   },
 }

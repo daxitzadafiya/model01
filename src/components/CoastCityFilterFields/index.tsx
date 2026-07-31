@@ -46,6 +46,10 @@ export const CoastCityFilterFields: React.FC<Props> = ({
   const allCitiesLabel = useTranslation('propertyList.filters.city.emptyLabel', 'All City')
   const loadingCoastsLabel = useTranslation('propertyList.filters.loadingCoasts', 'Loading coasts…')
   const loadingCitiesLabel = useTranslation('propertyList.filters.loadingCities', 'Loading cities…')
+  const noOptionsFoundLabel = useTranslation(
+    'propertyList.filters.noOptionsFound',
+    'No options found',
+  )
 
   const selectedCoasts = parseCoastFilter(coast)
   const selectedCities = parseCityFilter(city)
@@ -59,6 +63,14 @@ export const CoastCityFilterFields: React.FC<Props> = ({
     () => cities.map((item) => ({ value: item.value, label: item.label })),
     [cities],
   )
+
+  useEffect(() => {
+    const current = parseCoastFilter(coast)
+    const validCoasts = current.filter((value) => coasts.some((item) => item.value === value))
+    if (validCoasts.length !== current.length) {
+      onCoastChange(validCoasts)
+    }
+  }, [coast, coasts, onCoastChange])
 
   useEffect(() => {
     const current = parseCityFilter(city)
@@ -86,7 +98,8 @@ export const CoastCityFilterFields: React.FC<Props> = ({
         value={selectedCoasts}
         onChange={handleCoastChange}
         emptyLabel={coastsLoading ? loadingCoastsLabel : allCoastsLabel}
-        disabled={coastsLoading}
+        loading={coastsLoading}
+        noOptionsLabel={noOptionsFoundLabel}
         triggerClassName={triggerClassName}
       />
 
@@ -99,7 +112,9 @@ export const CoastCityFilterFields: React.FC<Props> = ({
         value={selectedCities}
         onChange={onCityChange}
         emptyLabel={citiesLoading ? loadingCitiesLabel : allCitiesLabel}
-        disabled={coastsLoading || citiesLoading || !coasts.length}
+        loading={citiesLoading}
+        noOptionsLabel={noOptionsFoundLabel}
+        disabled={coastsLoading || !coasts.length}
         triggerClassName={triggerClassName}
       />
     </>

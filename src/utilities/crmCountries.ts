@@ -2,13 +2,11 @@ import { extractCRMList } from '@/utilities/crmProperties'
 import { getCRMLocalizedText } from '@/utilities/localizedValue'
 
 import { unwrapCRMJsonPayload } from './crmCoasts'
+import type { SiteCountryOption } from './siteCountries.shared'
 
-export type CRMCountryOption = {
-  value: string
-  label: string
-  key: number
-}
+export type CRMCountryOption = SiteCountryOption
 
+/** @deprecated Hero block select removed — default comes from Countries.isDefault. */
 export type HeroDefaultCountrySlug = 'spain' | 'france' | 'portugal' | 'others'
 
 const pickNumber = (candidate: unknown): number | undefined => {
@@ -23,6 +21,7 @@ const pickNumber = (candidate: unknown): number | undefined => {
 const pickString = (candidate: unknown, fallback = '') =>
   typeof candidate === 'string' && candidate.trim() ? candidate.trim() : fallback
 
+/** @deprecated Prefer Countries.isDefault via resolveDefaultCountryKeys(countries). */
 const DEFAULT_COUNTRY_MATCHERS: Record<Exclude<HeroDefaultCountrySlug, 'others'>, string[]> = {
   spain: ['spain', 'españa', 'espana'],
   france: ['france'],
@@ -46,9 +45,11 @@ const normalizeCountry = (
     value: String(key),
     label,
     key,
+    isoCode: pickString(doc.iso_code).toUpperCase() || undefined,
   }
 }
 
+/** @deprecated Live CRM fetch — prefer CMS `/api/settings/countries`. Kept for tooling/debug. */
 export async function fetchCRMCountries(
   locale: string,
   init?: { signal?: AbortSignal },
@@ -73,17 +74,26 @@ export async function fetchCRMCountries(
     .sort((a, b) => a.label.localeCompare(b.label, lang))
 }
 
+/**
+ * Resolve the Sale hero pre-selected country key(s).
+ * Prefers Countries.isDefault from the CMS; falls back to legacy Hero block slug.
+ */
 export const resolveDefaultCountryKeys = (
-  defaultCountry: string | undefined | null,
   countries: CRMCountryOption[],
+  legacyDefaultCountry?: string | null,
 ): string[] => {
-  if (!defaultCountry || defaultCountry === 'others' || !countries.length) return []
+  if (!countries.length) return []
 
-  const slug = defaultCountry as HeroDefaultCountrySlug
+  const flagged = countries.find((country) => country.isDefault === true)
+  if (flagged) return [flagged.value]
+
+  if (!legacyDefaultCountry || legacyDefaultCountry === 'others') return []
+
+  const slug = legacyDefaultCountry as HeroDefaultCountrySlug
   const matchers =
     slug in DEFAULT_COUNTRY_MATCHERS
       ? DEFAULT_COUNTRY_MATCHERS[slug as Exclude<HeroDefaultCountrySlug, 'others'>]
-      : [defaultCountry]
+      : [legacyDefaultCountry]
 
   const match = countries.find((country) =>
     matchers.some((term) => country.label.toLowerCase().includes(term)),

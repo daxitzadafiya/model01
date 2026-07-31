@@ -21,6 +21,8 @@ import { FolderTableCell as FolderTableCell_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 import { FolderField as FolderField_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 import { TranslationsCell as TranslationsCell_1cefdd8cda518242b88f312125523272 } from '@/collections/Translations/TranslationsCell'
 import { TranslationsField as TranslationsField_67a80769b5f15d635ad295262c519d86 } from '@/collections/Translations/TranslationsField'
+import { NamesCell as NamesCell_6655eb62a5e9c2f12ffb8d31ccef2261 } from '@/collections/Countries/NamesCell'
+import { CountriesListToolbar as CountriesListToolbar_5576cd5d67a9d7db030669cb416bbf6b } from '@/collections/Countries/CountriesListToolbar'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { FolderTypeField as FolderTypeField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
@@ -29,6 +31,9 @@ import { SocialRowLabel as SocialRowLabel_7301750c868361ace60ca144eb5a30e1 } fro
 import { RowLabel as RowLabel_1f6ff6ff633e3695d348f4f3c58f1466 } from '@/Footer/RowLabel'
 import { CertificationRowLabel as CertificationRowLabel_6f419d2a29ab0c968cc0b28e4576f48a } from '@/Footer/CertificationRowLabel'
 import { LegalRowLabel as LegalRowLabel_06a46d974082a28d7949f6a827bd56a1 } from '@/Footer/LegalRowLabel'
+import { ActiveFontCheckbox as ActiveFontCheckbox_240f4e68792a7c53b1f71817dd421e5d } from '@/globals/Theme/ActiveFontCheckbox'
+import { GoogleFontRowLabel as GoogleFontRowLabel_84ae95ec77144a5f6b8f0a5d31417e4e } from '@/globals/Theme/GoogleFontRowLabel'
+import { SyncAdminLocaleOnSave as SyncAdminLocaleOnSave_746c8b7c47d567ac840bba97662bbca9 } from '@/globals/Localization/SyncAdminLocaleOnSave'
 import { UploadFeatureClient as UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { OrderedListFeatureClient as OrderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { UnorderedListFeatureClient as UnorderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -64,6 +69,8 @@ export const importMap = {
   "@payloadcms/next/rsc#FolderField": FolderField_f9c02e79a4aed9a3924487c0cd4cafb1,
   "@/collections/Translations/TranslationsCell#TranslationsCell": TranslationsCell_1cefdd8cda518242b88f312125523272,
   "@/collections/Translations/TranslationsField#TranslationsField": TranslationsField_67a80769b5f15d635ad295262c519d86,
+  "@/collections/Countries/NamesCell#NamesCell": NamesCell_6655eb62a5e9c2f12ffb8d31ccef2261,
+  "@/collections/Countries/CountriesListToolbar#CountriesListToolbar": CountriesListToolbar_5576cd5d67a9d7db030669cb416bbf6b,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/next/client#FolderTypeField": FolderTypeField_2b8867833a34864a02ddf429b0728a40,
@@ -72,6 +79,9 @@ export const importMap = {
   "@/Footer/RowLabel#RowLabel": RowLabel_1f6ff6ff633e3695d348f4f3c58f1466,
   "@/Footer/CertificationRowLabel#CertificationRowLabel": CertificationRowLabel_6f419d2a29ab0c968cc0b28e4576f48a,
   "@/Footer/LegalRowLabel#LegalRowLabel": LegalRowLabel_06a46d974082a28d7949f6a827bd56a1,
+  "@/globals/Theme/ActiveFontCheckbox#ActiveFontCheckbox": ActiveFontCheckbox_240f4e68792a7c53b1f71817dd421e5d,
+  "@/globals/Theme/GoogleFontRowLabel#GoogleFontRowLabel": GoogleFontRowLabel_84ae95ec77144a5f6b8f0a5d31417e4e,
+  "@/globals/Localization/SyncAdminLocaleOnSave#SyncAdminLocaleOnSave": SyncAdminLocaleOnSave_746c8b7c47d567ac840bba97662bbca9,
   "@payloadcms/richtext-lexical/client#UploadFeatureClient": UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#OrderedListFeatureClient": OrderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#UnorderedListFeatureClient": UnorderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,

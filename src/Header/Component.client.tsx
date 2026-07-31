@@ -78,63 +78,65 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({
         )}
       >
         <Link
-          className="font-headline-sm text-[13px] sm:text-headline-sm tracking-widest uppercase min-w-0 flex-1 pr-1 sm:pr-0"
+          className="font-headline-sm text-[13px] sm:text-headline-sm tracking-widest uppercase shrink-0 min-w-0 pr-1 sm:pr-0"
           href="/"
         >
           <Logo
-            className="max-w-[10.5rem] min-[380px]:max-w-[11.5rem] sm:max-w-[14.5rem] md:max-w-[17.5rem]"
+            placement="header"
             sources={logoSources}
             onDarkBackground={isTransparent}
           />
         </Link>
 
-        <HeaderNav
-          data={data}
-          mobileOpen={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          onDarkBackground={isTransparent}
-        />
-
-        <div className="flex items-center gap-1 sm:gap-3 shrink-0">
-          <Link
-            href={favoritesHref}
-            {...(favoritesLink?.newTab
-              ? { rel: 'noopener noreferrer', target: '_blank' }
-              : {})}
-            aria-label={
-              favoritesCount > 0 && !favoritesLink?.label
-                ? `${favoritesAriaLabel}, ${favoritesCount} saved`
-                : favoritesAriaLabel
-            }
-            className={cn(
-              'relative hover:scale-110 transition-transform p-1',
-              isTransparent ? 'text-white' : 'text-primary',
-            )}
-          >
-            <Heart size={30} />
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-tertiary text-white text-[10px] font-bold flex items-center justify-center leading-none">
-              {favoritesCount > 99 ? '99+' : favoritesCount || '0'}
-            </span>
-          </Link>
-          <LanguageSwitcher
-            items={languageMenu}
-            currentLocale={locale}
+        <div className="flex items-center gap-1.5 sm:gap-3 ml-auto min-w-0">
+          <HeaderNav
+            data={data}
+            mobileOpen={menuOpen}
+            onClose={() => setMenuOpen(false)}
             onDarkBackground={isTransparent}
           />
-          <button
-            type="button"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={menuOpen}
-            className={cn(
-              'md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center',
-              isTransparent
-                ? 'border-white/40 text-white'
-                : 'border-outline-variant text-primary',
-            )}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            {menuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+
+          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+            <Link
+              href={favoritesHref}
+              {...(favoritesLink?.newTab
+                ? { rel: 'noopener noreferrer', target: '_blank' }
+                : {})}
+              aria-label={
+                favoritesCount > 0 && !favoritesLink?.label
+                  ? `${favoritesAriaLabel}, ${favoritesCount} saved`
+                  : favoritesAriaLabel
+              }
+              className={cn(
+                'relative hover:scale-110 transition-transform p-1',
+                isTransparent ? 'text-white' : 'text-primary',
+              )}
+            >
+              <Heart size={30} />
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-tertiary text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                {favoritesCount > 99 ? '99+' : favoritesCount || '0'}
+              </span>
+            </Link>
+            <LanguageSwitcher
+              items={languageMenu}
+              currentLocale={locale}
+              onDarkBackground={isTransparent}
+            />
+            <button
+              type="button"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              className={cn(
+                'md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center',
+                isTransparent
+                  ? 'border-white/40 text-white'
+                  : 'border-outline-variant text-primary',
+              )}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
       </div>
     </nav>

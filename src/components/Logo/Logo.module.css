@@ -1,7 +1,43 @@
 .logo {
-  width: 100%;
+  display: block;
+  width: auto;
   height: auto;
+  max-width: 100%;
   object-fit: contain;
+  object-position: left center;
+}
+
+/* Cap height so any upload (wide, square, or tall) fits the chrome */
+.header {
+  max-height: 2.5rem;
+}
+
+@media (min-width: 40rem) {
+  .header {
+    max-height: 2.75rem;
+  }
+}
+
+@media (min-width: 48rem) {
+  .header {
+    max-height: 3.25rem;
+  }
+}
+
+.footer {
+  max-height: 3.5rem;
+}
+
+@media (min-width: 40rem) {
+  .footer {
+    max-height: 4rem;
+  }
+}
+
+@media (min-width: 48rem) {
+  .footer {
+    max-height: 4.5rem;
+  }
 }
 
 .light {

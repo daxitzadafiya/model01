@@ -116,7 +116,7 @@ export const serializePropertyFiltersToSearchParams = (
 
   if (filters.propertyType?.length) params.set('propertyType', filters.propertyType.join(','))
 
-  if (filters.country?.length) params.set('country', filters.country.join(','))
+  if (filters.country?.length) params.set('country', filters.country[0]!)
   if (filters.coast?.length) params.set('coast', filters.coast.join(','))
   if (filters.city?.length) params.set('city', filters.city.join(','))
 
@@ -157,7 +157,7 @@ export const parsePropertyFiltersFromSearchParams = (
   if (coast.length) filters.coast = coast
 
   const country = splitCsv(searchParams.get('country'))
-  if (country.length) filters.country = country
+  if (country.length) filters.country = parseCountryFilter(country)
 
   const city = splitCsv(searchParams.get('city'))
   if (city.length) filters.city = city

@@ -7,7 +7,7 @@ import {
   PROPERTY_CARD_IMAGE_SIZE,
   PROPERTY_DETAIL_IMAGE_SIZE,
 } from '@/utilities/optimaImage'
-import { isCRMTruthy, resolveCRMPropertyLocalizedTexts } from '@/utilities/localizedValue'
+import { getCRMLocalizedText, isCRMTruthy, resolveCRMPropertyLocalizedTexts } from '@/utilities/localizedValue'
 import {
   resolveProjectDetailHref,
   resolvePropertyDetailHref,
@@ -17,9 +17,11 @@ import {
 import {
   HOLIDAY_SELECT_DATES_LABEL,
   isHolidayRentalProperty,
+  PRICE_ON_DEMAND_LABEL,
   resolveHolidayGuestsFilterCount,
   resolveHolidayPriceDisplay,
 } from '@/utilities/crmHoliday'
+import { PRICE_ON_REQUEST_LABEL } from '@/utilities/localizePropertyPrice'
 import {
   arrivalDateKeyToUnixSeconds,
   departureDateKeyToUnixSeconds,
@@ -658,8 +660,13 @@ export const buildFilterQuery = (
     }
   } else if (filters.reference?.trim()) {
     const trimmedRef = filters.reference.trim()
-    const numericRef = Number(trimmedRef)
-    query.reference = referenceAsNumber && Number.isFinite(numericRef) ? numericRef : trimmedRef
+    // Same pattern as projects: digits → reference, otherwise search by property name.
+    if (/^\d+$/.test(trimmedRef)) {
+      const numericRef = Number(trimmedRef)
+      query.reference = referenceAsNumber && Number.isFinite(numericRef) ? numericRef : trimmedRef
+    } else {
+      query.search_by_property_name = trimmedRef
+    }
   }
 
   if (filters.propertyType?.length) {
@@ -675,6 +682,7 @@ export const buildFilterQuery = (
   const countryKeys = (filters.country ?? [])
     .map((value) => Number(value))
     .filter((key) => Number.isFinite(key))
+    .slice(0, 1)
 
   if (countryKeys.length > 0) {
     query.country = { $in: countryKeys }
@@ -950,7 +958,8 @@ export const buildCRMListingQuery = ({
     }
   } else if (preset === 'featured') {
     baseQuery = {
-      ...similarCommercials,
+      // Featured carousel always includes similar commercials, regardless of Optima CRM global.
+      similar_commercials: 'include_similar',
       featured: true,
       sale: true,
       remove_count: true,
@@ -959,8 +968,9 @@ export const buildCRMListingQuery = ({
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'favorites') {
+    // Favorites fetch by explicit _id $in — do not send similar_commercials.
     baseQuery = {
-      ...similarCommercials,
+      // ...similarCommercials,
       ...CRM_COORDINATE_QUERY_FIELDS,
       remove_count: true,
       // has_images: true,
@@ -1068,7 +1078,12 @@ export function normalizeCRMProperty(
 
   const localized = resolveCRMPropertyLocalizedTexts(property, locale)
 
+  // Prefer CRM `property_name` for cards/listings (matches search_by_property_name).
+  const propertyName =
+    getCRMLocalizedText(property.property_name, locale) || pickString(property.property_name)
+
   const propertyTitle =
+    propertyName ||
     localized.title ||
     pickString(property.project_name) ||
     pickString(property.display_name) ||
@@ -1127,7 +1142,7 @@ export function normalizeCRMProperty(
   // may have `project: true` or phase price fields without being a construction listing.
   const isProjectEntity = options.projectListing === true
 
-  let resolvedPrice = options.emptyPriceWhenMissing ? '' : 'Price on request'
+  let resolvedPrice = options.emptyPriceWhenMissing ? '' : PRICE_ON_REQUEST_LABEL
   let holidayPriceSummary: string | undefined
   let holidayPriceValue: number | undefined
 
@@ -1158,11 +1173,11 @@ export function normalizeCRMProperty(
       const highLabel = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(high)
       resolvedPrice = options.currencySymbolAfter ? `${highLabel} €` : `€${highLabel}`
     } else if (hasPriceOnDemand) {
-      resolvedPrice = 'Price on demand'
+      resolvedPrice = PRICE_ON_DEMAND_LABEL
     }
   } else if (isLongTermRentalProperty) {
     if (hasPriceOnDemand) {
-      resolvedPrice = 'Price on demand'
+      resolvedPrice = PRICE_ON_DEMAND_LABEL
     } else {
       const activeSeason = pickActiveLongTermRentalSeason(property)
       const seasonPrice = activeSeason
@@ -1183,11 +1198,11 @@ export function normalizeCRMProperty(
           ? `${formattedRawPrice} €`
           : `€${formattedRawPrice}`
       } else {
-        resolvedPrice = 'Price on demand'
+        resolvedPrice = PRICE_ON_DEMAND_LABEL
       }
     }
   } else if (hasPriceOnDemand) {
-    resolvedPrice = 'Price on demand'
+    resolvedPrice = PRICE_ON_DEMAND_LABEL
   } else if (formattedRawPrice) {
     resolvedPrice = options.currencySymbolAfter ? `${formattedRawPrice} €` : `€${formattedRawPrice}`
   } else if (priceValue === 0) {
@@ -1240,7 +1255,7 @@ export function normalizeCRMProperty(
   }
 }
 
-export { HOLIDAY_SELECT_DATES_LABEL }
+export { HOLIDAY_SELECT_DATES_LABEL, PRICE_ON_DEMAND_LABEL, PRICE_ON_REQUEST_LABEL }
 
 export const normalizeCRMListProperty = (
   property: Record<string, unknown>,

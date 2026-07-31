@@ -1,5 +1,4 @@
-const ACCENT = '#755b00'
-const ACCENT_SOFT = 'rgba(117, 91, 0, 0.28)'
+const FALLBACK_ACCENT = '#755b00'
 
 function toAbsoluteUrl(path: string): string {
   if (!path || path.startsWith('http')) return path
@@ -11,16 +10,60 @@ function toAbsoluteUrl(path: string): string {
   return path
 }
 
+function getThemeTertiaryColor(): string {
+  if (typeof window === 'undefined') return FALLBACK_ACCENT
+
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue('--color-tertiary')
+    .trim()
+
+  return value || FALLBACK_ACCENT
+}
+
+function colorToRgba(color: string, alpha: number): string {
+  const trimmed = color.trim()
+
+  if (trimmed.startsWith('rgba(') || trimmed.startsWith('rgb(')) {
+    const parts = trimmed
+      .replace(/^rgba?\(/, '')
+      .replace(/\)$/, '')
+      .split(',')
+      .map((part) => part.trim())
+    const [r = '0', g = '0', b = '0'] = parts
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+
+  const hex = trimmed.replace('#', '')
+  const full =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map((char) => char + char)
+          .join('')
+      : hex
+
+  if (full.length !== 6 || Number.isNaN(Number.parseInt(full, 16))) {
+    return colorToRgba(FALLBACK_ACCENT, alpha)
+  }
+
+  const r = Number.parseInt(full.slice(0, 2), 16)
+  const g = Number.parseInt(full.slice(2, 4), 16)
+  const b = Number.parseInt(full.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 function drawMarkerIcon(
   ctx: CanvasRenderingContext2D,
   image: CanvasImageSource,
   width: number,
   height: number,
   hovered: boolean,
+  accent: string,
 ): void {
   const centerX = width / 2
   const headRadius = hovered ? 21 : 18
   const headCenterY = headRadius + (hovered ? 7 : 6)
+  const accentSoft = colorToRgba(accent, hovered ? 0.34 : 0.28)
 
   ctx.clearRect(0, 0, width, height)
 
@@ -34,14 +77,14 @@ function drawMarkerIcon(
   ctx.save()
   ctx.beginPath()
   ctx.arc(centerX, headCenterY, headRadius + (hovered ? 7 : 5), 0, Math.PI * 2)
-  ctx.fillStyle = hovered ? 'rgba(117, 91, 0, 0.34)' : ACCENT_SOFT
+  ctx.fillStyle = accentSoft
   ctx.fill()
   ctx.restore()
 
   ctx.save()
   ctx.beginPath()
   ctx.arc(centerX, headCenterY, headRadius + 3, 0, Math.PI * 2)
-  ctx.strokeStyle = ACCENT
+  ctx.strokeStyle = accent
   ctx.lineWidth = hovered ? 3 : 2
   ctx.stroke()
   ctx.restore()
@@ -65,7 +108,7 @@ function drawMarkerIcon(
   ctx.fillStyle = '#ffffff'
   ctx.shadowColor = 'transparent'
   ctx.fill()
-  ctx.strokeStyle = ACCENT
+  ctx.strokeStyle = accent
   ctx.lineWidth = hovered ? 2 : 1.5
   ctx.stroke()
   ctx.restore()
@@ -92,6 +135,7 @@ export function loadOfficeLocationMarkerIcons(
     const image = new Image()
     image.crossOrigin = 'anonymous'
     image.onload = () => {
+      const accent = getThemeTertiaryColor()
       const defaultSize = { width: 56, height: 64 }
       const hoverSize = { width: 64, height: 72 }
 
@@ -103,7 +147,7 @@ export function loadOfficeLocationMarkerIcons(
         reject(new Error('Could not create marker canvas'))
         return
       }
-      drawMarkerIcon(defaultCtx, image, defaultSize.width, defaultSize.height, false)
+      drawMarkerIcon(defaultCtx, image, defaultSize.width, defaultSize.height, false, accent)
 
       const hoverCanvas = document.createElement('canvas')
       hoverCanvas.width = hoverSize.width
@@ -113,7 +157,7 @@ export function loadOfficeLocationMarkerIcons(
         reject(new Error('Could not create marker canvas'))
         return
       }
-      drawMarkerIcon(hoverCtx, image, hoverSize.width, hoverSize.height, true)
+      drawMarkerIcon(hoverCtx, image, hoverSize.width, hoverSize.height, true, accent)
 
       resolve({
         defaultIcon: {

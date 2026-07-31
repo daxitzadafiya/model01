@@ -34,8 +34,12 @@ import {
   formatHolidayStayNightlyRate,
   formatHolidayStayTotalSummary,
 } from '@/utilities/holidayRentalPricing'
-import { parseHolidayGuestCount, resolveMaxHolidayGuests, clampHolidayGuestCount } from '@/utilities/crmHoliday'
-import { useTranslation } from '@/utilities/translateClient'
+import {
+  parseHolidayGuestCount,
+  resolveMaxHolidayGuests,
+  clampHolidayGuestCount,
+} from '@/utilities/crmHoliday'
+import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   contactForm?: Form | null
@@ -134,6 +138,7 @@ export const PropertyDetailView: React.FC<Props> = ({
     'propertyDetail.holiday.selectDatesForPrice',
     'Select dates to view price',
   )
+  const displayPrice = useLocalizedPropertyPrice(property.price)
   const statusBadgeDisplay =
     property.statusBadgeLabel === 'SOLD'
       ? soldBadgeLabel
@@ -163,6 +168,13 @@ export const PropertyDetailView: React.FC<Props> = ({
       guests: clampHolidayGuestCount(parseHolidayGuestCount(liveGuests), maxGuests),
     })
   }, [isHolidayRental, liveArrival, liveDeparture, liveGuests, maxGuests, rentalSeasons])
+
+  const liveNightlyLabel = useLocalizedPropertyPrice(
+    liveHolidayQuote ? formatHolidayStayNightlyRate(liveHolidayQuote) : undefined,
+  )
+  const liveSummaryLabel = useLocalizedPropertyPrice(
+    liveHolidayQuote ? formatHolidayStayTotalSummary(liveHolidayQuote) : undefined,
+  )
 
   const specItems = [
     property.sqft
@@ -232,15 +244,15 @@ export const PropertyDetailView: React.FC<Props> = ({
               {liveHolidayQuote ? (
                 <>
                   <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary">
-                    {formatHolidayStayNightlyRate(liveHolidayQuote)}
+                    {liveNightlyLabel}
                   </div>
                   <p className="mt-2 text-body-md text-on-surface-variant">
-                    {formatHolidayStayTotalSummary(liveHolidayQuote)}
+                    {liveSummaryLabel}
                   </p>
                 </>
               ) : property.price ? (
                 <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary">
-                  {property.price}
+                  {displayPrice}
                 </div>
               ) : (
                 <div className="text-[22px] md:text-[26px] font-headline-md text-on-surface-variant italic">
@@ -251,7 +263,7 @@ export const PropertyDetailView: React.FC<Props> = ({
           ) : (
             property.price && (
               <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary mb-6 md:mb-10">
-                {property.price}
+                {displayPrice}
               </div>
             )
           )}

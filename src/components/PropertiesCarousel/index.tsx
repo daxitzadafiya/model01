@@ -9,6 +9,7 @@ import { resolvePropertyDetailFetchStatuses } from '@/utilities/propertyDetailFe
 import { useReveal, activateRevealElements } from '@/utilities/useReveal'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
 import { cn } from '@/utilities/ui'
+import { useTranslation } from '@/utilities/translateClient'
 
 const CARDS_PER_VIEW_DESKTOP = 3
 const CARDS_PER_VIEW_MOBILE = 1
@@ -91,14 +92,26 @@ export const PropertiesCarousel: React.FC<Props> = ({
   backgroundColor = 'surface',
   showSoldBadge,
   useCrmStatus = true,
-  emptyEyebrow = 'Listings',
-  emptyTitle = 'No properties found',
-  emptyDescription = 'We could not find any listings for this selection. Try another filter or check again soon.',
+  emptyEyebrow,
+  emptyTitle,
+  emptyDescription,
   showWhenEmpty = false,
   animateEntry = false,
   className,
 }) => {
   const sectionRef = useReveal<HTMLElement>()
+  const defaultEmptyEyebrow = useTranslation('propertiesCarousel.empty.eyebrow', 'Listings')
+  const defaultEmptyTitle = useTranslation(
+    'propertiesCarousel.empty.title',
+    'No properties found',
+  )
+  const defaultEmptyDescription = useTranslation(
+    'propertiesCarousel.empty.description',
+    'We could not find any listings for this selection. Try another filter or check again soon.',
+  )
+  const resolvedEmptyEyebrow = emptyEyebrow ?? defaultEmptyEyebrow
+  const resolvedEmptyTitle = emptyTitle ?? defaultEmptyTitle
+  const resolvedEmptyDescription = emptyDescription ?? defaultEmptyDescription
   const [entryRevealed, setEntryRevealed] = useState(false)
   const carouselRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -541,9 +554,9 @@ export const PropertiesCarousel: React.FC<Props> = ({
       ) : (
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12 reveal active">
           <SectionEmptyState
-            eyebrow={emptyEyebrow}
-            title={emptyTitle}
-            description={emptyDescription}
+            eyebrow={resolvedEmptyEyebrow}
+            title={resolvedEmptyTitle}
+            description={resolvedEmptyDescription}
             tone={backgroundColor === 'surface-container-low' ? 'muted' : 'surface'}
           />
         </div>

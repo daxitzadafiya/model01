@@ -202,6 +202,7 @@
 
   body {
     @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+    font-family: var(--font-theme-body, var(--font-outfit, ui-sans-serif, system-ui));
     scrollbar-width: thin;
     scrollbar-color: var(--color-tertiary, #755b00) var(--color-surface-container-low, #f8f3ec);
   }
@@ -415,3 +416,52 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* WhatsApp floating CTA */
+@keyframes whatsapp-fab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes whatsapp-fab-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  70% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+.whatsapp-fab-enter {
+  animation: whatsapp-fab-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.whatsapp-fab-ring {
+  background: color-mix(in srgb, var(--color-tertiary, #0d9488) 55%, transparent);
+  animation: whatsapp-fab-ring 3s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.whatsapp-fab-ring-delay {
+  animation-delay: 1.5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-fab-enter,
+  .whatsapp-fab-ring,
+  .whatsapp-fab-ring-delay {
+    animation: none;
+  }
+}
+

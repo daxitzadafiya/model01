@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'roumpos-visitor-country'
+const STORAGE_KEY = 'app-visitor-country'
 /** Cache detected country for 30 days — location rarely changes for the same browser. */
 const TTL_MS = 30 * 24 * 60 * 60 * 1000
 

@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from 'react'
 
-import { fetchCRMCountries, type CRMCountryOption } from '@/utilities/crmCountries'
+import type { SiteCountryOption } from '@/utilities/siteCountries.shared'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
+/** @deprecated Prefer SiteCountryOption — kept for existing call sites. */
+export type CRMCountryOption = SiteCountryOption
+
+/**
+ * Countries for Sale filters — loaded from CMS Countries collection
+ * (CRM is only called when that collection is empty, or via Sync from CRM).
+ */
 export function useCRMCountries() {
   const locale = useSiteLocale()
-  const [countries, setCountries] = useState<CRMCountryOption[]>([])
+  const [countries, setCountries] = useState<SiteCountryOption[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -18,11 +25,23 @@ export function useCRMCountries() {
       setLoading(true)
       setError(null)
       try {
-        const nextCountries = await fetchCRMCountries(locale, { signal: controller.signal })
-        setCountries(nextCountries)
+        const response = await fetch(
+          `/api/settings/countries?locale=${encodeURIComponent(locale)}`,
+          {
+            signal: controller.signal,
+            cache: 'no-store',
+          },
+        )
+
+        if (!response.ok) {
+          throw new Error(`Countries failed (${response.status})`)
+        }
+
+        const nextCountries = (await response.json()) as SiteCountryOption[]
+        setCountries(Array.isArray(nextCountries) ? nextCountries : [])
       } catch (err) {
         if ((err as Error).name === 'AbortError') return
-        console.error('Failed to load CRM countries', err)
+        console.error('Failed to load site countries', err)
         setCountries([])
         setError('Unable to load countries')
       } finally {

@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto'
+
 import {
   collectLocalizedRichText,
   collectLocalizedStrings,
@@ -170,12 +172,90 @@ export async function buildDocumentPatches(
   return patches
 }
 
+function topLevelKey(path: string): string {
+  return path.split(/[.\[]/, 1)[0] ?? path
+}
+
+function newArrayRowId(): string {
+  return randomBytes(12).toString('hex')
+}
+
+/**
+ * SQLite stores localized array rows with `id` as a global primary key (not per-locale).
+ * Reusing source-locale row IDs when writing another locale causes:
+ * `UNIQUE constraint failed: footer_nav_items.id`
+ *
+ * Prefer existing target-locale IDs by index; otherwise mint new IDs.
+ */
+function ensureUniqueLocalizedArrayIds(node: unknown, targetNode: unknown): void {
+  if (Array.isArray(node)) {
+    const targetArray = Array.isArray(targetNode) ? targetNode : null
+
+    for (let index = 0; index < node.length; index++) {
+      const item = node[index]
+      if (!item || typeof item !== 'object' || Array.isArray(item)) continue
+
+      const record = item as Record<string, unknown>
+      const targetItem = targetArray?.[index]
+      const targetId =
+        targetItem && typeof targetItem === 'object' && !Array.isArray(targetItem)
+          ? (targetItem as Record<string, unknown>).id
+          : undefined
+
+      if (typeof targetId === 'string' && targetId.trim()) {
+        record.id = targetId.trim()
+      } else {
+        record.id = newArrayRowId()
+      }
+
+      ensureUniqueLocalizedArrayIds(
+        record,
+        targetItem && typeof targetItem === 'object' ? targetItem : null,
+      )
+    }
+    return
+  }
+
+  if (!node || typeof node !== 'object') return
+
+  const record = node as Record<string, unknown>
+  const targetRecord =
+    targetNode && typeof targetNode === 'object' && !Array.isArray(targetNode)
+      ? (targetNode as Record<string, unknown>)
+      : null
+
+  for (const [key, value] of Object.entries(record)) {
+    if (key === 'id') continue
+    ensureUniqueLocalizedArrayIds(value, targetRecord?.[key])
+  }
+}
+
 export function buildUpdateDataFromPatches(
   patches: DocumentFieldPatches,
+  options?: {
+    /** Source doc used to keep full array row shape (type/url/etc), not just translated labels. */
+    baseDoc?: Record<string, unknown> | null
+    /** Existing target-locale doc — reuse its array row IDs when present. */
+    targetDoc?: Record<string, unknown> | null
+  },
 ): Record<string, unknown> | null {
   if (patches.size === 0) return null
 
   const data: Record<string, unknown> = {}
+  const baseDoc = options?.baseDoc ?? null
+
+  if (baseDoc) {
+    const keys = new Set<string>()
+    for (const path of patches.keys()) {
+      keys.add(topLevelKey(path))
+    }
+
+    for (const key of keys) {
+      if (key in baseDoc) {
+        data[key] = structuredClone(baseDoc[key])
+      }
+    }
+  }
 
   let appliedCount = 0
 
@@ -188,5 +268,9 @@ export function buildUpdateDataFromPatches(
     if (applied) appliedCount++
   }
 
-  return appliedCount > 0 ? data : null
+  if (appliedCount === 0) return null
+
+  ensureUniqueLocalizedArrayIds(data, options?.targetDoc ?? null)
+
+  return data
 }

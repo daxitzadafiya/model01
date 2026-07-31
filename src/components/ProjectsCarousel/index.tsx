@@ -9,6 +9,7 @@ import type { NormalizedCRMProject } from '@/utilities/crmProjects'
 import { useReveal, activateRevealElements } from '@/utilities/useReveal'
 import { SectionEmptyState } from '@/components/SectionEmptyState'
 import { cn } from '@/utilities/ui'
+import { useTranslation } from '@/utilities/translateClient'
 
 const CARDS_PER_VIEW_DESKTOP = 3
 const CARDS_PER_VIEW_MOBILE = 1
@@ -68,14 +69,23 @@ export const ProjectsCarousel: React.FC<Props> = ({
   projects,
   loading = false,
   backgroundColor = 'surface',
-  emptyEyebrow = 'Projects',
-  emptyTitle = 'No projects found',
-  emptyDescription = 'We could not find any projects for this selection. Try another filter or check again soon.',
+  emptyEyebrow,
+  emptyTitle,
+  emptyDescription,
   showWhenEmpty = false,
   animateEntry = false,
   className,
 }) => {
   const sectionRef = useReveal<HTMLElement>()
+  const defaultEmptyEyebrow = useTranslation('projectsCarousel.empty.eyebrow', 'Projects')
+  const defaultEmptyTitle = useTranslation('projectsCarousel.empty.title', 'No projects found')
+  const defaultEmptyDescription = useTranslation(
+    'projectsCarousel.empty.description',
+    'We could not find any projects for this selection. Try another filter or check again soon.',
+  )
+  const resolvedEmptyEyebrow = emptyEyebrow ?? defaultEmptyEyebrow
+  const resolvedEmptyTitle = emptyTitle ?? defaultEmptyTitle
+  const resolvedEmptyDescription = emptyDescription ?? defaultEmptyDescription
   const [entryRevealed, setEntryRevealed] = useState(false)
   const carouselRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -503,9 +513,9 @@ export const ProjectsCarousel: React.FC<Props> = ({
       ) : (
         <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop pb-12 reveal active">
           <SectionEmptyState
-            eyebrow={emptyEyebrow}
-            title={emptyTitle}
-            description={emptyDescription}
+            eyebrow={resolvedEmptyEyebrow}
+            title={resolvedEmptyTitle}
+            description={resolvedEmptyDescription}
             tone={backgroundColor === 'surface-container-low' ? 'muted' : 'surface'}
           />
         </div>

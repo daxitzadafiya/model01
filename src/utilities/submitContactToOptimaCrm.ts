@@ -33,10 +33,37 @@ const PASSTHROUGH_FIELDS = [
   'transaction_types',
   'interest',
   'other_reference',
+  'cities',
+  'lgroups',
+  'countries',
+  'budget_min',
+  'budget_max',
+  'min_bedrooms',
+  'min_bathrooms',
+  'feet_views',
+  'feet_categories',
+  'garden',
+  'parking',
+  'pool',
+  'rent_from_date',
+  'rent_to_date',
+  'min_sleeps',
 ] as const
 
 /** Fields sent to Optima as JSON booleans (not strings). */
 const BOOLEAN_FIELDS = new Set(['gdpr_status'])
+
+/** Comma-separated CRM list fields → arrays (or comma string when CRM expects implode). */
+const COMMA_LIST_FIELDS = new Set([
+  'cities',
+  'lgroups',
+  'countries',
+  'feet_views',
+  'feet_categories',
+  'garden',
+  'parking',
+  'pool',
+])
 
 export async function buildAccountsIndexUrl(): Promise<string> {
   const settings = await getOptimaCrmSettings()
@@ -103,6 +130,13 @@ function pickStringField(
   return undefined
 }
 
+function splitCommaList(value: string): string[] {
+  return value
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
 function applyCommercialProfileFields(
   out: Record<string, unknown>,
   payload: Record<string, string | boolean>,
@@ -112,15 +146,27 @@ function applyCommercialProfileFields(
   const profile: Record<string, string[]> = {}
 
   if (typeof typeOne === 'string' && typeOne.trim()) {
-    profile.type_one = [typeOne.trim()]
+    profile.type_one = splitCommaList(typeOne)
   }
 
   if (typeof typeTwo === 'string' && typeTwo.trim()) {
-    profile.type_two = [typeTwo.trim()]
+    profile.type_two = splitCommaList(typeTwo)
   }
 
   if (Object.keys(profile).length > 0) {
     out.commercial_profile = profile
+  }
+}
+
+function applyCommaListFields(
+  out: Record<string, unknown>,
+  payload: Record<string, string | boolean>,
+): void {
+  for (const key of COMMA_LIST_FIELDS) {
+    const value = payload[key]
+    if (typeof value !== 'string' || !value.trim()) continue
+    // Optima accounts/index accepts comma-separated strings (gestali saveAccount implode).
+    out[key] = value.trim()
   }
 }
 
@@ -141,6 +187,7 @@ function mapContactToOptimaPayload(
 
   const surname = pickStringField(payload, [...SURNAME_ALIASES])
   const message = pickStringField(payload, ['message', 'comments'])
+  const searchCriteria = pickStringField(payload, ['search_criteria'])
   const property = pickStringField(payload, ['property', 'reference', '_id'])
   const toEmail = pickStringField(payload, ['to_email', 'assigned_to'])
 
@@ -148,6 +195,7 @@ function mapContactToOptimaPayload(
   if (surname) out.surname = surname
 
   for (const key of PASSTHROUGH_FIELDS) {
+    if (COMMA_LIST_FIELDS.has(key)) continue
     const value = payload[key]
     if (typeof value === 'string' && value.trim()) out[key] = value.trim()
   }
@@ -156,15 +204,17 @@ function mapContactToOptimaPayload(
     out.gdpr_status = toBoolean(payload.gdpr_status)
   }
 
-  if (message) {
-    out.message = message
-    out.comments = message
+  const combinedMessage = [message, searchCriteria].filter(Boolean).join('\n\n')
+  if (combinedMessage) {
+    out.message = combinedMessage
+    out.comments = combinedMessage
   }
 
   if (property) out.property = property
   if (toEmail) out.to_email = toEmail
 
   applyCommercialProfileFields(out, payload)
+  applyCommaListFields(out, payload)
 
   if (locale?.trim()) {
     out.language = mapLocaleToBrochurePdfLang(locale)

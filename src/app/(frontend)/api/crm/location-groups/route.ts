@@ -1,16 +1,22 @@
 /**
  * Server proxy for Yii location groups (coasts). Avoids browser CORS on the contact URL.
+ * Optional `country` query (CRM key, e.g. `?country=1`) scopes coasts to that country.
  */
 import { NextResponse } from 'next/server'
 
-import { getFromCRMContact } from '@/utilities/crmApi.server'
+import { getFromCRMContactWithQuery } from '@/utilities/crmApi.server'
 import { unwrapCRMJsonPayload } from '@/utilities/crmCoasts'
 
 const LOCATION_GROUPS_ROUTE = 'properties/location-groups-key-value'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const response = await getFromCRMContact(LOCATION_GROUPS_ROUTE)
+    const { searchParams } = new URL(request.url)
+    const country = searchParams.get('country')?.trim()
+    const crmParams = new URLSearchParams()
+    if (country) crmParams.set('country', country)
+
+    const response = await getFromCRMContactWithQuery(LOCATION_GROUPS_ROUTE, crmParams)
 
     if (!response.ok) {
       return NextResponse.json(

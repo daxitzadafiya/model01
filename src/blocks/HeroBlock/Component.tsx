@@ -105,13 +105,13 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   const rentalTabLabel = useTranslation('hero.searchTabs.rental', 'Rental Properties')
   const holidayTabLabel = useTranslation('hero.searchTabs.holiday', 'Holiday Properties')
   const countryLabel = useTranslation('propertyList.filters.country', 'Country')
-  const allCountriesLabel = useTranslation(
-    'propertyList.filters.country.emptyLabel',
-    'All Countries',
-  )
   const loadingCountriesLabel = useTranslation(
     'propertyList.filters.loadingCountries',
     'Loading countries…',
+  )
+  const noOptionsFoundLabel = useTranslation(
+    'propertyList.filters.noOptionsFound',
+    'No options found',
   )
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
@@ -154,7 +154,21 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions(filterDataPreset)
   const { countries, loading: countriesLoading } = useCRMCountries()
-  const { coasts, loading: coastsLoading } = useCRMCoasts()
+
+  const defaultCountryAppliedRef = useRef(false)
+
+  // Prefer selected country; before the sale default is applied, use CMS default so the
+  // first coasts request is already country-scoped (e.g. ?country=1).
+  const countryKeysForCoasts = useMemo(() => {
+    const selected = parseCountryFilter(searchFilters.country)
+    if (selected.length) return selected
+    if (activeTab === 'sale' && !defaultCountryAppliedRef.current && countries.length) {
+      return resolveDefaultCountryKeys(countries, defaultCountry)
+    }
+    return selected
+  }, [activeTab, countries, defaultCountry, searchFilters.country])
+
+  const { coasts, loading: coastsLoading } = useCRMCoasts(countryKeysForCoasts)
   const { cities, loading: citiesLoading } = useCRMCities(
     searchFilters.coast,
     coasts,
@@ -172,13 +186,11 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     priceRangeOptions,
   )
 
-  const defaultCountryAppliedRef = useRef(false)
-
   const resetFiltersForTab = useCallback(
     (tab: HeroPropertyTab) => {
       const nextFilters: PropertyListFilters = { ...EMPTY_PROPERTY_FILTERS }
       if (tab === 'sale' && countries.length) {
-        nextFilters.country = resolveDefaultCountryKeys(defaultCountry, countries)
+        nextFilters.country = resolveDefaultCountryKeys(countries, defaultCountry)
         defaultCountryAppliedRef.current = true
       }
       setSearchFilters(nextFilters)
@@ -190,7 +202,7 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   // user clears the selection (they may want "All Countries").
   useEffect(() => {
     if (defaultCountryAppliedRef.current || activeTab !== 'sale' || !countries.length) return
-    const defaultKeys = resolveDefaultCountryKeys(defaultCountry, countries)
+    const defaultKeys = resolveDefaultCountryKeys(countries, defaultCountry)
     defaultCountryAppliedRef.current = true
     if (!defaultKeys.length) return
     setSearchFilters((prev) => {
@@ -208,7 +220,12 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     key: keyof PropertyListFilters,
     value: PropertyListFilters[keyof PropertyListFilters],
   ) => {
-    setSearchFilters((prev) => ({ ...prev, [key]: value }))
+    setSearchFilters((prev) => {
+      if (key === 'country') {
+        return { ...prev, country: value as PropertyListFilters['country'], coast: [], city: [] }
+      }
+      return { ...prev, [key]: value }
+    })
   }
 
   const handleGuestsCustomChange = (value: string) => {
@@ -289,15 +306,15 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     <div className={cn('grid gap-3 md:gap-4 p-3.5 md:p-6 items-end', options.gridClassName)}>
       {activeTab === 'sale' && (
         <FilterSelect
-          mode="multi"
           label={countryLabel}
           id={`${options.idPrefix}-country`}
           icon={<Globe size={20} strokeWidth={1.75} />}
           options={countryOptions}
-          value={parseCountryFilter(searchFilters.country)}
-          onChange={(value) => handleSearchFilterChange('country', value)}
-          emptyLabel={countriesLoading ? loadingCountriesLabel : allCountriesLabel}
-          disabled={countriesLoading}
+          value={parseCountryFilter(searchFilters.country)[0] ?? countryOptions[0]?.value ?? ''}
+          onChange={(value) => handleSearchFilterChange('country', value ? [value] : [])}
+          loading={countriesLoading}
+          placeholder={countriesLoading ? loadingCountriesLabel : countryLabel}
+          noOptionsLabel={noOptionsFoundLabel}
           triggerClassName={heroSearchFieldClassName}
         />
       )}
@@ -327,7 +344,8 @@ const HeroBlockContent: React.FC<Props> = (props) => {
             value={parsePropertyTypeFilter(searchFilters.propertyType)}
             onChange={(value) => handleSearchFilterChange('propertyType', value)}
             emptyLabel={propertyTypeLoading ? loadingTypesLabel : allPropertiesLabel}
-            disabled={propertyTypeLoading}
+            loading={propertyTypeLoading}
+            noOptionsLabel={noOptionsFoundLabel}
             triggerClassName={heroSearchFieldClassName}
           />
 

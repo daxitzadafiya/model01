@@ -92,7 +92,10 @@ export async function autoTranslateGlobal({
       targetLocale,
     )
 
-    const data = buildUpdateDataFromPatches(patches)
+    const data = buildUpdateDataFromPatches(patches, {
+      baseDoc: sourceDoc,
+      targetDoc,
+    })
     if (!data) continue
 
     await payload.updateGlobal({

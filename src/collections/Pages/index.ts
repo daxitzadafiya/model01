@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
 import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { pageLayoutBlocks } from '@/blocks/pageLayoutBlocks'
@@ -20,6 +21,10 @@ import {
 
 export const Pages: CollectionConfig<'pages'> = {
   slug: 'pages',
+  labels: {
+    singular: a('admin.pages.singular', 'Page'),
+    plural: a('admin.pages.plural', 'Pages'),
+  },
   access: {
     create: authenticated,
     delete: authenticated,
@@ -56,19 +61,21 @@ export const Pages: CollectionConfig<'pages'> = {
       name: 'title',
       type: 'text',
       required: true,
+      label: a('admin.pages.fields.title', 'Title'),
     },
     {
       type: 'tabs',
       tabs: [
         {
           fields: [hero],
-          label: 'Hero',
+          label: a('admin.pages.tabs.hero', 'Hero'),
         },
         {
           fields: [
             {
               name: 'layout',
               type: 'blocks',
+              label: a('admin.pages.fields.layout', 'Layout'),
               blocks: [...pageLayoutBlocks],
               required: true,
               admin: {
@@ -76,11 +83,11 @@ export const Pages: CollectionConfig<'pages'> = {
               },
             },
           ],
-          label: 'Content',
+          label: a('admin.pages.tabs.content', 'Content'),
         },
         {
           name: 'meta',
-          label: 'SEO',
+          label: a('admin.pages.tabs.seo', 'SEO'),
           fields: [
             OverviewField({
               titlePath: 'meta.title',
@@ -96,7 +103,7 @@ export const Pages: CollectionConfig<'pages'> = {
 
             MetaDescriptionField({}),
             PreviewField({
-              // if the `generateUrl` function is configured
+              // if the generateUrl function is configured
               hasGenerateFn: true,
 
               // field paths to match the target field for data
@@ -110,11 +117,24 @@ export const Pages: CollectionConfig<'pages'> = {
     {
       name: 'publishedAt',
       type: 'date',
+      label: a('admin.pages.fields.publishedAt', 'Published At'),
       admin: {
         position: 'sidebar',
       },
     },
-    slugField(),
+    slugField({
+      overrides: (field) => {
+        for (const sub of field.fields) {
+          if ('name' in sub && sub.name === 'slug') {
+            sub.label = a('admin.pages.fields.slug', 'Slug')
+          }
+          if ('name' in sub && sub.name === 'generateSlug') {
+            sub.label = a('admin.pages.fields.generateSlug', 'Generate slug')
+          }
+        }
+        return field
+      },
+    }),
   ],
   hooks: {
     afterChange: [autoTranslatePageContent, revalidatePage],

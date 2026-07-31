@@ -1,19 +1,25 @@
 import type { Block } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
+
 export const FounderSpotlightBlock: Block = {
   slug: 'founderSpotlightBlock',
   interfaceName: 'FounderSpotlightBlock',
   labels: {
-    singular: 'Founder Spotlight',
-    plural: 'Founder Spotlights',
+    singular: a('admin.blocks.founderSpotlightBlock.singular', 'Founder Spotlight'),
+    plural: a('admin.blocks.founderSpotlightBlock.plural', 'Founder Spotlights'),
   },
   fields: [
     {
       name: 'subtitle',
       type: 'text',
       defaultValue: 'FOUNDER SPOTLIGHT',
+      label: a('admin.blocks.founderSpotlightBlock.subtitleLabel', 'Subtitle'),
       admin: {
-        description: 'Small label above the founder name',
+        description: a(
+          'admin.blocks.founderSpotlightBlock.subtitleDescription',
+          'Small label above the founder name',
+        ),
       },
       localized: true,
     },
@@ -22,21 +28,30 @@ export const FounderSpotlightBlock: Block = {
       type: 'text',
       required: true,
       localized: true,
+      label: a('admin.blocks.founderSpotlightBlock.nameLabel', 'Name'),
     },
     {
       name: 'role',
       type: 'text',
       required: true,
+      label: a('admin.blocks.founderSpotlightBlock.roleLabel', 'Role'),
       admin: {
-        description: 'e.g. Founder & Managing Director',
+        description: a(
+          'admin.blocks.founderSpotlightBlock.roleDescription',
+          'e.g. Founder & Managing Director',
+        ),
       },
       localized: true,
     },
     {
       name: 'quote',
       type: 'textarea',
+      label: a('admin.blocks.founderSpotlightBlock.quoteLabel', 'Quote'),
       admin: {
-        description: 'Optional pull quote displayed prominently',
+        description: a(
+          'admin.blocks.founderSpotlightBlock.quoteDescription',
+          'Optional pull quote displayed prominently',
+        ),
       },
       localized: true,
     },
@@ -45,25 +60,32 @@ export const FounderSpotlightBlock: Block = {
       type: 'textarea',
       required: true,
       localized: true,
+      label: a('admin.blocks.founderSpotlightBlock.bioLabel', 'Bio'),
     },
     {
       name: 'portrait',
       type: 'upload',
       relationTo: 'media',
       required: true,
+      label: a('admin.blocks.founderSpotlightBlock.portraitLabel', 'Portrait'),
     },
     {
       name: 'highlights',
       type: 'array',
-      maxRows: 4,
+      label: a('admin.blocks.founderSpotlightBlock.highlightsLabel', 'Highlights'),
+      labels: {
+        singular: a('admin.blocks.founderSpotlightBlock.highlightSingular', 'Highlight'),
+        plural: a('admin.blocks.founderSpotlightBlock.highlightsPlural', 'Highlights'),
+      },
       fields: [
         {
           name: 'value',
           type: 'text',
           required: true,
           localized: true,
+          label: a('admin.blocks.founderSpotlightBlock.highlightValueLabel', 'Value'),
           admin: {
-            description: 'e.g. 25+',
+            description: a('admin.blocks.founderSpotlightBlock.highlightValueDescription', 'e.g. 25+'),
           },
         },
         {
@@ -71,8 +93,12 @@ export const FounderSpotlightBlock: Block = {
           type: 'text',
           required: true,
           localized: true,
+          label: a('admin.blocks.founderSpotlightBlock.highlightLabelLabel', 'Label'),
           admin: {
-            description: 'e.g. Years of Excellence',
+            description: a(
+              'admin.blocks.founderSpotlightBlock.highlightLabelDescription',
+              'e.g. Years of Excellence',
+            ),
           },
         },
       ],

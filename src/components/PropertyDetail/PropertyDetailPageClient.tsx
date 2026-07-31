@@ -37,6 +37,7 @@ import { resolveCRMPropertyDocuments } from '@/utilities/crmPropertyDocuments'
 import { buildPropertyBrochurePdfUrl } from '@/utilities/propertyBrochure'
 import { extractReferenceFromSlug } from '@/utilities/propertyUrl'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
+import { formatPageTitle } from '@/utilities/getAppName'
 
 const pickNumber = (value: unknown): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) return value
@@ -238,7 +239,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
         setLatitude(pickNumber(raw.latitude) ?? pickNumber(raw.lat))
         setLongitude(pickNumber(raw.longitude) ?? pickNumber(raw.lng))
 
-        document.title = `${normalized.title} | Roumpos Real Estate`
+        document.title = formatPageTitle(normalized.title)
 
         setShowSimilarSoldBadge(false)
         setRelatedProperties([])

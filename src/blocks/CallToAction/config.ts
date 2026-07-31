@@ -7,6 +7,8 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { a } from '@/utilities/adminI18n'
+
 import { linkGroup } from '../../fields/linkGroup'
 
 export const CallToAction: Block = {
@@ -37,7 +39,7 @@ export const CallToAction: Block = {
     }),
   ],
   labels: {
-    plural: 'Calls to Action',
-    singular: 'Call to Action',
+    plural: a('admin.blocks.cta.plural', 'Calls to Action'),
+    singular: a('admin.blocks.cta.singular', 'Call to Action'),
   },
 }

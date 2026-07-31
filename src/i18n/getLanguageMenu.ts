@@ -49,6 +49,18 @@ function mapGlobalToMenu(global: Localization | null): LanguageMenuItem[] {
     .filter((item): item is LanguageMenuItem => item !== null)
 }
 
+function resolveSiteDefaultLocale(
+  global: Localization | null,
+  items: LanguageMenuItem[],
+): Locale {
+  const configured = global?.defaultLocale
+  if (configured && isLocale(configured) && items.some((item) => item.locale === configured)) {
+    return configured
+  }
+
+  return items[0]?.locale ?? defaultLocale
+}
+
 export const getLanguageMenuItems = cache(async (): Promise<LanguageMenuItem[]> => {
   const global = await getCachedGlobal('localization', 0)()
   const items = mapGlobalToMenu(global)
@@ -59,24 +71,34 @@ export const getLanguageMenuItems = cache(async (): Promise<LanguageMenuItem[]> 
 export function resolveActiveLocale(
   currentLocale: Locale,
   items: LanguageMenuItem[],
+  preferredDefault: Locale = defaultLocale,
 ): Locale {
   if (items.some((item) => item.locale === currentLocale)) {
     return currentLocale
   }
 
-  return items[0]?.locale ?? defaultLocale
+  if (items.some((item) => item.locale === preferredDefault)) {
+    return preferredDefault
+  }
+
+  return items[0]?.locale ?? preferredDefault
 }
 
 export const getActiveLocale = cache(async (): Promise<{
   locale: Locale
   languageMenu: LanguageMenuItem[]
+  siteDefaultLocale: Locale
 }> => {
-  const languageMenu = await getLanguageMenuItems()
+  const global = await getCachedGlobal('localization', 0)()
+  const mapped = mapGlobalToMenu(global)
+  const languageMenu = mapped.length > 0 ? mapped : fallbackMenu
+  const siteDefaultLocale = resolveSiteDefaultLocale(global, languageMenu)
   const menuLocales = languageMenu.map((item) => item.locale)
-  const cookieLocale = await getLocale(menuLocales)
+  const cookieLocale = await getLocale(menuLocales, siteDefaultLocale)
 
   return {
     languageMenu,
-    locale: resolveActiveLocale(cookieLocale, languageMenu),
+    siteDefaultLocale,
+    locale: resolveActiveLocale(cookieLocale, languageMenu, siteDefaultLocale),
   }
 })

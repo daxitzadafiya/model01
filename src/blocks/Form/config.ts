@@ -7,6 +7,8 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { a } from '@/utilities/adminI18n'
+
 export const FormBlock: Block = {
   slug: 'formBlock',
   interfaceName: 'FormBlock',
@@ -16,11 +18,12 @@ export const FormBlock: Block = {
       type: 'relationship',
       relationTo: 'forms',
       required: true,
+      label: a('admin.blocks.formBlock.formLabel', 'Form'),
     },
     {
       name: 'enableIntro',
       type: 'checkbox',
-      label: 'Enable Intro Content',
+      label: a('admin.blocks.formBlock.enableIntroLabel', 'Enable Intro Content'),
     },
     {
       name: 'introContent',
@@ -38,14 +41,14 @@ export const FormBlock: Block = {
           ]
         },
       }),
-      label: 'Intro Content',
+      label: a('admin.blocks.formBlock.introContentLabel', 'Intro Content'),
     },
   ],
   graphQL: {
     singularName: 'FormBlock',
   },
   labels: {
-    plural: 'Form Blocks',
-    singular: 'Form Block',
+    plural: a('admin.blocks.formBlock.plural', 'Form Blocks'),
+    singular: a('admin.blocks.formBlock.singular', 'Form Block'),
   },
 }

@@ -9,6 +9,7 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Translations } from './collections/Translations'
+import { Countries } from './collections/Countries'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -25,18 +26,15 @@ import { PropertyMap } from './globals/PropertyMap/config'
 import { emailAdapter } from './email/configureEmailAdapter'
 import { Theme } from './globals/Theme/config'
 import { payloadLocalization } from './i18n/locales'
+import { adminLanguagePacks } from './i18n/adminLanguagePacks'
+import { syncAdminLanguagesFromLocalization } from './i18n/syncAdminLanguagesFromLocalization'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { hasAdminCredentials } from './constants/adminUser'
 import { ensureAdminUser } from './utilities/ensureAdminUser'
+import { seedAdminTranslations } from './utilities/adminI18n'
 import { migrations } from './migrations'
-
-// Import locales Languages
-import { de } from '@payloadcms/translations/languages/de'
-import { en } from '@payloadcms/translations/languages/en'
-import { es } from '@payloadcms/translations/languages/es'
-import { fr } from '@payloadcms/translations/languages/fr'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -44,9 +42,15 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   serverURL: getServerSideURL(),
 
-  // i18n localization
+  // Admin UI languages for Account → Language.
+  // Start with Localization defaults (en/de/es); syncAdminLanguagesFromLocalization()
+  // adds/removes packs when Globals → Localization changes.
   i18n: {
-    supportedLanguages: { en, de, fr, es },
+    supportedLanguages: {
+      en: adminLanguagePacks.en,
+      de: adminLanguagePacks.de,
+      es: adminLanguagePacks.es,
+    },
   },
 
   // localization (content locales — see src/i18n/locales.ts to add codes)
@@ -65,8 +69,24 @@ export default buildConfig({
       payload.logger.info('=== hasAdminCredentials ===')
       await ensureAdminUser(payload)
     }
+
+    let adminLanguageCodes: string[] = ['en']
+    try {
+      adminLanguageCodes = await syncAdminLanguagesFromLocalization(payload)
+    } catch (error) {
+      payload.logger.error({ err: error }, '[adminLanguages] Failed to sync Account Language options')
+    }
+
+    // Populate Translations (admin.*) for Localization Account Languages only.
+    // Runs in the background so first boot / new projects are not blocked on DeepL.
+    // Admin layout `ensureAdminI18nSynced` awaits the same shared promise when needed.
+    void seedAdminTranslations(payload, { locales: adminLanguageCodes }).catch((error) => {
+      payload.logger.error({ err: error }, '[adminI18n] Failed to seed admin translations')
+    })
   },
   admin: {
+    // Avoid recoverable hydration mismatches in admin (style FOUC / extensions / Next 16)
+    suppressHydrationWarning: true,
     components: {
       graphics: {
         Icon: '@/components/Icon/Icon',
@@ -139,7 +159,7 @@ export default buildConfig({
     push: false,
     prodMigrations: migrations,
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Translations],
+  collections: [Pages, Posts, Media, Categories, Users, Translations, Countries],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [
     Header,

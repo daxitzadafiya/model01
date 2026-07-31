@@ -19,15 +19,20 @@ export async function getSiteContentLocales(payload: Payload): Promise<Locale[]>
 
     const rows = global?.languages?.filter((row) => row.enabled !== false && row.locale) ?? []
 
+    const fallback =
+      global?.defaultLocale && isLocale(String(global.defaultLocale))
+        ? (String(global.defaultLocale) as Locale)
+        : defaultLocale
+
     if (rows.length === 0) {
-      return [defaultLocale]
+      return [fallback]
     }
 
     const codes = rows
       .map((row) => String(row.locale).trim().toLowerCase())
       .filter(isLocale)
 
-    return codes.length > 0 ? codes : [defaultLocale]
+    return codes.length > 0 ? codes : [fallback]
   } catch {
     return [defaultLocale]
   }

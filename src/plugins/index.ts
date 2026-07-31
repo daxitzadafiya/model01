@@ -5,6 +5,7 @@ import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
 import { Plugin } from 'payload'
+import { a } from '@/utilities/adminI18n'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -38,6 +39,10 @@ export const plugins: Plugin[] = [
   redirectsPlugin({
     collections: ['pages', 'posts'],
     overrides: {
+      labels: {
+        singular: a('admin.redirects.singular', 'Redirect'),
+        plural: a('admin.redirects.plural', 'Redirects'),
+      },
       // @ts-expect-error - This is a valid override, mapped fields don't resolve to the same type
       fields: ({ defaultFields }) => {
         return defaultFields.map((field) => {
@@ -45,7 +50,10 @@ export const plugins: Plugin[] = [
             return {
               ...field,
               admin: {
-                description: 'You will need to rebuild the website when changing this field.',
+                description: a(
+                  'admin.redirects.fromDescription',
+                  'You will need to rebuild the website when changing this field.',
+                ),
               },
             }
           }
@@ -70,6 +78,10 @@ export const plugins: Plugin[] = [
       payment: false,
     },
     formOverrides: {
+      labels: {
+        singular: a('admin.forms.singular', 'Form'),
+        plural: a('admin.forms.plural', 'Forms'),
+      },
       fields: ({ defaultFields }) => {
         return defaultFields.map((field) => {
           if ('name' in field && field.name === 'confirmationMessage') {
@@ -91,6 +103,10 @@ export const plugins: Plugin[] = [
       },
     },
     formSubmissionOverrides: {
+      labels: {
+        singular: a('admin.formSubmissions.singular', 'Form Submission'),
+        plural: a('admin.formSubmissions.plural', 'Form Submissions'),
+      },
       fields: ({ defaultFields }) => {
         return [
           ...defaultFields,
@@ -222,6 +238,10 @@ export const plugins: Plugin[] = [
     collections: ['posts'],
     beforeSync: beforeSyncWithSearch,
     searchOverrides: {
+      labels: {
+        singular: a('admin.search.singular', 'Search Result'),
+        plural: a('admin.search.plural', 'Search Results'),
+      },
       fields: ({ defaultFields }) => {
         return [...defaultFields, ...searchFields]
       },

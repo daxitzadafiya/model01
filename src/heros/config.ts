@@ -1,5 +1,6 @@
 import type { Field } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
 import {
   FixedToolbarFeature,
   HeadingFeature,
@@ -17,22 +18,22 @@ export const hero: Field = {
       name: 'type',
       type: 'select',
       defaultValue: 'lowImpact',
-      label: 'Type',
+      label: a('admin.heros.fields.type', 'Type'),
       options: [
         {
-          label: 'None',
+          label: a('admin.heros.type.none', 'None'),
           value: 'none',
         },
         {
-          label: 'High Impact',
+          label: a('admin.heros.type.highImpact', 'High Impact'),
           value: 'highImpact',
         },
         {
-          label: 'Medium Impact',
+          label: a('admin.heros.type.mediumImpact', 'Medium Impact'),
           value: 'mediumImpact',
         },
         {
-          label: 'Low Impact',
+          label: a('admin.heros.type.lowImpact', 'Low Impact'),
           value: 'lowImpact',
         },
       ],
@@ -61,6 +62,7 @@ export const hero: Field = {
     {
       name: 'media',
       type: 'upload',
+      label: a('admin.heros.fields.media', 'Media'),
       admin: {
         condition: (_, { type } = {}) => ['highImpact', 'mediumImpact'].includes(type),
       },

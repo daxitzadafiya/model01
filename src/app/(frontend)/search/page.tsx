@@ -8,6 +8,8 @@ import { Search } from '@/search/Component'
 import { CardPostData } from '@/components/Card'
 import { formatPageTitle, getAppName } from '@/utilities/getAppName'
 import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getActiveLocale } from '@/i18n/getLanguageMenu'
+import { t } from '@/utilities/translate'
 
 type Args = {
   searchParams: Promise<{
@@ -16,7 +18,10 @@ type Args = {
 }
 export default async function Page({ searchParams: searchParamsPromise }: Args) {
   const { q: query } = await searchParamsPromise
+  const { locale } = await getActiveLocale()
   const payload = await getPayload({ config: configPromise })
+  const searchHeading = await t('search.heading', locale, 'Search')
+  const noResultsLabel = await t('search.noResults', locale, 'No results found.')
 
   const posts = await payload.find({
     collection: 'search',
@@ -64,7 +69,7 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
     <div className="pt-24 pb-24">
       <div className="container mb-16">
         <div className="prose dark:prose-invert max-w-none text-center">
-          <h1 className="mb-8 lg:mb-16">Search</h1>
+          <h1 className="mb-8 lg:mb-16">{searchHeading}</h1>
 
           <div className="max-w-[50rem] mx-auto">
             <Search />
@@ -75,7 +80,7 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
       {posts.totalDocs > 0 ? (
         <CollectionArchive posts={posts.docs as CardPostData[]} />
       ) : (
-        <div className="container">No results found.</div>
+        <div className="container">{noResultsLabel}</div>
       )}
     </div>
   )

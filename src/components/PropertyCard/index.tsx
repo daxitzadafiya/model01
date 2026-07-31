@@ -13,7 +13,7 @@ import {
   stashPropertyDetailListingContext,
   type PropertyDetailListingContext,
 } from '@/utilities/propertyDetailListingContext'
-import { useTranslation } from '@/utilities/translateClient'
+import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
 
 export type PropertyCardData = {
   imageResource?: PayloadMedia
@@ -125,6 +125,8 @@ export const PropertyCard: React.FC<Props> = ({
     'propertyList.card.removeFromFavorites',
     'Remove from favorites',
   )
+  const displayPrice = useLocalizedPropertyPrice(property.price)
+  const displayPriceSubtext = useLocalizedPropertyPrice(property.priceSubtext)
   const statusBadgeDisplay =
     statusBadgeLabel === 'SOLD'
       ? soldBadgeLabel
@@ -206,10 +208,10 @@ export const PropertyCard: React.FC<Props> = ({
           </span>
         </div>
         <span className="font-body-md text-body-md font-bold text-primary text-right">
-          {property.price ? <span className="block">{property.price}</span> : null}
-          {property.priceSubtext && (
+          {displayPrice ? <span className="block">{displayPrice}</span> : null}
+          {displayPriceSubtext && (
             <span className="block text-label-sm font-label-sm font-normal text-on-surface-variant mt-0.5">
-              {property.priceSubtext}
+              {displayPriceSubtext}
             </span>
           )}
         </span>

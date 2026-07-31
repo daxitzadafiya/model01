@@ -1,5 +1,7 @@
 import type { ArrayField, Field, GlobalConfig } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
+
 import { revalidatePropertyFilters } from './hooks/revalidatePropertyFilters'
 
 const COL_THIRD = '33.33%' as const
@@ -12,17 +14,20 @@ const sortOptionFields: Field[] = [
       {
         name: 'value',
         type: 'text',
-        label: 'Value',
+        label: a('admin.propertyFilters.sortOptions.value', 'Value'),
         required: true,
         admin: {
           width: '30%',
-          description: 'Unique key for this sort option.',
+          description: a(
+            'admin.propertyFilters.sortOptions.value.description',
+            'Unique key for this sort option.',
+          ),
         },
       },
       {
         name: 'label',
         type: 'text',
-        label: 'Label',
+        label: a('admin.propertyFilters.sortOptions.label', 'Label'),
         required: true,
         localized: true,
         admin: {
@@ -32,12 +37,14 @@ const sortOptionFields: Field[] = [
       {
         name: 'sortParams',
         type: 'textarea',
-        label: 'CRM sort parameters',
+        label: a('admin.propertyFilters.sortOptions.sortParams', 'CRM sort parameters'),
         required: true,
         admin: {
           width: '40%',
-          description:
+          description: a(
+            'admin.propertyFilters.sortOptions.sortParams.description',
             'JSON merged into options.sort (e.g. {"created_at": -1}, {"current_price": 1}, {"updated_at": true}).',
+          ),
         },
       },
     ],
@@ -51,17 +58,20 @@ const filterOptionFields: Field[] = [
       {
         name: 'value',
         type: 'text',
-        label: 'Value',
+        label: a('admin.propertyFilters.filterOptions.value', 'Value'),
         required: true,
         admin: {
           width: '40%',
-          description: 'CRM filter value sent with the search query.',
+          description: a(
+            'admin.propertyFilters.filterOptions.value.description',
+            'CRM filter value sent with the search query.',
+          ),
         },
       },
       {
         name: 'label',
         type: 'text',
-        label: 'Label',
+        label: a('admin.propertyFilters.filterOptions.label', 'Label'),
         required: true,
         localized: true,
         admin: {
@@ -79,17 +89,20 @@ const priceRangeFields: Field[] = [
       {
         name: 'value',
         type: 'text',
-        label: 'Value',
+        label: a('admin.propertyFilters.priceRanges.value', 'Value'),
         required: true,
         admin: {
           width: '25%',
-          description: 'Unique key (e.g. 500k-1m).',
+          description: a(
+            'admin.propertyFilters.priceRanges.value.description',
+            'Unique key (e.g. 500k-1m).',
+          ),
         },
       },
       {
         name: 'label',
         type: 'text',
-        label: 'Label',
+        label: a('admin.propertyFilters.priceRanges.label', 'Label'),
         required: true,
         localized: true,
         admin: {
@@ -99,21 +112,27 @@ const priceRangeFields: Field[] = [
       {
         name: 'min',
         type: 'text',
-        label: 'Min price',
+        label: a('admin.propertyFilters.priceRanges.min', 'Min price'),
         required: true,
         admin: {
           width: '25%',
-          description: 'CRM value or "any".',
+          description: a(
+            'admin.propertyFilters.priceRanges.min.description',
+            'CRM value or "any".',
+          ),
         },
       },
       {
         name: 'max',
         type: 'text',
-        label: 'Max price',
+        label: a('admin.propertyFilters.priceRanges.max', 'Max price'),
         required: true,
         admin: {
           width: '25%',
-          description: 'CRM value or "any".',
+          description: a(
+            'admin.propertyFilters.priceRanges.max.description',
+            'CRM value or "any".',
+          ),
         },
       },
     ],
@@ -139,13 +158,15 @@ function filterArrayField(
 
 export const PropertyFilters: GlobalConfig = {
   slug: 'propertyFilters',
-  label: 'Property Filters',
+  label: a('admin.propertyFilters.label', 'Property Filters'),
   access: {
     read: () => true,
   },
   admin: {
-    description:
+    description: a(
+      'admin.propertyFilters.description',
       'Dropdown options for property search filters and sort order. Property type and location still come from the CRM API.',
+    ),
   },
   hooks: {
     afterChange: [revalidatePropertyFilters],
@@ -153,11 +174,14 @@ export const PropertyFilters: GlobalConfig = {
   fields: [
     filterArrayField({
       name: 'sortOptions',
-      label: 'Sort options',
+      label: a('admin.propertyFilters.sortOptions', 'Sort options'),
       admin: {
         width: '100%',
         initCollapsed: false,
-        description: 'Options for the property list “Sort by” dropdown. Each row maps to CRM options.sort.',
+        description: a(
+          'admin.propertyFilters.sortOptions.description',
+          'Options for the property list “Sort by” dropdown. Each row maps to CRM options.sort.',
+        ),
       },
       defaultValue: [
         { value: 'recent', label: 'Recent', sortParams: '{"created_at": -1}' },
@@ -169,11 +193,14 @@ export const PropertyFilters: GlobalConfig = {
     }),
     filterArrayField({
       name: 'priceRanges',
-      label: 'Price ranges',
+      label: a('admin.propertyFilters.priceRanges', 'Price ranges'),
       admin: {
         width: '100%',
         initCollapsed: false,
-        description: 'Used in the main filter bar and hero search.',
+        description: a(
+          'admin.propertyFilters.priceRanges.description',
+          'Used in the main filter bar and hero search.',
+        ),
       },
       defaultValue: [
         { value: 'any', label: 'Any Price', min: 'any', max: 'any' },
@@ -189,10 +216,13 @@ export const PropertyFilters: GlobalConfig = {
       fields: [
         filterArrayField({
           name: 'bedrooms',
-          label: 'Bedrooms',
+          label: a('admin.propertyFilters.bedrooms', 'Bedrooms'),
           admin: {
             width: COL_HALF,
-            description: 'Exact bedroom counts. Use value "other" for the custom-number option.',
+            description: a(
+              'admin.propertyFilters.bedrooms.description',
+              'Exact bedroom counts. Use value "other" for the custom-number option.',
+            ),
           },
           defaultValue: [
             { value: 'any', label: 'Any Bedrooms' },
@@ -207,10 +237,13 @@ export const PropertyFilters: GlobalConfig = {
         }),
         filterArrayField({
           name: 'bathrooms',
-          label: 'Bathrooms',
+          label: a('admin.propertyFilters.bathrooms', 'Bathrooms'),
           admin: {
             width: COL_HALF,
-            description: 'Exact bathroom counts. Use value "other" for the custom-number option.',
+            description: a(
+              'admin.propertyFilters.bathrooms.description',
+              'Exact bathroom counts. Use value "other" for the custom-number option.',
+            ),
           },
           defaultValue: [
             { value: 'any', label: 'Any Bathrooms' },
@@ -230,7 +263,7 @@ export const PropertyFilters: GlobalConfig = {
       fields: [
         filterArrayField({
           name: 'minPrices',
-          label: 'Min price',
+          label: a('admin.propertyFilters.minPrices', 'Min price'),
           admin: { width: COL_HALF },
           defaultValue: [
             { value: 'any', label: 'Any Min Price' },
@@ -243,7 +276,7 @@ export const PropertyFilters: GlobalConfig = {
         }),
         filterArrayField({
           name: 'maxPrices',
-          label: 'Max price',
+          label: a('admin.propertyFilters.maxPrices', 'Max price'),
           admin: { width: COL_HALF },
           defaultValue: [
             { value: 'any', label: 'Any Max Price' },
@@ -261,10 +294,13 @@ export const PropertyFilters: GlobalConfig = {
       fields: [
         filterArrayField({
           name: 'features',
-          label: 'Features',
+          label: a('admin.propertyFilters.features', 'Features'),
           admin: {
             width: '100%',
-            description: 'Values must be "sea views", "mountain", or "golf".',
+            description: a(
+              'admin.propertyFilters.features.description',
+              'Values must be "sea views", "mountain", or "golf".',
+            ),
           },
           defaultValue: [
             { value: 'sea views', label: 'Sea view' },
@@ -280,10 +316,13 @@ export const PropertyFilters: GlobalConfig = {
       fields: [
         filterArrayField({
           name: 'guests',
-          label: 'Holiday guests',
+          label: a('admin.propertyFilters.guests', 'Holiday guests'),
           admin: {
             width: COL_HALF,
-            description: 'Guest count options for holiday rental search.',
+            description: a(
+              'admin.propertyFilters.guests.description',
+              'Guest count options for holiday rental search.',
+            ),
           },
           defaultValue: [
             { value: 'any', label: 'Any Guests' },
@@ -300,10 +339,13 @@ export const PropertyFilters: GlobalConfig = {
         }),
         filterArrayField({
           name: 'holidayBudgetRanges',
-          label: 'Holiday total budget',
+          label: a('admin.propertyFilters.holidayBudgetRanges', 'Holiday total budget'),
           admin: {
             width: COL_HALF,
-            description: 'Budget ranges for holiday rental search (hero + holiday listing filters).',
+            description: a(
+              'admin.propertyFilters.holidayBudgetRanges.description',
+              'Budget ranges for holiday rental search (hero + holiday listing filters).',
+            ),
           },
           defaultValue: [
             { value: 'any', label: 'Any Budget', min: 'any', max: 'any' },

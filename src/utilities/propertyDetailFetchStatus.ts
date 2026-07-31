@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'roumpos:property-detail-fetch-status'
+const STORAGE_KEY = 'app:property-detail-fetch-status'
 
 type StashedDetailFetchStatus = {
   reference: string

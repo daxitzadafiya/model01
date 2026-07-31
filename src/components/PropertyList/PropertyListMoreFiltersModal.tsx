@@ -1,7 +1,19 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import { Banknote, Bath, Bed, Globe, Home, RotateCcw, Search, Sparkles, Tag, X } from 'lucide-react'
+import {
+  Banknote,
+  Bath,
+  Bed,
+  Globe,
+  Home,
+  RotateCcw,
+  Save,
+  Search,
+  Sparkles,
+  Tag,
+  X,
+} from 'lucide-react'
 
 import { FilterSelect } from '@/components/FilterSelect'
 import type { FilterSelectOption } from '@/components/FilterSelect'
@@ -29,6 +41,7 @@ type Props = {
   onClose: () => void
   onClear: () => void
   onSearch: () => void
+  onSaveSearch?: () => void
   propertyTypeOptions: FilterSelectOption[]
   propertyTypeLoading?: boolean
   countries: CRMCountryOption[]
@@ -38,6 +51,8 @@ type Props = {
   coastsLoading?: boolean
   cities: CRMCityOption[]
   citiesLoading?: boolean
+  /** Override reference field label (e.g. Reference or project name) */
+  referenceLabel?: string
   /** Override reference field placeholder (e.g. projects: Ref or project name) */
   referencePlaceholder?: string
   /** Show delivery + distance-to-sea filters (projects listing). */
@@ -76,6 +91,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   onClose,
   onClear,
   onSearch,
+  onSaveSearch,
   propertyTypeOptions,
   propertyTypeLoading = false,
   countries,
@@ -85,11 +101,13 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   coastsLoading = false,
   cities,
   citiesLoading = false,
+  referenceLabel: referenceLabelProp,
   referencePlaceholder: referencePlaceholderProp,
   showProjectFilters = false,
 }) => {
   const moreFiltersLabel = useTranslation('propertyList.filters.moreFilters', 'More Filters')
-  const referenceLabel = useTranslation('propertyList.filters.reference', 'Reference')
+  const referenceLabelDefault = useTranslation('propertyList.filters.reference', 'Reference')
+  const referenceLabel = referenceLabelProp || referenceLabelDefault
   const referencePlaceholderDefault = useTranslation(
     'propertyList.filters.reference.placeholder',
     'Reference...',
@@ -100,7 +118,10 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
   const countryLabel = useTranslation('propertyList.filters.country', 'Country')
   const loadingCountriesLabel = useTranslation('propertyList.filters.loadingCountries', 'Loading countries…')
-  const allCountriesLabel = useTranslation('propertyList.filters.country.emptyLabel', 'All Countries')
+  const noOptionsFoundLabel = useTranslation(
+    'propertyList.filters.noOptionsFound',
+    'No options found',
+  )
   const bedroomsLabel = useTranslation('propertyList.filters.bedrooms', 'Bedrooms')
   const bathroomsLabel = useTranslation('propertyList.filters.bathrooms', 'Bathrooms')
   const countCustomPlaceholder = useTranslation(
@@ -113,6 +134,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   const featuresEmptyLabel = useTranslation('propertyList.filters.features.emptyLabel', 'Features')
   const clearFiltersLabel = useTranslation('propertyList.filters.clearFilters', 'Clear Filters')
   const searchLabel = useTranslation('propertyList.filters.search', 'Search')
+  const saveFilterLabel = useTranslation('propertyList.filters.saveSearch', 'Save search')
   const closeFiltersAriaLabel = useTranslation(
     'propertyList.filters.closeFiltersAria',
     'Close filters',
@@ -213,27 +235,41 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                 value={parsePropertyTypeFilter(filters.propertyType)}
                 onChange={(value) => onChange('propertyType', value)}
                 emptyLabel={propertyTypeLoading ? loadingTypesLabel : allPropertiesLabel}
-                disabled={propertyTypeLoading}
+                loading={propertyTypeLoading}
+                noOptionsLabel={noOptionsFoundLabel}
                 icon={<Home {...filterFieldIcon} />}
               />
             </div>
 
-            <div className="min-w-0 sm:col-span-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <CoastCityFilterFields
-                  coast={filters.coast}
-                  city={filters.city}
-                  onCoastChange={(value) => onChange('coast', value)}
-                  onCityChange={(value) => onChange('city', value)}
-                  coasts={coasts}
-                  coastsLoading={coastsLoading}
-                  cities={cities}
-                  citiesLoading={citiesLoading}
-                  coastId="filter-modal-coast"
-                  cityId="filter-modal-city"
+            {showCountryFilter && (
+              <div className="min-w-0">
+                <FilterSelect
+                  label={countryLabel}
+                  options={countries.map((item) => ({ value: item.value, label: item.label }))}
+                  value={
+                    parseCountryFilter(filters.country)[0] ?? countries[0]?.value ?? ''
+                  }
+                  onChange={(value) => onChange('country', value ? [value] : [])}
+                  loading={countriesLoading}
+                  placeholder={countriesLoading ? loadingCountriesLabel : countryLabel}
+                  noOptionsLabel={noOptionsFoundLabel}
+                  icon={<Globe {...filterFieldIcon} />}
                 />
               </div>
-            </div>
+            )}
+
+            <CoastCityFilterFields
+              coast={filters.coast}
+              city={filters.city}
+              onCoastChange={(value) => onChange('coast', value)}
+              onCityChange={(value) => onChange('city', value)}
+              coasts={coasts}
+              coastsLoading={coastsLoading}
+              cities={cities}
+              citiesLoading={citiesLoading}
+              coastId="filter-modal-coast"
+              cityId="filter-modal-city"
+            />
 
             <div className="min-w-0">
               <CountFilterField
@@ -283,7 +319,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
               />
             </div>
 
-            <div className={`min-w-0 ${showCountryFilter ? 'sm:col-span-1' : 'sm:col-span-2'}`}>
+            <div className={`min-w-0 ${showCountryFilter ? '' : 'sm:col-span-2'}`}>
               <FilterSelect
                 mode="multi"
                 label={featuresLabel}
@@ -324,42 +360,42 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                 </div>
               </>
             )}
-
-            {showCountryFilter && (
-              <div className="min-w-0 sm:col-span-1">
-                <FilterSelect
-                  mode="multi"
-                  label={countryLabel}
-                  options={countries.map((item) => ({ value: item.value, label: item.label }))}
-                  value={parseCountryFilter(filters.country)}
-                  onChange={(value) => onChange('country', value)}
-                  emptyLabel={countriesLoading ? loadingCountriesLabel : allCountriesLabel}
-                  disabled={countriesLoading || !countries.length}
-                  icon={<Globe {...filterFieldIcon} />}
-                />
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="relative z-0 flex shrink-0 flex-col-reverse gap-4 border-t border-outline-variant/30 bg-surface-container-low px-6 py-5 sm:flex-row sm:items-center sm:justify-between md:px-8">
+        <div className="relative z-0 flex shrink-0 flex-col-reverse gap-3 border-t border-outline-variant/30 bg-surface-container-low px-6 py-4 sm:flex-row sm:items-center sm:justify-between md:px-8">
           <button
             type="button"
             onClick={() => {
               onClear()
             }}
-            className="px-10 py-3 text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 hover:text-primary transition-colors cursor-pointer border border-outline-variant rounded-lg"
+            className="min-h-11 px-6 py-3 text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest flex items-center justify-center gap-2 hover:text-primary transition-colors cursor-pointer border border-outline-variant rounded-lg"
           >
-            <RotateCcw size={18} />
+            <RotateCcw size={18} aria-hidden />
             {clearFiltersLabel}
           </button>
-          <button
-            type="submit"
-            className="px-10 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors cursor-pointer"
-          >
-            <Search size={18} />
-            {searchLabel}
-          </button>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+            {onSaveSearch && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose()
+                  onSaveSearch()
+                }}
+                className="min-h-11 px-6 py-3 bg-tertiary text-white font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary-container transition-colors cursor-pointer"
+              >
+                <Save size={18} strokeWidth={1.75} aria-hidden />
+                {saveFilterLabel}
+              </button>
+            )}
+            <button
+              type="submit"
+              className="min-h-11 px-8 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors cursor-pointer"
+            >
+              <Search size={18} aria-hidden />
+              {searchLabel}
+            </button>
+          </div>
         </div>
       </form>
     </div>

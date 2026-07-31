@@ -1,3 +1,4 @@
+import Logo from '@/components/Logo/Logo'
 import { getLogoSources } from '@/components/Logo/getLogoSources'
 import type { Payload } from 'payload'
 
@@ -20,13 +21,7 @@ export async function AdminBrandLogo({ payload }: AdminBrandLogoProps) {
 
   return (
     <div className="login__brand">
-      {/* eslint-disable @next/next/no-img-element */}
-      <img
-        alt={sources.alt}
-        height={sources.height}
-        src={sources.lightSrc}
-        width={sources.width}
-      />
+      <Logo loading="eager" priority="high" sources={sources} />
     </div>
   )
 }

@@ -1,72 +1,89 @@
 import type { GlobalConfig } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
+import { a } from '@/utilities/adminI18n'
 import { invalidateOptimaCrmSettingsCache } from '@/settings/optimaCrm/client'
 import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
 export const OptimaCrmSettings: GlobalConfig = {
   slug: 'optimaCrmSettings',
-  label: 'Optima CRM',
+  label: a('admin.optimaCrmSettings.label', 'Optima CRM'),
   access: {
     read: authenticated,
     update: authenticated,
   },
   admin: {
-    description:
+    description: a(
+      'admin.optimaCrmSettings.description',
       'Optima CRM API credentials, contact endpoint, and image CDN settings. Stored in the database — not in environment variables.',
-    group: 'Settings',
+    ),
+    group: a('admin.groups.settings', 'Settings'),
   },
   fields: [
     {
       name: 'api',
       type: 'group',
-      label: 'API credentials',
+      label: a('admin.optimaCrmSettings.api', 'API credentials'),
       fields: [
         {
           name: 'apiUrl',
           type: 'text',
-          label: 'CRM API URL (v3)',
+          label: a('admin.optimaCrmSettings.api.apiUrl', 'CRM API URL (v3)'),
           required: true,
           admin: {
-            description: 'Base URL for Optima v3 API (e.g. https://your-crm.optima-crm.com/v3).',
+            description: a(
+              'admin.optimaCrmSettings.api.apiUrl.description',
+              'Base URL for Optima v3 API (e.g. https://your-crm.optima-crm.com/v3).',
+            ),
           },
         },
         {
           name: 'apiKey',
           type: 'text',
-          label: 'CRM API key',
+          label: a('admin.optimaCrmSettings.api.apiKey', 'CRM API key'),
           required: true,
           admin: {
-            description: 'Sent as user_apikey on CRM requests.',
+            description: a(
+              'admin.optimaCrmSettings.api.apiKey.description',
+              'Sent as user_apikey on CRM requests.',
+            ),
           },
         },
         {
           name: 'contactUrl',
           type: 'text',
-          label: 'Contact form URL (Yii)',
+          label: a('admin.optimaCrmSettings.api.contactUrl', 'Contact form URL (Yii)'),
           required: true,
           admin: {
-            description:
+            description: a(
+              'admin.optimaCrmSettings.api.contactUrl.description',
               'Yii endpoint for contact submissions and PDF brochures (?r=accounts/index or ?r=pdf).',
+            ),
           },
         },
         {
           name: 'userKey',
           type: 'text',
-          label: 'Optima user key',
+          label: a('admin.optimaCrmSettings.api.userKey', 'Optima user key'),
           required: true,
           admin: {
-            description: 'Used for property detail view and PDF brochure generation.',
+            description: a(
+              'admin.optimaCrmSettings.api.userKey.description',
+              'Used for property detail view and PDF brochure generation.',
+            ),
           },
         },
         {
           name: 'brochureTemplateId',
           type: 'number',
-          label: 'Brochure template ID',
+          label: a('admin.optimaCrmSettings.api.brochureTemplateId', 'Brochure template ID'),
           defaultValue: 39,
           required: true,
           admin: {
-            description: 'Optima PDF template ID for property brochures.',
+            description: a(
+              'admin.optimaCrmSettings.api.brochureTemplateId.description',
+              'Optima PDF template ID for property brochures.',
+            ),
           },
         },
       ],
@@ -74,11 +91,13 @@ export const OptimaCrmSettings: GlobalConfig = {
     {
       name: 'images',
       type: 'group',
-      label: 'Image CDN',
+      label: a('admin.optimaCrmSettings.images', 'Image CDN'),
       required: true,
       admin: {
-        description:
+        description: a(
+          'admin.optimaCrmSettings.images.description',
           'Optima image URL bases. Defaults match the standard Optima CDN if left empty.',
+        ),
       },
       fields: [
         {
@@ -86,34 +105,45 @@ export const OptimaCrmSettings: GlobalConfig = {
           type: 'text',
           required: true,
           defaultValue: 'https://images.optima-crm.com/cms_medias/',
+          label: a('admin.optimaCrmSettings.images.imageUrlWithoutResize', 'Image URL Without Resize'),
         },
         {
           name: 'imageUrl',
           type: 'text',
           required: true,
           defaultValue: 'https://images.optima-crm.com/resize/cms_medias/',
+          label: a('admin.optimaCrmSettings.images.imageUrl', 'Image URL'),
         },
         {
           name: 'commercialImageBase',
           type: 'text',
           required: true,
           defaultValue: 'https://images.optima-crm.com/commercial_images',
+          label: a('admin.optimaCrmSettings.images.commercialImageBase', 'Commercial Image Base'),
         },
         {
           name: 'constructionsImageBase',
           type: 'text',
           required: true,
           defaultValue: 'https://images.optima-crm.com/constructions_images',
+          label: a('admin.optimaCrmSettings.images.constructionsImageBase', 'Constructions Image Base'),
           admin: {
-            description: 'Base URL for construction/project document files.',
+            description: a(
+              'admin.optimaCrmSettings.images.constructionsImageBase.description',
+              'Base URL for construction/project document files.',
+            ),
           },
         },
         {
           name: 'agencyId',
           type: 'text',
           required: true,
+          label: a('admin.optimaCrmSettings.images.agencyId', 'Agency ID'),
           admin: {
-            description: 'Optima agency ID for commercial images.',
+            description: a(
+              'admin.optimaCrmSettings.images.agencyId.description',
+              'Optima agency ID for commercial images.',
+            ),
           },
         },
         {
@@ -121,34 +151,56 @@ export const OptimaCrmSettings: GlobalConfig = {
           type: 'text',
           required: true,
           defaultValue: 'https://images.optima-crm.com/resize/',
+          label: a('admin.optimaCrmSettings.images.propertyResizeBase', 'Property Resize Base'),
         },
         {
           name: 'siteId',
           type: 'text',
           required: true,
           defaultValue: '237',
+          label: a('admin.optimaCrmSettings.images.siteId', 'Site ID'),
         },
       ],
     },
     {
       name: 'properties',
       type: 'group',
-      label: 'Property queries',
+      label: a('admin.optimaCrmSettings.properties', 'Property queries'),
       fields: [
         {
           name: 'similarCommercials',
           type: 'select',
-          label: 'Similar commercials',
+          label: a('admin.optimaCrmSettings.properties.similarCommercials', 'Similar commercials'),
           defaultValue: 'exclude_similar',
           required: true,
           options: [
-            { label: 'Exclude similar', value: 'exclude_similar' },
-            { label: 'Include similar', value: 'include_similar' },
-            { label: 'Only similar', value: 'only_similar' },
+            {
+              label: a(
+                'admin.optimaCrmSettings.properties.similarCommercials.excludeSimilar',
+                'Exclude similar',
+              ),
+              value: 'exclude_similar',
+            },
+            {
+              label: a(
+                'admin.optimaCrmSettings.properties.similarCommercials.includeSimilar',
+                'Include similar',
+              ),
+              value: 'include_similar',
+            },
+            {
+              label: a(
+                'admin.optimaCrmSettings.properties.similarCommercials.onlySimilar',
+                'Only similar',
+              ),
+              value: 'only_similar',
+            },
           ],
           admin: {
-            description:
+            description: a(
+              'admin.optimaCrmSettings.properties.similarCommercials.description',
               'Controls the similar_commercials parameter on all CRM property listing requests.',
+            ),
           },
         },
       ],

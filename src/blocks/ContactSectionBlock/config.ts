@@ -1,11 +1,13 @@
 import type { Block } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
+
 export const ContactSectionBlock: Block = {
   slug: 'contactSectionBlock',
   interfaceName: 'ContactSectionBlock',
   labels: {
-    singular: 'Contact Section',
-    plural: 'Contact Sections',
+    singular: a('admin.blocks.contactSectionBlock.singular', 'Contact Section'),
+    plural: a('admin.blocks.contactSectionBlock.plural', 'Contact Sections'),
   },
   fields: [
     {
@@ -13,8 +15,12 @@ export const ContactSectionBlock: Block = {
       type: 'text',
       localized: true,
       defaultValue: 'Inquiry',
+      label: a('admin.blocks.contactSectionBlock.formEyebrowLabel', 'Form Eyebrow'),
       admin: {
-        description: 'Small uppercase label above the form title (left side).',
+        description: a(
+          'admin.blocks.contactSectionBlock.formEyebrowDescription',
+          'Small uppercase label above the form title (left side).',
+        ),
       },
     },
     {
@@ -23,6 +29,7 @@ export const ContactSectionBlock: Block = {
       required: true,
       localized: true,
       defaultValue: 'Private Consultation',
+      label: a('admin.blocks.contactSectionBlock.formTitleLabel', 'Form Title'),
     },
     {
       name: 'formDescription',
@@ -30,13 +37,18 @@ export const ContactSectionBlock: Block = {
       localized: true,
       defaultValue:
         'Our specialists are dedicated to finding your ideal heritage property. Please share your requirements below.',
+      label: a('admin.blocks.contactSectionBlock.formDescriptionLabel', 'Form Description'),
     },
     {
       name: 'submitLabelOverride',
       type: 'text',
       localized: true,
+      label: a('admin.blocks.contactSectionBlock.submitLabelOverrideLabel', 'Submit Label Override'),
       admin: {
-        description: 'Optional. If empty, submit label from the selected form is used.',
+        description: a(
+          'admin.blocks.contactSectionBlock.submitLabelOverrideDescription',
+          'Optional. If empty, submit label from the selected form is used.',
+        ),
       },
     },
     {
@@ -44,6 +56,7 @@ export const ContactSectionBlock: Block = {
       type: 'text',
       localized: true,
       defaultValue: "Your information is safe with us. We'll never share your details.",
+      label: a('admin.blocks.contactSectionBlock.formTrustNoteLabel', 'Form Trust Note'),
     },
     {
       type: 'row',
@@ -51,7 +64,10 @@ export const ContactSectionBlock: Block = {
         {
           name: 'enableResubmit',
           type: 'checkbox',
-          label: 'Enable re-submit button after success',
+          label: a(
+            'admin.blocks.contactSectionBlock.enableResubmitLabel',
+            'Enable re-submit button after success',
+          ),
           defaultValue: true,
           admin: {
             width: '50%',
@@ -62,6 +78,10 @@ export const ContactSectionBlock: Block = {
           type: 'text',
           localized: true,
           defaultValue: 'Submit another response',
+          label: a(
+            'admin.blocks.contactSectionBlock.resubmitButtonLabelLabel',
+            'Resubmit Button Label',
+          ),
           admin: {
             width: '50%',
             condition: (_, siblingData) => Boolean(siblingData?.enableResubmit),
@@ -77,9 +97,13 @@ export const ContactSectionBlock: Block = {
           type: 'text',
           localized: true,
           defaultValue: 'Thank you!',
+          label: a('admin.blocks.contactSectionBlock.successTitleLabel', 'Success Title'),
           admin: {
             width: '50%',
-            description: 'Heading shown after successful form submission.',
+            description: a(
+              'admin.blocks.contactSectionBlock.successTitleDescription',
+              'Heading shown after successful form submission.',
+            ),
           },
         },
         {
@@ -87,9 +111,13 @@ export const ContactSectionBlock: Block = {
           type: 'text',
           localized: true,
           defaultValue: 'Your response has been submitted.',
+          label: a('admin.blocks.contactSectionBlock.successSubtitleLabel', 'Success Subtitle'),
           admin: {
             width: '50%',
-            description: 'Subtext shown below the success title.',
+            description: a(
+              'admin.blocks.contactSectionBlock.successSubtitleDescription',
+              'Subtext shown below the success title.',
+            ),
           },
         },
       ],
@@ -98,6 +126,11 @@ export const ContactSectionBlock: Block = {
       name: 'offices',
       type: 'array',
       minRows: 1,
+      label: a('admin.blocks.contactSectionBlock.officesLabel', 'Offices'),
+      labels: {
+        singular: a('admin.blocks.contactSectionBlock.officeSingular', 'Office'),
+        plural: a('admin.blocks.contactSectionBlock.officesPlural', 'Offices'),
+      },
       admin: {
         initCollapsed: true,
       },
@@ -107,6 +140,7 @@ export const ContactSectionBlock: Block = {
           type: 'text',
           localized: true,
           defaultValue: 'Headquarters',
+          label: a('admin.blocks.contactSectionBlock.officeLabelLabel', 'Label'),
         },
         {
           name: 'city',
@@ -114,27 +148,36 @@ export const ContactSectionBlock: Block = {
           required: true,
           localized: true,
           defaultValue: 'Athens',
+          label: a('admin.blocks.contactSectionBlock.cityLabel', 'City'),
         },
         {
           name: 'addressLines',
           type: 'array',
           minRows: 1,
+          label: a('admin.blocks.contactSectionBlock.addressLinesLabel', 'Address Lines'),
+          labels: {
+            singular: a('admin.blocks.contactSectionBlock.addressLineSingular', 'Address Line'),
+            plural: a('admin.blocks.contactSectionBlock.addressLinesPlural', 'Address Lines'),
+          },
           fields: [
             {
               name: 'line',
               type: 'text',
               required: true,
               localized: true,
+              label: a('admin.blocks.contactSectionBlock.addressLineLabel', 'Line'),
             },
           ],
         },
         {
           name: 'phone',
           type: 'text',
+          label: a('admin.blocks.contactSectionBlock.phoneLabel', 'Phone'),
         },
         {
           name: 'email',
           type: 'email',
+          label: a('admin.blocks.contactSectionBlock.emailLabel', 'Email'),
         },
         {
           type: 'row',
@@ -142,18 +185,26 @@ export const ContactSectionBlock: Block = {
             {
               name: 'lat',
               type: 'number',
+              label: a('admin.blocks.contactSectionBlock.latLabel', 'Latitude'),
               admin: {
                 width: '50%',
-                description: 'Latitude for map marker (e.g. 48.9903224).',
+                description: a(
+                  'admin.blocks.contactSectionBlock.latDescription',
+                  'Latitude for map marker (e.g. 48.9903224).',
+                ),
                 step: 0.000001,
               },
             },
             {
               name: 'lon',
               type: 'number',
+              label: a('admin.blocks.contactSectionBlock.lonLabel', 'Longitude'),
               admin: {
                 width: '50%',
-                description: 'Longitude for map marker (e.g. 12.1991392).',
+                description: a(
+                  'admin.blocks.contactSectionBlock.lonDescription',
+                  'Longitude for map marker (e.g. 12.1991392).',
+                ),
                 step: 0.000001,
               },
             },
@@ -163,6 +214,7 @@ export const ContactSectionBlock: Block = {
           name: 'image',
           type: 'upload',
           relationTo: 'media',
+          label: a('admin.blocks.contactSectionBlock.imageLabel', 'Image'),
         },
       ],
     },
@@ -171,9 +223,12 @@ export const ContactSectionBlock: Block = {
       type: 'relationship',
       relationTo: 'forms',
       required: true,
+      label: a('admin.blocks.contactSectionBlock.formLabel', 'Form'),
       admin: {
-        description:
+        description: a(
+          'admin.blocks.contactSectionBlock.formDescription',
           'Select a form from the Forms collection. Manage fields and submissions under Forms / Form Submissions in admin.',
+        ),
       },
     },
   ],

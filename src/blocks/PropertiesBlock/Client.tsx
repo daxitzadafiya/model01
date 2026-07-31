@@ -7,6 +7,7 @@ import {
   PropertiesCarousel,
   type PropertiesCarouselItem,
 } from '@/components/PropertiesCarousel'
+import { PRICE_ON_REQUEST_LABEL } from '@/utilities/localizePropertyPrice'
 
 type Props = Extract<Page['layout'][0], { blockType: 'propertiesBlock' }> & {
   crmProperties?: PropertiesCarouselItem[]
@@ -33,7 +34,7 @@ export const PropertiesBlockClient: React.FC<Props> = ({
       beds: property.beds ?? undefined,
       baths: property.baths ?? undefined,
       sqft: property.sqft ?? undefined,
-      price: property.price || 'Price on request',
+      price: property.price || PRICE_ON_REQUEST_LABEL,
     })) ?? []
 
   const displayProperties = source === 'crm' ? crmProperties : normalizedCMSProperties

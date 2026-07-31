@@ -65,11 +65,23 @@ const normalizeCity = (doc: Record<string, unknown>, locale: string): CRMCityOpt
   }
 }
 
-export async function fetchCRMCoasts(init?: { signal?: AbortSignal }): Promise<CRMCoastOption[]> {
-  const response = await fetch('/api/crm/location-groups', {
-    signal: init?.signal,
-    cache: 'no-store',
-  })
+export async function fetchCRMCoasts(
+  countryKeys?: string[],
+  init?: { signal?: AbortSignal },
+): Promise<CRMCoastOption[]> {
+  const params = new URLSearchParams()
+  // CRM only accepts a single country key.
+  const country = (countryKeys ?? []).map((key) => key.trim()).find(Boolean)
+  if (country) params.set('country', country)
+
+  const query = params.toString()
+  const response = await fetch(
+    query ? `/api/crm/location-groups?${query}` : '/api/crm/location-groups',
+    {
+      signal: init?.signal,
+      cache: 'no-store',
+    },
+  )
 
   if (!response.ok) {
     throw new Error(`CRM location groups failed (${response.status})`)

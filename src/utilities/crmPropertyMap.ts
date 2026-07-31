@@ -126,8 +126,9 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
   }
 
   if (preset === 'favorites') {
+    // Favorites fetch by explicit _id $in — do not send similar_commercials.
     return {
-      ...similarCommercials,
+      // ...similarCommercials,
       archived: { $ne: true },
       // has_images: true,
     }
@@ -144,6 +145,8 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
   if (preset === 'seaView') {
     baseQuery['views.sea'] = true
   } else if (preset === 'featured') {
+    // Featured listings always include similar commercials, regardless of Optima CRM global.
+    baseQuery.similar_commercials = 'include_similar'
     baseQuery.featured = true
   }
 
@@ -157,13 +160,22 @@ export const normalizeMapFindAllQuery = (
 ): Record<string, unknown> => {
   const { remove_count: _removeCount, ...rest } = query
 
-  const normalized: Record<string, unknown> = withCRMCoordinateQueryFields(
-    withSimilarCommercialsDefault({
-      ...rest,
-      archived: { $ne: true },
-      // has_images: true,
-    }),
-  )
+  const withoutRemoveCount: Record<string, unknown> = {
+    ...rest,
+    archived: { $ne: true },
+    // has_images: true,
+  }
+
+  // Favorites omit similar_commercials (id list only); other presets use the global default.
+  let withSimilar: Record<string, unknown>
+  if (preset === 'favorites') {
+    const { similar_commercials: _similar, ...query } = withoutRemoveCount
+    withSimilar = query
+  } else {
+    withSimilar = withSimilarCommercialsDefault(withoutRemoveCount)
+  }
+
+  const normalized: Record<string, unknown> = withCRMCoordinateQueryFields(withSimilar)
 
   if (preset !== 'favorites') {
     if (preset === 'forRent') {

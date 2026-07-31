@@ -9,6 +9,15 @@ import {
   getFieldRequiredValidationMapping,
 } from '@/utilities/formFieldLabels'
 import {
+  HOLIDAY_SELECT_DATES_LABEL,
+  PRICE_ON_DEMAND_LABEL,
+} from '@/utilities/crmHoliday'
+import {
+  localizePropertyPrice,
+  PRICE_ON_REQUEST_LABEL,
+  type PropertyPriceLabels,
+} from '@/utilities/localizePropertyPrice'
+import {
   getTranslationSnapshot,
   isTranslationResolved,
   requestTranslation,
@@ -85,6 +94,33 @@ export function useTranslation(key: string, fallbackValue: string): string {
     () => getTranslationSnapshot(key, locale, fallbackValue),
     () => fallbackValue,
   )
+}
+
+/** Labels for CRM/holiday price strings composed in English. */
+export function usePropertyPriceLabels(): PropertyPriceLabels {
+  return {
+    priceOnDemand: useTranslation('propertyList.card.priceOnDemand', PRICE_ON_DEMAND_LABEL),
+    priceOnRequest: useTranslation('propertyList.card.priceOnRequest', PRICE_ON_REQUEST_LABEL),
+    selectDatesForPrice: useTranslation(
+      'propertyList.card.selectDatesForPrice',
+      HOLIDAY_SELECT_DATES_LABEL,
+    ),
+    from: useTranslation('propertyList.card.priceFrom', 'from'),
+    perNight: useTranslation('propertyList.card.perNight', '/night'),
+    perMonth: useTranslation('propertyList.card.perMonth', 'per month'),
+    perYear: useTranslation('propertyList.card.perYear', 'per year'),
+    nights: useTranslation('propertyDetail.holiday.nights', 'nights'),
+    guests: useTranslation('propertyList.card.guestsUnit', 'guests'),
+    perPersonPerNight: useTranslation(
+      'propertyDetail.holiday.perPersonPerNightShort',
+      'per person / night',
+    ),
+  }
+}
+
+export function useLocalizedPropertyPrice(price?: string): string {
+  const labels = usePropertyPriceLabels()
+  return localizePropertyPrice(price, labels)
 }
 
 export function useFormFieldLabel(fieldName: string, labelFromForm?: string): string {

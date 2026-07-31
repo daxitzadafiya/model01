@@ -14,6 +14,10 @@ import {
   COMMERCIAL_PROFILE_TYPE_ONE_FIELD,
   COMMERCIAL_PROFILE_TYPE_TWO_FIELD,
 } from '@/utilities/propertyInquiry'
+import {
+  SAVE_SEARCH_FLAG_FIELD,
+  SAVE_SEARCH_SUMMARY_FIELD,
+} from '@/utilities/saveSearch'
 import { HOLIDAY_CHECK_IN_HOUR, HOLIDAY_CHECK_OUT_HOUR } from '@/utilities/holidayStayTimes'
 import { t } from '@/utilities/translate'
 
@@ -22,7 +26,7 @@ type SubmissionField = {
   value: string | boolean | number | null | undefined
 }
 
-type NotificationTemplate = 'contact' | 'propertyInquiry' | 'holidayBooking'
+type NotificationTemplate = 'contact' | 'propertyInquiry' | 'holidayBooking' | 'saveSearch'
 
 type NotificationField = {
   label: string
@@ -65,6 +69,23 @@ const INTERNAL_FIELDS = new Set([
   'recaptchaToken',
   'syncToOptimaCrm',
   'submissionLocale',
+  SAVE_SEARCH_FLAG_FIELD,
+  'source',
+  'cities',
+  'lgroups',
+  'countries',
+  'budget_min',
+  'budget_max',
+  'min_bedrooms',
+  'min_bathrooms',
+  'feet_views',
+  'feet_categories',
+  'garden',
+  'parking',
+  'pool',
+  'rent_from_date',
+  'rent_to_date',
+  'min_sleeps',
 ])
 
 const EXCLUDED_FIELD_BLOCK_TYPES = new Set(['checkbox', 'message'])
@@ -90,6 +111,11 @@ const TEMPLATE_DEFAULTS: Record<
     name: 'New Holiday Booking Enquiry',
     intro: 'A new holiday rental booking enquiry has been received from your website.',
   },
+  saveSearch: {
+    subject: 'New Save Search Request',
+    name: 'New Save Search Request',
+    intro: 'A visitor saved a property search and asked to be notified about matching listings.',
+  },
 }
 
 const CLIENT_TEMPLATE_DEFAULTS: Record<NotificationTemplate, { subject: string }> = {
@@ -101,6 +127,9 @@ const CLIENT_TEMPLATE_DEFAULTS: Record<NotificationTemplate, { subject: string }
   },
   holidayBooking: {
     subject: 'Holiday booking enquiry (Ref: {{reference}})',
+  },
+  saveSearch: {
+    subject: 'Thank you for saving your search',
   },
 }
 
@@ -124,6 +153,13 @@ function isPropertyInquirySubmission(
     getSubmissionValue(submissionData, 'property') ||
     getSubmissionValue(submissionData, 'reference'),
   )
+}
+
+function isSaveSearchSubmission(submissionData: SubmissionField[] | null | undefined): boolean {
+  const flag = getSubmissionValue(submissionData, SAVE_SEARCH_FLAG_FIELD).toLowerCase()
+  if (flag === 'true' || flag === '1' || flag === 'yes') return true
+  if (getSubmissionValue(submissionData, SAVE_SEARCH_SUMMARY_FIELD)) return true
+  return getSubmissionValue(submissionData, 'message').toLowerCase() === 'save search'
 }
 
 function getClientEmail(submissionData: SubmissionField[] | null | undefined): string | undefined {
@@ -267,10 +303,20 @@ function getClientTemplate(
   const group = emailSettings?.clientConfirmation
   if (!group || typeof group !== 'object') return null
 
-  const templateConfig = group[template]
-  if (!templateConfig || typeof templateConfig !== 'object') return null
+  const templateConfig = (group as Record<string, unknown>)[template]
+  if (templateConfig && typeof templateConfig === 'object') {
+    return templateConfig as EmailTemplateConfig
+  }
 
-  return templateConfig as EmailTemplateConfig
+  // Backward-compatible fallback before saveSearch template existed in admin.
+  if (template === 'saveSearch') {
+    const contactTemplate = group.contact
+    if (contactTemplate && typeof contactTemplate === 'object') {
+      return contactTemplate as EmailTemplateConfig
+    }
+  }
+
+  return null
 }
 
 async function resolveTemplateContentHtml(
@@ -414,8 +460,13 @@ export async function sendFormSubmissionNotificationEmail({
 }): Promise<void> {
   const submissionData = (doc.submissionData ?? []) as SubmissionField[]
   const locale = (doc.submissionLocale as string | undefined)?.trim().toLowerCase() || 'en'
-  const isPropertyInquiry = isPropertyInquirySubmission(submissionData)
-  const template: NotificationTemplate = isPropertyInquiry ? 'propertyInquiry' : 'contact'
+  const isSaveSearch = isSaveSearchSubmission(submissionData)
+  const isPropertyInquiry = !isSaveSearch && isPropertyInquirySubmission(submissionData)
+  const template: NotificationTemplate = isSaveSearch
+    ? 'saveSearch'
+    : isPropertyInquiry
+      ? 'propertyInquiry'
+      : 'contact'
 
   const [formTitle, formDefinition] = await Promise.all([
     resolveFormTitle(payload, doc.form),
@@ -424,6 +475,8 @@ export async function sendFormSubmissionNotificationEmail({
 
   const visibleFields = submissionData.filter((entry) => {
     if (!entry?.field || isExcludedEmailField(entry.field, formDefinition)) return false
+    // Gestali-style save-search mail focuses on contact details + search criteria.
+    if (isSaveSearch && (entry.field === 'message' || entry.field === 'subject')) return false
     return Boolean(getSubmissionValue(submissionData, entry.field))
   })
 

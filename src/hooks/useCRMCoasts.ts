@@ -1,13 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { fetchCRMCoasts, type CRMCoastOption } from '@/utilities/crmCoasts'
 
-export function useCRMCoasts() {
+export function useCRMCoasts(country?: string[]) {
   const [coasts, setCoasts] = useState<CRMCoastOption[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const countryKeys = useMemo(() => {
+    const keys = (country ?? [])
+      .map((key) => key.trim())
+      .filter((key) => key && key !== 'all' && key !== 'any')
+    // CRM only accepts a single country key.
+    return keys.slice(0, 1)
+  }, [country])
+  const countryKey = countryKeys[0] ?? ''
 
   useEffect(() => {
     const controller = new AbortController()
@@ -16,7 +25,7 @@ export function useCRMCoasts() {
       setLoading(true)
       setError(null)
       try {
-        const nextCoasts = await fetchCRMCoasts({ signal: controller.signal })
+        const nextCoasts = await fetchCRMCoasts(countryKeys, { signal: controller.signal })
         setCoasts(nextCoasts)
       } catch (err) {
         if ((err as Error).name === 'AbortError') return
@@ -30,7 +39,7 @@ export function useCRMCoasts() {
 
     void load()
     return () => controller.abort()
-  }, [])
+  }, [countryKey, countryKeys])
 
   return { coasts, loading, error }
 }

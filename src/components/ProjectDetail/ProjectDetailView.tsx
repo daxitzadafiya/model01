@@ -23,7 +23,7 @@ import type { CRMPropertyVideoItem } from '@/utilities/crmPropertyVideo'
 import type { Form } from '@/payload-types'
 import type { NormalizedCRMProject } from '@/utilities/crmProjects'
 import type { PropertyInquiryContext } from '@/utilities/propertyInquiry'
-import { useTranslation } from '@/utilities/translateClient'
+import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   contactForm?: Form | null
@@ -98,6 +98,7 @@ export const ProjectDetailView: React.FC<Props> = ({
   const bedroomPlural = useTranslation('propertyDetail.specs.bedroomPlural', 'Bedrooms')
   const bathSingular = useTranslation('propertyDetail.specs.bathSingular', 'Bath')
   const bathPlural = useTranslation('propertyDetail.specs.bathPlural', 'Baths')
+  const displayPrice = useLocalizedPropertyPrice(project.price)
 
   const locationSubtitle = [project.city, project.location]
     .filter(Boolean)
@@ -126,7 +127,7 @@ export const ProjectDetailView: React.FC<Props> = ({
       : project.deliveryLabel
         ? { icon: 'check_circle', label: deliveryLabel, value: project.deliveryLabel }
         : null,
-    project.price ? { icon: 'check_circle', label: priceLabel, value: project.price } : null,
+    project.price ? { icon: 'check_circle', label: priceLabel, value: displayPrice } : null,
     totalUnits > 0 ? { icon: 'basement', label: unitsLabel, value: String(totalUnits) } : null,
     project.sqft
       ? { icon: 'straighten', label: livingAreaLabel, value: String(project.sqft) }
@@ -181,9 +182,9 @@ export const ProjectDetailView: React.FC<Props> = ({
             </p>
           )}
 
-          {project.price && (
+          {displayPrice && (
             <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary mb-4">
-              {project.price}
+              {displayPrice}
             </div>
           )}
 

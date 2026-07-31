@@ -1,6 +1,9 @@
+'use client'
+
 import React from 'react'
 import { Building2, type LucideIcon } from 'lucide-react'
 import { cn } from '@/utilities/ui'
+import { useTranslation } from '@/utilities/translateClient'
 
 type SectionEmptyStateProps = {
   eyebrow?: string
@@ -10,6 +13,8 @@ type SectionEmptyStateProps = {
   className?: string
   /** Matches PropertiesBlock section background when set */
   tone?: 'surface' | 'muted'
+  /** Optional CTA below the description (e.g. Save search). */
+  action?: React.ReactNode
 }
 
 const GhostPropertyCards = () => (
@@ -42,13 +47,21 @@ const GhostPropertyCards = () => (
 )
 
 export const SectionEmptyState: React.FC<SectionEmptyStateProps> = ({
-  eyebrow = 'No results',
-  title = 'No items available',
-  description = 'Please check back later.',
+  eyebrow,
+  title,
+  description,
   icon: Icon = Building2,
   className = '',
   tone = 'muted',
+  action,
 }) => {
+  const defaultEyebrow = useTranslation('emptyState.eyebrow', 'No results')
+  const defaultTitle = useTranslation('emptyState.title', 'No items available')
+  const defaultDescription = useTranslation(
+    'emptyState.description',
+    'Please check back later.',
+  )
+
   return (
     <div
       className={cn(
@@ -76,14 +89,18 @@ export const SectionEmptyState: React.FC<SectionEmptyStateProps> = ({
         </div>
 
         <span className="text-tertiary font-label-nav text-label-nav tracking-[0.2em] md:tracking-[0.3em] uppercase">
-          {eyebrow}
+          {eyebrow ?? defaultEyebrow}
         </span>
 
-        <h3 className="mt-3 font-headline-sm text-headline-sm text-primary max-w-lg">{title}</h3>
+        <h3 className="mt-3 font-headline-sm text-headline-sm text-primary max-w-lg">
+          {title ?? defaultTitle}
+        </h3>
 
         <p className="mt-3 max-w-md font-body-md text-body-md text-secondary leading-relaxed">
-          {description}
+          {description ?? defaultDescription}
         </p>
+
+        {action ? <div className="mt-6">{action}</div> : null}
 
         <div
           className="mt-8 h-px w-16 bg-gradient-to-r from-transparent via-tertiary-container/70 to-transparent"

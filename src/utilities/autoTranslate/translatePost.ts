@@ -98,7 +98,10 @@ export async function autoTranslatePost({
       targetLocale,
     )
 
-    const data = buildUpdateDataFromPatches(patches)
+    const data = buildUpdateDataFromPatches(patches, {
+      baseDoc: sourceRecord,
+      targetDoc: targetDoc as unknown as Record<string, unknown> | null,
+    })
     if (!data) continue
 
     await payload.update({

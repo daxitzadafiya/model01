@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Banknote, Home, MapPin, RotateCcw, Search, SlidersHorizontal } from 'lucide-react'
+import { Banknote, Bookmark, Home, MapPin, RotateCcw, Save, Search, SlidersHorizontal } from 'lucide-react'
 
 import { FilterSelect } from '@/components/FilterSelect'
 import type { FilterSelectOption } from '@/components/FilterSelect'
@@ -39,6 +39,7 @@ type Props = {
   coastsLoading?: boolean
   cities: CRMCityOption[]
   citiesLoading?: boolean
+  onOpenSaveSearch?: () => void
 }
 
 export const PropertyListFilters: React.FC<Props> = ({
@@ -57,6 +58,7 @@ export const PropertyListFilters: React.FC<Props> = ({
   coastsLoading = false,
   cities,
   citiesLoading = false,
+  onOpenSaveSearch,
 }) => {
   const [modalOpen, setModalOpen] = useState(false)
   const priceRangeOptions = usePriceRangeOptions()
@@ -69,22 +71,33 @@ export const PropertyListFilters: React.FC<Props> = ({
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
   const allPropertiesLabel = useTranslation('propertyList.filters.allProperties', 'All Properties')
   const priceRangeLabel = useTranslation('propertyList.filters.priceRange', 'Price Range')
-  const countryLabel = useTranslation('propertyList.filters.country', 'Country')
-  const loadingCountriesLabel = useTranslation('propertyList.filters.loadingCountries', 'Loading countries…')
-  const allCountriesLabel = useTranslation(
-    'propertyList.filters.country.emptyLabel',
-    'All Countries',
+  const noOptionsFoundLabel = useTranslation(
+    'propertyList.filters.noOptionsFound',
+    'No options found',
   )
   const clearFiltersLabel = useTranslation('propertyList.filters.clearFilters', 'Clear Filters')
   const searchLabel = useTranslation('propertyList.filters.search', 'Search')
+  const saveSearchLabel = useTranslation('propertyList.filters.saveSearch', 'Save search')
   const moreFiltersAriaLabel = useTranslation(
     'propertyList.filters.moreFiltersAria',
     'More filters',
   )
   const searchByMapLabel = useTranslation('propertyList.filters.searchByMap', 'Search By Map')
+  const projectReferenceLabel = useTranslation(
+    'propertyList.filters.reference.projectLabel',
+    'Reference or project name',
+  )
+  const propertyReferenceLabel = useTranslation(
+    'propertyList.filters.reference.propertyLabel',
+    'Reference or Property name',
+  )
   const projectReferencePlaceholder = useTranslation(
     'propertyList.filters.reference.projectPlaceholder',
     'Ref or project name…',
+  )
+  const propertyReferencePlaceholder = useTranslation(
+    'propertyList.filters.reference.propertyPlaceholder',
+    'Ref or property name…',
   )
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -152,7 +165,8 @@ export const PropertyListFilters: React.FC<Props> = ({
                   value={parsePropertyTypeFilter(filters.propertyType)}
                   onChange={(value) => onChange('propertyType', value)}
                   emptyLabel={propertyTypeLoading ? loadingTypesLabel : allPropertiesLabel}
-                  disabled={propertyTypeLoading}
+                  loading={propertyTypeLoading}
+                  noOptionsLabel={noOptionsFoundLabel}
                 />
 
                 <FilterSelect
@@ -199,14 +213,23 @@ export const PropertyListFilters: React.FC<Props> = ({
                 className="px-4 py-3 border cursor-pointer border-outline-variant text-on-surface-variant font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:border-tertiary hover:text-tertiary transition-colors duration-300"
               >
                 <RotateCcw size={18} />
-                <span className="hidden md:inline">{clearFiltersLabel}</span>
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => onOpenSaveSearch?.()}
+              title={saveSearchLabel}
+              aria-label={saveSearchLabel}
+              className="px-4 py-3 cursor-pointer bg-tertiary text-white rounded-lg flex items-center justify-center hover:bg-tertiary-container transition-colors duration-300"
+            >
+              {/* <Bookmark size={20} strokeWidth={1.75} /> */}
+              <Save size={20} strokeWidth={1.75} />
+            </button>
             <button
               type="submit"
               title={searchLabel}
               aria-label={searchLabel}
-              className="flex-1 cursor-pointer md:flex-none px-8 md:px-12 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors duration-300"
+              className="flex-1 cursor-pointer md:flex-none px-4 md:px-6 py-3 bg-primary text-on-primary font-label-nav text-label-nav uppercase tracking-widest rounded-lg flex items-center justify-center gap-2 hover:bg-tertiary hover:text-on-tertiary transition-colors duration-300"
             >
               <Search size={18} />
               <span className="hidden md:inline">{searchLabel}</span>
@@ -223,6 +246,7 @@ export const PropertyListFilters: React.FC<Props> = ({
           onClose={() => setModalOpen(false)}
           onClear={handleClear}
           onSearch={handleModalSearch}
+          onSaveSearch={onOpenSaveSearch}
           propertyTypeOptions={propertyTypeOptions}
           propertyTypeLoading={propertyTypeLoading}
           countries={countries}
@@ -232,7 +256,10 @@ export const PropertyListFilters: React.FC<Props> = ({
           cities={cities}
           citiesLoading={citiesLoading}
           showCountryFilter={listingPreset === 'forSale'}
-          referencePlaceholder={isProjectsList ? projectReferencePlaceholder : undefined}
+          referenceLabel={isProjectsList ? projectReferenceLabel : propertyReferenceLabel}
+          referencePlaceholder={
+            isProjectsList ? projectReferencePlaceholder : propertyReferencePlaceholder
+          }
           showProjectFilters={isProjectsList}
         />
       )}

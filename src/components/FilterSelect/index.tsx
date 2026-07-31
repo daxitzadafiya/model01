@@ -26,6 +26,10 @@ type BaseProps = {
   className?: string
   triggerClassName?: string
   disabled?: boolean
+  /** When true, trigger shows loading/emptyLabel instead of the no-options message. */
+  loading?: boolean
+  /** Shown on the trigger and in the menu when `options` is empty (and not loading). */
+  noOptionsLabel?: string
   /** Prefer opening above the trigger (use for bottom-row modal fields). */
   menuPlacement?: FloatingMenuPlacement
   /** Custom class name for the custom input */
@@ -70,6 +74,8 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
     className,
     triggerClassName,
     disabled = false,
+    loading = false,
+    noOptionsLabel = 'No options found',
     menuPlacement = 'auto',
     customInputClassName = '',
   } = props
@@ -89,12 +95,23 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
   const isCustomMode = Boolean(
     singleProps?.customOptionValue && singleProps.value === singleProps.customOptionValue,
   )
+  const hasOptions = options.length > 0
+  const isUnavailable = loading || !hasOptions
   const selectedValues = useMemo(
     () => (isMulti ? props.value : [props.value]),
     [isMulti, props.value],
   )
 
   const displayLabel = useMemo(() => {
+    if (loading) {
+      if (isMulti) {
+        return (props as FilterSelectMultiProps).emptyLabel ?? placeholder
+      }
+      return placeholder
+    }
+
+    if (!hasOptions) return noOptionsLabel
+
     if (isMulti) {
       const multiProps = props as FilterSelectMultiProps
       if (selectedValues.length === 0) {
@@ -117,7 +134,16 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
 
     const match = options.find((opt) => opt.value === props.value)
     return match?.label ?? placeholder
-  }, [isMulti, options, placeholder, props, selectedValues])
+  }, [
+    hasOptions,
+    isMulti,
+    loading,
+    noOptionsLabel,
+    options,
+    placeholder,
+    props,
+    selectedValues,
+  ])
 
   useLayoutEffect(() => {
     if (!open || !rootRef.current) return
@@ -125,12 +151,16 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
     const updatePosition = () => {
       const rect = rootRef.current?.getBoundingClientRect()
       if (!rect) return
-      const menuHeight = menuRef.current?.getBoundingClientRect().height ?? 0
+      const menuRect = menuRef.current?.getBoundingClientRect()
       setMenuStyle(
         computeFloatingMenuStyle({
           triggerRect: rect,
-          menuHeight,
+          menuHeight: menuRect?.height ?? 0,
+          menuWidth: menuRect?.width ?? 0,
           placement: menuPlacement,
+          fitContent: true,
+          // Wide enough for price ranges like "100 000 € - 200 000 €", not full-bleed.
+          maxWidth: 320,
         }),
       )
     }
@@ -180,7 +210,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
   const isSelected = (value: string) => selectedValues.includes(value)
 
   const handleSelect = (value: string) => {
-    if (disabled) return
+    if (disabled || isUnavailable) return
     const option = options.find((opt) => opt.value === value)
     if (option?.disabled) return
 
@@ -206,10 +236,12 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
     customInputRef.current?.focus()
   }, [isCustomMode, open])
 
+  const triggerDisabled = disabled || isUnavailable
+
   const triggerClass = cn(
     defaultTriggerClass,
     'relative flex items-center transition-colors cursor-pointer duration-200',
-    disabled && 'cursor-not-allowed opacity-60',
+    triggerDisabled && 'cursor-not-allowed opacity-60',
     open && 'border-tertiary',
     triggerClassName,
   )
@@ -275,47 +307,60 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
         'bg-surface py-1 shadow-lg',
       )}
     >
-      {options.map((option) => {
-        const selected = isSelected(option.value)
+      {!hasOptions ? (
+        <li
+          role="presentation"
+          className="px-4 py-2.5 font-body-md text-body-md text-on-surface-variant"
+        >
+          <span className="block truncate" title={loading ? displayLabel : noOptionsLabel}>
+            {loading ? displayLabel : noOptionsLabel}
+          </span>
+        </li>
+      ) : (
+        options.map((option) => {
+          const selected = isSelected(option.value)
 
-        return (
-          <li key={option.value} role="presentation">
-            <button
-              type="button"
-              role="option"
-              aria-selected={selected}
-              disabled={option.disabled}
-              className={cn(
-                'flex w-full items-center gap-2 px-4 py-2.5 text-left font-body-md text-body-md transition-colors duration-150 cursor-pointer',
-                selected
-                  ? 'bg-primary text-on-primary'
-                  : 'text-on-surface hover:bg-surface-container-low',
-                option.disabled && 'cursor-not-allowed opacity-50',
-              )}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => handleSelect(option.value)}
-            >
-              {isMulti && (
-                <span
-                  className={cn(
-                    'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
-                    selected
-                      ? 'border-on-primary bg-on-primary/10'
-                      : 'border-outline-variant bg-surface',
-                  )}
-                  aria-hidden
-                >
-                  {selected && <Check size={12} strokeWidth={3} />}
+          return (
+            <li key={option.value} role="presentation">
+              <button
+                type="button"
+                role="option"
+                aria-selected={selected}
+                disabled={option.disabled}
+                className={cn(
+                  'flex w-full items-center gap-2 px-4 py-2.5 text-left font-body-md text-body-md transition-colors duration-150 cursor-pointer',
+                  selected
+                    ? 'bg-primary text-on-primary'
+                    : 'text-on-surface hover:bg-surface-container-low',
+                  option.disabled && 'cursor-not-allowed opacity-50',
+                )}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => handleSelect(option.value)}
+              >
+                {isMulti && (
+                  <span
+                    className={cn(
+                      'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                      selected
+                        ? 'border-on-primary bg-on-primary/10'
+                        : 'border-outline-variant bg-surface',
+                    )}
+                    aria-hidden
+                  >
+                    {selected && <Check size={12} strokeWidth={3} />}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1 truncate" title={option.label}>
+                  {option.label}
                 </span>
-              )}
-              <span className="flex-1 truncate">{option.label}</span>
-              {!isMulti && selected && (
-                <Check size={16} className="shrink-0 opacity-90" aria-hidden />
-              )}
-            </button>
-          </li>
-        )
-      })}
+                {!isMulti && selected && (
+                  <Check size={16} className="shrink-0 opacity-90" aria-hidden />
+                )}
+              </button>
+            </li>
+          )
+        })
+      )}
     </ul>
   ) : null
 
@@ -331,9 +376,9 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={listboxId}
-          aria-disabled={disabled || undefined}
+          aria-disabled={triggerDisabled || undefined}
           className={triggerClass}
-          onClick={() => !disabled && setOpen((current) => !current)}
+          onClick={() => !triggerDisabled && setOpen((current) => !current)}
         >
           {triggerIcon}
           {triggerBody}
@@ -343,7 +388,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = (props) => {
         <button
           type="button"
           id={triggerId}
-          disabled={disabled}
+          disabled={triggerDisabled}
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={listboxId}

@@ -7,6 +7,8 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { a } from '@/utilities/adminI18n'
+
 export const Archive: Block = {
   slug: 'archive',
   interfaceName: 'ArchiveBlock',
@@ -25,19 +27,20 @@ export const Archive: Block = {
           ]
         },
       }),
-      label: 'Intro Content',
+      label: a('admin.blocks.archive.introContentLabel', 'Intro Content'),
     },
     {
       name: 'populateBy',
       type: 'select',
       defaultValue: 'collection',
+      label: a('admin.blocks.archive.populateByLabel', 'Populate By'),
       options: [
         {
-          label: 'Collection',
+          label: a('admin.blocks.archive.populateByCollection', 'Collection'),
           value: 'collection',
         },
         {
-          label: 'Individual Selection',
+          label: a('admin.blocks.archive.populateBySelection', 'Individual Selection'),
           value: 'selection',
         },
       ],
@@ -49,10 +52,10 @@ export const Archive: Block = {
         condition: (_, siblingData) => siblingData.populateBy === 'collection',
       },
       defaultValue: 'posts',
-      label: 'Collections To Show',
+      label: a('admin.blocks.archive.relationToLabel', 'Collections To Show'),
       options: [
         {
-          label: 'Posts',
+          label: a('admin.blocks.archive.relationToPosts', 'Posts'),
           value: 'posts',
         },
       ],
@@ -64,7 +67,7 @@ export const Archive: Block = {
         condition: (_, siblingData) => siblingData.populateBy === 'collection',
       },
       hasMany: true,
-      label: 'Categories To Show',
+      label: a('admin.blocks.archive.categoriesLabel', 'Categories To Show'),
       relationTo: 'categories',
     },
     {
@@ -75,7 +78,7 @@ export const Archive: Block = {
         step: 1,
       },
       defaultValue: 10,
-      label: 'Limit',
+      label: a('admin.blocks.archive.limitLabel', 'Limit'),
     },
     {
       name: 'selectedDocs',
@@ -84,12 +87,12 @@ export const Archive: Block = {
         condition: (_, siblingData) => siblingData.populateBy === 'selection',
       },
       hasMany: true,
-      label: 'Selection',
+      label: a('admin.blocks.archive.selectedDocsLabel', 'Selection'),
       relationTo: ['posts'],
     },
   ],
   labels: {
-    plural: 'Archives',
-    singular: 'Archive',
+    plural: a('admin.blocks.archive.plural', 'Archives'),
+    singular: a('admin.blocks.archive.singular', 'Archive'),
   },
 }

@@ -12,6 +12,7 @@ import {
   resolveDefaultPhoneCountry,
   validatePhoneInputValue,
 } from '@/utilities/phoneValidation'
+import { useTranslation } from '@/utilities/translateClient'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 import './phone-input.css'
@@ -61,6 +62,7 @@ export const PhoneInputField: React.FC<Props> = ({
   const visitorCountry = useVisitorCountry()
   const localeCountry = resolveDefaultPhoneCountry(locale)
   const [selectedCountry, setSelectedCountry] = useState(localeCountry)
+  const searchCountryLabel = useTranslation('phoneInput.searchCountry', 'Search country')
 
   // Apply geo default after mount (and when locale changes) while the field is empty.
   useEffect(() => {
@@ -102,14 +104,14 @@ export const PhoneInputField: React.FC<Props> = ({
         onBlur,
       }}
       containerClass={cn(
-        'roumpos-phone-input',
-        variant === 'contact' ? 'roumpos-phone-input--contact' : 'roumpos-phone-input--holiday',
-        invalid && 'roumpos-phone-input--invalid',
+        'app-phone-input',
+        variant === 'contact' ? 'app-phone-input--contact' : 'app-phone-input--holiday',
+        invalid && 'app-phone-input--invalid',
         className,
       )}
       placeholder={placeholder}
       preferredCountries={PREFERRED_COUNTRIES}
-      searchPlaceholder="Search country"
+      searchPlaceholder={searchCountryLabel}
       specialLabel=""
       isValid={
         showValidation

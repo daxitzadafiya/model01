@@ -1,3 +1,7 @@
+/** Canonical English labels — translate at display via `useTranslation`. */
+export const ENERGY_NOT_AVAILABLE_LABEL = 'Not available'
+export const ENERGY_PENDING_LABEL = 'Pending'
+
 /** CRM values that skip the A–G scale (matches legacy PHP `$exceptEnergyTypes`). */
 const EXCEPT_ENERGY_TYPES = new Set(
   [
@@ -85,7 +89,7 @@ const resolveStatusMessage = (certificate: string): string | undefined => {
   const normalized = normalizeCertificate(certificate)
   const lower = normalized.toLowerCase()
 
-  if (lower === 'not available' || lower === 'x') return 'Pending'
+  if (lower === 'not available' || lower === 'x') return ENERGY_PENDING_LABEL
   if (EXCEPT_ENERGY_TYPES.has(lower)) return normalized
   if (!toActiveGrade(normalized)) return normalized
 
@@ -120,13 +124,13 @@ export function normalizeCRMPropertyEnergy(
   if (!certificate && consumption == null && emissions == null) {
     if (!hasRawEnergyField(property)) return null
     return {
-      certificate: 'Not available',
+      certificate: ENERGY_NOT_AVAILABLE_LABEL,
       isEmpty: true,
-      statusMessage: 'Pending',
+      statusMessage: ENERGY_PENDING_LABEL,
     }
   }
 
-  const resolvedCertificate = certificate || 'Not available'
+  const resolvedCertificate = certificate || ENERGY_NOT_AVAILABLE_LABEL
   const activeGrade = toActiveGrade(resolvedCertificate)
   const statusMessage = resolveStatusMessage(resolvedCertificate)
   const isEmpty = !activeGrade

@@ -9,7 +9,7 @@ import { formatPropertyAreaDisplay } from '@/components/PropertyCard'
 import { useProjectFavorites } from '@/providers/PropertyFavorites'
 import type { FavoriteProjectId } from '@/utilities/propertyFavorites'
 import type { NormalizedCRMProject, ProjectPhaseInfo } from '@/utilities/crmProjects'
-import { useTranslation } from '@/utilities/translateClient'
+import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
 import { cn } from '@/utilities/ui'
 
 type Props = {
@@ -113,6 +113,7 @@ export const ProjectCard: React.FC<Props> = ({
   const deliveryLabel = useTranslation('projectList.card.delivery', 'Delivery')
   const airportLabel = useTranslation('projectList.card.airport', 'Airport')
   const beachLabel = useTranslation('projectList.card.beach', 'Beach')
+  const displayPrice = useLocalizedPropertyPrice(project.price)
 
   const visiblePhases = showAllPhases ? project.phases : project.phases.slice(0, 2)
   const hiddenPhaseCount = Math.max(0, project.phases.length - 2)
@@ -215,9 +216,9 @@ export const ProjectCard: React.FC<Props> = ({
               </span>
             )}
           </div>
-          {project.price ? (
+          {displayPrice ? (
             <span className="font-body-md text-body-md font-bold text-primary text-right">
-              {project.price}
+              {displayPrice}
             </span>
           ) : null}
         </div>

@@ -14,6 +14,12 @@ type Props = {
 export const ProjectDetailRelated: React.FC<Props> = ({ projects, loading = false }) => {
   const subtitle = useTranslation('projectDetail.similar.subtitle', 'Curated Collection')
   const title = useTranslation('projectDetail.similar.heading', 'Similar Projects')
+  const emptyEyebrow = useTranslation('projectsCarousel.empty.eyebrow', 'Projects')
+  const emptyTitle = useTranslation('projectsCarousel.empty.title', 'No projects found')
+  const emptyDescription = useTranslation(
+    'projectDetail.similar.emptyDescription',
+    'We could not find similar projects right now. Check again soon.',
+  )
 
   if (!loading && projects.length === 0) return null
 
@@ -25,9 +31,9 @@ export const ProjectDetailRelated: React.FC<Props> = ({ projects, loading = fals
       loading={loading}
       backgroundColor="surface"
       animateEntry
-      emptyEyebrow="Projects"
-      emptyTitle="No projects found"
-      emptyDescription="We could not find similar projects right now. Check again soon."
+      emptyEyebrow={emptyEyebrow}
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
     />
   )
 }

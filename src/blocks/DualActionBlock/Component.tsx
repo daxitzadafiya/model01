@@ -4,6 +4,7 @@ import React from 'react'
 import type { Page } from '@/payload-types'
 import { useReveal } from '@/utilities/useReveal'
 import { CMSLink } from '@/components/Link'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = Extract<Page['layout'][0], { blockType: 'dualActionBlock' }>
 
@@ -19,6 +20,7 @@ const ActionPanel: React.FC<PanelProps> = ({
   variant,
 }) => {
   const isDark = variant === 'dark'
+  const learnMoreLabel = useTranslation('common.learnMore', 'Learn More')
 
   return (
     <div
@@ -39,7 +41,7 @@ const ActionPanel: React.FC<PanelProps> = ({
       {panelLink && (
         <CMSLink
           {...panelLink}
-          label={buttonText || panelLink.label || 'Learn more'}
+          label={buttonText || panelLink.label || learnMoreLabel}
           appearance="inline"
           className={
             'rounded-full ' +

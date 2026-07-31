@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
 import {
   FixedToolbarFeature,
   InlineToolbarFeature,
@@ -16,6 +17,10 @@ const dirname = path.dirname(filename)
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  labels: {
+    singular: a('admin.media.singular', 'Media'),
+    plural: a('admin.media.plural', 'Media'),
+  },
   folders: true,
   access: {
     create: authenticated,
@@ -27,11 +32,13 @@ export const Media: CollectionConfig = {
     {
       name: 'alt',
       type: 'text',
+      label: a('admin.media.fields.alt', 'Alt'),
       //required: true,
     },
     {
       name: 'caption',
       type: 'richText',
+      label: a('admin.media.fields.caption', 'Caption'),
       editor: lexicalEditor({
         features: ({ rootFeatures }) => {
           return [...rootFeatures, FixedToolbarFeature(), InlineToolbarFeature()]

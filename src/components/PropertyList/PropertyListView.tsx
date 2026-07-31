@@ -8,6 +8,9 @@ import { useSiteLocale } from '@/utilities/useSiteLocale'
 import { FilterSelect } from '@/components/FilterSelect'
 import { PropertyMapModal } from '@/components/PropertyMap/PropertyMapModal'
 import { ArrowUpDown } from 'lucide-react'
+import type { Form } from '@/payload-types'
+import { PropertyListSaveSearchModal } from './PropertyListSaveSearchModal'
+import type { SaveSearchLabelMaps } from '@/utilities/saveSearch'
 import { useCRMCoasts } from '@/hooks/useCRMCoasts'
 import { useCRMCountries } from '@/hooks/useCRMCountries'
 import { useCRMCities } from '@/hooks/useCRMCities'
@@ -83,6 +86,7 @@ type Props = {
   listingKey?: string
   /** Default listing pages: server fetch + URL pagination (filters/favorites stay client-driven). */
   serverManaged?: boolean
+  contactForm?: Form | null
 }
 
 const DEFAULT_PAGE_SIZE = 9
@@ -118,6 +122,7 @@ const PropertyListViewInner: React.FC<Props> = ({
   emptyStateNoFavoritesDescription,
   emptyStateNoResultsTitle,
   emptyStateNoResultsDescription,
+  contactForm,
   initialData,
   listingKey = '',
   serverManaged = false,
@@ -135,6 +140,7 @@ const PropertyListViewInner: React.FC<Props> = ({
   const [filters, setFilters] = useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PropertyListFilters>(EMPTY_PROPERTY_FILTERS)
   const [mapModalOpen, setMapModalOpen] = useState(false)
+  const [saveSearchOpen, setSaveSearchOpen] = useState(false)
 
   const { propertyFavoriteIds, projectFavoriteIds, propertyCount, projectCount } =
     usePropertyFavorites()
@@ -191,7 +197,7 @@ const PropertyListViewInner: React.FC<Props> = ({
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions(filterPreset)
   const { countries, loading: countriesLoading } = useCRMCountries()
-  const { coasts, loading: coastsLoading } = useCRMCoasts()
+  const { coasts, loading: coastsLoading } = useCRMCoasts(filters.country)
   const { cities, loading: citiesLoading } = useCRMCities(filters.coast, coasts, filterPreset)
   const sortParams = useMemo(
     () => sortOptions.find((option) => option.value === sort)?.sort,
@@ -284,6 +290,31 @@ const PropertyListViewInner: React.FC<Props> = ({
     return rawProperties.map((raw) => normalizeCRMProject(raw, activeLocale))
   }, [activeLocale, isFavoritesProjectsTab, listingPreset, rawProperties])
 
+  const saveSearchLabelMaps = useMemo((): SaveSearchLabelMaps => {
+    const coastMap: Record<string, string> = {}
+    for (const coast of coasts) {
+      if (coast.value) coastMap[coast.value] = coast.label
+    }
+    const cityMap: Record<string, string> = {}
+    for (const city of cities) {
+      if (city.value) cityMap[city.value] = city.label
+    }
+    const countryMap: Record<string, string> = {}
+    for (const country of countries) {
+      if (country.value) countryMap[country.value] = country.label
+    }
+    const propertyTypeMap: Record<string, string> = {}
+    for (const option of propertyTypeOptions) {
+      if (option.value) propertyTypeMap[option.value] = option.label
+    }
+    return {
+      coasts: coastMap,
+      cities: cityMap,
+      countries: countryMap,
+      propertyTypes: propertyTypeMap,
+    }
+  }, [cities, coasts, countries, propertyTypeOptions])
+
   const sortByLabel = useTranslation('propertyList.filters.sortBy', 'Sort by')
   const showingLabel = useTranslation('propertyList.results.showing', 'Showing')
   const defaultResultsLabel = useTranslation(
@@ -291,16 +322,14 @@ const PropertyListViewInner: React.FC<Props> = ({
     'extraordinary properties',
   )
   const projectsResultsLabel = useTranslation('propertyList.results.projects', 'projects')
-  const favoritesPropertiesTabLabel = useTranslation(
-    'favorites.tabs.properties',
-    'Property Favorites',
-  )
-  const favoritesProjectsTabLabel = useTranslation('favorites.tabs.projects', 'Project Favorites')
+  const favoritesPropertiesTabLabel = useTranslation('favorites.tabs.property', 'Property')
+  const favoritesProjectsTabLabel = useTranslation('favorites.tabs.project', 'Project')
   const favoritesEyebrow = useTranslation('propertyList.emptyState.favoritesEyebrow', 'Favorites')
   const collectionsEyebrow = useTranslation(
     'propertyList.emptyState.collectionsEyebrow',
     'Collections',
   )
+
   const noFavoritesTitle = useTranslation(
     'propertyList.emptyState.noFavoritesTitle',
     'No favorites yet',
@@ -574,14 +603,20 @@ const PropertyListViewInner: React.FC<Props> = ({
     setPage(1)
     setRawProperties([])
     setTotal(0)
-    setLoading(true)
-  }, [favoritesTab, isFavoritesList])
+    // Empty tabs stay at 0 — avoid a loading "…" flash on tab change.
+    setLoading(activeFavoriteIds.length > 0)
+  }, [activeFavoriteIds.length, favoritesTab, isFavoritesList])
 
   const handleFilterChange = (
     key: keyof PropertyListFilters,
     value: PropertyListFilters[keyof PropertyListFilters],
   ) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setFilters((prev) => {
+      if (key === 'country') {
+        return { ...prev, country: value as PropertyListFilters['country'], coast: [], city: [] }
+      }
+      return { ...prev, [key]: value }
+    })
   }
 
   const handleApply = (nextFilters: PropertyListFilters) => {
@@ -694,7 +729,7 @@ const PropertyListViewInner: React.FC<Props> = ({
                 id={`favorites-tab-${tab.id}`}
                 onClick={() => handleFavoritesTabChange(tab.id)}
                 className={cn(
-                  'relative -mb-px pb-3 font-body-md text-body-md transition-colors',
+                  'relative -mb-px cursor-pointer pb-3 font-body-md text-body-md transition-colors',
                   selected
                     ? 'text-primary border-b-2 border-primary font-semibold'
                     : 'text-on-surface-variant hover:text-on-surface border-b-2 border-transparent',
@@ -717,6 +752,7 @@ const PropertyListViewInner: React.FC<Props> = ({
           onApply={handleApply}
           showMap={mapEnabled}
           onOpenMap={() => setMapModalOpen(true)}
+          onOpenSaveSearch={() => setSaveSearchOpen(true)}
           propertyTypeOptions={propertyTypeOptions}
           propertyTypeLoading={propertyTypeLoading}
           countries={countries}
@@ -846,6 +882,15 @@ const PropertyListViewInner: React.FC<Props> = ({
           onDrawApply={handleMapDrawApply}
         />
       )}
+
+      <PropertyListSaveSearchModal
+        open={saveSearchOpen}
+        onClose={() => setSaveSearchOpen(false)}
+        contactForm={contactForm}
+        filters={filters}
+        listingPreset={filtersListingPreset}
+        labelMaps={saveSearchLabelMaps}
+      />
     </div>
   )
 }

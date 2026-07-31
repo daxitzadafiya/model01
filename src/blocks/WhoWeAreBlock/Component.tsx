@@ -6,6 +6,7 @@ import { useReveal } from '@/utilities/useReveal'
 import { Media } from '@/components/Media'
 import { CMSLink } from '@/components/Link'
 import { Award, Eye, Heart, Shield, Star, TrendingUp, ArrowRight } from 'lucide-react'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = WhoWeAreBlockType & {
   disableInnerContainer?: boolean
@@ -30,6 +31,7 @@ export const WhoWeAreBlock: React.FC<Props> = ({
   ctaLink,
 }) => {
   const ref = useReveal()
+  const learnMoreLabel = useTranslation('common.learnMore', 'Learn More')
 
   return (
     <section ref={ref} className="relative py-20 md:py-32 bg-surface overflow-hidden">
@@ -116,7 +118,7 @@ export const WhoWeAreBlock: React.FC<Props> = ({
                 appearance="inline"
                 className="group/btn inline-flex w-fit items-center gap-3 rounded-full border border-primary bg-primary px-8 py-4 font-label-nav text-label-nav uppercase tracking-widest text-white font-bold transition-all duration-300 hover:bg-tertiary hover:border-tertiary hover:shadow-[0_8px_20px_-6px_rgba(230,195,100,0.4)]"
               >
-                <span>{buttonText || ctaLink.label || 'Learn More'}</span>
+                <span>{buttonText || ctaLink.label || learnMoreLabel}</span>
                 <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
               </CMSLink>
             </div>

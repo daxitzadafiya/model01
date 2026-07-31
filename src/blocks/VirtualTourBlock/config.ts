@@ -1,14 +1,15 @@
 import type { Block } from 'payload'
 
 import { link } from '@/fields/link'
+import { a } from '@/utilities/adminI18n'
 
 export const VirtualTourBlock: Block = {
   slug: 'virtualTourBlock',
   dbName: 'vtour',
   interfaceName: 'VirtualTourBlock',
   labels: {
-    singular: 'Virtual Tour CTA',
-    plural: 'Virtual Tour CTAs',
+    singular: a('admin.blocks.virtualTourBlock.singular', 'Virtual Tour CTA'),
+    plural: a('admin.blocks.virtualTourBlock.plural', 'Virtual Tour CTAs'),
   },
   fields: [
     {
@@ -17,6 +18,7 @@ export const VirtualTourBlock: Block = {
       required: true,
       localized: true,
       defaultValue: 'Step Inside Your Future Home from Anywhere in the World.',
+      label: a('admin.blocks.virtualTourBlock.titleLabel', 'Title'),
     },
     {
       name: 'buttonText',
@@ -24,12 +26,13 @@ export const VirtualTourBlock: Block = {
       required: true,
       localized: true,
       defaultValue: 'EXPLORE NOW',
+      label: a('admin.blocks.virtualTourBlock.buttonTextLabel', 'Button Text'),
     },
     link({
       appearances: false,
       overrides: {
         name: 'ctaLink',
-        label: 'Button Link',
+        label: a('admin.blocks.virtualTourBlock.ctaLinkLabel', 'Button Link'),
       },
     }),
     {
@@ -37,6 +40,7 @@ export const VirtualTourBlock: Block = {
       type: 'upload',
       relationTo: 'media',
       required: true,
+      label: a('admin.blocks.virtualTourBlock.backgroundImageLabel', 'Background Image'),
     },
   ],
 }

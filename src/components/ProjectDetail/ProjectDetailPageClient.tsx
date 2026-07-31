@@ -23,6 +23,7 @@ import {
 import { resolveCRMPropertyVideos } from '@/utilities/crmPropertyVideo'
 import { extractReferenceFromSlug } from '@/utilities/propertyUrl'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
+import { formatPageTitle } from '@/utilities/getAppName'
 
 function ProjectDetailSkeleton() {
   return (
@@ -128,7 +129,7 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
         setAmenities(normalizeCRMAmenities(detailSource))
         setLatitude(normalized.latitude)
         setLongitude(normalized.longitude)
-        document.title = `${normalized.title} | Roumpos Real Estate`
+        document.title = formatPageTitle(normalized.title)
 
         setSimilarProjectsLoading(true)
         void (async () => {

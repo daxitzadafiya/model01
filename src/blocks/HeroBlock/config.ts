@@ -1,7 +1,13 @@
-import type { Block, Field } from 'payload'
+import type { Block, Field, PayloadRequest } from 'payload'
 
 import { link } from '@/fields/link'
+import { a, aString } from '@/utilities/adminI18n'
 import { parseVimeoVideoId, parseYouTubeVideoId } from '@/utilities/heroVideo'
+
+type ValidateArgs = {
+  siblingData?: Record<string, unknown>
+  req?: PayloadRequest
+}
 
 const isImageMedia = (_: unknown, siblingData?: Record<string, unknown>) =>
   siblingData?.mediaType !== 'video'
@@ -28,54 +34,76 @@ const mediaFields: Field[] = [
   {
     name: 'mediaType',
     type: 'select',
-    label: 'Background Media Type',
+    label: a('admin.blocks.heroBlock.mediaTypeLabel', 'Background Media Type'),
     defaultValue: 'image',
     required: true,
     options: [
-      { label: 'Image', value: 'image' },
-      { label: 'Video', value: 'video' },
+      { label: a('admin.blocks.heroBlock.mediaTypeImage', 'Image'), value: 'image' },
+      { label: a('admin.blocks.heroBlock.mediaTypeVideo', 'Video'), value: 'video' },
     ],
     admin: {
-      description: 'Choose between a static image, image slider, or video background.',
+      description: a(
+        'admin.blocks.heroBlock.mediaTypeDescription',
+        'Choose between a static image, image slider, or video background.',
+      ),
     },
   },
   {
     name: 'imageMode',
     type: 'select',
-    label: 'Image Display Mode',
+    label: a('admin.blocks.heroBlock.imageModeLabel', 'Image Display Mode'),
     defaultValue: 'single',
     options: [
-      { label: 'Single Image', value: 'single' },
-      { label: 'Image Slider', value: 'slider' },
+      { label: a('admin.blocks.heroBlock.imageModeSingle', 'Single Image'), value: 'single' },
+      { label: a('admin.blocks.heroBlock.imageModeSlider', 'Image Slider'), value: 'slider' },
     ],
     admin: {
       condition: isImageMedia,
-      description: 'Display one image or rotate through multiple images.',
+      description: a(
+        'admin.blocks.heroBlock.imageModeDescription',
+        'Display one image or rotate through multiple images.',
+      ),
     },
   },
   {
     name: 'backgroundImage',
     type: 'upload',
     relationTo: 'media',
+    label: a('admin.blocks.heroBlock.backgroundImageLabel', 'Background Image'),
     admin: {
       condition: isSingleImage,
-      description: 'Full-width hero background image.',
+      description: a(
+        'admin.blocks.heroBlock.backgroundImageDescription',
+        'Full-width hero background image.',
+      ),
     },
-    validate: (value: unknown, { siblingData }: { siblingData?: Record<string, unknown> }) => {
+    validate: (value: unknown, { siblingData, req }: ValidateArgs) => {
       const data = siblingData
       if (data?.mediaType === 'video' || data?.imageMode === 'slider') return true
-      if (!value) return 'A background image is required for single-image mode.'
+      if (!value)
+        return aString(
+          'admin.blocks.heroBlock.backgroundImageRequired',
+          'A background image is required for single-image mode.',
+          req?.i18n?.language,
+        )
       return true
     },
   },
   {
     name: 'sliderImages',
     type: 'array',
-    label: 'Slider Images',
+    label: a('admin.blocks.heroBlock.sliderImagesLabel', 'Slider Images'),
+    labels: {
+      singular: a('admin.blocks.heroBlock.sliderImageSingular', 'Slider Image'),
+      plural: a('admin.blocks.heroBlock.sliderImagesPlural', 'Slider Images'),
+    },
     minRows: 2,
     admin: {
       condition: isImageSlider,
-      description: 'Add at least two images for the hero slider.',
+      description: a(
+        'admin.blocks.heroBlock.sliderImagesDescription',
+        'Add at least two images for the hero slider.',
+      ),
     },
     fields: [
       {
@@ -83,13 +111,18 @@ const mediaFields: Field[] = [
         type: 'upload',
         relationTo: 'media',
         required: true,
+        label: a('admin.blocks.heroBlock.sliderImageLabel', 'Image'),
       },
     ],
-    validate: (value: unknown, { siblingData }: { siblingData?: Record<string, unknown> }) => {
+    validate: (value: unknown, { siblingData, req }: ValidateArgs) => {
       const data = siblingData
       if (data?.mediaType !== 'image' || data?.imageMode !== 'slider') return true
       if (!Array.isArray(value) || value.length < 2) {
-        return 'Add at least two images for the slider.'
+        return aString(
+          'admin.blocks.heroBlock.sliderImagesMinRows',
+          'Add at least two images for the slider.',
+          req?.i18n?.language,
+        )
       }
       return true
     },
@@ -97,7 +130,7 @@ const mediaFields: Field[] = [
   {
     name: 'sliderAutoplay',
     type: 'checkbox',
-    label: 'Autoplay Slider',
+    label: a('admin.blocks.heroBlock.sliderAutoplayLabel', 'Autoplay Slider'),
     defaultValue: true,
     admin: {
       condition: isImageSlider,
@@ -106,24 +139,27 @@ const mediaFields: Field[] = [
   {
     name: 'sliderInterval',
     type: 'number',
-    label: 'Autoplay Interval (seconds)',
+    label: a('admin.blocks.heroBlock.sliderIntervalLabel', 'Autoplay Interval (seconds)'),
     defaultValue: 5,
     min: 2,
     max: 15,
     admin: {
       condition: (_, siblingData) => isImageSlider(_, siblingData) && siblingData?.sliderAutoplay !== false,
-      description: 'Time between slide transitions when autoplay is enabled.',
+      description: a(
+        'admin.blocks.heroBlock.sliderIntervalDescription',
+        'Time between slide transitions when autoplay is enabled.',
+      ),
     },
   },
   {
     name: 'videoSource',
     type: 'select',
-    label: 'Video Source',
+    label: a('admin.blocks.heroBlock.videoSourceLabel', 'Video Source'),
     defaultValue: 'youtube',
     options: [
-      { label: 'YouTube', value: 'youtube' },
-      { label: 'Vimeo', value: 'vimeo' },
-      { label: 'Uploaded Video', value: 'upload' },
+      { label: a('admin.blocks.heroBlock.videoSourceYoutube', 'YouTube'), value: 'youtube' },
+      { label: a('admin.blocks.heroBlock.videoSourceVimeo', 'Vimeo'), value: 'vimeo' },
+      { label: a('admin.blocks.heroBlock.videoSourceUpload', 'Uploaded Video'), value: 'upload' },
     ],
     admin: {
       condition: isVideoMedia,
@@ -132,32 +168,58 @@ const mediaFields: Field[] = [
   {
     name: 'youtubeUrl',
     type: 'text',
-    label: 'YouTube URL',
+    label: a('admin.blocks.heroBlock.youtubeUrlLabel', 'YouTube URL'),
     admin: {
       condition: isYouTubeVideo,
-      description: 'Paste a YouTube watch or share URL.',
+      description: a(
+        'admin.blocks.heroBlock.youtubeUrlDescription',
+        'Paste a YouTube watch or share URL.',
+      ),
     },
-    validate: (value: unknown, { siblingData }: { siblingData?: Record<string, unknown> }) => {
+    validate: (value: unknown, { siblingData, req }: ValidateArgs) => {
       const data = siblingData
       if (data?.mediaType !== 'video' || data?.videoSource !== 'youtube') return true
-      if (!value || typeof value !== 'string' || !value.trim()) return 'A YouTube URL is required.'
-      if (!parseYouTubeVideoId(value)) return 'Enter a valid YouTube URL.'
+      if (!value || typeof value !== 'string' || !value.trim())
+        return aString(
+          'admin.blocks.heroBlock.youtubeUrlRequired',
+          'A YouTube URL is required.',
+          req?.i18n?.language,
+        )
+      if (!parseYouTubeVideoId(value))
+        return aString(
+          'admin.blocks.heroBlock.youtubeUrlInvalid',
+          'Enter a valid YouTube URL.',
+          req?.i18n?.language,
+        )
       return true
     },
   },
   {
     name: 'vimeoUrl',
     type: 'text',
-    label: 'Vimeo URL',
+    label: a('admin.blocks.heroBlock.vimeoUrlLabel', 'Vimeo URL'),
     admin: {
       condition: isVimeoVideo,
-      description: 'Paste a Vimeo page or player URL.',
+      description: a(
+        'admin.blocks.heroBlock.vimeoUrlDescription',
+        'Paste a Vimeo page or player URL.',
+      ),
     },
-    validate: (value: unknown, { siblingData }: { siblingData?: Record<string, unknown> }) => {
+    validate: (value: unknown, { siblingData, req }: ValidateArgs) => {
       const data = siblingData
       if (data?.mediaType !== 'video' || data?.videoSource !== 'vimeo') return true
-      if (!value || typeof value !== 'string' || !value.trim()) return 'A Vimeo URL is required.'
-      if (!parseVimeoVideoId(value)) return 'Enter a valid Vimeo URL.'
+      if (!value || typeof value !== 'string' || !value.trim())
+        return aString(
+          'admin.blocks.heroBlock.vimeoUrlRequired',
+          'A Vimeo URL is required.',
+          req?.i18n?.language,
+        )
+      if (!parseVimeoVideoId(value))
+        return aString(
+          'admin.blocks.heroBlock.vimeoUrlInvalid',
+          'Enter a valid Vimeo URL.',
+          req?.i18n?.language,
+        )
       return true
     },
   },
@@ -165,15 +227,23 @@ const mediaFields: Field[] = [
     name: 'videoUpload',
     type: 'upload',
     relationTo: 'media',
-    label: 'Background Video',
+    label: a('admin.blocks.heroBlock.videoUploadLabel', 'Background Video'),
     admin: {
       condition: isUploadedVideo,
-      description: 'Upload an MP4 or WebM file. Video plays muted and loops automatically.',
+      description: a(
+        'admin.blocks.heroBlock.videoUploadDescription',
+        'Upload an MP4 or WebM file. Video plays muted and loops automatically.',
+      ),
     },
-    validate: (value: unknown, { siblingData }: { siblingData?: Record<string, unknown> }) => {
+    validate: (value: unknown, { siblingData, req }: ValidateArgs) => {
       const data = siblingData
       if (data?.mediaType !== 'video' || data?.videoSource !== 'upload') return true
-      if (!value) return 'An uploaded video is required.'
+      if (!value)
+        return aString(
+          'admin.blocks.heroBlock.videoUploadRequired',
+          'An uploaded video is required.',
+          req?.i18n?.language,
+        )
       return true
     },
   },
@@ -182,6 +252,10 @@ const mediaFields: Field[] = [
 export const HeroBlock: Block = {
   slug: 'heroBlock',
   interfaceName: 'HeroBlock',
+  labels: {
+    singular: a('admin.blocks.heroBlock.singular', 'Hero Block'),
+    plural: a('admin.blocks.heroBlock.plural', 'Hero Blocks'),
+  },
   fields: [
     {
       name: 'title',
@@ -189,9 +263,12 @@ export const HeroBlock: Block = {
       required: true,
       defaultValue: 'Discover Exceptional Properties in Greece.',
       localized: true,
+      label: a('admin.blocks.heroBlock.titleLabel', 'Title'),
       admin: {
-        description:
+        description: a(
+          'admin.blocks.heroBlock.titleDescription',
           'Edit in English only. Other languages refresh via DeepL when English changes on save.',
+        ),
       },
     },
     {
@@ -200,18 +277,24 @@ export const HeroBlock: Block = {
       required: true,
       defaultValue: 'View All Properties',
       localized: true,
+      label: a('admin.blocks.heroBlock.buttonTextLabel', 'Button Text'),
       admin: {
-        description:
+        description: a(
+          'admin.blocks.heroBlock.buttonTextDescription',
           'Edit in English only. Other languages refresh via DeepL when English changes on save.',
+        ),
       },
     },
     link({
       appearances: false,
       overrides: {
         name: 'ctaLink',
-        label: 'Button Link',
+        label: a('admin.blocks.heroBlock.ctaLinkLabel', 'Button Link'),
         admin: {
-          description: 'Where the hero button navigates to (e.g. Property for Sale page).',
+          description: a(
+            'admin.blocks.heroBlock.ctaLinkDescription',
+            'Where the hero button navigates to (e.g. Property for Sale page).',
+          ),
         },
       },
     }),
@@ -219,18 +302,18 @@ export const HeroBlock: Block = {
     {
       name: 'showSearch',
       type: 'checkbox',
-      label: 'Show Search Bar on Hero',
+      label: a('admin.blocks.heroBlock.showSearchLabel', 'Show Search Bar on Hero'),
       defaultValue: true,
     },
     {
       name: 'defaultPropertyTab',
       type: 'select',
-      label: 'Default Selected Property Tab',
+      label: a('admin.blocks.heroBlock.defaultPropertyTabLabel', 'Default Selected Property Tab'),
       defaultValue: 'sale',
       options: [
-        { label: 'Sale Properties', value: 'sale' },
-        { label: 'Rental Properties', value: 'rental' },
-        { label: 'Holiday Properties', value: 'holiday' },
+        { label: a('admin.blocks.heroBlock.propertyTabSale', 'Sale Properties'), value: 'sale' },
+        { label: a('admin.blocks.heroBlock.propertyTabRental', 'Rental Properties'), value: 'rental' },
+        { label: a('admin.blocks.heroBlock.propertyTabHoliday', 'Holiday Properties'), value: 'holiday' },
       ],
       admin: {
         condition: (_, siblingData) => siblingData?.showSearch !== false,
@@ -239,17 +322,20 @@ export const HeroBlock: Block = {
     {
       name: 'defaultCountry',
       type: 'select',
-      label: 'Default Country (Sale Properties only)',
+      label: a('admin.blocks.heroBlock.defaultCountryLabel', 'Default Country (Sale Properties only)'),
       defaultValue: 'spain',
       options: [
-        { label: 'Spain', value: 'spain' },
-        { label: 'France', value: 'france' },
-        { label: 'Portugal', value: 'portugal' },
-        { label: 'Others', value: 'others' },
+        { label: a('admin.blocks.heroBlock.countrySpain', 'Spain'), value: 'spain' },
+        { label: a('admin.blocks.heroBlock.countryFrance', 'France'), value: 'france' },
+        { label: a('admin.blocks.heroBlock.countryPortugal', 'Portugal'), value: 'portugal' },
+        { label: a('admin.blocks.heroBlock.countryOthers', 'Others'), value: 'others' },
       ],
       admin: {
-        condition: (_, siblingData) => siblingData?.showSearch !== false,
-        description: 'Pre-selected country on the Sale Properties tab (defaults to Spain).',
+        hidden: true,
+        description: a(
+          'admin.blocks.heroBlock.defaultCountryDescription',
+          'Deprecated — set Default on a country under Collections → Countries instead.',
+        ),
       },
     },
     link({
@@ -257,10 +343,12 @@ export const HeroBlock: Block = {
       disableLabel: true,
       overrides: {
         name: 'searchResultsLink',
-        label: 'Search Results Page',
+        label: a('admin.blocks.heroBlock.searchResultsLinkLabel', 'Search Results Page'),
         admin: {
-          description:
+          description: a(
+            'admin.blocks.heroBlock.searchResultsLinkDescription',
             'Where the hero property search sends visitors (e.g. your All Properties page).',
+          ),
           condition: (_, siblingData) => siblingData?.showSearch !== false,
         },
         defaultValue: {

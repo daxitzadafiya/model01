@@ -17,6 +17,8 @@ import {
   type LinkFields,
 } from '@payloadcms/richtext-lexical'
 
+import { a, aString } from '@/utilities/adminI18n'
+
 export const emailTemplateEditor = lexicalEditor({
   features: [
     ParagraphFeature(),
@@ -43,8 +45,10 @@ export const emailTemplateEditor = lexicalEditor({
             type: 'text',
             admin: {
               condition: (_data, siblingData) => siblingData?.linkType !== 'internal',
-              description:
+              description: a(
+                'admin.fields.emailTemplate.urlDescription',
                 'Use mailto:email@example.com, tel:+34000000000, or https:// for website links.',
+              ),
             },
             label: ({ t }) => t('fields:enterURL'),
             required: true,
@@ -52,7 +56,13 @@ export const emailTemplateEditor = lexicalEditor({
               if ((options?.siblingData as LinkFields)?.linkType === 'internal') {
                 return true
               }
-              return value ? true : 'URL is required'
+              return value
+                ? true
+                : aString(
+                    'admin.fields.emailTemplate.urlRequired',
+                    'URL is required',
+                    options?.req?.i18n?.language,
+                  )
             }) as TextFieldSingleValidation,
           },
         ]
@@ -82,22 +92,29 @@ export function emailTemplateFields(defaults?: EmailTemplateFieldDefaults): Fiel
       type: 'text',
       localized: true,
       required: true,
-      label: 'Automated response email subject',
+      label: a(
+        'admin.fields.emailTemplate.subject',
+        'Automated response email subject',
+      ),
       defaultValue: defaults?.subject,
       admin: {
-        description:
+        description: a(
+          'admin.fields.emailTemplate.subjectDescription',
           'Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.',
+        ),
       },
     },
     {
       name: 'content',
       type: 'richText',
       localized: true,
-      label: 'Automated response email body',
+      label: a('admin.fields.emailTemplate.content', 'Automated response email body'),
       defaultValue: defaults?.content,
       admin: {
-        description:
+        description: a(
+          'admin.fields.emailTemplate.contentDescription',
           'Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.',
+        ),
       },
       editor: emailTemplateEditor,
     },

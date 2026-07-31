@@ -1,11 +1,13 @@
 import type { Block } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
+
 export const AdvisorsBlock: Block = {
   slug: 'advisorsBlock',
   interfaceName: 'AdvisorsBlock',
   labels: {
-    singular: 'Advisors',
-    plural: 'Advisors',
+    singular: a('admin.blocks.advisorsBlock.singular', 'Advisors'),
+    plural: a('admin.blocks.advisorsBlock.plural', 'Advisors'),
   },
   fields: [
     {
@@ -13,6 +15,7 @@ export const AdvisorsBlock: Block = {
       type: 'text',
       defaultValue: 'MEET OUR TEAM',
       localized: true,
+      label: a('admin.blocks.advisorsBlock.subtitleLabel', 'Subtitle'),
     },
     {
       name: 'title',
@@ -20,40 +23,55 @@ export const AdvisorsBlock: Block = {
       required: true,
       defaultValue: 'Meet Our Distinguished Agents',
       localized: true,
+      label: a('admin.blocks.advisorsBlock.titleLabel', 'Title'),
     },
     {
       name: 'advisors',
       type: 'array',
       minRows: 1,
+      label: a('admin.blocks.advisorsBlock.advisorsLabel', 'Advisors'),
+      labels: {
+        singular: a('admin.blocks.advisorsBlock.advisorSingular', 'Advisor'),
+        plural: a('admin.blocks.advisorsBlock.advisorsPlural', 'Advisors'),
+      },
       fields: [
         {
           name: 'image',
           type: 'upload',
           relationTo: 'media',
           required: true,
+          label: a('admin.blocks.advisorsBlock.imageLabel', 'Image'),
         },
         {
           name: 'name',
           type: 'text',
           required: true,
           localized: true,
+          label: a('admin.blocks.advisorsBlock.nameLabel', 'Name'),
         },
         {
           name: 'role',
           type: 'text',
           required: true,
           localized: true,
-          label: 'Title / Role',
+          label: a('admin.blocks.advisorsBlock.roleLabel', 'Title / Role'),
           admin: {
-            description: 'e.g. Founder & Managing Director',
+            description: a(
+              'admin.blocks.advisorsBlock.roleDescription',
+              'e.g. Founder & Managing Director',
+            ),
           },
         },
         {
           name: 'description',
           type: 'textarea',
           localized: true,
+          label: a('admin.blocks.advisorsBlock.descriptionLabel', 'Description'),
           admin: {
-            description: 'Short biography shown below the title',
+            description: a(
+              'admin.blocks.advisorsBlock.descriptionDescription',
+              'Short biography shown below the title',
+            ),
           },
         },
       ],

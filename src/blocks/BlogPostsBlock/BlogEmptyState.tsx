@@ -5,6 +5,7 @@ import { ArrowRight, Newspaper } from 'lucide-react'
 import { cn } from '@/utilities/ui'
 
 import { CMSLink, type CMSLinkType } from '@/components/Link'
+import { useTranslation } from '@/utilities/translateClient'
 
 type BlogEmptyStateProps = {
   eyebrow?: string
@@ -45,12 +46,18 @@ const GhostArticleCards = () => (
 )
 
 export const BlogEmptyState: React.FC<BlogEmptyStateProps> = ({
-  eyebrow = 'No Results',
-  title = 'No posts found',
-  description = 'There are no articles published yet. Please check back soon for new content.',
+  eyebrow,
+  title,
+  description,
   ctaLink,
   className,
 }) => {
+  const defaultEyebrow = useTranslation('blog.empty.eyebrow', 'No Results')
+  const defaultTitle = useTranslation('blog.empty.title', 'No posts found')
+  const defaultDescription = useTranslation(
+    'blog.empty.description',
+    'There are no articles published yet. Please check back soon for new content.',
+  )
   const hasCta = ctaLink && (ctaLink.url || ctaLink.reference)
 
   return (
@@ -77,13 +84,15 @@ export const BlogEmptyState: React.FC<BlogEmptyStateProps> = ({
         </div>
 
         <span className="text-tertiary font-label-nav text-label-nav tracking-[0.2em] md:tracking-[0.3em] uppercase">
-          {eyebrow}
+          {eyebrow ?? defaultEyebrow}
         </span>
 
-        <h3 className="mt-3 font-headline-sm text-headline-sm text-primary max-w-lg">{title}</h3>
+        <h3 className="mt-3 font-headline-sm text-headline-sm text-primary max-w-lg">
+          {title ?? defaultTitle}
+        </h3>
 
         <p className="mt-3 max-w-md font-body-md text-body-md text-secondary leading-relaxed">
-          {description}
+          {description ?? defaultDescription}
         </p>
 
         {hasCta && ctaLink && (

@@ -74,6 +74,7 @@ export interface Config {
     categories: Category;
     users: User;
     translations: Translation;
+    countries: Country;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -98,6 +99,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     translations: TranslationsSelect<false> | TranslationsSelect<true>;
+    countries: CountriesSelect<false> | CountriesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -940,7 +942,7 @@ export interface HeroBlock {
   showSearch?: boolean | null;
   defaultPropertyTab?: ('sale' | 'rental' | 'holiday') | null;
   /**
-   * Pre-selected country on the Sale Properties tab (defaults to Spain).
+   * Deprecated — set Default on a country under Collections → Countries instead.
    */
   defaultCountry?: ('spain' | 'france' | 'portugal' | 'others') | null;
   /**
@@ -1628,7 +1630,7 @@ export interface BlogPostsBlock {
   blockType: 'blogPostsBlock';
 }
 /**
- * UI strings created automatically by the app when t() runs. Edit translations here; do not add keys manually.
+ * UI strings created automatically by the app when t() runs (frontend) or admin.* keys for the admin panel. Edit translations here; do not add keys manually.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "translations".
@@ -1636,7 +1638,7 @@ export interface BlogPostsBlock {
 export interface Translation {
   id: number;
   /**
-   * Set automatically by the app (e.g. propertyList.filters.search).
+   * Set automatically by the app (e.g. propertyList.filters.search or admin.pages.title).
    */
   key: string;
   /**
@@ -1651,6 +1653,45 @@ export interface Translation {
     | number
     | boolean
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * CRM countries cached in the CMS. Sync from Optima, enable “Show on site” for the Sale country filter, then choose the Default country from the dropdown above the list (only Show-on-site countries appear).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries".
+ */
+export interface Country {
+  id: number;
+  adminLabel: string;
+  isoCode?: string | null;
+  /**
+   * Numeric key sent to the CRM country filter.
+   */
+  key: number;
+  status?: string | null;
+  crmId?: string | null;
+  /**
+   * Localized country names from CRM. Search works across all languages.
+   */
+  names:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  showOnSite?: boolean | null;
+  /**
+   * Managed by the Default country dropdown on the Countries list. Only one country can be default.
+   */
+  isDefault?: boolean | null;
+  offerSale?: boolean | null;
+  offerRental?: boolean | null;
+  offerHoliday?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1969,6 +2010,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'translations';
         value: number | Translation;
+      } | null)
+    | ({
+        relationTo: 'countries';
+        value: number | Country;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2896,6 +2941,25 @@ export interface TranslationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries_select".
+ */
+export interface CountriesSelect<T extends boolean = true> {
+  adminLabel?: T;
+  isoCode?: T;
+  key?: T;
+  status?: T;
+  crmId?: T;
+  names?: T;
+  showOnSite?: T;
+  isDefault?: T;
+  offerSale?: T;
+  offerRental?: T;
+  offerHoliday?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects_select".
  */
 export interface RedirectsSelect<T extends boolean = true> {
@@ -3355,12 +3419,33 @@ export interface Footer {
     address?: string | null;
   };
   certificationsTitle?: string | null;
+  /**
+   * Page opened when a visitor clicks a certification image (e.g. your Certifications page).
+   */
+  certificationsLink?: {
+    type?: ('reference' | 'custom') | null;
+    newTab?: boolean | null;
+    reference?:
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null);
+    url?: string | null;
+  };
   certifications?:
     | {
         /**
-         * react icon name (e.g. FiPhone, FiMail, FiMapPin). You can use from https://react-icons.github.io/react-icons/icons/fi/
+         * Certification badge or logo image shown in the footer.
          */
-        icon: string;
+        image: number | Media;
+        /**
+         * Optional name for this certification (admin list + image alt fallback).
+         */
+        label?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3420,6 +3505,26 @@ export interface Footer {
 export interface Theme {
   id: number;
   /**
+   * Site default keeps Outfit for body and EB Garamond for headlines. Custom mode applies one Google Font across the site.
+   */
+  fontMode?: ('site-default' | 'google') | null;
+  /**
+   * Add or remove any font by its exact Google Fonts family name (e.g. Figtree, Inter, Playfair Display). Mark exactly one row as Active — that font is applied site-wide.
+   */
+  googleFonts?:
+    | {
+        /**
+         * Must match fonts.google.com exactly (case-sensitive).
+         */
+        family: string;
+        /**
+         * Only one font can be active at a time.
+         */
+        active?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Defines :root variables used by Tailwind classes (e.g. --color-primary for bg-primary / text-primary). When empty, the default palette is used.
    */
   customCSS?: string | null;
@@ -3427,13 +3532,17 @@ export interface Theme {
   createdAt?: string | null;
 }
 /**
- * Languages listed here appear on the website switcher and in the admin “Locale” menu (top right). Content locale must exist in src/i18n/locales.ts. Add a row per language, then save.
+ * Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "localization".
  */
 export interface Localization {
   id: number;
+  /**
+   * Shown to first-time visitors (before they pick a language). Options come from Site languages below with “Show on site” enabled.
+   */
+  defaultLocale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   /**
    * Add languages with + Add Language. Content locale must be a code from the list (not a display name like "Deutsch").
    */
@@ -3476,11 +3585,11 @@ export interface Logo {
    */
   alt: string;
   /**
-   * Logo for light backgrounds (e.g. header). Falls back to /logo.png.
+   * Logo for light backgrounds (e.g. scrolled header). Prefer a wide transparent PNG (~1200×200). Size is auto-fitted in the header/footer.
    */
   lightLogo?: (number | null) | Media;
   /**
-   * Logo for dark backgrounds (e.g. footer). Falls back to /logow.png.
+   * Logo for dark backgrounds (hero header, footer). Prefer a wide transparent PNG (~1200×200). Size is auto-fitted in the header/footer.
    */
   darkLogo?: (number | null) | Media;
   /**
@@ -3856,6 +3965,33 @@ export interface EmailSetting {
         [k: string]: unknown;
       } | null;
     };
+    /**
+     * Thank-you email after a visitor saves a property search. Edit subject and body per locale like the other confirmation templates.
+     */
+    saveSearch?: {
+      /**
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
+       */
+      subject: string;
+      /**
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
+       */
+      content?: {
+        root: {
+          type: string;
+          children: {
+            type: any;
+            version: number;
+            [k: string]: unknown;
+          }[];
+          direction: ('ltr' | 'rtl') | null;
+          format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+          indent: number;
+          version: number;
+        };
+        [k: string]: unknown;
+      } | null;
+    };
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -3918,7 +4054,7 @@ export interface OptimaCrmSetting {
   createdAt?: string | null;
 }
 /**
- * DeepL API credentials for auto-translating missing UI strings via t(). Stored in the database — not in environment variables.
+ * DeepL API credentials for auto-translating missing UI strings via t() (frontend and admin.* keys). Stored in the database — not in environment variables.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "deeplSettings".
@@ -3935,7 +4071,7 @@ export interface DeeplSetting {
   createdAt?: string | null;
 }
 /**
- * Third-party integration keys for Google Maps and reCAPTCHA. Stored in the database — not in environment variables.
+ * Third-party integrations for Google Maps, reCAPTCHA, WhatsApp, and Virtual Assistant. Stored in the database — not in environment variables.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "integrationsSettings".
@@ -3957,6 +4093,30 @@ export interface IntegrationsSetting {
      * Server-side key for verifying form submissions.
      */
     secretKey: string;
+  };
+  whatsapp?: {
+    /**
+     * Show a floating WhatsApp chat button on the website.
+     */
+    enabled?: boolean | null;
+    /**
+     * Full international number, e.g. +34604225709. Used for https://wa.me/… links.
+     */
+    phoneNumber?: string | null;
+    /**
+     * Corner where the floating button appears.
+     */
+    position?: ('right' | 'left') | null;
+  };
+  virtualAssistant?: {
+    /**
+     * Load the Optima webchat widget script on the frontend.
+     */
+    enabled?: boolean | null;
+    /**
+     * Paste the full script tag, e.g. <script src="https://webchat-api.optimasit.com/widget.js" data-agency-key="your-key" async></script>
+     */
+    embedScript?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -4073,10 +4233,19 @@ export interface FooterSelect<T extends boolean = true> {
         address?: T;
       };
   certificationsTitle?: T;
+  certificationsLink?:
+    | T
+    | {
+        type?: T;
+        newTab?: T;
+        reference?: T;
+        url?: T;
+      };
   certifications?:
     | T
     | {
-        icon?: T;
+        image?: T;
+        label?: T;
         id?: T;
       };
   copyrightText?: T;
@@ -4110,6 +4279,14 @@ export interface FooterSelect<T extends boolean = true> {
  * via the `definition` "theme_select".
  */
 export interface ThemeSelect<T extends boolean = true> {
+  fontMode?: T;
+  googleFonts?:
+    | T
+    | {
+        family?: T;
+        active?: T;
+        id?: T;
+      };
   customCSS?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -4120,6 +4297,7 @@ export interface ThemeSelect<T extends boolean = true> {
  * via the `definition` "localization_select".
  */
 export interface LocalizationSelect<T extends boolean = true> {
+  defaultLocale?: T;
   languages?:
     | T
     | {
@@ -4329,6 +4507,12 @@ export interface EmailSettingsSelect<T extends boolean = true> {
               subject?: T;
               content?: T;
             };
+        saveSearch?:
+          | T
+          | {
+              subject?: T;
+              content?: T;
+            };
       };
   updatedAt?: T;
   createdAt?: T;
@@ -4395,6 +4579,19 @@ export interface IntegrationsSettingsSelect<T extends boolean = true> {
     | {
         siteKey?: T;
         secretKey?: T;
+      };
+  whatsapp?:
+    | T
+    | {
+        enabled?: T;
+        phoneNumber?: T;
+        position?: T;
+      };
+  virtualAssistant?:
+    | T
+    | {
+        enabled?: T;
+        embedScript?: T;
       };
   updatedAt?: T;
   createdAt?: T;

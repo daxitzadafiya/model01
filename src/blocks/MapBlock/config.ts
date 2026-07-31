@@ -1,22 +1,24 @@
 import type { Block } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
+
 export const MapBlock: Block = {
   slug: 'mapBlock',
   interfaceName: 'MapBlock',
   labels: {
-    singular: 'Map',
-    plural: 'Maps',
+    singular: a('admin.blocks.mapBlock.singular', 'Map'),
+    plural: a('admin.blocks.mapBlock.plural', 'Maps'),
   },
   fields: [
     {
       name: 'center',
       type: 'group',
-      label: 'Default map center',
+      label: a('admin.blocks.mapBlock.centerLabel', 'Default map center'),
       fields: [
         {
           name: 'lat',
           type: 'number',
-          label: 'Latitude',
+          label: a('admin.blocks.mapBlock.latLabel', 'Latitude'),
           defaultValue: 48.9903224,
           required: true,
           admin: {
@@ -26,7 +28,7 @@ export const MapBlock: Block = {
         {
           name: 'lng',
           type: 'number',
-          label: 'Longitude',
+          label: a('admin.blocks.mapBlock.lngLabel', 'Longitude'),
           defaultValue: 12.1991392,
           required: true,
           admin: {
@@ -38,20 +40,24 @@ export const MapBlock: Block = {
     {
       name: 'defaultZoom',
       type: 'number',
-      label: 'Default zoom',
+      label: a('admin.blocks.mapBlock.defaultZoomLabel', 'Default zoom'),
       defaultValue: 6,
       min: 1,
       max: 20,
       admin: {
-        description: 'Initial zoom level when the map loads.',
+        description: a(
+          'admin.blocks.mapBlock.defaultZoomDescription',
+          'Initial zoom level when the map loads.',
+        ),
       },
     },
     {
       name: 'height',
       type: 'number',
       defaultValue: 500,
+      label: a('admin.blocks.mapBlock.heightLabel', 'Height'),
       admin: {
-        description: 'Map height in pixels.',
+        description: a('admin.blocks.mapBlock.heightDescription', 'Map height in pixels.'),
       },
     },
     {
@@ -59,8 +65,9 @@ export const MapBlock: Block = {
       type: 'text',
       localized: true,
       defaultValue: 'Map',
+      label: a('admin.blocks.mapBlock.titleLabel', 'Title'),
       admin: {
-        description: 'Accessible title for the map.',
+        description: a('admin.blocks.mapBlock.titleDescription', 'Accessible title for the map.'),
       },
     },
   ],

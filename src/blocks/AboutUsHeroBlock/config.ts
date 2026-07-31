@@ -1,11 +1,13 @@
 import type { Block } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
+
 export const AboutUsHeroBlock: Block = {
   slug: 'aboutUsHeroBlock',
   interfaceName: 'AboutUsHeroBlock',
   labels: {
-    singular: 'About Us Hero',
-    plural: 'About Us Hero Sections',
+    singular: a('admin.blocks.aboutUsHeroBlock.singular', 'About Us Hero'),
+    plural: a('admin.blocks.aboutUsHeroBlock.plural', 'About Us Hero Sections'),
   },
   fields: [
     {
@@ -13,8 +15,12 @@ export const AboutUsHeroBlock: Block = {
       type: 'text',
       localized: true,
       defaultValue: 'About Us',
+      label: a('admin.blocks.aboutUsHeroBlock.labelLabel', 'Label'),
       admin: {
-        description: 'Small label above the headline',
+        description: a(
+          'admin.blocks.aboutUsHeroBlock.labelDescription',
+          'Small label above the headline',
+        ),
       },
     },
     {
@@ -23,8 +29,12 @@ export const AboutUsHeroBlock: Block = {
       required: true,
       defaultValue: "We don't just sell properties. We help you find home.",
       localized: true,
+      label: a('admin.blocks.aboutUsHeroBlock.headlineLabel', 'Headline'),
       admin: {
-        description: 'Large serif headline (line breaks are preserved)',
+        description: a(
+          'admin.blocks.aboutUsHeroBlock.headlineDescription',
+          'Large serif headline (line breaks are preserved)',
+        ),
       },
     },
     {
@@ -34,8 +44,12 @@ export const AboutUsHeroBlock: Block = {
       localized: true,
       defaultValue:
         'A full-service real estate company dedicated to helping clients confidently find, buy, sell, and invest in exceptional properties.',
+      label: a('admin.blocks.aboutUsHeroBlock.descriptionLabel', 'Description'),
       admin: {
-        description: 'Supporting paragraph below the headline',
+        description: a(
+          'admin.blocks.aboutUsHeroBlock.descriptionDescription',
+          'Supporting paragraph below the headline',
+        ),
       },
     },
     {
@@ -43,8 +57,12 @@ export const AboutUsHeroBlock: Block = {
       type: 'upload',
       relationTo: 'media',
       required: true,
+      label: a('admin.blocks.aboutUsHeroBlock.backgroundImageLabel', 'Background Image'),
       admin: {
-        description: 'Full-width background photograph',
+        description: a(
+          'admin.blocks.aboutUsHeroBlock.backgroundImageDescription',
+          'Full-width background photograph',
+        ),
       },
     },
   ],

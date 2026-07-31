@@ -11,10 +11,19 @@ export type FloatingMenuPlacement = 'auto' | 'top' | 'bottom'
 export type FloatingMenuPositionInput = {
   triggerRect: DOMRect
   menuHeight?: number
+  /** Measured menu width (after mount) — used to keep fit-content menus on-screen. */
+  menuWidth?: number
   gap?: number
   maxMenuHeight?: number
   viewportPadding?: number
   minWidth?: number
+  /**
+   * Grow with content instead of locking to the trigger width.
+   * Still at least as wide as the trigger, and capped by `maxWidth` / viewport.
+   */
+  fitContent?: boolean
+  /** Soft cap so menus do not stretch across the viewport. */
+  maxWidth?: number
   placement?: FloatingMenuPlacement
 }
 
@@ -25,10 +34,13 @@ export type FloatingMenuPositionInput = {
 export function computeFloatingMenuStyle({
   triggerRect,
   menuHeight = 0,
+  menuWidth = 0,
   gap = DEFAULT_GAP,
   maxMenuHeight = DEFAULT_MAX_HEIGHT,
   viewportPadding = DEFAULT_VIEWPORT_PADDING,
   minWidth,
+  fitContent = false,
+  maxWidth,
   placement = 'auto',
 }: FloatingMenuPositionInput): CSSProperties {
   const spaceBelow = window.innerHeight - triggerRect.bottom - viewportPadding
@@ -44,15 +56,38 @@ export function computeFloatingMenuStyle({
       (wouldOverflowBelow || spaceBelow < estimatedHeight) &&
       spaceAbove >= 120)
 
-  const width = minWidth ? Math.max(triggerRect.width, minWidth) : triggerRect.width
+  const viewportMaxWidth = window.innerWidth - viewportPadding * 2
+  const cappedMaxWidth = Math.min(maxWidth ?? viewportMaxWidth, viewportMaxWidth)
+  const resolvedMinWidth = Math.max(triggerRect.width, minWidth ?? 0)
+
+  const estimatedWidth =
+    menuWidth > 0
+      ? Math.min(Math.max(menuWidth, resolvedMinWidth), cappedMaxWidth)
+      : Math.min(resolvedMinWidth, cappedMaxWidth)
+
+  let left = triggerRect.left
+  if (left + estimatedWidth > window.innerWidth - viewportPadding) {
+    left = Math.max(viewportPadding, window.innerWidth - viewportPadding - estimatedWidth)
+  }
+
+  const widthStyles: CSSProperties = fitContent
+    ? {
+        width: 'max-content',
+        minWidth: resolvedMinWidth,
+        maxWidth: cappedMaxWidth,
+      }
+    : {
+        width: minWidth ? Math.max(triggerRect.width, minWidth) : triggerRect.width,
+        maxWidth: cappedMaxWidth,
+      }
 
   if (openUp) {
     const maxHeight = Math.max(120, Math.min(maxMenuHeight, spaceAbove - gap))
 
     return {
       position: 'fixed',
-      left: triggerRect.left,
-      width,
+      left,
+      ...widthStyles,
       bottom: window.innerHeight - triggerRect.top + gap,
       maxHeight,
       overflowY: 'auto',
@@ -65,8 +100,8 @@ export function computeFloatingMenuStyle({
   return {
     position: 'fixed',
     top: triggerRect.bottom + gap,
-    left: triggerRect.left,
-    width,
+    left,
+    ...widthStyles,
     maxHeight,
     overflowY: 'auto',
     zIndex: FLOATING_MENU_Z_INDEX,

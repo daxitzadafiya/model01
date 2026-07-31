@@ -59,8 +59,31 @@ export function useMarkerViewportPosition(
       if (!point) return
 
       const mapRect = map.getDiv().getBoundingClientRect()
+      const mapInViewport =
+        mapRect.bottom > HEADER_SAFE_ZONE &&
+        mapRect.top < window.innerHeight &&
+        mapRect.right > 0 &&
+        mapRect.left < window.innerWidth
+
+      // Hide while the map (or its pin) is scrolled off-screen — avoid clamping a
+      // detached popup over other page sections.
+      if (!mapInViewport) {
+        setPosition(null)
+        return
+      }
+
       const x = mapRect.left + point.x
       const y = mapRect.top + point.y
+      const visibleTop = Math.max(mapRect.top, HEADER_SAFE_ZONE)
+      const visibleBottom = Math.min(mapRect.bottom, window.innerHeight)
+      const visibleLeft = Math.max(mapRect.left, 0)
+      const visibleRight = Math.min(mapRect.right, window.innerWidth)
+
+      if (x < visibleLeft || x > visibleRight || y < visibleTop || y > visibleBottom) {
+        setPosition(null)
+        return
+      }
+
       const placeAbove = y - POPUP_ESTIMATED_HEIGHT > HEADER_SAFE_ZONE
 
       setPosition(clampPopupPosition(x, y, placeAbove))

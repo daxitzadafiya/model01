@@ -29,6 +29,19 @@ import * as migration_20260703_170000_hero_block_search_tabs from './20260703_17
 import * as migration_20260706_120000_property_filters_holiday from './20260706_120000_property_filters_holiday'
 import * as migration_20260715_140000_email_holiday_booking_template from './20260715_140000_email_holiday_booking_template'
 import * as migration_20260723_100000_footer_powered_by from './20260723_100000_footer_powered_by'
+import * as migration_20260727_100000_localization_default_locale from './20260727_100000_localization_default_locale'
+import * as migration_20260727_150000_countries_global from './20260727_150000_countries_global'
+import * as migration_20260727_180000_countries_collection from './20260727_180000_countries_collection'
+import * as migration_20260728_100000_countries_is_default from './20260728_100000_countries_is_default'
+import * as migration_20260728_120000_integrations_whatsapp from './20260728_120000_integrations_whatsapp'
+import * as migration_20260728_121000_integrations_whatsapp_ensure from './20260728_121000_integrations_whatsapp_ensure'
+import * as migration_20260728_130000_integrations_virtual_assistant from './20260728_130000_integrations_virtual_assistant'
+import * as migration_20260728_140000_footer_certifications_image from './20260728_140000_footer_certifications_image'
+import * as migration_20260728_141000_footer_certifications_image_ensure from './20260728_141000_footer_certifications_image_ensure'
+import * as migration_20260728_150000_footer_certifications_link from './20260728_150000_footer_certifications_link'
+import * as migration_20260728_160000_theme_font_family from './20260728_160000_theme_font_family'
+import * as migration_20260728_170000_theme_google_fonts_library from './20260728_170000_theme_google_fonts_library'
+import * as migration_20260730_100000_email_save_search_template from './20260730_100000_email_save_search_template'
 
 export const migrations = [
   {
@@ -185,5 +198,70 @@ export const migrations = [
     up: migration_20260723_100000_footer_powered_by.up,
     down: migration_20260723_100000_footer_powered_by.down,
     name: '20260723_100000_footer_powered_by',
+  },
+  {
+    up: migration_20260727_100000_localization_default_locale.up,
+    down: migration_20260727_100000_localization_default_locale.down,
+    name: '20260727_100000_localization_default_locale',
+  },
+  {
+    up: migration_20260727_150000_countries_global.up,
+    down: migration_20260727_150000_countries_global.down,
+    name: '20260727_150000_countries_global',
+  },
+  {
+    up: migration_20260727_180000_countries_collection.up,
+    down: migration_20260727_180000_countries_collection.down,
+    name: '20260727_180000_countries_collection',
+  },
+  {
+    up: migration_20260728_100000_countries_is_default.up,
+    down: migration_20260728_100000_countries_is_default.down,
+    name: '20260728_100000_countries_is_default',
+  },
+  {
+    up: migration_20260728_120000_integrations_whatsapp.up,
+    down: migration_20260728_120000_integrations_whatsapp.down,
+    name: '20260728_120000_integrations_whatsapp',
+  },
+  {
+    up: migration_20260728_121000_integrations_whatsapp_ensure.up,
+    down: migration_20260728_121000_integrations_whatsapp_ensure.down,
+    name: '20260728_121000_integrations_whatsapp_ensure',
+  },
+  {
+    up: migration_20260728_130000_integrations_virtual_assistant.up,
+    down: migration_20260728_130000_integrations_virtual_assistant.down,
+    name: '20260728_130000_integrations_virtual_assistant',
+  },
+  {
+    up: migration_20260728_140000_footer_certifications_image.up,
+    down: migration_20260728_140000_footer_certifications_image.down,
+    name: '20260728_140000_footer_certifications_image',
+  },
+  {
+    up: migration_20260728_141000_footer_certifications_image_ensure.up,
+    down: migration_20260728_141000_footer_certifications_image_ensure.down,
+    name: '20260728_141000_footer_certifications_image_ensure',
+  },
+  {
+    up: migration_20260728_150000_footer_certifications_link.up,
+    down: migration_20260728_150000_footer_certifications_link.down,
+    name: '20260728_150000_footer_certifications_link',
+  },
+  {
+    up: migration_20260728_160000_theme_font_family.up,
+    down: migration_20260728_160000_theme_font_family.down,
+    name: '20260728_160000_theme_font_family',
+  },
+  {
+    up: migration_20260728_170000_theme_google_fonts_library.up,
+    down: migration_20260728_170000_theme_google_fonts_library.down,
+    name: '20260728_170000_theme_google_fonts_library',
+  },
+  {
+    up: migration_20260730_100000_email_save_search_template.up,
+    down: migration_20260730_100000_email_save_search_template.down,
+    name: '20260730_100000_email_save_search_template',
   },
 ]

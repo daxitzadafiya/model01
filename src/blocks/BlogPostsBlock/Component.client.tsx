@@ -175,12 +175,9 @@ export const BlogPostsBlockClient: React.FC<ClientProps> = ({
           !loading && (
             <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop reveal">
               <BlogEmptyState
-                eyebrow={emptyStateEyebrow || 'No Results'}
-                title={emptyStateTitle || 'No posts found'}
-                description={
-                  emptyStateDescription ||
-                  'There are no articles published yet. Please check back soon for new content.'
-                }
+                eyebrow={emptyStateEyebrow || undefined}
+                title={emptyStateTitle || undefined}
+                description={emptyStateDescription || undefined}
                 ctaLink={emptyStateLink}
               />
             </div>

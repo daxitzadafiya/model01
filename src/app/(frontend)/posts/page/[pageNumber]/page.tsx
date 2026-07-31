@@ -11,6 +11,7 @@ import { notFound } from 'next/navigation'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { formatPageTitle, getAppName } from '@/utilities/getAppName'
 import { getCachedGlobal } from '@/utilities/getGlobals'
+import { t } from '@/utilities/translate'
 
 export const revalidate = 600
 
@@ -29,6 +30,7 @@ export default async function Page({ params: paramsPromise }: Args) {
   if (!Number.isInteger(sanitizedPageNumber)) notFound()
 
   const { locale } = await getActiveLocale()
+  const postsHeading = await t('posts.heading', locale, 'Posts')
 
   const posts = await payload.find({
     collection: 'posts',
@@ -43,7 +45,7 @@ export default async function Page({ params: paramsPromise }: Args) {
     <div className="pt-24 pb-24">
       <div className="container mb-16">
         <div className="prose dark:prose-invert max-w-none">
-          <h1>Posts</h1>
+          <h1>{postsHeading}</h1>
         </div>
       </div>
 

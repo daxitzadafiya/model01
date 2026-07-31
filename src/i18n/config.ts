@@ -5,6 +5,7 @@ export type { FlagCountry, Locale }
 
 export { defaultLocale, localeCodes }
 
+// Frontend visitor content locale (separate from Payload admin UI language `payload-lng`).
 export const localeCookieName = 'payload-locale'
 
 export type LanguageMenuItem = {

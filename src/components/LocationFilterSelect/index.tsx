@@ -10,6 +10,7 @@ import {
   type FloatingMenuPlacement,
 } from '@/utilities/floatingMenuPosition'
 import { cn } from '@/utilities/ui'
+import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   label: string
@@ -52,6 +53,18 @@ export const LocationFilterSelect: React.FC<Props> = ({
   const generatedId = useId()
   const triggerId = idProp ?? generatedId
   const listboxId = `${triggerId}-listbox`
+  const loadingLocationsLabel = useTranslation(
+    'propertyList.filters.loadingLocations',
+    'Loading locations…',
+  )
+  const noLocationsLabel = useTranslation(
+    'propertyList.filters.noLocations',
+    'No locations available',
+  )
+  const selectedCountLabel = useTranslation(
+    'propertyList.filters.locationsSelected',
+    '{count} selected',
+  )
 
   const [open, setOpen] = useState(false)
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({})
@@ -71,14 +84,25 @@ export const LocationFilterSelect: React.FC<Props> = ({
   }, [tree])
 
   const displayLabel = useMemo(() => {
-    if (loading) return 'Loading locations…'
+    if (loading) return loadingLocationsLabel
+    if (tree.length === 0) return noLocationsLabel
     if (value.length === 0) return emptyLabel ?? placeholder
 
     const labels = value.map((key) => areaLabelByKey.get(key)).filter(Boolean) as string[]
 
     if (labels.length <= 2) return labels.join(', ')
-    return `${labels.length} selected`
-  }, [areaLabelByKey, emptyLabel, loading, placeholder, value])
+    return selectedCountLabel.replace('{count}', String(labels.length))
+  }, [
+    areaLabelByKey,
+    emptyLabel,
+    loading,
+    loadingLocationsLabel,
+    noLocationsLabel,
+    placeholder,
+    selectedCountLabel,
+    tree.length,
+    value,
+  ])
 
   const getCityAreaKeys = (city: CRMLocationCity) => city.areas.map((area) => areaKey(area.key))
 
@@ -184,7 +208,7 @@ export const LocationFilterSelect: React.FC<Props> = ({
     >
       {tree.length === 0 ? (
         <p className="px-4 py-3 font-body-md text-body-md text-on-surface-variant">
-          {loading ? 'Loading locations…' : 'No locations available'}
+          {loading ? loadingLocationsLabel : noLocationsLabel}
         </p>
       ) : (
         tree.map((city) => {
@@ -239,7 +263,7 @@ export const LocationFilterSelect: React.FC<Props> = ({
       <button
         type="button"
         id={triggerId}
-        disabled={disabled || loading}
+        disabled={disabled || loading || tree.length === 0}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listboxId}
@@ -247,7 +271,7 @@ export const LocationFilterSelect: React.FC<Props> = ({
           defaultTriggerClass,
           icon ? 'pl-10' : 'pl-4',
           'relative transition-colors cursor-pointer duration-200',
-          (disabled || loading) && 'cursor-not-allowed opacity-60',
+          (disabled || loading || tree.length === 0) && 'cursor-not-allowed opacity-60',
           open && 'border-tertiary',
           triggerClassName,
         )}

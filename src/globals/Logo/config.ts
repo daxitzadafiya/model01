@@ -1,34 +1,43 @@
 import type { GlobalConfig } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
+
 import { revalidateLogo } from './hooks/revalidateLogo'
 
 export const SiteLogo: GlobalConfig = {
   slug: 'logo',
-  label: 'Logo',
+  label: a('admin.logo.label', 'Logo'),
   access: {
     read: () => true,
   },
   admin: {
-    description: 'Site logos used in the header, footer, and admin panel.',
+    description: a(
+      'admin.logo.description',
+      'Site logos used in the header, footer, and admin panel.',
+    ),
   },
   fields: [
     {
       name: 'appName',
       type: 'text',
-      label: 'App Name',
+      label: a('admin.logo.appName', 'App Name'),
       defaultValue: 'Horizon Estates',
       required: true,
       admin: {
-        description: 'Site name shown in page titles, metadata, and other branding.',
+        description: a(
+          'admin.logo.appName.description',
+          'Site name shown in page titles, metadata, and other branding.',
+        ),
       },
     },
     {
       name: 'alt',
       type: 'text',
+      label: a('admin.logo.alt', 'Alt'),
       defaultValue: 'Horizon Estates',
       required: true,
       admin: {
-        description: 'Alternative text for accessibility.',
+        description: a('admin.logo.alt.description', 'Alternative text for accessibility.'),
       },
     },
     {
@@ -39,9 +48,13 @@ export const SiteLogo: GlobalConfig = {
           type: 'upload',
           relationTo: 'media',
           required: false,
+          label: a('admin.logo.lightLogo', 'Light Logo'),
           admin: {
             width: '50%',
-            description: 'Logo for light backgrounds (e.g. header). Falls back to /logo.png.',
+            description: a(
+              'admin.logo.lightLogo.description',
+              'Logo for light backgrounds (e.g. scrolled header). Prefer a wide transparent PNG (~1200×200). Size is auto-fitted in the header/footer.',
+            ),
           },
         },
         {
@@ -49,9 +62,13 @@ export const SiteLogo: GlobalConfig = {
           type: 'upload',
           relationTo: 'media',
           required: false,
+          label: a('admin.logo.darkLogo', 'Dark Logo'),
           admin: {
             width: '50%',
-            description: 'Logo for dark backgrounds (e.g. footer). Falls back to /logow.png.',
+            description: a(
+              'admin.logo.darkLogo.description',
+              'Logo for dark backgrounds (hero header, footer). Prefer a wide transparent PNG (~1200×200). Size is auto-fitted in the header/footer.',
+            ),
           },
         },
       ],
@@ -61,9 +78,12 @@ export const SiteLogo: GlobalConfig = {
       type: 'upload',
       relationTo: 'media',
       required: false,
+      label: a('admin.logo.favicon', 'Favicon'),
       admin: {
-        description:
+        description: a(
+          'admin.logo.favicon.description',
           'Favicon used in browser tabs for both frontend and admin. Falls back to /favicon.ico.',
+        ),
       },
     },
   ],

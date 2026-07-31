@@ -1,29 +1,31 @@
 import type { Field } from 'payload'
 
+import { a } from '@/utilities/adminI18n'
+
 export const propertyMapFields: Field[] = [
   {
     name: 'modalTitle',
     type: 'text',
-    label: 'Modal title',
+    label: a('admin.propertyMap.modalTitle', 'Modal title'),
     defaultValue: 'Property Map',
     localized: true,
   },
   {
     name: 'defaultCenter',
     type: 'group',
-    label: 'Default map center',
+    label: a('admin.propertyMap.defaultCenter', 'Default map center'),
     fields: [
       {
         name: 'lat',
         type: 'number',
-        label: 'Latitude',
+        label: a('admin.propertyMap.defaultCenter.lat', 'Latitude'),
         defaultValue: 38.3452,
         required: true,
       },
       {
         name: 'lng',
         type: 'number',
-        label: 'Longitude',
+        label: a('admin.propertyMap.defaultCenter.lng', 'Longitude'),
         defaultValue: -0.481,
         required: true,
       },
@@ -32,7 +34,7 @@ export const propertyMapFields: Field[] = [
   {
     name: 'defaultZoom',
     type: 'number',
-    label: 'Default zoom',
+    label: a('admin.propertyMap.defaultZoom', 'Default zoom'),
     defaultValue: 8,
     min: 1,
     max: 20,
@@ -41,7 +43,7 @@ export const propertyMapFields: Field[] = [
   {
     name: 'minZoom',
     type: 'number',
-    label: 'Minimum zoom',
+    label: a('admin.propertyMap.minZoom', 'Minimum zoom'),
     defaultValue: 5,
     min: 1,
     max: 20,
@@ -49,7 +51,7 @@ export const propertyMapFields: Field[] = [
   {
     name: 'maxZoom',
     type: 'number',
-    label: 'Maximum zoom',
+    label: a('admin.propertyMap.maxZoom', 'Maximum zoom'),
     defaultValue: 18,
     min: 1,
     max: 20,
@@ -57,13 +59,13 @@ export const propertyMapFields: Field[] = [
   {
     name: 'enableDrawSearch',
     type: 'checkbox',
-    label: 'Enable draw-to-search',
+    label: a('admin.propertyMap.enableDrawSearch', 'Enable draw-to-search'),
     defaultValue: true,
   },
   {
     name: 'drawInstructionText',
     type: 'text',
-    label: 'Draw instruction text',
+    label: a('admin.propertyMap.drawInstructionText', 'Draw instruction text'),
     defaultValue: 'Draw A Shape Around The Region(S) You Would Like To Search',
     localized: true,
     admin: {
@@ -73,7 +75,7 @@ export const propertyMapFields: Field[] = [
   {
     name: 'drawButtonLabel',
     type: 'text',
-    label: 'Draw button label',
+    label: a('admin.propertyMap.drawButtonLabel', 'Draw button label'),
     defaultValue: 'Draw your area on the map',
     localized: true,
     admin: {
@@ -83,24 +85,24 @@ export const propertyMapFields: Field[] = [
   {
     name: 'clusterColors',
     type: 'group',
-    label: 'Cluster colors',
+    label: a('admin.propertyMap.clusterColors', 'Cluster colors'),
     fields: [
       {
         name: 'small',
         type: 'text',
-        label: 'Small cluster',
+        label: a('admin.propertyMap.clusterColors.small', 'Small cluster'),
         defaultValue: '#5e5e5c',
       },
       {
         name: 'medium',
         type: 'text',
-        label: 'Medium cluster',
+        label: a('admin.propertyMap.clusterColors.medium', 'Medium cluster'),
         defaultValue: '#755b00',
       },
       {
         name: 'large',
         type: 'text',
-        label: 'Large cluster',
+        label: a('admin.propertyMap.clusterColors.large', 'Large cluster'),
         defaultValue: '#000000',
       },
     ],
@@ -108,13 +110,15 @@ export const propertyMapFields: Field[] = [
   {
     name: 'mapFetchLimit',
     type: 'number',
-    label: 'Map fetch limit',
+    label: a('admin.propertyMap.mapFetchLimit', 'Map fetch limit'),
     defaultValue: 5000,
     min: 1,
     max: 10000000,
     admin: {
-      description:
+      description: a(
+        'admin.propertyMap.mapFetchLimit.description',
         'Maximum number of properties to fetch in a single CRM request when loading map markers.',
+      ),
     },
   },
 ]
