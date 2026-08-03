@@ -12,7 +12,7 @@ import { fetchPropertiesCarouselServerData } from '@/utilities/propertiesCarouse
 
 type Props = Extract<Page['layout'][0], { blockType: 'propertiesBlock' }>
 
-type CarouselCrmPreset = Extract<CRMListingPreset, 'featured' | 'seaView'>
+type CarouselCrmPreset = Extract<CRMListingPreset, 'featured' | 'seaView' | 'golf'>
 
 export const PropertiesBlock = async ({
   dataSource,

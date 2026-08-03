@@ -9,7 +9,7 @@ import {
 import { fetchCRMPropertiesServer } from '@/utilities/crmProperties.server'
 import { PROPERTY_CARD_IMAGE_SIZE } from '@/utilities/optimaImage'
 
-type CarouselCrmPreset = Extract<CRMListingPreset, 'featured' | 'seaView'>
+type CarouselCrmPreset = Extract<CRMListingPreset, 'featured' | 'seaView' | 'golf'>
 
 export async function fetchPropertiesCarouselServerData(
   preset: CarouselCrmPreset,

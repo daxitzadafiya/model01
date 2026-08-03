@@ -144,6 +144,17 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
 
   if (preset === 'seaView') {
     baseQuery['views.sea'] = true
+  } else if (preset === 'golf') {
+    baseQuery.$and = [
+      {
+        $or: [
+          { 'categories.golf': true },
+          { 'settings.close_to_golf': true },
+          { 'settings.frontline_golf': true },
+          { 'views.golf': true },
+        ],
+      },
+    ]
   } else if (preset === 'featured') {
     // Featured listings always include similar commercials, regardless of Optima CRM global.
     baseQuery.similar_commercials = 'include_similar'

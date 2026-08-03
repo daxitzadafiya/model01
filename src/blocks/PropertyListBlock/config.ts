@@ -90,6 +90,10 @@ export const PropertyListBlock: Block = {
           label: a('admin.blocks.propertyListBlock.listingSeaView', 'Sea View Properties'),
           value: 'seaView',
         },
+        {
+          label: a('admin.blocks.propertyListBlock.listingGolf', 'Golf Properties'),
+          value: 'golf',
+        },
       ],
     },
     {

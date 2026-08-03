@@ -67,6 +67,8 @@ function resolveListingLabel(preset: CRMListingPreset): string {
       return 'Featured'
     case 'seaView':
       return 'Sea View'
+    case 'golf':
+      return 'Golf Properties'
     default:
       return preset
   }

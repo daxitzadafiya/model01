@@ -81,6 +81,10 @@ export const PropertiesBlock: Block = {
           label: a('admin.blocks.propertiesBlock.crmPresetSeaView', 'Sea View Properties'),
           value: 'seaView',
         },
+        {
+          label: a('admin.blocks.propertiesBlock.crmPresetGolf', 'Golf Properties'),
+          value: 'golf',
+        },
       ],
       admin: {
         condition: (_, siblingData) => siblingData?.dataSource === 'crm',

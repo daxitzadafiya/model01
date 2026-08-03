@@ -35,6 +35,7 @@ export type CRMListingPreset =
   | 'sold'
   | 'featured'
   | 'seaView'
+  | 'golf'
   | 'custom'
   | 'favorites'
   | 'projects'
@@ -953,6 +954,25 @@ export const buildCRMListingQuery = ({
       $and: [
         {
           'views.sea': true,
+        },
+      ],
+    }
+  } else if (preset === 'golf') {
+    baseQuery = {
+      ...similarCommercials,
+      sale: true,
+      remove_count: true,
+      // has_images: true,
+      ...CRM_COORDINATE_QUERY_FIELDS,
+      status: { $in: ['Available', 'Under Offer'] },
+      $and: [
+        {
+          $or: [
+            { 'categories.golf': true },
+            { 'views.golf': true },
+            { 'settings.frontline_golf': true },
+            { 'settings.close_to_golf': true },
+          ],
         },
       ],
     }

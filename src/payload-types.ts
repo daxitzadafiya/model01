@@ -1030,7 +1030,7 @@ export interface PropertiesBlock {
   backgroundColor?: ('surface' | 'surface-container-low') | null;
   showSoldBadge?: boolean | null;
   dataSource?: ('cms' | 'crm') | null;
-  crmPreset?: ('featured' | 'seaView') | null;
+  crmPreset?: ('featured' | 'seaView' | 'golf') | null;
   crmLimit?: number | null;
   properties?:
     | {
@@ -1059,7 +1059,16 @@ export interface PropertyListBlock {
   breadcrumbParentHref?: string | null;
   pageTitle?: string | null;
   resultsLabel?: string | null;
-  listingPreset: 'forSale' | 'forRent' | 'forHoliday' | 'projects' | 'favorites' | 'sold' | 'featured' | 'seaView';
+  listingPreset:
+    | 'forSale'
+    | 'forRent'
+    | 'forHoliday'
+    | 'projects'
+    | 'favorites'
+    | 'sold'
+    | 'featured'
+    | 'seaView'
+    | 'golf';
   pageSize?: number | null;
   showFilters?: boolean | null;
   /**
