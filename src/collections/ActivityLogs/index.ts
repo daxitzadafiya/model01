@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { adminOnly } from '@/access/adminOnly'
+import { authenticated } from '@/access/authenticated'
 import { a } from '@/utilities/adminI18n'
 
 const denyAll = () => false
@@ -14,7 +14,7 @@ export const ActivityLogs: CollectionConfig = {
   access: {
     create: denyAll,
     delete: denyAll,
-    read: adminOnly,
+    read: authenticated,
     update: denyAll,
   },
   admin: {
