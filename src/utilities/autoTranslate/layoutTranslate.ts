@@ -148,7 +148,12 @@ export async function buildLayoutPatches(
       const sourceChanged = sourceText !== previousSourceText
       const existingText = targetStrings.get(path) ?? ''
 
-      if (!sourceChanged && existingText) continue
+      // Keep existing target copy when source did not change (identity patch so we can
+      // always apply onto a full sourceLayout base without wiping prior translations).
+      if (!sourceChanged && existingText) {
+        blockPatches.set(path, { kind: 'string', value: existingText })
+        continue
+      }
 
       const translated = await translate(sourceText, targetLocale)
       if (translated) {
@@ -164,11 +169,15 @@ export async function buildLayoutPatches(
         ? lexicalPlainText(previousRichText.get(path))
         : ''
       const sourceChanged = sourceFingerprint !== previousFingerprint
-      const existingFingerprint = targetRichText.has(path)
-        ? lexicalPlainText(targetRichText.get(path))
+      const existingRichText = targetRichText.get(path)
+      const existingFingerprint = existingRichText
+        ? lexicalPlainText(existingRichText)
         : ''
 
-      if (!sourceChanged && existingFingerprint) continue
+      if (!sourceChanged && existingFingerprint && existingRichText) {
+        blockPatches.set(path, { kind: 'richtext', value: existingRichText })
+        continue
+      }
 
       const translated = await translateLexicalRichText(sourceValue, (text) =>
         translate(text, targetLocale),

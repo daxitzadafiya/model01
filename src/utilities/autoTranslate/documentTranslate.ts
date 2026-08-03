@@ -138,7 +138,13 @@ export async function buildDocumentPatches(
     const sourceChanged = sourceText !== previousSourceText
     const existingText = targetStrings.get(path) ?? ''
 
-    if (!sourceChanged && existingText) continue
+    // Preserve existing target copy when source did not change (identity patch).
+    // Update payloads are built from the source doc shape, so skipped fields
+    // would otherwise be rewritten as English.
+    if (!sourceChanged && existingText) {
+      patches.set(path, { kind: 'string', value: existingText })
+      continue
+    }
 
     const translated = await translate(sourceText, targetLocale)
     if (translated) {
@@ -154,11 +160,15 @@ export async function buildDocumentPatches(
       ? lexicalPlainText(previousRichText.get(path))
       : ''
     const sourceChanged = sourceFingerprint !== previousFingerprint
-    const existingFingerprint = targetRichText.has(path)
-      ? lexicalPlainText(targetRichText.get(path))
+    const existingRichText = targetRichText.get(path)
+    const existingFingerprint = existingRichText
+      ? lexicalPlainText(existingRichText)
       : ''
 
-    if (!sourceChanged && existingFingerprint) continue
+    if (!sourceChanged && existingFingerprint && existingRichText) {
+      patches.set(path, { kind: 'richtext', value: existingRichText })
+      continue
+    }
 
     const translated = await translateLexicalRichText(sourceValue, (text) =>
       translate(text, targetLocale),

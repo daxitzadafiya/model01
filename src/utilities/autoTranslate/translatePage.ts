@@ -1,7 +1,7 @@
 import type { Payload } from 'payload'
 
 import { getSiteContentLocales } from '@/i18n/getSiteContentLocales'
-import { defaultLocale } from '@/i18n/locales'
+import { defaultLocale, type Locale } from '@/i18n/locales'
 import type { Page } from '@/payload-types'
 import { getDeepLSettingsFromPayload } from '@/settings/deepl/server'
 import { translateWithDeepL } from '@/utilities/deepl'
@@ -13,6 +13,7 @@ import {
   buildLayoutPatches,
   layoutLocalizedFieldsChanged,
 } from './layoutTranslate'
+import { resolveTargetLocales } from './resolveTargetLocales'
 
 type AutoTranslatePageLayoutArgs = {
   payload: Payload
@@ -23,6 +24,8 @@ type AutoTranslatePageLayoutArgs = {
   skipChangeCheck?: boolean
   sourceLocale?: string
   isDraft: boolean
+  /** When set, only translate these locales (intersected with enabled site locales). */
+  targetLocales?: readonly Locale[]
 }
 
 export async function autoTranslatePageLayout({
@@ -33,6 +36,7 @@ export async function autoTranslatePageLayout({
   skipChangeCheck = false,
   sourceLocale = defaultLocale,
   isDraft,
+  targetLocales: targetLocalesFilter,
 }: AutoTranslatePageLayoutArgs): Promise<{ updatedLocales: string[] }> {
   const normalizedSource = sourceLocale.trim().toLowerCase() || defaultLocale
   const sourceLayout = sourceDoc.layout
@@ -56,7 +60,7 @@ export async function autoTranslatePageLayout({
   }
 
   const locales = await getSiteContentLocales(payload)
-  const targetLocales = locales.filter((code) => code.toLowerCase() !== normalizedSource)
+  const targetLocales = resolveTargetLocales(locales, normalizedSource, targetLocalesFilter)
 
   if (targetLocales.length === 0) {
     return { updatedLocales: [] }
@@ -84,11 +88,10 @@ export async function autoTranslatePageLayout({
       targetDoc = null
     }
 
-    // Use the real target locale layout for "already translated?" checks.
-    // Falling back to sourceLayout here would treat English copy as existing
-    // translations and skip filling empty locales.
+    // Target layout is only for "already translated?" checks. Always apply patches
+    // onto a clone of the English/source layout so required non-localized fields and
+    // block shape stay intact (sparse target locales used to wipe required strings).
     const targetLayout = targetDoc?.layout ?? null
-    const baseLayout = targetLayout ?? sourceLayout
     const patches = await buildLayoutPatches(
       sourceLayout,
       previousDoc?.layout,
@@ -96,7 +99,7 @@ export async function autoTranslatePageLayout({
       translate,
       targetLocale,
     )
-    const patchedLayout = applyLayoutPatches(baseLayout, patches)
+    const patchedLayout = applyLayoutPatches(sourceLayout, patches)
 
     if (!patchedLayout) continue
 

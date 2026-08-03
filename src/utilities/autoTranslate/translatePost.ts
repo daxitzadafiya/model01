@@ -1,7 +1,7 @@
 import type { Payload } from 'payload'
 
 import { getSiteContentLocales } from '@/i18n/getSiteContentLocales'
-import { defaultLocale } from '@/i18n/locales'
+import { defaultLocale, type Locale } from '@/i18n/locales'
 import type { Post } from '@/payload-types'
 import { getDeepLSettingsFromPayload } from '@/settings/deepl/server'
 import { translateWithDeepL } from '@/utilities/deepl'
@@ -14,6 +14,7 @@ import {
   documentLocalizedFieldsChanged,
 } from './documentTranslate'
 import { POST_FIELD_REGISTRY } from './postFieldRegistry'
+import { resolveTargetLocales } from './resolveTargetLocales'
 
 type AutoTranslatePostArgs = {
   payload: Payload
@@ -23,6 +24,8 @@ type AutoTranslatePostArgs = {
   skipChangeCheck?: boolean
   sourceLocale?: string
   isDraft: boolean
+  /** When set, only translate these locales (intersected with enabled site locales). */
+  targetLocales?: readonly Locale[]
 }
 
 export async function autoTranslatePost({
@@ -33,6 +36,7 @@ export async function autoTranslatePost({
   skipChangeCheck = false,
   sourceLocale = defaultLocale,
   isDraft,
+  targetLocales: targetLocalesFilter,
 }: AutoTranslatePostArgs): Promise<{ updatedLocales: string[] }> {
   const normalizedSource = sourceLocale.trim().toLowerCase() || defaultLocale
   const registry = POST_FIELD_REGISTRY
@@ -60,7 +64,7 @@ export async function autoTranslatePost({
   }
 
   const locales = await getSiteContentLocales(payload)
-  const targetLocales = locales.filter((code) => code.toLowerCase() !== normalizedSource)
+  const targetLocales = resolveTargetLocales(locales, normalizedSource, targetLocalesFilter)
 
   if (targetLocales.length === 0) {
     return { updatedLocales: [] }

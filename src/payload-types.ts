@@ -1068,7 +1068,8 @@ export interface PropertyListBlock {
     | 'sold'
     | 'featured'
     | 'seaView'
-    | 'golf';
+    | 'golf'
+    | 'custom';
   pageSize?: number | null;
   showFilters?: boolean | null;
   /**
@@ -3365,6 +3366,8 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
+ * Edit localized header copy in English; other locales update via DeepL on save when DeepL is enabled.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header".
  */
@@ -3514,9 +3517,9 @@ export interface Footer {
   certifications?:
     | {
         /**
-         * Certification badge or logo image shown in the footer.
+         * Certification badge or logo image shown in the footer. Rows without an image are hidden on the site.
          */
-        image: number | Media;
+        image?: (number | null) | Media;
         /**
          * Optional name for this certification (admin list + image alt fallback).
          */
@@ -3607,7 +3610,7 @@ export interface Theme {
   createdAt?: string | null;
 }
 /**
- * Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save.
+ * Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save. When DeepL is enabled, newly added or re-enabled languages are auto-filled from English across Pages, Posts, Header, Footer, and other localized content (empty fields only).
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "localization".
@@ -3778,7 +3781,7 @@ export interface PropertyMap {
   createdAt?: string | null;
 }
 /**
- * Dropdown options for property search filters and sort order. Property type and location still come from the CRM API.
+ * Dropdown options for property search filters and sort order. Edit labels in English; other locales update via DeepL on save when DeepL is enabled. Property type and location still come from the CRM API.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "propertyFilters".

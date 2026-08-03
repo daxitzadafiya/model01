@@ -189,12 +189,11 @@ export const footerFields: Field[] = [
                 name: 'image',
                 type: 'upload',
                 relationTo: 'media',
-                required: true,
                 label: a('admin.footer.certifications.image', 'Image'),
                 admin: {
                   description: a(
                     'admin.footer.certifications.image.description',
-                    'Certification badge or logo image shown in the footer.',
+                    'Certification badge or logo image shown in the footer. Rows without an image are hidden on the site.',
                   ),
                 },
               },
