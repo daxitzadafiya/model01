@@ -42,6 +42,8 @@ import * as migration_20260728_150000_footer_certifications_link from './2026072
 import * as migration_20260728_160000_theme_font_family from './20260728_160000_theme_font_family'
 import * as migration_20260728_170000_theme_google_fonts_library from './20260728_170000_theme_google_fonts_library'
 import * as migration_20260730_100000_email_save_search_template from './20260730_100000_email_save_search_template'
+import * as migration_20260803_100000_activity_logs from './20260803_100000_activity_logs'
+import * as migration_20260803_110000_activity_logs_locale_actor from './20260803_110000_activity_logs_locale_actor'
 
 export const migrations = [
   {
@@ -263,5 +265,15 @@ export const migrations = [
     up: migration_20260730_100000_email_save_search_template.up,
     down: migration_20260730_100000_email_save_search_template.down,
     name: '20260730_100000_email_save_search_template',
+  },
+  {
+    up: migration_20260803_100000_activity_logs.up,
+    down: migration_20260803_100000_activity_logs.down,
+    name: '20260803_100000_activity_logs',
+  },
+  {
+    up: migration_20260803_110000_activity_logs_locale_actor.up,
+    down: migration_20260803_110000_activity_logs_locale_actor.down,
+    name: '20260803_110000_activity_logs_locale_actor',
   },
 ]

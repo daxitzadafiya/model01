@@ -5,6 +5,7 @@ import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
 import { Plugin } from 'payload'
+import { activityLogPlugin } from '@/plugins/activityLogPlugin'
 import { a } from '@/utilities/adminI18n'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
@@ -259,4 +260,6 @@ export const plugins: Plugin[] = [
       footer: { enabled: { find: true, update: true } },
     },
   }),
+  // Must be last so plugin-injected collections (redirects, forms, MCP, search) get audit hooks.
+  activityLogPlugin(),
 ]

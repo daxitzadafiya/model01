@@ -79,6 +79,7 @@ export interface Config {
     forms: Form;
     'form-submissions': FormSubmission;
     search: Search;
+    'activity-logs': ActivityLog;
     'payload-mcp-api-keys': PayloadMcpApiKey;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
@@ -104,6 +105,7 @@ export interface Config {
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
+    'activity-logs': ActivityLogsSelect<false> | ActivityLogsSelect<true>;
     'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
@@ -1777,6 +1779,39 @@ export interface Search {
   createdAt: string;
 }
 /**
+ * Read-only audit trail of create, update, and delete actions across collections, globals, and settings.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity-logs".
+ */
+export interface ActivityLog {
+  id: number;
+  action: 'create' | 'update' | 'delete';
+  module: 'Collections' | 'Globals' | 'Settings' | 'MCP';
+  section: string;
+  localeLabel?: string | null;
+  documentId: string;
+  documentTitle?: string | null;
+  actorLabel: string;
+  timestamp: string;
+  /**
+   * Short preview of what changed — full details are below.
+   */
+  changesSummary?: string | null;
+  locale?: string | null;
+  updatedBy?: (number | null) | User;
+  changes?:
+    | {
+        field: string;
+        oldValue?: string | null;
+        newValue?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * API keys control which collections, resources, tools, and prompts MCP clients can access
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2030,6 +2065,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'search';
         value: number | Search;
+      } | null)
+    | ({
+        relationTo: 'activity-logs';
+        value: number | ActivityLog;
       } | null)
     | ({
         relationTo: 'payload-mcp-api-keys';
@@ -3149,6 +3188,33 @@ export interface SearchSelect<T extends boolean = true> {
         relationTo?: T;
         categoryID?: T;
         title?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity-logs_select".
+ */
+export interface ActivityLogsSelect<T extends boolean = true> {
+  action?: T;
+  module?: T;
+  section?: T;
+  localeLabel?: T;
+  documentId?: T;
+  documentTitle?: T;
+  actorLabel?: T;
+  timestamp?: T;
+  changesSummary?: T;
+  locale?: T;
+  updatedBy?: T;
+  changes?:
+    | T
+    | {
+        field?: T;
+        oldValue?: T;
+        newValue?: T;
         id?: T;
       };
   updatedAt?: T;

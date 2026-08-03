@@ -25,6 +25,7 @@ import { NamesCell as NamesCell_6655eb62a5e9c2f12ffb8d31ccef2261 } from '@/colle
 import { CountriesListToolbar as CountriesListToolbar_5576cd5d67a9d7db030669cb416bbf6b } from '@/collections/Countries/CountriesListToolbar'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
+import { ChangesDiffView as ChangesDiffView_80481d55acb6f9fd1f575104a24cff2d } from '@/components/ActivityLog/ChangesDiffView'
 import { FolderTypeField as FolderTypeField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
 import { RowLabel as RowLabel_ec255a65fa6fa8d1faeb09cf35284224 } from '@/Header/RowLabel'
 import { SocialRowLabel as SocialRowLabel_7301750c868361ace60ca144eb5a30e1 } from '@/Footer/SocialRowLabel'
@@ -73,6 +74,7 @@ export const importMap = {
   "@/collections/Countries/CountriesListToolbar#CountriesListToolbar": CountriesListToolbar_5576cd5d67a9d7db030669cb416bbf6b,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
+  "@/components/ActivityLog/ChangesDiffView#ChangesDiffView": ChangesDiffView_80481d55acb6f9fd1f575104a24cff2d,
   "@payloadcms/next/client#FolderTypeField": FolderTypeField_2b8867833a34864a02ddf429b0728a40,
   "@/Header/RowLabel#RowLabel": RowLabel_ec255a65fa6fa8d1faeb09cf35284224,
   "@/Footer/SocialRowLabel#SocialRowLabel": SocialRowLabel_7301750c868361ace60ca144eb5a30e1,
