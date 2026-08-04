@@ -317,10 +317,8 @@ const PropertyListViewInner: React.FC<Props> = ({
 
   const sortByLabel = useTranslation('propertyList.filters.sortBy', 'Sort by')
   const showingLabel = useTranslation('propertyList.results.showing', 'Showing')
-  const defaultResultsLabel = useTranslation(
-    'propertyList.results.extraordinaryProperties',
-    'extraordinary properties',
-  )
+  /** CMS `resultsLabel` is source of truth; English only if the block field is empty. */
+  const defaultResultsLabel = 'extraordinary properties'
   const projectsResultsLabel = useTranslation('propertyList.results.projects', 'projects')
   const favoritesPropertiesTabLabel = useTranslation('favorites.tabs.property', 'Property')
   const favoritesProjectsTabLabel = useTranslation('favorites.tabs.project', 'Project')
@@ -330,14 +328,16 @@ const PropertyListViewInner: React.FC<Props> = ({
     'Collections',
   )
 
-  const noFavoritesTitle = useTranslation(
-    'propertyList.emptyState.noFavoritesTitle',
-    'No favorites yet',
-  )
-  const noFavoritesDescription = useTranslation(
-    'propertyList.emptyState.noFavoritesDescription',
-    "You haven't favorited any properties yet. Browse our listings and tap the heart on any property to save it here.",
-  )
+  // Favorites empty copy: Property List block CMS (localized + DeepL). No Translations keys.
+  const cmsNoFavoritesTitle = emptyStateNoFavoritesTitle?.trim() || 'No favorites yet'
+  const cmsNoFavoritesDescription =
+    emptyStateNoFavoritesDescription?.trim() ||
+    "You haven't favorited any properties yet. Browse our listings and tap the heart on any property to save it here."
+  const cmsNoMatchingFavoritesTitle = emptyStateNoResultsTitle?.trim() || 'No matching favorites'
+  const cmsNoMatchingFavoritesDescription =
+    emptyStateNoResultsDescription?.trim() ||
+    'None of your saved properties match these filters. Try adjusting your search or add more favorites from our listings.'
+
   const noProjectFavoritesTitle = useTranslation(
     'propertyList.emptyState.noProjectFavoritesTitle',
     'No project favorites yet',
@@ -345,14 +345,6 @@ const PropertyListViewInner: React.FC<Props> = ({
   const noProjectFavoritesDescription = useTranslation(
     'propertyList.emptyState.noProjectFavoritesDescription',
     "You haven't favorited any projects yet. Browse our projects and tap the heart on any project to save it here.",
-  )
-  const noMatchingFavoritesTitle = useTranslation(
-    'propertyList.emptyState.noMatchingFavoritesTitle',
-    'No matching favorites',
-  )
-  const noMatchingFavoritesDescription = useTranslation(
-    'propertyList.emptyState.noMatchingFavoritesDescription',
-    'None of your saved properties match these filters. Try adjusting your search or add more favorites from our listings.',
   )
   const noMatchingProjectFavoritesDescription = useTranslation(
     'propertyList.emptyState.noMatchingProjectFavoritesDescription',
@@ -379,16 +371,17 @@ const PropertyListViewInner: React.FC<Props> = ({
   const emptyResultsDescription = isProjectsList ? noProjectsDescription : noPropertiesDescription
   const resolvedResultsLabel = isFavoritesProjectsTab
     ? projectsResultsLabel
-    : resultsLabel || defaultResultsLabel
+    : resultsLabel?.trim() || defaultResultsLabel
   const emptyFavoritesTitle = isFavoritesProjectsTab
     ? noProjectFavoritesTitle
-    : emptyStateNoFavoritesTitle || noFavoritesTitle
+    : cmsNoFavoritesTitle
   const emptyFavoritesDescription = isFavoritesProjectsTab
     ? noProjectFavoritesDescription
-    : emptyStateNoFavoritesDescription || noFavoritesDescription
+    : cmsNoFavoritesDescription
   const emptyMatchingFavoritesDescription = isFavoritesProjectsTab
     ? noMatchingProjectFavoritesDescription
-    : emptyStateNoResultsDescription || noMatchingFavoritesDescription
+    : cmsNoMatchingFavoritesDescription
+  const emptyMatchingFavoritesTitle = cmsNoMatchingFavoritesTitle
 
   /** Apply server-rendered listing (page, sort, properties). */
   useEffect(() => {
@@ -852,13 +845,13 @@ const PropertyListViewInner: React.FC<Props> = ({
             eyebrow={isFavoritesList ? favoritesEyebrow : collectionsEyebrow}
             title={
               isFavoritesList
-                ? emptyStateNoResultsTitle || noMatchingFavoritesTitle
-                : emptyStateNoResultsTitle || emptyResultsTitle
+                ? emptyMatchingFavoritesTitle
+                : emptyStateNoResultsTitle?.trim() || emptyResultsTitle
             }
             description={
               isFavoritesList
                 ? emptyMatchingFavoritesDescription
-                : emptyStateNoResultsDescription || emptyResultsDescription
+                : emptyStateNoResultsDescription?.trim() || emptyResultsDescription
             }
             tone="surface"
           />

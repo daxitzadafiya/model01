@@ -1,6 +1,17 @@
-import type { Block } from 'payload'
+import type { Block, FieldHook } from 'payload'
 
 import { a } from '@/utilities/adminI18n'
+
+/** Favorites-only copy — do not persist or expose when Property collection is anything else. */
+const clearEmptyStateUnlessFavorites: FieldHook = ({ siblingData, value }) => {
+  if (siblingData?.listingPreset !== 'favorites') return null
+  return value
+}
+
+const favoritesEmptyStateHooks = {
+  beforeChange: [clearEmptyStateUnlessFavorites],
+  afterRead: [clearEmptyStateUnlessFavorites],
+}
 
 export const PropertyListBlock: Block = {
   slug: 'propertyListBlock',
@@ -143,10 +154,11 @@ export const PropertyListBlock: Block = {
         'admin.blocks.propertyListBlock.emptyStateNoFavoritesTitleLabel',
         'Empty state title (no saved favorites)',
       ),
-      defaultValue: 'No favorites yet',
       localized: true,
+      hooks: favoritesEmptyStateHooks,
       admin: {
         condition: (_, siblingData) => siblingData?.listingPreset === 'favorites',
+        placeholder: 'No favorites yet',
       },
     },
     {
@@ -156,11 +168,12 @@ export const PropertyListBlock: Block = {
         'admin.blocks.propertyListBlock.emptyStateNoFavoritesDescriptionLabel',
         'Empty state description (no saved favorites)',
       ),
-      defaultValue:
-        "You haven't favorited any properties yet. Browse our listings and tap the heart on any property to save it here.",
       localized: true,
+      hooks: favoritesEmptyStateHooks,
       admin: {
         condition: (_, siblingData) => siblingData?.listingPreset === 'favorites',
+        placeholder:
+          "You haven't favorited any properties yet. Browse our listings and tap the heart on any property to save it here.",
       },
     },
     {
@@ -170,10 +183,11 @@ export const PropertyListBlock: Block = {
         'admin.blocks.propertyListBlock.emptyStateNoResultsTitleLabel',
         'Empty state title (filters match nothing)',
       ),
-      defaultValue: 'No matching favorites',
       localized: true,
+      hooks: favoritesEmptyStateHooks,
       admin: {
         condition: (_, siblingData) => siblingData?.listingPreset === 'favorites',
+        placeholder: 'No matching favorites',
       },
     },
     {
@@ -183,11 +197,12 @@ export const PropertyListBlock: Block = {
         'admin.blocks.propertyListBlock.emptyStateNoResultsDescriptionLabel',
         'Empty state description (filters match nothing)',
       ),
-      defaultValue:
-        'None of your saved properties match these filters. Try adjusting your search or add more favorites from our listings.',
       localized: true,
+      hooks: favoritesEmptyStateHooks,
       admin: {
         condition: (_, siblingData) => siblingData?.listingPreset === 'favorites',
+        placeholder:
+          'None of your saved properties match these filters. Try adjusting your search or add more favorites from our listings.',
       },
     },
   ],

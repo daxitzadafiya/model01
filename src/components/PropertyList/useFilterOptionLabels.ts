@@ -1,69 +1,54 @@
 'use client'
 
-import { useMemo } from 'react'
-
 import { usePropertyFilterOptions } from '@/hooks/usePropertyFilterOptions'
 import type { PropertySortOption } from '@/utilities/propertyFilterOptions.shared'
-import { useTranslatedOptions, useTranslation } from '@/utilities/translateClient'
+
+/**
+ * Option labels come from the Property Filters global (localized + DeepL).
+ * Do not overlay Translations-collection keys — those duplicate CMS content.
+ */
 
 export function useSortOptions(): PropertySortOption[] {
   const { sortOptions } = usePropertyFilterOptions()
-  const translated = useTranslatedOptions(sortOptions, 'propertyList.sort')
-
-  return useMemo(
-    () =>
-      sortOptions.map((option, index) => ({
-        ...option,
-        label: translated[index]?.label ?? option.label,
-      })),
-    [sortOptions, translated],
-  )
+  return sortOptions
 }
 
 export function usePriceRangeOptions() {
   const { priceRanges } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(priceRanges, 'propertyList.filters.priceRange')
+  return priceRanges
 }
 
 export function useBedroomOptions() {
   const { bedrooms } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(bedrooms, 'propertyList.filters.bedrooms')
+  return bedrooms
 }
 
 export function useBathroomOptions() {
   const { bathrooms } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(bathrooms, 'propertyList.filters.bathrooms')
+  return bathrooms
 }
 
 export function useMinPriceOptions() {
   const { minPrices } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(minPrices, 'propertyList.filters.minPrice')
+  return minPrices
 }
 
 export function useMaxPriceOptions() {
   const { maxPrices } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(maxPrices, 'propertyList.filters.maxPrice')
+  return maxPrices
 }
 
 export function useFeatureFilterOptions() {
   const { features } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(features, 'propertyList.filters.features')
+  return features
 }
 
 export function useGuestOptions() {
   const { guests } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(guests, 'propertyList.filters.guests')
+  return guests
 }
 
 export function useHolidayBudgetOptions() {
   const { holidayBudgetRanges } = usePropertyFilterOptions()
-
-  return useTranslatedOptions(holidayBudgetRanges, 'propertyList.filters.totalBudget')
+  return holidayBudgetRanges
 }
