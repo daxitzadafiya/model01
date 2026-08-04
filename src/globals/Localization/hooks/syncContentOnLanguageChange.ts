@@ -29,7 +29,8 @@ function enabledLocaleSet(languages: LanguageRow[] | null | undefined): Set<Loca
 
 /**
  * When Site languages are newly enabled, enqueue a DeepL backfill for all
- * localized CMS content into those locales (empty fields only).
+ * localized CMS content into those locales (empty fields only), including
+ * Localization Display names shown in the header language switcher.
  */
 export const syncContentOnLanguageChange: GlobalAfterChangeHook = async ({
   doc,

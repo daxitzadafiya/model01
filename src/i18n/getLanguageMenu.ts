@@ -62,7 +62,8 @@ function resolveSiteDefaultLocale(
 }
 
 export const getLanguageMenuItems = cache(async (): Promise<LanguageMenuItem[]> => {
-  const global = await getCachedGlobal('localization', 0)()
+  const provisional = await getLocale()
+  const global = await getCachedGlobal('localization', 0, provisional)()
   const items = mapGlobalToMenu(global)
 
   return items.length > 0 ? items : fallbackMenu
@@ -89,16 +90,24 @@ export const getActiveLocale = cache(async (): Promise<{
   languageMenu: LanguageMenuItem[]
   siteDefaultLocale: Locale
 }> => {
-  const global = await getCachedGlobal('localization', 0)()
-  const mapped = mapGlobalToMenu(global)
-  const languageMenu = mapped.length > 0 ? mapped : fallbackMenu
+  const provisional = await getLocale()
+  let global = await getCachedGlobal('localization', 0, provisional)()
+  let mapped = mapGlobalToMenu(global)
+  let languageMenu = mapped.length > 0 ? mapped : fallbackMenu
   const siteDefaultLocale = resolveSiteDefaultLocale(global, languageMenu)
   const menuLocales = languageMenu.map((item) => item.locale)
   const cookieLocale = await getLocale(menuLocales, siteDefaultLocale)
+  const locale = resolveActiveLocale(cookieLocale, languageMenu, siteDefaultLocale)
+
+  if (locale !== provisional) {
+    global = await getCachedGlobal('localization', 0, locale)()
+    mapped = mapGlobalToMenu(global)
+    languageMenu = mapped.length > 0 ? mapped : fallbackMenu
+  }
 
   return {
     languageMenu,
     siteDefaultLocale,
-    locale: resolveActiveLocale(cookieLocale, languageMenu, siteDefaultLocale),
+    locale,
   }
 })

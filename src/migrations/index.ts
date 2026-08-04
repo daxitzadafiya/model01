@@ -44,6 +44,7 @@ import * as migration_20260728_170000_theme_google_fonts_library from './2026072
 import * as migration_20260730_100000_email_save_search_template from './20260730_100000_email_save_search_template'
 import * as migration_20260803_100000_activity_logs from './20260803_100000_activity_logs'
 import * as migration_20260803_110000_activity_logs_locale_actor from './20260803_110000_activity_logs_locale_actor'
+import * as migration_20260804_100000_localization_display_name_localized from './20260804_100000_localization_display_name_localized'
 
 export const migrations = [
   {
@@ -275,5 +276,10 @@ export const migrations = [
     up: migration_20260803_110000_activity_logs_locale_actor.up,
     down: migration_20260803_110000_activity_logs_locale_actor.down,
     name: '20260803_110000_activity_logs_locale_actor',
+  },
+  {
+    up: migration_20260804_100000_localization_display_name_localized.up,
+    down: migration_20260804_100000_localization_display_name_localized.down,
+    name: '20260804_100000_localization_display_name_localized',
   },
 ]

@@ -11,8 +11,6 @@
  */
 import type { LocalizationConfigWithLabels } from 'payload'
 
-import { filterAdminLocales } from './filterAdminLocales'
-
 export const cmsLocales = [
   { code: 'en', label: 'English' },
   { code: 'de', label: 'German' },
@@ -33,7 +31,10 @@ export const payloadLocalization: LocalizationConfigWithLabels = {
   locales: cmsLocales.map(({ code, label }) => ({ code, label })),
   defaultLocale,
   fallback: true,
-  filterAvailableLocales: filterAdminLocales,
+  // Lazy import avoids a circular init cycle:
+  // locales → filterAdminLocales → adminLanguageLabels → adminLanguagePacks → locales
+  filterAvailableLocales: (args) =>
+    import('./filterAdminLocales').then(({ filterAdminLocales }) => filterAdminLocales(args)),
 }
 
 /** Flag icons available in the language switcher (Globals → Localization) */

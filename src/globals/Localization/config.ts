@@ -8,6 +8,7 @@ import {
 } from '@/i18n/locales'
 import { a, aString } from '@/utilities/adminI18n'
 
+import { autoTranslateLocalizationContent } from './hooks/autoTranslateLocalizationContent'
 import { revalidateLocalization } from './hooks/revalidateLocalization'
 import { syncAdminLocaleOnDefaultChange } from './hooks/syncAdminLocaleOnDefaultChange'
 import { syncContentOnLanguageChange } from './hooks/syncContentOnLanguageChange'
@@ -37,7 +38,7 @@ export const Localization: GlobalConfig = {
   admin: {
     description: a(
       'admin.localization.description',
-      'Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save. When DeepL is enabled, newly added or re-enabled languages are auto-filled from English across Pages, Posts, Header, Footer, and other localized content (empty fields only).',
+      'Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save. Display names are localized — edit them in English; DeepL fills other languages on save. When DeepL is enabled, newly added or re-enabled languages are auto-filled from English across Pages, Posts, Header, Footer, Display names, and other localized content (empty fields only).',
     ),
   },
   fields: [
@@ -185,12 +186,13 @@ export const Localization: GlobalConfig = {
         {
           name: 'label',
           type: 'text',
+          localized: true,
           label: a('admin.localization.languages.displayName', 'Display name'),
           required: true,
           admin: {
             description: a(
               'admin.localization.languages.displayName.description',
-              'Menu label (e.g. En - UK, Deutsch, Ελληνικά)',
+              'Header language menu label (e.g. English, Deutsch, Ελληνικά). Edit in English only; other languages refresh via DeepL when English changes on save.',
             ),
           },
         },
@@ -236,6 +238,12 @@ export const Localization: GlobalConfig = {
     },
   ],
   hooks: {
+    afterChange: [
+      autoTranslateLocalizationContent,
+      syncAdminLocaleOnDefaultChange,
+      revalidateLocalization,
+      syncContentOnLanguageChange,
+    ],
     beforeChange: [
       ({ data }) => {
         const languages = data?.languages
@@ -273,11 +281,6 @@ export const Localization: GlobalConfig = {
           languages: normalizedLanguages,
         }
       },
-    ],
-    afterChange: [
-      syncAdminLocaleOnDefaultChange,
-      revalidateLocalization,
-      syncContentOnLanguageChange,
     ],
   },
 }

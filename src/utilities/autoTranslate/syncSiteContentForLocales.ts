@@ -11,6 +11,7 @@ import { COOKIE_CONSENT_FIELD_REGISTRY } from './cookieConsentFieldRegistry'
 import { documentHasSourceTranslatableContent } from './documentTranslate'
 import { FOOTER_FIELD_REGISTRY } from './footerFieldRegistry'
 import { HEADER_FIELD_REGISTRY } from './headerFieldRegistry'
+import { LOCALIZATION_FIELD_REGISTRY } from './localizationFieldRegistry'
 import { PROPERTY_FILTERS_FIELD_REGISTRY } from './propertyFiltersFieldRegistry'
 import { PROPERTY_MAP_FIELD_REGISTRY } from './propertyMapFieldRegistry'
 import { POST_FIELD_REGISTRY } from './postFieldRegistry'
@@ -40,7 +41,8 @@ async function syncGlobal(
     | 'header'
     | 'cookieConsent'
     | 'propertyMap'
-    | 'propertyFilters',
+    | 'propertyFilters'
+    | 'localization',
   registry: {
     strings: readonly string[]
     richText: readonly string[]
@@ -226,9 +228,16 @@ export async function syncSiteContentForLocales({
   )
 
   const globals: Array<{
-    slug: 'footer' | 'header' | 'cookieConsent' | 'propertyMap' | 'propertyFilters'
+    slug:
+      | 'footer'
+      | 'header'
+      | 'cookieConsent'
+      | 'propertyMap'
+      | 'propertyFilters'
+      | 'localization'
     registry: { strings: readonly string[]; richText: readonly string[] }
   }> = [
+    { slug: 'localization', registry: LOCALIZATION_FIELD_REGISTRY },
     { slug: 'footer', registry: FOOTER_FIELD_REGISTRY },
     { slug: 'header', registry: HEADER_FIELD_REGISTRY },
     { slug: 'cookieConsent', registry: COOKIE_CONSENT_FIELD_REGISTRY },

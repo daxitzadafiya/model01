@@ -6,18 +6,20 @@ import {
   withLanguageLabel,
   type AdminLanguageCode,
 } from '@/i18n/adminLanguagePacks'
+import {
+  applyAccountLanguageOptionLabels,
+  resolveDisplayNameLabel,
+  type LocalizationLanguageRow,
+} from '@/i18n/adminLanguageLabels'
 import { defaultLocale, getCmsLocaleLabel } from '@/i18n/locales'
-
-type LocalizationLanguageRow = {
-  enabled?: boolean | null
-  locale?: string | null
-  label?: string | null
-}
 
 /**
  * Drive Account → Language options from Globals → Localization
  * (enabled site languages that also have a Payload admin UI pack).
  * Returns the codes applied to `i18n.supportedLanguages` (always includes `en`).
+ *
+ * Option labels use Localization Display names (English on sync; each admin
+ * request refreshes them for the current Account language via filterAdminLocales).
  */
 export async function syncAdminLanguagesFromLocalization(
   payload: Payload,
@@ -28,6 +30,7 @@ export async function syncAdminLanguagesFromLocalization(
     const localization = await payload.findGlobal({
       slug: 'localization',
       depth: 0,
+      locale: 'all',
       overrideAccess: true,
     })
     rows = (localization?.languages ?? []).filter(
@@ -54,9 +57,8 @@ export async function syncAdminLanguagesFromLocalization(
     }
 
     const pack = adminLanguagePacks[code]
-    // Prefer English CMS labels (German / Spanish) for Account → Language.
-    // Localization "Display name" is for the site switcher / Locale menu.
-    const label = getCmsLocaleLabel(code)
+    const label =
+      resolveDisplayNameLabel(row.label, defaultLocale) || getCmsLocaleLabel(code)
     next[code] = withLanguageLabel(pack, label)
   }
 
@@ -102,6 +104,8 @@ export async function syncAdminLanguagesFromLocalization(
       supported[code] = next[code as AdminLanguageCode]
     }
   }
+
+  applyAccountLanguageOptionLabels(payload, rows, defaultLocale)
 
   const codes = readAppliedAdminLanguageCodes(payload)
   payload.logger.info(

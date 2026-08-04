@@ -43,13 +43,16 @@ export default buildConfig({
   serverURL: getServerSideURL(),
 
   // Admin UI languages for Account → Language.
-  // Start with Localization defaults (en/de/es); syncAdminLanguagesFromLocalization()
-  // adds/removes packs when Globals → Localization changes.
+  // Full pack pool; syncAdminLanguagesFromLocalization() keeps only languages
+  // enabled in Globals → Localization (and always keeps `en`).
   i18n: {
     supportedLanguages: {
       en: adminLanguagePacks.en,
       de: adminLanguagePacks.de,
       es: adminLanguagePacks.es,
+      fr: adminLanguagePacks.fr,
+      it: adminLanguagePacks.it,
+      nl: adminLanguagePacks.nl,
     },
   },
 
