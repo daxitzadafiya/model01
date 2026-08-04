@@ -3,6 +3,8 @@ import type { Field } from 'payload'
 import { link } from '@/fields/link'
 import { a } from '@/utilities/adminI18n'
 
+import { sectionLayoutFields } from './sectionLayoutFields'
+
 export const footerFields: Field[] = [
   {
     type: 'tabs',
@@ -10,6 +12,7 @@ export const footerFields: Field[] = [
       {
         label: a('admin.footer.tabs.brand', 'Brand'),
         fields: [
+          ...sectionLayoutFields({ prefix: 'brand', defaultOrder: 1 }),
           {
             name: 'tagline',
             type: 'textarea',
@@ -74,6 +77,7 @@ export const footerFields: Field[] = [
       {
         label: a('admin.footer.tabs.quickLinks', 'Quick Links'),
         fields: [
+          ...sectionLayoutFields({ prefix: 'quickLinks', defaultOrder: 2 }),
           {
             name: 'quickLinksTitle',
             type: 'text',
@@ -111,6 +115,7 @@ export const footerFields: Field[] = [
       {
         label: a('admin.footer.tabs.contact', 'Contact'),
         fields: [
+          ...sectionLayoutFields({ prefix: 'contact', defaultOrder: 3 }),
           {
             name: 'contactTitle',
             type: 'text',
@@ -149,6 +154,7 @@ export const footerFields: Field[] = [
       {
         label: a('admin.footer.tabs.certifications', 'Certifications'),
         fields: [
+          ...sectionLayoutFields({ prefix: 'certifications', defaultOrder: 4 }),
           {
             name: 'certificationsTitle',
             type: 'text',
@@ -215,6 +221,11 @@ export const footerFields: Field[] = [
       {
         label: a('admin.footer.tabs.bottomBar', 'Bottom Bar'),
         fields: [
+          ...sectionLayoutFields({
+            prefix: 'bottomBar',
+            defaultOrder: 5,
+            includeLayout: false,
+          }),
           {
             name: 'copyrightText',
             type: 'text',

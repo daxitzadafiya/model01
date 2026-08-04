@@ -3449,6 +3449,18 @@ export interface Header {
 export interface Footer {
   id: number;
   /**
+   * When unchecked, this section is hidden on the site.
+   */
+  brandShowOnSite?: boolean | null;
+  /**
+   * Lower numbers appear first. Sections with the same order keep the default left-to-right order.
+   */
+  brandDisplayOrder?: number | null;
+  /**
+   * Desktop grid width (12-column grid). Four col-3 sections fill one row.
+   */
+  brandColumnWidth?: ('2' | '3' | '4') | null;
+  /**
    * Short description shown below the logo.
    */
   tagline?: string | null;
@@ -3466,6 +3478,18 @@ export interface Footer {
         id?: string | null;
       }[]
     | null;
+  /**
+   * When unchecked, this section is hidden on the site.
+   */
+  quickLinksShowOnSite?: boolean | null;
+  /**
+   * Lower numbers appear first. Sections with the same order keep the default left-to-right order.
+   */
+  quickLinksDisplayOrder?: number | null;
+  /**
+   * Desktop grid width (12-column grid). Four col-3 sections fill one row.
+   */
+  quickLinksColumnWidth?: ('2' | '3' | '4') | null;
   quickLinksTitle?: string | null;
   /**
    * Footer links for the current locale (switch locale in the admin bar to edit each language).
@@ -3490,12 +3514,36 @@ export interface Footer {
         id?: string | null;
       }[]
     | null;
+  /**
+   * When unchecked, this section is hidden on the site.
+   */
+  contactShowOnSite?: boolean | null;
+  /**
+   * Lower numbers appear first. Sections with the same order keep the default left-to-right order.
+   */
+  contactDisplayOrder?: number | null;
+  /**
+   * Desktop grid width (12-column grid). Four col-3 sections fill one row.
+   */
+  contactColumnWidth?: ('2' | '3' | '4') | null;
   contactTitle?: string | null;
   contact?: {
     phone?: string | null;
     email?: string | null;
     address?: string | null;
   };
+  /**
+   * When unchecked, this section is hidden on the site.
+   */
+  certificationsShowOnSite?: boolean | null;
+  /**
+   * Lower numbers appear first. Sections with the same order keep the default left-to-right order.
+   */
+  certificationsDisplayOrder?: number | null;
+  /**
+   * Desktop grid width (12-column grid). Four col-3 sections fill one row.
+   */
+  certificationsColumnWidth?: ('2' | '3' | '4') | null;
   certificationsTitle?: string | null;
   /**
    * Page opened when a visitor clicks a certification image (e.g. your Certifications page).
@@ -3527,6 +3575,10 @@ export interface Footer {
         id?: string | null;
       }[]
     | null;
+  /**
+   * When unchecked, this section is hidden on the site.
+   */
+  bottomBarShowOnSite?: boolean | null;
   /**
    * Localized “all rights reserved” phrase only. The footer adds ©, year, and app name from Logo → App Name automatically.
    */
@@ -4278,6 +4330,9 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
+  brandShowOnSite?: T;
+  brandDisplayOrder?: T;
+  brandColumnWidth?: T;
   tagline?: T;
   socialLinks?:
     | T
@@ -4287,6 +4342,9 @@ export interface FooterSelect<T extends boolean = true> {
         newTab?: T;
         id?: T;
       };
+  quickLinksShowOnSite?: T;
+  quickLinksDisplayOrder?: T;
+  quickLinksColumnWidth?: T;
   quickLinksTitle?: T;
   navItems?:
     | T
@@ -4302,6 +4360,9 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  contactShowOnSite?: T;
+  contactDisplayOrder?: T;
+  contactColumnWidth?: T;
   contactTitle?: T;
   contact?:
     | T
@@ -4310,6 +4371,9 @@ export interface FooterSelect<T extends boolean = true> {
         email?: T;
         address?: T;
       };
+  certificationsShowOnSite?: T;
+  certificationsDisplayOrder?: T;
+  certificationsColumnWidth?: T;
   certificationsTitle?: T;
   certificationsLink?:
     | T
@@ -4326,6 +4390,7 @@ export interface FooterSelect<T extends boolean = true> {
         label?: T;
         id?: T;
       };
+  bottomBarShowOnSite?: T;
   copyrightText?: T;
   poweredBy?:
     | T

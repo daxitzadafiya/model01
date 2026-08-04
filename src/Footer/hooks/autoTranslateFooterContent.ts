@@ -3,7 +3,10 @@ import type { GlobalAfterChangeHook } from 'payload'
 import { defaultLocale } from '@/i18n/locales'
 import { enqueueAutoTranslate } from '@/utilities/autoTranslate/autoTranslateQueue'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
-import { documentHasSourceTranslatableContent } from '@/utilities/autoTranslate/documentTranslate'
+import {
+  documentHasSourceTranslatableContent,
+  documentLocalizedFieldsChanged,
+} from '@/utilities/autoTranslate/documentTranslate'
 import { FOOTER_FIELD_REGISTRY } from '@/utilities/autoTranslate/footerFieldRegistry'
 import { runDeferredFooterAutoTranslate } from '@/utilities/autoTranslate/runDeferredFooterAutoTranslate'
 
@@ -19,7 +22,17 @@ export const autoTranslateFooterContent: GlobalAfterChangeHook = async ({
   if (sourceLocale !== defaultLocale) return doc
 
   const sourceRecord = doc as unknown as Record<string, unknown>
+  const previousRecord = previousDoc
+    ? (previousDoc as unknown as Record<string, unknown>)
+    : null
+
   if (!documentHasSourceTranslatableContent(sourceRecord, FOOTER_FIELD_REGISTRY)) {
+    return doc
+  }
+
+  // Layout / visibility-only saves must not enqueue DeepL or bump updatedAt
+  // (that triggers Payload's "Document modified" stale-data modal).
+  if (!documentLocalizedFieldsChanged(sourceRecord, previousRecord, FOOTER_FIELD_REGISTRY)) {
     return doc
   }
 
@@ -29,14 +42,17 @@ export const autoTranslateFooterContent: GlobalAfterChangeHook = async ({
     sourceLocale,
   }
 
-  try {
-    await enqueueAutoTranslate(() => runDeferredFooterAutoTranslate(job, req.payload))
-  } catch (error) {
-    req.payload.logger.error({
-      err: error,
-      msg: '[autoTranslate] Footer translation failed',
-    })
-  }
+  // Do not await DeepL — keep the admin save response fast (same pattern as Pages).
+  queueMicrotask(() => {
+    void enqueueAutoTranslate(() => runDeferredFooterAutoTranslate(job, req.payload)).catch(
+      (error) => {
+        req.payload.logger.error({
+          err: error,
+          msg: '[autoTranslate] Deferred footer translation failed',
+        })
+      },
+    )
+  })
 
   return doc
 }

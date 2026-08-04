@@ -122,8 +122,9 @@ export async function buildDocumentPatches(
   registry: DocumentFieldRegistry,
   translate: (text: string, targetLocale: string) => Promise<string | null>,
   targetLocale: string,
-): Promise<DocumentFieldPatches> {
+): Promise<{ patches: DocumentFieldPatches; hasChanges: boolean }> {
   const patches: DocumentFieldPatches = new Map()
+  let hasChanges = false
 
   const sourceStrings = collectStringFingerprints(source, registry.strings)
   const previousStrings = previous ? collectStringFingerprints(previous, registry.strings) : new Map()
@@ -146,6 +147,7 @@ export async function buildDocumentPatches(
       continue
     }
 
+    hasChanges = true
     const translated = await translate(sourceText, targetLocale)
     if (translated) {
       patches.set(path, { kind: 'string', value: translated })
@@ -170,6 +172,7 @@ export async function buildDocumentPatches(
       continue
     }
 
+    hasChanges = true
     const translated = await translateLexicalRichText(sourceValue, (text) =>
       translate(text, targetLocale),
     )
@@ -179,7 +182,7 @@ export async function buildDocumentPatches(
     }
   }
 
-  return patches
+  return { patches, hasChanges }
 }
 
 function topLevelKey(path: string): string {

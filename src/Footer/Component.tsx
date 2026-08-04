@@ -16,7 +16,37 @@ import {
   DEFAULT_POWERED_BY_URL,
   DEFAULT_RIGHTS_RESERVED,
 } from '@/Footer/formatCopyright'
-import type { Media as MediaType } from '@/payload-types'
+import type { FooterColumnWidth } from '@/Footer/sectionLayoutFields'
+import type { Footer as FooterType, Media as MediaType } from '@/payload-types'
+import { cn } from '@/utilities/ui'
+
+const COLUMN_WIDTH_CLASS: Record<FooterColumnWidth, string> = {
+  '2': 'md:col-span-2',
+  '3': 'md:col-span-3',
+  '4': 'md:col-span-4',
+}
+
+const DEFAULT_SECTION_ORDER = {
+  brand: 1,
+  quickLinks: 2,
+  contact: 3,
+  certifications: 4,
+} as const
+
+type ColumnSectionKey = keyof typeof DEFAULT_SECTION_ORDER
+
+function resolveColumnWidth(value: string | null | undefined): FooterColumnWidth {
+  if (value === '2' || value === '3' || value === '4') return value
+  return '3'
+}
+
+function isShown(value: boolean | null | undefined): boolean {
+  return value !== false
+}
+
+function resolveOrder(value: number | null | undefined, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
 
 export async function Footer() {
   const { locale } = await getActiveLocale()
@@ -24,6 +54,7 @@ export async function Footer() {
     getCachedGlobal('footer', 1, locale)(),
     getCachedGlobal('logo', 1)(),
   ])
+
   const logoSources = getLogoSources(logoData)
   const appName = getAppName(logoData)
 
@@ -45,10 +76,22 @@ export async function Footer() {
   const showPoweredBy = Boolean(poweredByText.trim() && poweredByLinkLabel.trim())
   const legalLinks = footerData?.legalLinks ?? []
 
-  return (
-    <footer className="bg-primary py-12 md:py-16 text-on-primary reveal active">
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 md:gap-gutter">
-        <div className="sm:col-span-2 md:col-span-1">
+  const data = footerData as FooterType | null
+
+  const columnSections: Array<{
+    key: ColumnSectionKey
+    order: number
+    widthClass: string
+    content: React.ReactNode
+  }> = []
+
+  if (isShown(data?.brandShowOnSite)) {
+    columnSections.push({
+      key: 'brand',
+      order: resolveOrder(data?.brandDisplayOrder, DEFAULT_SECTION_ORDER.brand),
+      widthClass: COLUMN_WIDTH_CLASS[resolveColumnWidth(data?.brandColumnWidth)],
+      content: (
+        <>
           <Link className="inline-block mb-4 md:mb-8" href="/">
             <Logo placement="footer" onDarkBackground sources={logoSources} />
           </Link>
@@ -72,8 +115,18 @@ export async function Footer() {
               ))}
             </div>
           )}
-        </div>
-        <div>
+        </>
+      ),
+    })
+  }
+
+  if (isShown(data?.quickLinksShowOnSite)) {
+    columnSections.push({
+      key: 'quickLinks',
+      order: resolveOrder(data?.quickLinksDisplayOrder, DEFAULT_SECTION_ORDER.quickLinks),
+      widthClass: COLUMN_WIDTH_CLASS[resolveColumnWidth(data?.quickLinksColumnWidth)],
+      content: (
+        <>
           {quickLinksTitle && (
             <h4 className="font-label-nav text-label-nav text-tertiary uppercase mb-4 md:mb-8">
               {quickLinksTitle}
@@ -91,8 +144,18 @@ export async function Footer() {
               ))}
             </ul>
           )}
-        </div>
-        <div>
+        </>
+      ),
+    })
+  }
+
+  if (isShown(data?.contactShowOnSite)) {
+    columnSections.push({
+      key: 'contact',
+      order: resolveOrder(data?.contactDisplayOrder, DEFAULT_SECTION_ORDER.contact),
+      widthClass: COLUMN_WIDTH_CLASS[resolveColumnWidth(data?.contactColumnWidth)],
+      content: (
+        <>
           {contactTitle && (
             <h4 className="font-label-nav text-label-nav text-tertiary uppercase mb-4 md:mb-8">
               {contactTitle}
@@ -130,8 +193,18 @@ export async function Footer() {
               )}
             </ul>
           )}
-        </div>
-        <div className="sm:col-span-2 md:col-span-1">
+        </>
+      ),
+    })
+  }
+
+  if (isShown(data?.certificationsShowOnSite)) {
+    columnSections.push({
+      key: 'certifications',
+      order: resolveOrder(data?.certificationsDisplayOrder, DEFAULT_SECTION_ORDER.certifications),
+      widthClass: COLUMN_WIDTH_CLASS[resolveColumnWidth(data?.certificationsColumnWidth)],
+      content: (
+        <>
           {certificationsTitle && (
             <h4 className="font-label-nav text-label-nav text-tertiary uppercase mb-4 md:mb-8">
               {certificationsTitle}
@@ -157,9 +230,7 @@ export async function Footer() {
                 )
 
                 if (!certificationsHref) {
-                  return (
-                    <div key={id || i}>{badge}</div>
-                  )
+                  return <div key={id || i}>{badge}</div>
                 }
 
                 return (
@@ -177,39 +248,74 @@ export async function Footer() {
               })}
             </div>
           )}
+        </>
+      ),
+    })
+  }
+
+  columnSections.sort((a, b) => {
+    if (a.order !== b.order) return a.order - b.order
+    return DEFAULT_SECTION_ORDER[a.key] - DEFAULT_SECTION_ORDER[b.key]
+  })
+
+  const showBottomBar = isShown(data?.bottomBarShowOnSite)
+  const hasColumns = columnSections.length > 0
+
+  if (!hasColumns && !showBottomBar) {
+    return null
+  }
+
+  return (
+    <footer className="bg-primary py-12 md:py-16 text-on-primary reveal active">
+      {hasColumns && (
+        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-10 md:gap-gutter">
+          {columnSections.map(({ key, widthClass, content }) => (
+            <div key={key} className={cn('sm:col-span-1', widthClass)}>
+              {content}
+            </div>
+          ))}
         </div>
-      </div>
-      <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mt-12 md:mt-20 pt-6 md:pt-8 border-t border-on-primary/20 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-        <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1">
-          {rightsReserved && (
-            <p className="font-label-sm text-label-sm text-on-primary uppercase">
-              © {new Date().getFullYear()}{' '}
-              <span className="text-tertiary">{appName || DEFAULT_APP_NAME}</span>.{' '}
-              {rightsReserved || DEFAULT_RIGHTS_RESERVED}
-            </p>
+      )}
+      {showBottomBar && (
+        <div
+          className={cn(
+            'max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left',
+            hasColumns
+              ? 'mt-12 md:mt-20 pt-6 md:pt-8 border-t border-on-primary/20'
+              : '',
           )}
-          {showPoweredBy && (
-            <p className="font-label-sm text-label-sm text-on-primary">
-              {poweredByText.trim()}{' '}
-              <a
-                className="text-tertiary hover:text-surface-bright transition-colors"
-                href={poweredByUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {poweredByLinkLabel.trim()}
-              </a>
-            </p>
-          )}
-        </div>
-        {legalLinks.length > 0 && (
-          <div className="flex flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 md:gap-6 font-label-sm text-label-sm text-on-primary">
-            {legalLinks.map(({ link }, i) => (
-              <CMSLink key={i} className="hover:text-tertiary" {...link} />
-            ))}
+        >
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1">
+            {rightsReserved && (
+              <p className="font-label-sm text-label-sm text-on-primary uppercase">
+                © {new Date().getFullYear()}{' '}
+                <span className="text-tertiary">{appName || DEFAULT_APP_NAME}</span>.{' '}
+                {rightsReserved || DEFAULT_RIGHTS_RESERVED}
+              </p>
+            )}
+            {showPoweredBy && (
+              <p className="font-label-sm text-label-sm text-on-primary">
+                {poweredByText.trim()}{' '}
+                <a
+                  className="text-tertiary hover:text-surface-bright transition-colors"
+                  href={poweredByUrl}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {poweredByLinkLabel.trim()}
+                </a>
+              </p>
+            )}
           </div>
-        )}
-      </div>
+          {legalLinks.length > 0 && (
+            <div className="flex flex-wrap justify-center md:justify-end gap-x-4 gap-y-2 md:gap-6 font-label-sm text-label-sm text-on-primary">
+              {legalLinks.map(({ link }, i) => (
+                <CMSLink key={i} className="hover:text-tertiary" {...link} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </footer>
   )
 }

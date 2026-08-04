@@ -93,7 +93,7 @@ export async function autoTranslatePost({
       targetDoc = null
     }
 
-    const patches = await buildDocumentPatches(
+    const { patches, hasChanges } = await buildDocumentPatches(
       sourceRecord,
       previousDoc as unknown as Record<string, unknown> | null,
       targetDoc as unknown as Record<string, unknown> | null,
@@ -101,6 +101,8 @@ export async function autoTranslatePost({
       translate,
       targetLocale,
     )
+
+    if (!hasChanges) continue
 
     const data = buildUpdateDataFromPatches(patches, {
       baseDoc: sourceRecord,

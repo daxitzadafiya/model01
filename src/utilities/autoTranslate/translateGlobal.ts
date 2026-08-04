@@ -87,7 +87,7 @@ export async function autoTranslateGlobal({
       targetDoc = null
     }
 
-    const patches = await buildDocumentPatches(
+    const { patches, hasChanges } = await buildDocumentPatches(
       sourceDoc,
       previousDoc,
       targetDoc,
@@ -95,6 +95,10 @@ export async function autoTranslateGlobal({
       translate,
       targetLocale,
     )
+
+    // Identity-only patches must not call updateGlobal — that bumps updatedAt and
+    // triggers Payload's admin "Document modified" stale-data modal.
+    if (!hasChanges) continue
 
     const data = buildUpdateDataFromPatches(patches, {
       baseDoc: sourceDoc,
