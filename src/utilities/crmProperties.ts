@@ -1030,7 +1030,7 @@ export type NormalizeCRMPropertyOptions = {
   holidayPeriodFrom?: string
   holidayPeriodTo?: string
   holidayGuests?: string
-  /** Listing cards use "from €X /night"; detail pages use "€X/night". */
+  /** Listing cards and detail pages both use "€X /night". */
   holidayPriceVariant?: 'listing' | 'detail'
 }
 

@@ -171,7 +171,7 @@ export const formatHolidayNightlyRate = (nightlyRate: number): string =>
   `${formatEuro(nightlyRate)} /night`
 
 export const formatHolidayListingNightlyRate = (nightlyRate: number): string =>
-  `from ${formatEuro(nightlyRate)} /night`
+  formatHolidayNightlyRate(nightlyRate)
 
 export const formatHolidayStayNightlyRate = (quote: HolidayRentalQuote): string =>
   formatHolidayNightlyRate(quote.dailyPrice)
