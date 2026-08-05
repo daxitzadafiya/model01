@@ -6,6 +6,8 @@ import { getCachedGlobal } from '@/utilities/getGlobals'
 import { parseCRMSortParams } from '@/utilities/crmProperties'
 import {
   DEFAULT_PROPERTY_FILTER_OPTIONS,
+  deriveMaxPriceOptions,
+  deriveMinPriceOptions,
   type FilterSelectOption,
   type PriceRangeOption,
   type PropertyFilterOptions,
@@ -70,13 +72,19 @@ export function normalizePropertyFilterOptions(
 ): PropertyFilterOptions {
   if (!doc) return DEFAULT_PROPERTY_FILTER_OPTIONS
 
+  const priceRanges = normalizePriceRanges(
+    doc.priceRanges,
+    DEFAULT_PROPERTY_FILTER_OPTIONS.priceRanges,
+  )
+
   return {
     sortOptions: normalizeSortOptions(doc.sortOptions, DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions),
-    priceRanges: normalizePriceRanges(doc.priceRanges, DEFAULT_PROPERTY_FILTER_OPTIONS.priceRanges),
+    priceRanges,
     bedrooms: normalizeSimpleOptions(doc.bedrooms, DEFAULT_PROPERTY_FILTER_OPTIONS.bedrooms),
     bathrooms: normalizeSimpleOptions(doc.bathrooms, DEFAULT_PROPERTY_FILTER_OPTIONS.bathrooms),
-    minPrices: normalizeSimpleOptions(doc.minPrices, DEFAULT_PROPERTY_FILTER_OPTIONS.minPrices),
-    maxPrices: normalizeSimpleOptions(doc.maxPrices, DEFAULT_PROPERTY_FILTER_OPTIONS.maxPrices),
+    // More Filters Min/Max options are derived from price ranges (not admin catalogs).
+    minPrices: deriveMinPriceOptions(priceRanges),
+    maxPrices: deriveMaxPriceOptions(priceRanges),
     features: normalizeSimpleOptions(doc.features, DEFAULT_PROPERTY_FILTER_OPTIONS.features),
     guests: normalizeSimpleOptions(doc.guests, DEFAULT_PROPERTY_FILTER_OPTIONS.guests),
     holidayBudgetRanges: normalizePriceRanges(

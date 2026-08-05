@@ -240,37 +240,28 @@ export const propertyFiltersFields: Field[] = [
       }),
     ],
   },
-  {
-    type: 'row',
-    fields: [
-      filterArrayField({
-        name: 'minPrices',
-        label: a('admin.propertyFilters.minPrices', 'Min price'),
-        admin: { width: COL_HALF },
-        defaultValue: [
-          { value: 'any', label: 'Any Min Price' },
-          { value: '500000', label: '€500,000' },
-          { value: '1000000', label: '€1,000,000' },
-          { value: '3000000', label: '€3,000,000' },
-          { value: '10000000', label: '€10,000,000' },
-        ],
-        fields: filterOptionFields,
-      }),
-      filterArrayField({
-        name: 'maxPrices',
-        label: a('admin.propertyFilters.maxPrices', 'Max price'),
-        admin: { width: COL_HALF },
-        defaultValue: [
-          { value: 'any', label: 'Any Max Price' },
-          { value: '1000000', label: '€1,000,000' },
-          { value: '3000000', label: '€3,000,000' },
-          { value: '10000000', label: '€10,000,000' },
-          { value: '50000000', label: '€50,000,000+' },
-        ],
-        fields: filterOptionFields,
-      }),
-    ],
-  },
+  // Min/Max dropdowns on the site are derived from `priceRanges`.
+  // Keep the fields hidden so existing DB data is harmless but not editable.
+  filterArrayField({
+    name: 'minPrices',
+    label: a('admin.propertyFilters.minPrices', 'Min price'),
+    admin: {
+      hidden: true,
+      disableListColumn: true,
+    },
+    defaultValue: [],
+    fields: filterOptionFields,
+  }),
+  filterArrayField({
+    name: 'maxPrices',
+    label: a('admin.propertyFilters.maxPrices', 'Max price'),
+    admin: {
+      hidden: true,
+      disableListColumn: true,
+    },
+    defaultValue: [],
+    fields: filterOptionFields,
+  }),
   {
     type: 'row',
     fields: [

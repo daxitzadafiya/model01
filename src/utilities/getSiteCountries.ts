@@ -8,9 +8,24 @@ import {
   ensureCountriesSeeded,
   syncCountriesFromCRM,
 } from '@/utilities/syncCountriesFromCRM'
-import type { SiteCountryOption, SiteCountryRow } from '@/utilities/siteCountries.shared'
+import type {
+  SiteCountryOption,
+  SiteCountryRow,
+  SiteCountryTransaction,
+} from '@/utilities/siteCountries.shared'
 
-function mapRowToOption(row: SiteCountryRow, locale: string): SiteCountryOption | null {
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean)
+}
+
+function mapRowToOption(
+  row: SiteCountryRow,
+  locale: string,
+  transaction: SiteCountryTransaction,
+): SiteCountryOption | null {
   const key = typeof row.key === 'number' && Number.isFinite(row.key) ? row.key : null
   if (key === null) return null
 
@@ -20,26 +35,53 @@ function mapRowToOption(row: SiteCountryRow, locale: string): SiteCountryOption 
     row.isoCode?.trim() ||
     String(key)
 
+  const priceRangeValues =
+    transaction === 'sale'
+      ? asStringArray(row.salePriceRanges)
+      : transaction === 'rental'
+        ? asStringArray(row.rentalPriceRanges)
+        : undefined
+
+  const holidayBudgetValues =
+    transaction === 'holiday' ? asStringArray(row.holidayBudgetRanges) : undefined
+
   return {
     value: String(key),
     label,
     key,
     isoCode: row.isoCode?.trim() || undefined,
     isDefault: row.isDefault === true,
+    ...(priceRangeValues?.length ? { priceRangeValues } : {}),
+    ...(holidayBudgetValues?.length ? { holidayBudgetValues } : {}),
   }
 }
 
-function isActiveSaleCountry(row: SiteCountryRow): boolean {
-  if (row.showOnSite !== true) return false
-  if (row.offerSale !== true) return false
+function offerFieldForTransaction(transaction: SiteCountryTransaction): keyof SiteCountryRow {
+  if (transaction === 'sale') return 'offerSale'
+  if (transaction === 'rental') return 'offerRental'
+  return 'offerHoliday'
+}
+
+function isActiveCountryForTransaction(
+  row: SiteCountryRow,
+  transaction: SiteCountryTransaction,
+): boolean {
+  const offerField = offerFieldForTransaction(transaction)
+  if (row[offerField] !== true) return false
+
   const status = row.status?.trim().toLowerCase()
   if (status && status !== 'active') return false
   return true
 }
 
-async function findSaleCountries(locale: string): Promise<SiteCountryOption[]> {
+async function findCountries(
+  locale: string,
+  transaction: SiteCountryTransaction,
+): Promise<SiteCountryOption[]> {
   const payload = await getPayload({ config: configPromise })
   await ensureCountriesSeeded(payload)
+
+  const offerField = offerFieldForTransaction(transaction)
 
   const result = await payload.find({
     collection: 'countries',
@@ -47,28 +89,32 @@ async function findSaleCountries(locale: string): Promise<SiteCountryOption[]> {
     limit: 1000,
     pagination: false,
     where: {
-      and: [{ showOnSite: { equals: true } }, { offerSale: { equals: true } }],
+      [offerField]: { equals: true },
     },
     sort: 'adminLabel',
   })
 
   return (result.docs as SiteCountryRow[])
-    .filter(isActiveSaleCountry)
-    .map((row) => mapRowToOption(row, locale))
+    .filter((row) => isActiveCountryForTransaction(row, transaction))
+    .map((row) => mapRowToOption(row, locale, transaction))
     .filter((row): row is SiteCountryOption => row !== null)
     .sort((a, b) => a.label.localeCompare(b.label, locale, { sensitivity: 'base' }))
 }
 
 /**
- * Site countries enabled for Sale filters (hero + for-sale listing).
+ * Site countries enabled for transaction-type filters (hero + listing “more filters”).
  * Seeds from CRM automatically when the Countries collection is empty.
  */
-export const getSiteCountriesForSale = cache(async (locale = 'en'): Promise<SiteCountryOption[]> => {
+export const getSiteCountries = cache(
+  async (
+    locale = 'en',
+    transaction: SiteCountryTransaction = 'sale',
+  ): Promise<SiteCountryOption[]> => {
   try {
     const localeKey = locale || 'en'
     return await unstable_cache(
-      async () => findSaleCountries(localeKey),
-      ['site-countries-for-sale', localeKey],
+      async () => findCountries(localeKey, transaction),
+      ['site-countries', transaction, localeKey],
       {
         tags: ['collection_countries', `collection_countries_${localeKey}`],
       },
@@ -77,6 +123,15 @@ export const getSiteCountriesForSale = cache(async (locale = 'en'): Promise<Site
     console.error('Failed to load site countries', error)
     return []
   }
+  },
+)
+
+/**
+ * Backwards-compatible wrapper.
+ * Site countries enabled for Sale filters (hero + for-sale listing).
+ */
+export const getSiteCountriesForSale = cache(async (locale = 'en'): Promise<SiteCountryOption[]> => {
+  return getSiteCountries(locale, 'sale')
 })
 
 export { syncCountriesFromCRM, ensureCountriesSeeded }

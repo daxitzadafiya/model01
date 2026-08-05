@@ -19,7 +19,7 @@ async function revalidateCountries(payload: Awaited<ReturnType<typeof getPayload
 }
 
 /**
- * Set the single Sale hero default country (must already be Show on site),
+ * Set the single Sale hero default country (must already be enabled for Sale),
  * or clear the default when countryId is null.
  */
 export async function POST(request: Request) {
@@ -81,9 +81,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Country not found' }, { status: 404 })
     }
 
-    if (country.showOnSite !== true) {
+    if (country.offerSale !== true) {
       return NextResponse.json(
-        { error: 'Only countries with “Show on site” enabled can be the default' },
+        { error: 'Only countries enabled for Sale can be the default' },
         { status: 400 },
       )
     }

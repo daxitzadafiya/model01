@@ -47,6 +47,8 @@ type Props = {
   countries: CRMCountryOption[]
   countriesLoading?: boolean
   showCountryFilter?: boolean
+  /** Country-selected price range values; empty/undefined = all (derives Min/Max). */
+  priceRangeValues?: readonly string[] | null
   coasts: CRMCoastOption[]
   coastsLoading?: boolean
   cities: CRMCityOption[]
@@ -97,6 +99,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   countries,
   countriesLoading = false,
   showCountryFilter = false,
+  priceRangeValues,
   coasts,
   coastsLoading = false,
   cities,
@@ -147,8 +150,8 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   )
   const bedroomOptions = useBedroomOptions()
   const bathroomOptions = useBathroomOptions()
-  const minPriceOptions = useMinPriceOptions()
-  const maxPriceOptions = useMaxPriceOptions()
+  const minPriceOptions = useMinPriceOptions(priceRangeValues)
+  const maxPriceOptions = useMaxPriceOptions(priceRangeValues)
   const featureFilterOptions = useFeatureFilterOptions()
 
   useEffect(() => {
@@ -163,6 +166,19 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
       document.body.style.overflow = ''
     }
   }, [open, onClose])
+
+  // Keep Min/Max in sync with country-allowed derived options.
+  useEffect(() => {
+    if (!open) return
+    const min = filters.minPrice ?? 'any'
+    const max = filters.maxPrice ?? 'any'
+    if (min !== 'any' && !minPriceOptions.some((option) => option.value === min)) {
+      onChange('minPrice', 'any')
+    }
+    if (max !== 'any' && !maxPriceOptions.some((option) => option.value === max)) {
+      onChange('maxPrice', 'any')
+    }
+  }, [filters.maxPrice, filters.minPrice, maxPriceOptions, minPriceOptions, onChange, open])
 
   if (!open) return null
 
@@ -246,9 +262,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                 <FilterSelect
                   label={countryLabel}
                   options={countries.map((item) => ({ value: item.value, label: item.label }))}
-                  value={
-                    parseCountryFilter(filters.country)[0] ?? countries[0]?.value ?? ''
-                  }
+                  value={parseCountryFilter(filters.country)[0] ?? ''}
                   onChange={(value) => onChange('country', value ? [value] : [])}
                   loading={countriesLoading}
                   placeholder={countriesLoading ? loadingCountriesLabel : countryLabel}

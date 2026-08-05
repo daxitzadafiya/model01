@@ -26,6 +26,8 @@ type Props = {
   citiesLoading?: boolean
   idPrefix?: string
   dateInputClassName?: string
+  /** Country-selected holiday budget values; empty/undefined = all. */
+  holidayBudgetValues?: readonly string[] | null
 }
 
 export const HolidayFilterFields: React.FC<Props> = ({
@@ -37,9 +39,10 @@ export const HolidayFilterFields: React.FC<Props> = ({
   citiesLoading = false,
   idPrefix = 'holiday-filter',
   dateInputClassName,
+  holidayBudgetValues,
 }) => {
   const guestOptions = useGuestOptions()
-  const holidayBudgetOptions = useHolidayBudgetOptions()
+  const holidayBudgetOptions = useHolidayBudgetOptions(holidayBudgetValues)
 
   const guestsLabel = useTranslation('propertyList.filters.guests', 'Guests')
   const totalBudgetLabel = useTranslation('propertyList.filters.totalBudget', 'Total Budget')

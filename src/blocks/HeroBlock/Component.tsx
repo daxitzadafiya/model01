@@ -37,7 +37,8 @@ import { useCRMPropertyTypeOptions } from '@/hooks/useCRMPropertyTypeOptions'
 import { PropertyFilterOptionsProvider } from '@/hooks/usePropertyFilterOptions'
 import type { CRMListingPreset, PropertyListFilters } from '@/utilities/crmProperties'
 import { DEFAULT_MAX_HOLIDAY_GUESTS, MIN_HOLIDAY_GUESTS } from '@/utilities/crmHoliday'
-import { resolveDefaultCountryKeys } from '@/utilities/crmCountries'
+import { resolvePreselectedCountryKeys } from '@/utilities/crmCountries'
+import { resolveCountrySelectedRangeValues } from '@/utilities/propertyFilterOptions.shared'
 import { useTranslation } from '@/utilities/translateClient'
 import { useReveal } from '@/utilities/useReveal'
 import { useRegisterHeroOverlay } from '@/providers/HeroOverlay'
@@ -80,9 +81,12 @@ const heroContainerClassName =
   'w-full max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop'
 
 const heroGridClassName: Record<HeroPropertyTab, string> = {
+  // Country + Coast + City + Type + Price + Search
   sale: 'grid-cols-1 md:grid-cols-6',
-  rental: 'grid-cols-1 md:grid-cols-5',
-  holiday: 'grid-cols-1 md:grid-cols-6',
+  // Country + Coast + City + Type + Price + Search
+  rental: 'grid-cols-1 md:grid-cols-6',
+  // Country + Coast + City + Period + Guests + Budget + Search
+  holiday: 'grid-cols-1 md:grid-cols-7',
 }
 
 const heroMobileGridClassName = 'grid-cols-1'
@@ -141,9 +145,7 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   const listingPreset = HERO_TAB_PRESETS[activeTab]
   // Keep hero filter option APIs stable; do not re-fetch when switching tabs.
   const filterDataPreset: CRMListingPreset = 'forSale'
-  const priceRangeOptions = usePriceRangeOptions()
   const guestOptions = useGuestOptions()
-  const holidayBudgetOptions = useHolidayBudgetOptions()
 
   const guestsWithOther = useMemo(() => {
     const hasOther = guestOptions.some((option) => option.value === COUNT_FILTER_OTHER_VALUE)
@@ -153,20 +155,36 @@ const HeroBlockContent: React.FC<Props> = (props) => {
 
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions(filterDataPreset)
-  const { countries, loading: countriesLoading } = useCRMCountries()
+  const { countries, loading: countriesLoading } = useCRMCountries(activeTab)
 
+  const selectedCountryKeys = parseCountryFilter(searchFilters.country)
+  const countryPriceRangeValues = resolveCountrySelectedRangeValues(
+    countries,
+    selectedCountryKeys,
+    'price',
+  )
+  const countryHolidayBudgetValues = resolveCountrySelectedRangeValues(
+    countries,
+    selectedCountryKeys,
+    'holiday',
+  )
+  const priceRangeOptions = usePriceRangeOptions(countryPriceRangeValues)
+  const holidayBudgetOptions = useHolidayBudgetOptions(countryHolidayBudgetValues)
+
+  // Per-tab: apply CMS default once when that tab's countries load (if the default
+  // country is enabled for this transaction). Reset on tab change.
   const defaultCountryAppliedRef = useRef(false)
 
-  // Prefer selected country; before the sale default is applied, use CMS default so the
+  // Prefer selected country; before the default is applied, use CMS default so the
   // first coasts request is already country-scoped (e.g. ?country=1).
   const countryKeysForCoasts = useMemo(() => {
     const selected = parseCountryFilter(searchFilters.country)
     if (selected.length) return selected
-    if (activeTab === 'sale' && !defaultCountryAppliedRef.current && countries.length) {
-      return resolveDefaultCountryKeys(countries, defaultCountry)
+    if (!defaultCountryAppliedRef.current && !countriesLoading && countries.length) {
+      return resolvePreselectedCountryKeys(countries, defaultCountry)
     }
     return selected
-  }, [activeTab, countries, defaultCountry, searchFilters.country])
+  }, [countries, countriesLoading, defaultCountry, searchFilters.country])
 
   const { coasts, loading: coastsLoading } = useCRMCoasts(countryKeysForCoasts)
   const { cities, loading: citiesLoading } = useCRMCities(
@@ -186,34 +204,47 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     priceRangeOptions,
   )
 
-  const resetFiltersForTab = useCallback(
-    (tab: HeroPropertyTab) => {
-      const nextFilters: PropertyListFilters = { ...EMPTY_PROPERTY_FILTERS }
-      if (tab === 'sale' && countries.length) {
-        nextFilters.country = resolveDefaultCountryKeys(countries, defaultCountry)
-        defaultCountryAppliedRef.current = true
-      }
-      setSearchFilters(nextFilters)
-    },
-    [countries, defaultCountry],
-  )
+  const resetFiltersForTab = useCallback(() => {
+    defaultCountryAppliedRef.current = false
+    setSearchFilters({ ...EMPTY_PROPERTY_FILTERS })
+  }, [])
 
-  // Apply CMS default country once when countries load — do not re-apply after the
-  // user clears the selection (they may want "All Countries").
+  // Apply the pre-selected country once when countries load for the active tab: the CMS
+  // default when it is enabled for this transaction type, otherwise the first available
+  // country. Do not re-apply after the user clears the selection.
   useEffect(() => {
-    if (defaultCountryAppliedRef.current || activeTab !== 'sale' || !countries.length) return
-    const defaultKeys = resolveDefaultCountryKeys(countries, defaultCountry)
+    if (defaultCountryAppliedRef.current || countriesLoading || !countries.length) return
+    const defaultKeys = resolvePreselectedCountryKeys(countries, defaultCountry)
     defaultCountryAppliedRef.current = true
     if (!defaultKeys.length) return
     setSearchFilters((prev) => {
       if (prev.country?.length) return prev
       return { ...prev, country: defaultKeys }
     })
-  }, [activeTab, countries, defaultCountry])
+  }, [activeTab, countries, countriesLoading, defaultCountry])
+
+  // Drop stale price / budget selections when the country-allowed options change.
+  useEffect(() => {
+    setSearchFilters((prev) => {
+      let next = prev
+      const currentRange = resolvePriceRangeValue(prev.minPrice, prev.maxPrice, priceRangeOptions)
+      if (currentRange && currentRange !== 'any' && !priceRangeOptions.some((o) => o.value === currentRange)) {
+        next = { ...next, minPrice: 'any', maxPrice: 'any' }
+      }
+      const budget = prev.totalBudget ?? 'any'
+      if (
+        budget !== 'any' &&
+        !holidayBudgetOptions.some((option) => option.value === budget)
+      ) {
+        next = next === prev ? { ...prev, totalBudget: 'any' } : { ...next, totalBudget: 'any' }
+      }
+      return next
+    })
+  }, [holidayBudgetOptions, priceRangeOptions])
 
   const handleTabChange = (tab: HeroPropertyTab) => {
     setActiveTab(tab)
-    resetFiltersForTab(tab)
+    resetFiltersForTab()
   }
 
   const handleSearchFilterChange = (
@@ -222,7 +253,15 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   ) => {
     setSearchFilters((prev) => {
       if (key === 'country') {
-        return { ...prev, country: value as PropertyListFilters['country'], coast: [], city: [] }
+        return {
+          ...prev,
+          country: value as PropertyListFilters['country'],
+          coast: [],
+          city: [],
+          minPrice: 'any',
+          maxPrice: 'any',
+          totalBudget: 'any',
+        }
       }
       return { ...prev, [key]: value }
     })
@@ -304,20 +343,18 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     gridClassName: string
   }) => (
     <div className={cn('grid gap-3 md:gap-4 p-3.5 md:p-6 items-end', options.gridClassName)}>
-      {activeTab === 'sale' && (
-        <FilterSelect
-          label={countryLabel}
-          id={`${options.idPrefix}-country`}
-          icon={<Globe size={20} strokeWidth={1.75} />}
-          options={countryOptions}
-          value={parseCountryFilter(searchFilters.country)[0] ?? countryOptions[0]?.value ?? ''}
-          onChange={(value) => handleSearchFilterChange('country', value ? [value] : [])}
-          loading={countriesLoading}
-          placeholder={countriesLoading ? loadingCountriesLabel : countryLabel}
-          noOptionsLabel={noOptionsFoundLabel}
-          triggerClassName={heroSearchFieldClassName}
-        />
-      )}
+      <FilterSelect
+        label={countryLabel}
+        id={`${options.idPrefix}-country`}
+        icon={<Globe size={20} strokeWidth={1.75} />}
+        options={countryOptions}
+        value={parseCountryFilter(searchFilters.country)[0] ?? ''}
+        onChange={(value) => handleSearchFilterChange('country', value ? [value] : [])}
+        loading={countriesLoading}
+        placeholder={countriesLoading ? loadingCountriesLabel : countryLabel}
+        noOptionsLabel={noOptionsFoundLabel}
+        triggerClassName={heroSearchFieldClassName}
+      />
 
       <CoastCityFilterFields
         coast={searchFilters.coast}

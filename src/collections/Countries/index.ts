@@ -58,22 +58,23 @@ const clearOtherDefaultCountries: CollectionAfterChangeHook = async ({
   return doc
 }
 
-const syncSaleFlagsFromShowOnSite: CollectionBeforeChangeHook = ({ data }) => {
+const ensureDefaultCountryIsForSale: CollectionBeforeChangeHook = ({ data }) => {
   if (!data) return data
 
   // Default country must appear in the Sale filter.
   if (data.isDefault === true) {
-    data.showOnSite = true
+    data.offerSale = true
   }
 
-  // Sale country filter currently follows Show on site only.
-  if (typeof data.showOnSite === 'boolean') {
-    data.offerSale = data.showOnSite
+  // Clear range selections when a transaction type is turned off.
+  if (data.offerSale === false) {
+    data.salePriceRanges = []
   }
-
-  // Cannot be default if it is hidden from the site filter.
-  if (data.showOnSite === false) {
-    data.isDefault = false
+  if (data.offerRental === false) {
+    data.rentalPriceRanges = []
+  }
+  if (data.offerHoliday === false) {
+    data.holidayBudgetRanges = []
   }
 
   return data
@@ -93,12 +94,19 @@ export const Countries: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'adminLabel',
-    // -- TEMPORARY -- Hide some columns until we have a proper solution for the CRM sync.
-    defaultColumns: ['adminLabel', 'isoCode', 'names', 'showOnSite', 'updatedAt'],
+    defaultColumns: [
+      'adminLabel',
+      'isoCode',
+      'names',
+      'offerSale',
+      'offerRental',
+      'offerHoliday',
+      'updatedAt',
+    ],
     listSearchableFields: ['adminLabel', 'isoCode', 'names', 'key'],
     description: a(
       'admin.countries.description',
-      'CRM countries cached in the CMS. Sync from Optima, enable “Show on site” for the Sale country filter, then choose the Default country from the dropdown above the list (only Show-on-site countries appear).',
+      'CRM countries cached in the CMS. Sync from Optima, then toggle Sale / Rental / Holiday to control which countries appear in each transaction filter. Choose the Default country from the dropdown above the list (Sale-only).',
     ),
     components: {
       beforeListTable: ['@/collections/Countries/CountriesListToolbar#CountriesListToolbar'],
@@ -172,13 +180,6 @@ export const Countries: CollectionConfig = {
       },
     },
     {
-      name: 'showOnSite',
-      type: 'checkbox',
-      label: a('admin.countries.fields.showOnSite', 'Show on site'),
-      defaultValue: false,
-      index: true,
-    },
-    {
       name: 'isDefault',
       type: 'checkbox',
       label: a('admin.countries.fields.default', 'Default'),
@@ -202,10 +203,27 @@ export const Countries: CollectionConfig = {
       defaultValue: false,
       index: true,
       admin: {
-        hidden: true,
         disableBulkEdit: true,
-        disableListColumn: true,
         disableListFilter: true,
+      },
+    },
+    {
+      name: 'salePriceRanges',
+      type: 'json',
+      label: a('admin.countries.fields.salePriceRanges', 'Sale price ranges'),
+      defaultValue: [],
+      admin: {
+        condition: (_, siblingData) => siblingData?.offerSale === true,
+        description: a(
+          'admin.countries.fields.salePriceRangesDescription',
+          'Which Price ranges from Property Filters appear for this country on Sale. Leave empty to show all.',
+        ),
+        components: {
+          Field: '@/collections/Countries/CountryRangeMultiSelect#CountryRangeMultiSelect',
+        },
+        custom: {
+          source: 'priceRanges',
+        },
       },
     },
     {
@@ -214,10 +232,27 @@ export const Countries: CollectionConfig = {
       label: a('admin.countries.fields.rental', 'Rental'),
       defaultValue: false,
       admin: {
-        hidden: true,
         disableBulkEdit: true,
-        disableListColumn: true,
         disableListFilter: true,
+      },
+    },
+    {
+      name: 'rentalPriceRanges',
+      type: 'json',
+      label: a('admin.countries.fields.rentalPriceRanges', 'Rental price ranges'),
+      defaultValue: [],
+      admin: {
+        condition: (_, siblingData) => siblingData?.offerRental === true,
+        description: a(
+          'admin.countries.fields.rentalPriceRangesDescription',
+          'Which Price ranges from Property Filters appear for this country on Rental. Leave empty to show all.',
+        ),
+        components: {
+          Field: '@/collections/Countries/CountryRangeMultiSelect#CountryRangeMultiSelect',
+        },
+        custom: {
+          source: 'priceRanges',
+        },
       },
     },
     {
@@ -226,15 +261,32 @@ export const Countries: CollectionConfig = {
       label: a('admin.countries.fields.holiday', 'Holiday'),
       defaultValue: false,
       admin: {
-        hidden: true,
         disableBulkEdit: true,
-        disableListColumn: true,
         disableListFilter: true,
+      },
+    },
+    {
+      name: 'holidayBudgetRanges',
+      type: 'json',
+      label: a('admin.countries.fields.holidayBudgetRanges', 'Holiday total budget'),
+      defaultValue: [],
+      admin: {
+        condition: (_, siblingData) => siblingData?.offerHoliday === true,
+        description: a(
+          'admin.countries.fields.holidayBudgetRangesDescription',
+          'Which Holiday total budget ranges from Property Filters appear for this country. Leave empty to show all.',
+        ),
+        components: {
+          Field: '@/collections/Countries/CountryRangeMultiSelect#CountryRangeMultiSelect',
+        },
+        custom: {
+          source: 'holidayBudgetRanges',
+        },
       },
     },
   ],
   hooks: {
-    beforeChange: [syncSaleFlagsFromShowOnSite],
+    beforeChange: [ensureDefaultCountryIsForSale],
     afterChange: [clearOtherDefaultCountries, revalidateCountries],
   },
   timestamps: true,

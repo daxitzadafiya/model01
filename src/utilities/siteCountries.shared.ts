@@ -7,6 +7,10 @@ export type SiteCountryOption = {
   isoCode?: string
   /** When true, pre-selected in the Sale hero country filter. */
   isDefault?: boolean
+  /** Selected Property Filters price-range values for sale/rental. Empty = all. */
+  priceRangeValues?: string[]
+  /** Selected Property Filters holiday-budget values. Empty = all. */
+  holidayBudgetValues?: string[]
 }
 
 export type SiteCountryRow = {
@@ -17,11 +21,13 @@ export type SiteCountryRow = {
   status?: string | null
   adminLabel?: string
   names?: Record<string, string> | null
-  showOnSite?: boolean | null
   isDefault?: boolean | null
   offerSale?: boolean | null
   offerRental?: boolean | null
   offerHoliday?: boolean | null
+  salePriceRanges?: string[] | null
+  rentalPriceRanges?: string[] | null
+  holidayBudgetRanges?: string[] | null
 }
 
 /** ISO codes enabled for sale by default when first synced. */

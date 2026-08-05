@@ -101,3 +101,19 @@ export const resolveDefaultCountryKeys = (
 
   return match ? [match.value] : []
 }
+
+/**
+ * Country key(s) to pre-select in a filter.
+ * Uses the CMS default when it is enabled for the current transaction type,
+ * otherwise falls back to the first available country.
+ */
+export const resolvePreselectedCountryKeys = (
+  countries: CRMCountryOption[],
+  legacyDefaultCountry?: string | null,
+): string[] => {
+  const defaultKeys = resolveDefaultCountryKeys(countries, legacyDefaultCountry)
+  if (defaultKeys.length) return defaultKeys
+
+  const first = countries[0]
+  return first ? [first.value] : []
+}

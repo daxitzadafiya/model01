@@ -22,6 +22,7 @@ import { FolderField as FolderField_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@pa
 import { TranslationsCell as TranslationsCell_1cefdd8cda518242b88f312125523272 } from '@/collections/Translations/TranslationsCell'
 import { TranslationsField as TranslationsField_67a80769b5f15d635ad295262c519d86 } from '@/collections/Translations/TranslationsField'
 import { NamesCell as NamesCell_6655eb62a5e9c2f12ffb8d31ccef2261 } from '@/collections/Countries/NamesCell'
+import { CountryRangeMultiSelect as CountryRangeMultiSelect_e2f528b33bcc556b3369460e6b06e400 } from '@/collections/Countries/CountryRangeMultiSelect'
 import { CountriesListToolbar as CountriesListToolbar_5576cd5d67a9d7db030669cb416bbf6b } from '@/collections/Countries/CountriesListToolbar'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
@@ -71,6 +72,7 @@ export const importMap = {
   "@/collections/Translations/TranslationsCell#TranslationsCell": TranslationsCell_1cefdd8cda518242b88f312125523272,
   "@/collections/Translations/TranslationsField#TranslationsField": TranslationsField_67a80769b5f15d635ad295262c519d86,
   "@/collections/Countries/NamesCell#NamesCell": NamesCell_6655eb62a5e9c2f12ffb8d31ccef2261,
+  "@/collections/Countries/CountryRangeMultiSelect#CountryRangeMultiSelect": CountryRangeMultiSelect_e2f528b33bcc556b3369460e6b06e400,
   "@/collections/Countries/CountriesListToolbar#CountriesListToolbar": CountriesListToolbar_5576cd5d67a9d7db030669cb416bbf6b,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,

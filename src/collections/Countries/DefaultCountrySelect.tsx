@@ -7,7 +7,7 @@ type CountryOption = {
   id: number
   adminLabel: string
   isoCode?: string | null
-  showOnSite?: boolean | null
+  offerSale?: boolean | null
   isDefault?: boolean | null
 }
 
@@ -50,19 +50,19 @@ export function DefaultCountrySelect() {
         depth: '0',
         limit: '200',
         sort: 'adminLabel',
-        'where[or][0][showOnSite][equals]': 'true',
+        'where[or][0][offerSale][equals]': 'true',
         'where[or][1][isDefault][equals]': 'true',
       })
 
       const data = await fetchJson<CountriesResponse>(`/api/countries?${params.toString()}`)
       const docs = Array.isArray(data.docs) ? data.docs : []
-      const visible = docs.filter((doc) => doc.showOnSite === true)
+      const saleCountries = docs.filter((doc) => doc.offerSale === true)
       const currentDefault = docs.find((doc) => doc.isDefault === true)
 
-      setOptions(visible)
+      setOptions(saleCountries)
 
-      // Drop a stale default that is no longer shown on site.
-      if (currentDefault && currentDefault.showOnSite !== true) {
+      // Drop a stale default that is no longer enabled for Sale.
+      if (currentDefault && currentDefault.offerSale !== true) {
         setValue('')
         await fetch('/api/settings/countries/default', {
           method: 'POST',
@@ -177,7 +177,7 @@ export function DefaultCountrySelect() {
           {loading
             ? 'Loading…'
             : selectOptions.length === 0
-              ? 'Enable “Show on site” first'
+              ? 'Enable Sale for a country first'
               : 'None'}
         </option>
         {selectOptions.map((option) => (
@@ -188,7 +188,7 @@ export function DefaultCountrySelect() {
       </select>
       {!loading && selectOptions.length === 0 ? (
         <span style={{ fontSize: 12, opacity: 0.7 }}>
-          Turn on “Show on site” for countries that should appear in the filter.
+          Enable Sale for countries that may be selected as the default.
         </span>
       ) : null}
     </div>

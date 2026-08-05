@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Banknote, Bookmark, Home, MapPin, RotateCcw, Save, Search, SlidersHorizontal } from 'lucide-react'
 
 import { FilterSelect } from '@/components/FilterSelect'
@@ -10,10 +10,12 @@ import type { CRMCityOption, CRMCoastOption } from '@/utilities/crmCoasts'
 import type { CRMCountryOption } from '@/utilities/crmCountries'
 import type { CRMListingPreset } from '@/utilities/crmProperties'
 import type { PropertyListFilters as Filters } from '@/utilities/crmProperties'
+import { resolveCountrySelectedRangeValues } from '@/utilities/propertyFilterOptions.shared'
 import {
   applyPriceRangeValue,
   EMPTY_PROPERTY_FILTERS,
   hasActivePropertyFilters,
+  parseCountryFilter,
   parsePropertyTypeFilter,
   resolvePriceRangeValue,
 } from './filterOptions'
@@ -61,11 +63,46 @@ export const PropertyListFilters: React.FC<Props> = ({
   onOpenSaveSearch,
 }) => {
   const [modalOpen, setModalOpen] = useState(false)
-  const priceRangeOptions = usePriceRangeOptions()
+  const countryPriceRangeValues = resolveCountrySelectedRangeValues(
+    countries,
+    parseCountryFilter(filters.country),
+    'price',
+  )
+  const countryHolidayBudgetValues = resolveCountrySelectedRangeValues(
+    countries,
+    parseCountryFilter(filters.country),
+    'holiday',
+  )
+  const priceRangeOptions = usePriceRangeOptions(countryPriceRangeValues)
   const priceRange = resolvePriceRangeValue(filters.minPrice, filters.maxPrice, priceRangeOptions)
   const showClearFilters = hasActivePropertyFilters(appliedFilters)
   const isHolidayList = listingPreset === 'forHoliday'
   const isProjectsList = listingPreset === 'projects'
+  const showCountryFilter =
+    listingPreset === 'forSale' || listingPreset === 'forRent' || listingPreset === 'forHoliday'
+
+  // Clear stale price range / budget when country-allowed options change.
+  useEffect(() => {
+    if (
+      priceRange &&
+      priceRange !== 'any' &&
+      !priceRangeOptions.some((option) => option.value === priceRange)
+    ) {
+      onChange('minPrice', 'any')
+      onChange('maxPrice', 'any')
+    }
+  }, [onChange, priceRange, priceRangeOptions])
+
+  useEffect(() => {
+    const budget = filters.totalBudget ?? 'any'
+    if (budget === 'any') return
+    // Holiday budget options are enforced inside HolidayFilterFields via prop;
+    // clear here when the selected country no longer allows this budget key.
+    const allowed = countryHolidayBudgetValues
+    if (allowed?.length && !allowed.includes(budget)) {
+      onChange('totalBudget', 'any')
+    }
+  }, [countryHolidayBudgetValues, filters.totalBudget, onChange])
 
   const propertyTypeLabel = useTranslation('propertyList.filters.propertyType', 'Property Type')
   const loadingTypesLabel = useTranslation('propertyList.filters.loadingTypes', 'Loading types…')
@@ -140,6 +177,7 @@ export const PropertyListFilters: React.FC<Props> = ({
                 cities={cities}
                 citiesLoading={citiesLoading}
                 idPrefix="filter-bar"
+                holidayBudgetValues={countryHolidayBudgetValues}
               />
             ) : (
               <>
@@ -255,7 +293,8 @@ export const PropertyListFilters: React.FC<Props> = ({
           coastsLoading={coastsLoading}
           cities={cities}
           citiesLoading={citiesLoading}
-          showCountryFilter={listingPreset === 'forSale'}
+          showCountryFilter={showCountryFilter}
+          priceRangeValues={countryPriceRangeValues}
           referenceLabel={isProjectsList ? projectReferenceLabel : propertyReferenceLabel}
           referencePlaceholder={
             isProjectsList ? projectReferencePlaceholder : propertyReferencePlaceholder

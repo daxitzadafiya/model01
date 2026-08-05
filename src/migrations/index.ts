@@ -49,6 +49,7 @@ import * as migration_20260804_110000_footer_section_layout from './20260804_110
 import * as migration_20260804_120000_clear_property_list_empty_states from './20260804_120000_clear_property_list_empty_states'
 import * as migration_20260804_130000_delete_cms_dual_and_dead_translation_keys from './20260804_130000_delete_cms_dual_and_dead_translation_keys'
 import * as migration_20260804_140000_delete_property_list_cms_dual_translation_keys from './20260804_140000_delete_property_list_cms_dual_translation_keys'
+import * as migration_20260805_120000_countries_price_ranges from './20260805_120000_countries_price_ranges'
 
 export const migrations = [
   {
@@ -305,5 +306,10 @@ export const migrations = [
     up: migration_20260804_140000_delete_property_list_cms_dual_translation_keys.up,
     down: migration_20260804_140000_delete_property_list_cms_dual_translation_keys.down,
     name: '20260804_140000_delete_property_list_cms_dual_translation_keys',
+  },
+  {
+    up: migration_20260805_120000_countries_price_ranges.up,
+    down: migration_20260805_120000_countries_price_ranges.down,
+    name: '20260805_120000_countries_price_ranges',
   },
 ]

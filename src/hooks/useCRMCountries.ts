@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react'
 
-import type { SiteCountryOption } from '@/utilities/siteCountries.shared'
+import type {
+  SiteCountryOption,
+  SiteCountryTransaction,
+} from '@/utilities/siteCountries.shared'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 /** @deprecated Prefer SiteCountryOption — kept for existing call sites. */
@@ -12,7 +15,7 @@ export type CRMCountryOption = SiteCountryOption
  * Countries for Sale filters — loaded from CMS Countries collection
  * (CRM is only called when that collection is empty, or via Sync from CRM).
  */
-export function useCRMCountries() {
+export function useCRMCountries(transaction: SiteCountryTransaction = 'sale') {
   const locale = useSiteLocale()
   const [countries, setCountries] = useState<SiteCountryOption[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,9 +27,13 @@ export function useCRMCountries() {
     const load = async () => {
       setLoading(true)
       setError(null)
+      // Clear previous transaction's countries so tabs don't briefly show stale options.
+      setCountries([])
       try {
         const response = await fetch(
-          `/api/settings/countries?locale=${encodeURIComponent(locale)}`,
+          `/api/settings/countries?locale=${encodeURIComponent(locale)}&transaction=${encodeURIComponent(
+            transaction,
+          )}`,
           {
             signal: controller.signal,
             cache: 'no-store',
@@ -51,7 +58,7 @@ export function useCRMCountries() {
 
     void load()
     return () => controller.abort()
-  }, [locale])
+  }, [locale, transaction])
 
   return { countries, loading, error }
 }

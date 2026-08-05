@@ -1,7 +1,14 @@
 'use client'
 
+import { useMemo } from 'react'
+
 import { usePropertyFilterOptions } from '@/hooks/usePropertyFilterOptions'
-import type { PropertySortOption } from '@/utilities/propertyFilterOptions.shared'
+import {
+  deriveMaxPriceOptions,
+  deriveMinPriceOptions,
+  filterRangeOptions,
+  type PropertySortOption,
+} from '@/utilities/propertyFilterOptions.shared'
 
 /**
  * Option labels come from the Property Filters global (localized + DeepL).
@@ -13,9 +20,12 @@ export function useSortOptions(): PropertySortOption[] {
   return sortOptions
 }
 
-export function usePriceRangeOptions() {
+export function usePriceRangeOptions(selectedValues?: readonly string[] | null) {
   const { priceRanges } = usePropertyFilterOptions()
-  return priceRanges
+  return useMemo(
+    () => filterRangeOptions(priceRanges, selectedValues),
+    [priceRanges, selectedValues],
+  )
 }
 
 export function useBedroomOptions() {
@@ -28,14 +38,20 @@ export function useBathroomOptions() {
   return bathrooms
 }
 
-export function useMinPriceOptions() {
-  const { minPrices } = usePropertyFilterOptions()
-  return minPrices
+export function useMinPriceOptions(selectedValues?: readonly string[] | null) {
+  const { priceRanges } = usePropertyFilterOptions()
+  return useMemo(
+    () => deriveMinPriceOptions(filterRangeOptions(priceRanges, selectedValues)),
+    [priceRanges, selectedValues],
+  )
 }
 
-export function useMaxPriceOptions() {
-  const { maxPrices } = usePropertyFilterOptions()
-  return maxPrices
+export function useMaxPriceOptions(selectedValues?: readonly string[] | null) {
+  const { priceRanges } = usePropertyFilterOptions()
+  return useMemo(
+    () => deriveMaxPriceOptions(filterRangeOptions(priceRanges, selectedValues)),
+    [priceRanges, selectedValues],
+  )
 }
 
 export function useFeatureFilterOptions() {
@@ -48,7 +64,10 @@ export function useGuestOptions() {
   return guests
 }
 
-export function useHolidayBudgetOptions() {
+export function useHolidayBudgetOptions(selectedValues?: readonly string[] | null) {
   const { holidayBudgetRanges } = usePropertyFilterOptions()
-  return holidayBudgetRanges
+  return useMemo(
+    () => filterRangeOptions(holidayBudgetRanges, selectedValues),
+    [holidayBudgetRanges, selectedValues],
+  )
 }

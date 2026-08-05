@@ -97,11 +97,15 @@ function mapCRMDocToData(
     status,
     names: Object.keys(names).length > 0 ? names : (existing?.names ?? { en: adminLabel }),
     adminLabel,
-    showOnSite: existing?.showOnSite ?? (isNew ? isDefaultSaleCountry : false),
     isDefault: existing?.isDefault ?? (isNew ? isHeroDefaultCountry : false),
     offerSale: existing?.offerSale ?? (isNew ? isDefaultSaleCountry : false),
     offerRental: existing?.offerRental ?? false,
     offerHoliday: existing?.offerHoliday ?? false,
+    salePriceRanges: Array.isArray(existing?.salePriceRanges) ? existing.salePriceRanges : [],
+    rentalPriceRanges: Array.isArray(existing?.rentalPriceRanges) ? existing.rentalPriceRanges : [],
+    holidayBudgetRanges: Array.isArray(existing?.holidayBudgetRanges)
+      ? existing.holidayBudgetRanges
+      : [],
   }
 }
 
@@ -115,7 +119,7 @@ async function revalidateCountriesCache(payload: Payload): Promise<void> {
 
 /**
  * Fetch Optima countries and merge into the Countries collection.
- * Preserves showOnSite / isDefault / transaction flags for existing docs; adds new CRM countries.
+ * Preserves isDefault / transaction flags / price-range selections for existing docs; adds new CRM countries.
  */
 export async function syncCountriesFromCRM(payload: Payload): Promise<SyncCountriesResult> {
   if (syncInFlight) return syncInFlight

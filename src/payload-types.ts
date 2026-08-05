@@ -1669,7 +1669,7 @@ export interface Translation {
   createdAt: string;
 }
 /**
- * CRM countries cached in the CMS. Sync from Optima, enable “Show on site” for the Sale country filter, then choose the Default country from the dropdown above the list (only Show-on-site countries appear).
+ * CRM countries cached in the CMS. Sync from Optima, then toggle Sale / Rental / Holiday to control which countries appear in each transaction filter. Choose the Default country from the dropdown above the list (Sale-only).
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "countries".
@@ -1696,14 +1696,49 @@ export interface Country {
     | number
     | boolean
     | null;
-  showOnSite?: boolean | null;
   /**
    * Managed by the Default country dropdown on the Countries list. Only one country can be default.
    */
   isDefault?: boolean | null;
   offerSale?: boolean | null;
+  /**
+   * Which Price ranges from Property Filters appear for this country on Sale. Leave empty to show all.
+   */
+  salePriceRanges?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   offerRental?: boolean | null;
+  /**
+   * Which Price ranges from Property Filters appear for this country on Rental. Leave empty to show all.
+   */
+  rentalPriceRanges?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   offerHoliday?: boolean | null;
+  /**
+   * Which Holiday total budget ranges from Property Filters appear for this country. Leave empty to show all.
+   */
+  holidayBudgetRanges?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2999,11 +3034,13 @@ export interface CountriesSelect<T extends boolean = true> {
   status?: T;
   crmId?: T;
   names?: T;
-  showOnSite?: T;
   isDefault?: T;
   offerSale?: T;
+  salePriceRanges?: T;
   offerRental?: T;
+  rentalPriceRanges?: T;
   offerHoliday?: T;
+  holidayBudgetRanges?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -33,6 +33,7 @@ import {
   type NormalizedListProperty,
   type PropertyListFilters,
 } from '@/utilities/crmProperties'
+import type { SiteCountryTransaction } from '@/utilities/siteCountries.shared'
 import {
   buildCRMProjectsQuery,
   fetchCRMProjects,
@@ -41,7 +42,12 @@ import {
 import { ProjectCard } from '@/components/ProjectCard'
 import { hasMapAreaReferences } from '@/utilities/propertyMapFilters'
 import { DEFAULT_PROPERTY_FILTER_OPTIONS } from '@/utilities/propertyFilterOptions.shared'
-import { EMPTY_PROPERTY_FILTERS, hasAppliedPropertyFilters } from './filterOptions'
+import {
+  EMPTY_PROPERTY_FILTERS,
+  hasAppliedPropertyFilters,
+  parseCountryFilter,
+} from './filterOptions'
+import { resolvePreselectedCountryKeys } from '@/utilities/crmCountries'
 import { useSortOptions } from './useFilterOptionLabels'
 import { PropertyListFilters as FiltersBar } from './PropertyListFilters'
 import { PropertyListPagination } from './PropertyListPagination'
@@ -196,7 +202,10 @@ const PropertyListViewInner: React.FC<Props> = ({
 
   const { options: propertyTypeOptions, loading: propertyTypeLoading } =
     useCRMPropertyTypeOptions(filterPreset)
-  const { countries, loading: countriesLoading } = useCRMCountries()
+  const countriesTransaction: SiteCountryTransaction =
+    filterPreset === 'forRent' ? 'rental' : filterPreset === 'forHoliday' ? 'holiday' : 'sale'
+
+  const { countries, loading: countriesLoading } = useCRMCountries(countriesTransaction)
   const { coasts, loading: coastsLoading } = useCRMCoasts(filters.country)
   const { cities, loading: citiesLoading } = useCRMCities(filters.coast, coasts, filterPreset)
   const sortParams = useMemo(
@@ -438,6 +447,26 @@ const PropertyListViewInner: React.FC<Props> = ({
     setFiltersHydrated(true)
   }, [])
 
+  /**
+   * Pre-select the country in the filter UI: the CMS default when it is enabled for this
+   * transaction type, otherwise the first available country. Only touches the pending
+   * filter state so the server-rendered listing is untouched until the user searches.
+   */
+  const countryPreselectedRef = useRef(false)
+  useEffect(() => {
+    if (countryPreselectedRef.current) return
+    if (!filtersHydrated || countriesLoading || !countries.length) return
+
+    countryPreselectedRef.current = true
+    const preselected = resolvePreselectedCountryKeys(countries)
+    if (!preselected.length) return
+
+    setFilters((prev) => {
+      if (parseCountryFilter(prev.country).length) return prev
+      return { ...prev, country: preselected }
+    })
+  }, [countries, countriesLoading, filtersHydrated])
+
   /** Client CRM fetch — favorites and filtered listings only. */
   useEffect(() => {
     if (!filtersHydrated || isServerManaged) return
@@ -600,17 +629,25 @@ const PropertyListViewInner: React.FC<Props> = ({
     setLoading(activeFavoriteIds.length > 0)
   }, [activeFavoriteIds.length, favoritesTab, isFavoritesList])
 
-  const handleFilterChange = (
-    key: keyof PropertyListFilters,
-    value: PropertyListFilters[keyof PropertyListFilters],
-  ) => {
-    setFilters((prev) => {
-      if (key === 'country') {
-        return { ...prev, country: value as PropertyListFilters['country'], coast: [], city: [] }
-      }
-      return { ...prev, [key]: value }
-    })
-  }
+  const handleFilterChange = useCallback(
+    (key: keyof PropertyListFilters, value: PropertyListFilters[keyof PropertyListFilters]) => {
+      setFilters((prev) => {
+        if (key === 'country') {
+          return {
+            ...prev,
+            country: value as PropertyListFilters['country'],
+            coast: [],
+            city: [],
+            minPrice: 'any',
+            maxPrice: 'any',
+            totalBudget: 'any',
+          }
+        }
+        return { ...prev, [key]: value }
+      })
+    },
+    [],
+  )
 
   const handleApply = (nextFilters: PropertyListFilters) => {
     clearPendingPropertyListFilters()
