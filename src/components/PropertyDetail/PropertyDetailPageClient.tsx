@@ -2,7 +2,7 @@
 
 import { notFound, useSearchParams } from 'next/navigation'
 import { useParams } from 'next/navigation'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { PropertyDetailView } from '@/components/PropertyDetail/PropertyDetailView'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,8 +15,10 @@ import {
 } from '@/utilities/propertyDetailFetchStatus'
 import {
   parsePropertyDetailForQuery,
+  resolveDetailListingContextFromProperty,
   resolvePropertyDetailHolidayMode,
   takePropertyDetailListingContext,
+  listingContextToListingMode,
 } from '@/utilities/propertyDetailListingContext'
 import {
   fetchCRMSimilarProperties,
@@ -46,6 +48,13 @@ const pickNumber = (value: unknown): number | undefined => {
     if (Number.isFinite(parsed)) return parsed
   }
   return undefined
+}
+
+/** Fetch/abort rejections are not always named `AbortError` across browsers. */
+const isAbortError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false
+  const err = error as { name?: string; code?: number }
+  return err.name === 'AbortError' || err.code === 20
 }
 
 function PropertyDetailSkeleton() {
@@ -87,6 +96,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
   const isProject = entityType === 'project'
   const [loading, setLoading] = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
+  const loadSeqRef = useRef(0)
 
   const [property, setProperty] = useState<ReturnType<typeof normalizeCRMProperty> | null>(null)
   const [amenities, setAmenities] = useState<ReturnType<typeof normalizeCRMAmenities>>([])
@@ -169,6 +179,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
       parsePropertyDetailForQuery(forQuery) ?? takePropertyDetailListingContext(reference)
 
     const controller = new AbortController()
+    const loadSeq = ++loadSeqRef.current
 
     const load = async () => {
       setLoading(true)
@@ -182,50 +193,80 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
             locale: activeLocale,
             init: { signal: controller.signal },
           })
-          if (controller.signal.aborted) return
+          if (controller.signal.aborted || loadSeq !== loadSeqRef.current) return
         } else {
           const statuses = takePropertyDetailFetchStatus(reference)
           raw = await fetchCRMPropertyDetail(reference, {
             statuses,
             init: { signal: controller.signal },
           })
-          if (controller.signal.aborted) return
+          if (controller.signal.aborted || loadSeq !== loadSeqRef.current) return
 
           if (!raw && !statuses?.length) {
             raw = await fetchCRMPropertyDetail(reference, {
               statuses: ['Sold'],
               init: { signal: controller.signal },
             })
-            if (controller.signal.aborted) return
+            if (controller.signal.aborted || loadSeq !== loadSeqRef.current) return
           }
         }
 
         if (!raw) {
-          setNotFoundState(true)
+          if (loadSeq === loadSeqRef.current) {
+            setProperty(null)
+            setNotFoundState(true)
+          }
           return
         }
 
+        const resolvedListingContext =
+          listingContext ??
+          (isProject ? undefined : resolveDetailListingContextFromProperty(raw))
+
         const isHolidayDetail = isProject
           ? false
-          : resolvePropertyDetailHolidayMode(listingContext, raw, {
+          : resolvePropertyDetailHolidayMode(resolvedListingContext, raw, {
               hasHolidaySearchParams,
             })
 
-        const normalized = normalizeCRMProperty(raw, activeLocale, {
-          attachmentImageSize: PROPERTY_DETAIL_IMAGE_SIZE,
-          projectListing: isProject,
-          holidayListing: isHolidayDetail,
-          holidayPeriodFrom: holidayArrival,
-          holidayPeriodTo: holidayDeparture,
-          holidayGuests,
-          holidayPriceVariant: 'detail',
-        })
+        // Rent/holiday detail must pass listingMode so LT/ST season pricing is used
+        // instead of sale `current_price` (multi-listed CRM rows often have sale+rent).
+        const detailListingMode =
+          listingContextToListingMode(resolvedListingContext) ??
+          (isHolidayDetail ? 'rent' : undefined)
+
+        let normalized: ReturnType<typeof normalizeCRMProperty>
+        try {
+          normalized = normalizeCRMProperty(raw, activeLocale, {
+            attachmentImageSize: PROPERTY_DETAIL_IMAGE_SIZE,
+            projectListing: isProject,
+            listingMode: detailListingMode,
+            holidayListing: isHolidayDetail,
+            holidayPeriodFrom: holidayArrival,
+            holidayPeriodTo: holidayDeparture,
+            holidayGuests,
+            holidayPriceVariant: 'detail',
+          })
+        } catch (normalizeError) {
+          console.error('normalizeCRMProperty failed; retrying without listingMode', normalizeError)
+          normalized = normalizeCRMProperty(raw, activeLocale, {
+            attachmentImageSize: PROPERTY_DETAIL_IMAGE_SIZE,
+            projectListing: isProject,
+            holidayListing: isHolidayDetail,
+            holidayPeriodFrom: holidayArrival,
+            holidayPeriodTo: holidayDeparture,
+            holidayGuests,
+            holidayPriceVariant: 'detail',
+          })
+        }
+
+        if (controller.signal.aborted || loadSeq !== loadSeqRef.current) return
 
         setProperty(normalized)
         setIsHolidayRental(isHolidayDetail)
         setRentalSeasons(isProject ? [] : parseRentalSeasons(raw))
         setBookings(isProject ? [] : parseCRMPropertyBookings(raw))
-        setInquiry(extractPropertyInquiryContext(raw, normalized, listingContext))
+        setInquiry(extractPropertyInquiryContext(raw, normalized, resolvedListingContext))
         setBrochureUrl(isProject ? undefined : buildPropertyBrochurePdfUrl(raw, activeLocale))
         setVideos(resolveCRMPropertyVideos(raw, activeLocale))
         setDocuments(
@@ -246,7 +287,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
         setSimilarPropertiesLoading(false)
 
         if (!isProject) {
-          const similarListingContext = resolveSimilarListingContext(raw, listingContext)
+          const similarListingContext = resolveSimilarListingContext(raw, resolvedListingContext)
           setShowSimilarSoldBadge(isSimilarPropertySold(raw))
           setSimilarPropertiesLoading(true)
 
@@ -259,41 +300,51 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
                 signal: controller.signal,
               })
 
-              if (!controller.signal.aborted) {
-                setRelatedProperties(
-                  similarRaw.map((item) =>
-                    normalizeCRMListProperty(item, activeLocale, {
-                      listingMode:
-                        similarListingContext === 'rent' || similarListingContext === 'holiday'
-                          ? 'rent'
-                          : 'sale',
-                      holidayListing: similarListingContext === 'holiday',
-                    }),
-                  ),
-                )
-              }
+              if (controller.signal.aborted || loadSeq !== loadSeqRef.current) return
+
+              setRelatedProperties(
+                similarRaw.map((item) =>
+                  normalizeCRMListProperty(item, activeLocale, {
+                    listingMode:
+                      similarListingContext === 'rent' || similarListingContext === 'holiday'
+                        ? 'rent'
+                        : 'sale',
+                    holidayListing: similarListingContext === 'holiday',
+                  }),
+                ),
+              )
             } catch (similarError) {
-              if ((similarError as Error).name !== 'AbortError') {
+              if (!isAbortError(similarError)) {
                 console.error('Failed to load similar properties', similarError)
-                if (!controller.signal.aborted) setRelatedProperties([])
+                if (!controller.signal.aborted && loadSeq === loadSeqRef.current) {
+                  setRelatedProperties([])
+                }
               }
             } finally {
-              if (!controller.signal.aborted) setSimilarPropertiesLoading(false)
+              if (!controller.signal.aborted && loadSeq === loadSeqRef.current) {
+                setSimilarPropertiesLoading(false)
+              }
             }
           })()
         }
       } catch (error) {
-        if ((error as Error).name === 'AbortError') return
+        if (isAbortError(error)) return
+        if (loadSeq !== loadSeqRef.current) return
         console.error(`Failed to load ${isProject ? 'project' : 'property'} detail`, error)
+        setProperty(null)
         setNotFoundState(true)
       } finally {
-        if (!controller.signal.aborted) setLoading(false)
+        if (!controller.signal.aborted && loadSeq === loadSeqRef.current) {
+          setLoading(false)
+        }
       }
     }
 
     void load()
 
-    return () => controller.abort()
+    return () => {
+      controller.abort()
+    }
   }, [
     slug,
     activeLocale,

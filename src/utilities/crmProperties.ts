@@ -1137,6 +1137,8 @@ export function normalizeCRMProperty(
       : undefined
 
   const isHolidayProperty = options.holidayListing === true
+  // Long-term rental price comes from an active `period_seasons` / `rental_season_data`
+  // window only — never fall back to sale `current_price` (matches gestali / Optima).
   const isLongTermRentalProperty =
     options.listingMode === 'rent' &&
     !isHolidayProperty &&
@@ -1168,6 +1170,7 @@ export function normalizeCRMProperty(
   let holidayPriceValue: number | undefined
 
   if (isHolidayProperty) {
+    // ST rental: active `rental_seasons` nightly rate, else "Price on demand"
     const holidayPrice = resolveHolidayPriceDisplay({
       property,
       periodFrom: options.holidayPeriodFrom,
@@ -1197,16 +1200,15 @@ export function normalizeCRMProperty(
       resolvedPrice = PRICE_ON_DEMAND_LABEL
     }
   } else if (isLongTermRentalProperty) {
-    if (hasPriceOnDemand) {
-      resolvedPrice = PRICE_ON_DEMAND_LABEL
-    } else {
-      const activeSeason = pickActiveLongTermRentalSeason(property)
-      const seasonPrice = activeSeason
-        ? pickNumber(activeSeason.new_price) ??
-          pickNumber(activeSeason.total_per_month) ??
-          pickNumber(activeSeason.price)
-        : undefined
-      const duration = activeSeason?.duration === 'per_month' ? 'month' : 'year'
+    // LT rental: default on demand; only update when today is inside a season window
+    resolvedPrice = PRICE_ON_DEMAND_LABEL
+    const activeSeason = pickActiveLongTermRentalSeason(property)
+    if (activeSeason) {
+      const seasonPrice =
+        pickNumber(activeSeason.new_price) ??
+        pickNumber(activeSeason.total_per_month) ??
+        pickNumber(activeSeason.price)
+      const duration = activeSeason.duration === 'per_month' ? 'month' : 'year'
       if (seasonPrice != null && seasonPrice > 0) {
         const formatted = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
           seasonPrice,
@@ -1214,12 +1216,6 @@ export function normalizeCRMProperty(
         resolvedPrice = options.currencySymbolAfter
           ? `${formatted} € per ${duration}`
           : `€${formatted} per ${duration}`
-      } else if (formattedRawPrice) {
-        resolvedPrice = options.currencySymbolAfter
-          ? `${formattedRawPrice} €`
-          : `€${formattedRawPrice}`
-      } else {
-        resolvedPrice = PRICE_ON_DEMAND_LABEL
       }
     }
   } else if (hasPriceOnDemand) {

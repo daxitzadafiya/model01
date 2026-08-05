@@ -7,7 +7,12 @@ import {
   type CRMListingPreset,
 } from '@/utilities/crmProperties'
 import { fetchCRMPropertiesServer } from '@/utilities/crmProperties.server'
+import { isCRMTruthy } from '@/utilities/localizedValue'
 import { PROPERTY_CARD_IMAGE_SIZE } from '@/utilities/optimaImage'
+import {
+  listingContextToListingMode,
+  resolveDetailListingContextFromProperty,
+} from '@/utilities/propertyDetailListingContext'
 
 type CarouselCrmPreset = Extract<CRMListingPreset, 'featured' | 'seaView' | 'golf'>
 
@@ -27,11 +32,21 @@ export async function fetchPropertiesCarouselServerData(
   const result = await fetchCRMPropertiesServer(body)
 
   const items = result.properties.map((property): PropertiesCarouselItem => {
+    // Featured / seaView / golf queries are sale-first; keep sale price when `sale` is set.
+    // Rent-only / holiday-only rows still use active-season LT / ST pricing.
+    const listingContext = resolveDetailListingContextFromProperty(property)
+    const preferSale = isCRMTruthy(property.sale)
+    const listingMode = preferSale
+      ? 'sale'
+      : (listingContextToListingMode(listingContext) ?? 'sale')
+    const holidayListing = !preferSale && listingContext === 'forHoliday'
+
     const normalized = normalizeCRMProperty(property, locale, {
       currencySymbolAfter: true,
       emptyPriceWhenMissing: true,
       attachmentImageSize: PROPERTY_CARD_IMAGE_SIZE,
-      listingMode: 'sale',
+      listingMode,
+      holidayListing,
     })
 
     return {
