@@ -203,6 +203,10 @@ export const Countries: CollectionConfig = {
       defaultValue: false,
       index: true,
       admin: {
+        description: a(
+          'admin.countries.fields.saleDescription',
+          'Show this country in the Country options for the selected Sales Tab / Property List on Sales Page.',
+        ),
         disableBulkEdit: true,
         disableListFilter: true,
       },
@@ -232,6 +236,10 @@ export const Countries: CollectionConfig = {
       label: a('admin.countries.fields.rental', 'Rental'),
       defaultValue: false,
       admin: {
+        description: a(
+          'admin.countries.fields.rentalDescription',
+          'Show this country in the Country options for the selected Rental Tab / Property List on Rental Page.',
+        ),
         disableBulkEdit: true,
         disableListFilter: true,
       },
@@ -261,6 +269,10 @@ export const Countries: CollectionConfig = {
       label: a('admin.countries.fields.holiday', 'Holiday'),
       defaultValue: false,
       admin: {
+        description: a(
+          'admin.countries.fields.holidayDescription',
+          'Show this country in the Country options for the selected Holiday Tab / Property List on Holiday Rental Page.',
+        ),
         disableBulkEdit: true,
         disableListFilter: true,
       },

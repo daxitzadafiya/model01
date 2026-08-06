@@ -17,6 +17,7 @@
     "lint:fix": "cross-env NODE_OPTIONS=--no-deprecation eslint . --fix",
     "db:repair": "node scripts/repair-sqlite-db.mjs",
     "db:check": "node scripts/check-sqlite-db.mjs",
+    "backup:db": "node scripts/backup-db.mjs",
     "predev": "node scripts/check-sqlite-db.mjs && node scripts/patch-payload-root-hydration.mjs && node scripts/patch-payload-reset-view.mjs",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "reinstall": "cross-env NODE_OPTIONS=--no-deprecation rm -rf node_modules && rm pnpm-lock.yaml && pnpm --ignore-workspace install",
