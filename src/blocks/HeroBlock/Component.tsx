@@ -47,6 +47,26 @@ import { cn } from '@/utilities/ui'
 type Props = Extract<Page['layout'][0], { blockType: 'heroBlock' }>
 type HeroPropertyTab = 'sale' | 'rental' | 'holiday'
 
+const ALL_HERO_PROPERTY_TABS: HeroPropertyTab[] = ['sale', 'rental', 'holiday']
+
+const resolveVisibleHeroTabs = (
+  propertyTabs?: {
+    visibleTabs?: (HeroPropertyTab | null)[] | null
+    defaultTab?: HeroPropertyTab | null
+  } | null,
+): { visibleTabs: HeroPropertyTab[]; defaultTab: HeroPropertyTab } => {
+  const visibleFromGroup = (propertyTabs?.visibleTabs ?? []).filter(
+    (tab): tab is HeroPropertyTab => tab === 'sale' || tab === 'rental' || tab === 'holiday',
+  )
+  const visibleTabs = visibleFromGroup.length ? visibleFromGroup : ALL_HERO_PROPERTY_TABS
+
+  const candidate = propertyTabs?.defaultTab ?? visibleTabs[0] ?? 'sale'
+
+  const defaultTab = visibleTabs.includes(candidate) ? candidate : visibleTabs[0] ?? 'sale'
+
+  return { visibleTabs, defaultTab }
+}
+
 const HERO_TAB_PATHS: Record<HeroPropertyTab, string> = {
   sale: '/property-for-sale',
   rental: '/property-for-rent',
@@ -98,7 +118,7 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     ctaLink,
     searchResultsLink,
     showSearch,
-    defaultPropertyTab,
+    propertyTabs,
     defaultCountry,
   } = props
   const ref = useReveal()
@@ -135,8 +155,12 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   const searchFiltersTitle = useTranslation('hero.searchFiltersTitle', 'Search filters')
   const scrollLabel = useTranslation('hero.scrollIndicator', 'SCROLL')
 
-  const initialTab = (defaultPropertyTab ?? 'sale') as HeroPropertyTab
-  const [activeTab, setActiveTab] = useState<HeroPropertyTab>(initialTab)
+  const { visibleTabs, defaultTab } = useMemo(
+    () => resolveVisibleHeroTabs(propertyTabs),
+    [propertyTabs],
+  )
+
+  const [activeTab, setActiveTab] = useState<HeroPropertyTab>(defaultTab)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [searchFilters, setSearchFilters] = useState<PropertyListFilters>({
     ...EMPTY_PROPERTY_FILTERS,
@@ -331,11 +355,21 @@ const HeroBlockContent: React.FC<Props> = (props) => {
       ? { ...ctaLink, label: buttonText || ctaLink.label }
       : { type: 'custom' as const, url: '/property-for-sale', label: buttonText }
 
-  const tabs: { id: HeroPropertyTab; label: string }[] = [
-    { id: 'sale', label: saleTabLabel },
-    { id: 'rental', label: rentalTabLabel },
-    { id: 'holiday', label: holidayTabLabel },
-  ]
+  const tabs: { id: HeroPropertyTab; label: string }[] = useMemo(() => {
+    const allTabs: { id: HeroPropertyTab; label: string }[] = [
+      { id: 'sale', label: saleTabLabel },
+      { id: 'rental', label: rentalTabLabel },
+      { id: 'holiday', label: holidayTabLabel },
+    ]
+    return allTabs.filter((tab) => visibleTabs.includes(tab.id))
+  }, [holidayTabLabel, rentalTabLabel, saleTabLabel, visibleTabs])
+
+  useEffect(() => {
+    if (!visibleTabs.includes(activeTab)) {
+      setActiveTab(defaultTab)
+      resetFiltersForTab()
+    }
+  }, [activeTab, defaultTab, resetFiltersForTab, visibleTabs])
 
   const renderSearchFields = (options: {
     idPrefix: string
@@ -471,30 +505,32 @@ const HeroBlockContent: React.FC<Props> = (props) => {
           </button>
         </div>
       )}
-      <div
-        className={cn(
-          'flex w-full flex-col gap-1 rounded-xl border border-white/20 bg-black/15 p-1.5',
-          layout === 'desktop' &&
-            'sm:w-auto md:inline-flex md:w-fit md:flex-row md:flex-wrap md:items-center md:gap-1 md:rounded-full md:p-1',
-        )}
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => handleTabChange(tab.id)}
-            className={cn(
-              'w-full cursor-pointer rounded-full px-4 py-2.5 text-left font-label-nav text-label-nav uppercase transition-all touch-manipulation',
-              layout === 'desktop' && 'md:w-auto md:rounded-full md:px-5 md:py-2 md:text-center',
-              activeTab === tab.id
-                ? 'bg-tertiary text-white shadow-md'
-                : 'text-white/75 hover:bg-white/15 hover:text-white',
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {tabs.length > 0 && (
+        <div
+          className={cn(
+            'flex w-full flex-col gap-1 rounded-xl border border-white/20 bg-black/15 p-1.5',
+            layout === 'desktop' &&
+              'sm:w-auto md:inline-flex md:w-fit md:flex-row md:flex-wrap md:items-center md:gap-1 md:rounded-full md:p-1',
+          )}
+        >
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => handleTabChange(tab.id)}
+              className={cn(
+                'w-full cursor-pointer rounded-full px-4 py-2.5 text-left font-label-nav text-label-nav uppercase transition-all touch-manipulation',
+                layout === 'desktop' && 'md:w-auto md:rounded-full md:px-5 md:py-2 md:text-center',
+                activeTab === tab.id
+                  ? 'bg-tertiary text-white shadow-md'
+                  : 'text-white/75 hover:bg-white/15 hover:text-white',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className={cn(layout === 'desktop' && 'py-0.5 sm:py-0')}>
         <HeroWeather />
       </div>

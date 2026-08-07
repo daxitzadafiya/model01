@@ -30,6 +30,17 @@ const isVimeoVideo = (_: unknown, siblingData?: Record<string, unknown>) =>
 const isUploadedVideo = (_: unknown, siblingData?: Record<string, unknown>) =>
   siblingData?.mediaType === 'video' && siblingData?.videoSource === 'upload'
 
+const HERO_PROPERTY_TAB_OPTIONS = [
+  { label: a('admin.blocks.heroBlock.propertyTabSale', 'Sale Properties'), value: 'sale' },
+  { label: a('admin.blocks.heroBlock.propertyTabRental', 'Rental Properties'), value: 'rental' },
+  { label: a('admin.blocks.heroBlock.propertyTabHoliday', 'Holiday Properties'), value: 'holiday' },
+] as const
+
+type HeroPropertyTabValue = (typeof HERO_PROPERTY_TAB_OPTIONS)[number]['value']
+
+const getHeroPropertyTabOptionValue = (option: { value?: string } | string) =>
+  typeof option === 'string' ? option : (option.value ?? '')
+
 const mediaFields: Field[] = [
   {
     name: 'mediaType',
@@ -306,18 +317,84 @@ export const HeroBlock: Block = {
       defaultValue: true,
     },
     {
-      name: 'defaultPropertyTab',
-      type: 'select',
-      label: a('admin.blocks.heroBlock.defaultPropertyTabLabel', 'Default Selected Property Tab'),
-      defaultValue: 'sale',
-      options: [
-        { label: a('admin.blocks.heroBlock.propertyTabSale', 'Sale Properties'), value: 'sale' },
-        { label: a('admin.blocks.heroBlock.propertyTabRental', 'Rental Properties'), value: 'rental' },
-        { label: a('admin.blocks.heroBlock.propertyTabHoliday', 'Holiday Properties'), value: 'holiday' },
-      ],
+      name: 'propertyTabs',
+      type: 'group',
+      label: a('admin.blocks.heroBlock.propertyTabsLabel', 'Property Tabs'),
       admin: {
         condition: (_, siblingData) => siblingData?.showSearch !== false,
+        description: a(
+          'admin.blocks.heroBlock.propertyTabsDescription',
+          'Choose which property tabs appear in the hero search bar and which one is selected by default.',
+        ),
       },
+      fields: [
+        {
+          name: 'visibleTabs',
+          type: 'select',
+          hasMany: true,
+          required: true,
+          label: a('admin.blocks.heroBlock.visiblePropertyTabsLabel', 'Visible Property Tabs'),
+          defaultValue: ['sale', 'rental', 'holiday'],
+          options: [...HERO_PROPERTY_TAB_OPTIONS],
+          admin: {
+            description: a(
+              'admin.blocks.heroBlock.visiblePropertyTabsDescription',
+              'Select one or more tabs to show on the hero search bar.',
+            ),
+          },
+          validate: (value: unknown, { req }: ValidateArgs) => {
+            if (!Array.isArray(value) || value.length === 0) {
+              return aString(
+                'admin.blocks.heroBlock.visiblePropertyTabsRequired',
+                'Select at least one property tab.',
+                req?.i18n?.language,
+              )
+            }
+            return true
+          },
+        },
+        {
+          name: 'defaultTab',
+          type: 'select',
+          required: true,
+          label: a('admin.blocks.heroBlock.defaultPropertyTabLabel', 'Default Selected Property Tab'),
+          defaultValue: 'sale',
+          options: [...HERO_PROPERTY_TAB_OPTIONS],
+          filterOptions: ({ options, siblingData }) => {
+            const visibleTabs =
+              (siblingData as { visibleTabs?: HeroPropertyTabValue[] } | undefined)?.visibleTabs ?? []
+            if (!visibleTabs.length) return options
+            return options.filter((option) =>
+              visibleTabs.includes(getHeroPropertyTabOptionValue(option) as HeroPropertyTabValue),
+            )
+          },
+          admin: {
+            description: a(
+              'admin.blocks.heroBlock.defaultPropertyTabDescription',
+              'The tab that is active when the page loads. Only tabs selected above are available.',
+            ),
+          },
+          validate: (value: unknown, { siblingData, req }: ValidateArgs) => {
+            const visibleTabs =
+              (siblingData as { visibleTabs?: HeroPropertyTabValue[] } | undefined)?.visibleTabs ?? []
+            if (!value || typeof value !== 'string') {
+              return aString(
+                'admin.blocks.heroBlock.defaultPropertyTabRequired',
+                'Choose a default property tab.',
+                req?.i18n?.language,
+              )
+            }
+            if (visibleTabs.length && !visibleTabs.includes(value as HeroPropertyTabValue)) {
+              return aString(
+                'admin.blocks.heroBlock.defaultPropertyTabInvalid',
+                'Default tab must be one of the visible property tabs.',
+                req?.i18n?.language,
+              )
+            }
+            return true
+          },
+        },
+      ],
     },
     {
       name: 'defaultCountry',

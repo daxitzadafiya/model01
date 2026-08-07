@@ -942,7 +942,19 @@ export interface HeroBlock {
    */
   videoUpload?: (number | null) | Media;
   showSearch?: boolean | null;
-  defaultPropertyTab?: ('sale' | 'rental' | 'holiday') | null;
+  /**
+   * Choose which property tabs appear in the hero search bar and which one is selected by default.
+   */
+  propertyTabs?: {
+    /**
+     * Select one or more tabs to show on the hero search bar.
+     */
+    visibleTabs: ('sale' | 'rental' | 'holiday')[];
+    /**
+     * The tab that is active when the page loads. Only tabs selected above are available.
+     */
+    defaultTab: 'sale' | 'rental' | 'holiday';
+  };
   /**
    * Deprecated — set Default on a country under Collections → Countries instead.
    */
@@ -1700,6 +1712,9 @@ export interface Country {
    * Managed by the Default country dropdown on the Countries list. Only one country can be default.
    */
   isDefault?: boolean | null;
+  /**
+   * Show this country in the Country options for the selected Sales Tab / Property List on Sales Page.
+   */
   offerSale?: boolean | null;
   /**
    * Which Price ranges from Property Filters appear for this country on Sale. Leave empty to show all.
@@ -1713,6 +1728,9 @@ export interface Country {
     | number
     | boolean
     | null;
+  /**
+   * Show this country in the Country options for the selected Rental Tab / Property List on Rental Page.
+   */
   offerRental?: boolean | null;
   /**
    * Which Price ranges from Property Filters appear for this country on Rental. Leave empty to show all.
@@ -1726,6 +1744,9 @@ export interface Country {
     | number
     | boolean
     | null;
+  /**
+   * Show this country in the Country options for the selected Holiday Tab / Property List on Holiday Rental Page.
+   */
   offerHoliday?: boolean | null;
   /**
    * Which Holiday total budget ranges from Property Filters appear for this country. Leave empty to show all.
@@ -2361,7 +2382,12 @@ export interface HeroBlockSelect<T extends boolean = true> {
   vimeoUrl?: T;
   videoUpload?: T;
   showSearch?: T;
-  defaultPropertyTab?: T;
+  propertyTabs?:
+    | T
+    | {
+        visibleTabs?: T;
+        defaultTab?: T;
+      };
   defaultCountry?: T;
   searchResultsLink?:
     | T
