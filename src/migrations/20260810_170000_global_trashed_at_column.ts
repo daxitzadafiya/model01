@@ -31,6 +31,13 @@ async function tableHasColumn(
 
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   for (const table of GLOBAL_TABLES) {
+    const exists = await db.all<{ name: string }>(
+      sql.raw(
+        `SELECT name FROM sqlite_master WHERE type = 'table' AND name = '${table.replace(/'/g, "''")}'`,
+      ),
+    )
+    if (!exists.length) continue
+
     const hasTrashedAt = await tableHasColumn(db, table, 'trashed_at')
     if (hasTrashedAt) continue
 
