@@ -17,7 +17,7 @@ export {
   createGlobalAuditAfterChange,
   serializeChangeValue,
 } from './auditLogHook'
-export { diffDocuments, normalizeValue } from './diffDocuments'
+export { inferSoftDeleteAuditAction } from './inferSoftDeleteAuditAction'
 export { getRequestIp, getRequestUserAgent } from './getRequestMeta'
 export {
   buildChangesSummary,

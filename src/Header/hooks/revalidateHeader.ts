@@ -7,13 +7,15 @@ export const revalidateHeader: GlobalAfterChangeHook = async ({
   doc,
   req: { payload, context },
 }) => {
-  if (!context.disableRevalidate) {
-    payload.logger.info(`Revalidating header`)
+  if (context?.globalTrashAction || context?.disableRevalidate) {
+    return doc
+  }
 
-    await revalidateCacheTag('global_header')
-    for (const locale of localeCodes) {
-      await revalidateCacheTag(`global_header_${locale}`)
-    }
+  payload.logger.info(`Revalidating header`)
+
+  await revalidateCacheTag('global_header')
+  for (const locale of localeCodes) {
+    await revalidateCacheTag(`global_header_${locale}`)
   }
 
   return doc

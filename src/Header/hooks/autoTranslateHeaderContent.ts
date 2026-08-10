@@ -1,6 +1,7 @@
 import type { GlobalAfterChangeHook } from 'payload'
 
 import { defaultLocale } from '@/i18n/locales'
+import { GLOBAL_DELETED_AT_FIELD } from '@/plugins/trashAndVersions/constants'
 import { enqueueAutoTranslate } from '@/utilities/autoTranslate/autoTranslateQueue'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
 import { documentHasSourceTranslatableContent } from '@/utilities/autoTranslate/documentTranslate'
@@ -14,6 +15,18 @@ export const autoTranslateHeaderContent: GlobalAfterChangeHook = async ({
   context,
 }) => {
   if (isAutoTranslating(context)) return doc
+  if (
+    context?.globalTrashAction ||
+    context?.restoreNavItem ||
+    context?.skipAutoTranslate ||
+    context?.disableRevalidate
+  ) {
+    return doc
+  }
+
+  if ((doc as Record<string, unknown>)?.[GLOBAL_DELETED_AT_FIELD]) {
+    return doc
+  }
 
   const sourceLocale = (req.locale ?? defaultLocale).trim().toLowerCase()
   if (sourceLocale !== defaultLocale) return doc

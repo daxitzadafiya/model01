@@ -107,6 +107,7 @@ export async function autoTranslatePost({
     const data = buildUpdateDataFromPatches(patches, {
       baseDoc: sourceRecord,
       targetDoc: targetDoc as unknown as Record<string, unknown> | null,
+      previousSourceDoc: previousDoc as unknown as Record<string, unknown> | null,
     })
     if (!data) continue
 

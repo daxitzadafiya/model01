@@ -2,6 +2,7 @@ import type { Field } from 'payload'
 
 import { link } from '@/fields/link'
 import { a } from '@/utilities/adminI18n'
+import { softDeleteItemFields } from '@/plugins/trashAndVersions/softDeleteFields'
 
 export const headerFields: Field[] = [
   link({
@@ -46,6 +47,7 @@ export const headerFields: Field[] = [
               dbName: 'sub_lnk',
             },
           }),
+          ...softDeleteItemFields,
         ],
         admin: {
           description: a(
@@ -55,11 +57,12 @@ export const headerFields: Field[] = [
           initCollapsed: true,
         },
       },
+      ...softDeleteItemFields,
     ],
     admin: {
       description: a(
         'admin.header.navItems.description',
-        'Navigation links for the current locale (switch locale in the admin bar to edit each language).',
+        'Navigation links for the current locale (switch locale in the admin bar to edit each language). Removing an item moves it to Globals Trash (soft delete).',
       ),
       initCollapsed: true,
       components: {

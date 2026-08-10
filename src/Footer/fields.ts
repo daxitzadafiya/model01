@@ -2,6 +2,7 @@ import type { Field } from 'payload'
 
 import { link } from '@/fields/link'
 import { a } from '@/utilities/adminI18n'
+import { softDeleteItemFields } from '@/plugins/trashAndVersions/softDeleteFields'
 
 import { sectionLayoutFields } from './sectionLayoutFields'
 
@@ -36,10 +37,10 @@ export const footerFields: Field[] = [
               plural: a('admin.footer.socialLinksPlural', 'Social Links'),
             },
             admin: {
-              description: a(
-                'admin.footer.socialLinks.description',
-                'Social or external links shown as icons. you can use from https://react-icons.github.io/react-icons/icons/fi/',
-              ),
+        description: a(
+          'admin.footer.socialLinks.description',
+          'Social or external links shown as icons. Removing a row moves it to Globals Trash.',
+        ),
               initCollapsed: true,
               components: {
                 RowLabel: '@/Footer/SocialRowLabel#SocialRowLabel',
@@ -98,11 +99,12 @@ export const footerFields: Field[] = [
               link({
                 appearances: false,
               }),
+              ...softDeleteItemFields,
             ],
             admin: {
               description: a(
                 'admin.footer.navItems.description',
-                'Footer links for the current locale (switch locale in the admin bar to edit each language).',
+                'Footer links for the current locale (switch locale in the admin bar to edit each language). Removing an item moves it to Globals Trash (soft delete).',
               ),
               initCollapsed: true,
               components: {
@@ -186,6 +188,10 @@ export const footerFields: Field[] = [
             },
             admin: {
               initCollapsed: true,
+              description: a(
+                'admin.footer.certifications.description',
+                'Certification badges in the footer. Removing a row moves it to Globals Trash.',
+              ),
               components: {
                 RowLabel: '@/Footer/CertificationRowLabel#CertificationRowLabel',
               },
@@ -307,7 +313,7 @@ export const footerFields: Field[] = [
             admin: {
               description: a(
                 'admin.footer.legalLinks.description',
-                'Legal and policy links shown in the bottom bar.',
+                'Legal and policy links shown in the bottom bar. Removing a row moves it to Globals Trash.',
               ),
               initCollapsed: true,
               components: {

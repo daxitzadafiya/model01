@@ -103,6 +103,7 @@ export async function autoTranslateGlobal({
     const data = buildUpdateDataFromPatches(patches, {
       baseDoc: sourceDoc,
       targetDoc,
+      previousSourceDoc: previousDoc,
     })
     if (!data) continue
 
@@ -115,6 +116,7 @@ export async function autoTranslateGlobal({
       context: {
         [AUTO_TRANSLATING_CONTEXT_KEY]: true,
         disableRevalidate: true,
+        skipAutoTranslate: true,
       },
       overrideAccess: true,
     })

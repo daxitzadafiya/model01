@@ -30,7 +30,7 @@ export const ActivityLogs: CollectionConfig = {
     ],
     description: a(
       'admin.activityLogs.description',
-      'Read-only audit trail of create, update, and delete actions across collections, globals, and settings.',
+      'Read-only audit trail of create, update, delete, and restore actions across collections, globals, and settings.',
     ),
   },
   disableDuplicate: true,
@@ -54,6 +54,7 @@ export const ActivityLogs: CollectionConfig = {
                 { label: a('admin.activityLogs.actions.create', 'Create'), value: 'create' },
                 { label: a('admin.activityLogs.actions.update', 'Update'), value: 'update' },
                 { label: a('admin.activityLogs.actions.delete', 'Delete'), value: 'delete' },
+                { label: a('admin.activityLogs.actions.restore', 'Restore'), value: 'restore' },
               ],
               label: a('admin.activityLogs.fields.action', 'Action'),
               admin: { readOnly: true, width: '25%' },

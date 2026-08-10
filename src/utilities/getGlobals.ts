@@ -5,6 +5,7 @@ import { type DataFromGlobalSlug, getPayload } from 'payload'
 import { unstable_cache } from 'next/cache'
 
 import type { Locale } from '@/i18n/config'
+import { isGlobalTrashed } from '@/utilities/isGlobalTrashed'
 
 type Global = keyof Config['globals']
 
@@ -20,6 +21,14 @@ async function getGlobal<T extends Global>(
     depth,
     locale,
   })
+
+  // Soft-trashed globals are hidden from the public site; keep a typed shell.
+  if (isGlobalTrashed(global)) {
+    return {
+      id: (global as { id?: number | string }).id,
+      trashedAt: (global as { trashedAt?: string | null }).trashedAt,
+    } as unknown as DataFromGlobalSlug<T>
+  }
 
   return global
 }

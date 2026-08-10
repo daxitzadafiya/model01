@@ -37,6 +37,7 @@ import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { resolveThemeCustomCSS } from '@/globals/Theme/siteThemeTokens.mjs'
 import { resolveThemeFontVars } from '@/globals/Theme/googleFonts'
 import { getServerSideURL } from '@/utilities/getURL'
+import { isGlobalTrashed } from '@/utilities/isGlobalTrashed'
 
 export const viewport: Viewport = {
   colorScheme: 'light',
@@ -107,9 +108,11 @@ async function ThemeStyles() {
       slug: 'theme',
       depth: 0,
     })
-    customCSS = theme.customCSS ?? null
-    fontMode = theme.fontMode ?? null
-    googleFonts = theme.googleFonts ?? null
+    if (!isGlobalTrashed(theme)) {
+      customCSS = theme.customCSS ?? null
+      fontMode = theme.fontMode ?? null
+      googleFonts = theme.googleFonts ?? null
+    }
   } catch (error) {
     console.error('Error fetching Theme global:', error)
   }

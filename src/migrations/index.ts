@@ -1,57 +1,70 @@
-import * as migration_20260529_072521_kb_short_names from './20260529_072521_kb_short_names'
-import * as migration_20260605_104900_post_subtitle from './20260605_104900_post_subtitle'
-import * as migration_20260605_150500_header_nav_dropdown from './20260605_150500_header_nav_dropdown'
-import * as migration_20260608_161200_translations_collection from './20260608_161200_translations_collection'
-import * as migration_20260608_161500_translations_rels from './20260608_161500_translations_rels'
-import * as migration_20260609_095300_property_map_global from './20260609_095300_property_map_global'
-import * as migration_20260609_120000_property_list_block_show_map_version from './20260609_120000_property_list_block_show_map_version'
-import * as migration_20260609_150000_property_filters_global from './20260609_150000_property_filters_global'
-import * as migration_20260609_124500_email_settings from './20260609_124500_email_settings'
-import * as migration_20260610_120000_integration_settings_globals from './20260610_120000_integration_settings_globals'
-import * as migration_20260610_170500_email_template_fields from './20260610_170500_email_template_fields'
-import * as migration_20260610_180000_client_confirmation_contact_fields from './20260610_180000_client_confirmation_contact_fields'
-import * as migration_20260611_100700_hero_block_media from './20260611_100700_hero_block_media'
-import * as migration_20260611_140000_weather_settings from './20260611_140000_weather_settings'
-import * as migration_20260612_100000_hero_search_results_link from './20260612_100000_hero_search_results_link'
-import * as migration_20260612_110000_logo_app_name from './20260612_110000_logo_app_name'
-import * as migration_20260612_120000_footer_copyright_app_name from './20260612_120000_footer_copyright_app_name'
-import * as migration_20260612_160000_posts_localized_content from './20260612_160000_posts_localized_content'
-import * as migration_20260612_170000_posts_localized_backfill from './20260612_170000_posts_localized_backfill'
-import * as migration_20260615_100000_theme_custom_css from './20260615_100000_theme_custom_css'
-import * as migration_20260615_120000_property_filters_sort_options from './20260615_120000_property_filters_sort_options'
-import * as migration_20260615_130000_property_filters_sort_params_column from './20260615_130000_property_filters_sort_params_column'
-import * as migration_20260615_140000_footer_copyright_localized from './20260615_140000_footer_copyright_localized'
-import * as migration_20260615_140000_optima_crm_similar_commercials from './20260615_140000_optima_crm_similar_commercials'
-import * as migration_20260617_100000_contact_section_office_coordinates from './20260617_100000_contact_section_office_coordinates'
-import * as migration_20260617_110000_map_block_center from './20260617_110000_map_block_center'
-import * as migration_20260702_125500_property_filters_bathrooms from './20260702_125500_property_filters_bathrooms'
-import * as migration_20260703_170000_hero_block_search_tabs from './20260703_170000_hero_block_search_tabs'
-import * as migration_20260706_120000_property_filters_holiday from './20260706_120000_property_filters_holiday'
-import * as migration_20260715_140000_email_holiday_booking_template from './20260715_140000_email_holiday_booking_template'
-import * as migration_20260723_100000_footer_powered_by from './20260723_100000_footer_powered_by'
-import * as migration_20260727_100000_localization_default_locale from './20260727_100000_localization_default_locale'
-import * as migration_20260727_150000_countries_global from './20260727_150000_countries_global'
-import * as migration_20260727_180000_countries_collection from './20260727_180000_countries_collection'
-import * as migration_20260728_100000_countries_is_default from './20260728_100000_countries_is_default'
-import * as migration_20260728_120000_integrations_whatsapp from './20260728_120000_integrations_whatsapp'
-import * as migration_20260728_121000_integrations_whatsapp_ensure from './20260728_121000_integrations_whatsapp_ensure'
-import * as migration_20260728_130000_integrations_virtual_assistant from './20260728_130000_integrations_virtual_assistant'
-import * as migration_20260728_140000_footer_certifications_image from './20260728_140000_footer_certifications_image'
-import * as migration_20260728_141000_footer_certifications_image_ensure from './20260728_141000_footer_certifications_image_ensure'
-import * as migration_20260728_150000_footer_certifications_link from './20260728_150000_footer_certifications_link'
-import * as migration_20260728_160000_theme_font_family from './20260728_160000_theme_font_family'
-import * as migration_20260728_170000_theme_google_fonts_library from './20260728_170000_theme_google_fonts_library'
-import * as migration_20260730_100000_email_save_search_template from './20260730_100000_email_save_search_template'
-import * as migration_20260803_100000_activity_logs from './20260803_100000_activity_logs'
-import * as migration_20260803_110000_activity_logs_locale_actor from './20260803_110000_activity_logs_locale_actor'
-import * as migration_20260804_100000_localization_display_name_localized from './20260804_100000_localization_display_name_localized'
-import * as migration_20260804_110000_footer_section_layout from './20260804_110000_footer_section_layout'
-import * as migration_20260804_120000_clear_property_list_empty_states from './20260804_120000_clear_property_list_empty_states'
-import * as migration_20260804_130000_delete_cms_dual_and_dead_translation_keys from './20260804_130000_delete_cms_dual_and_dead_translation_keys'
-import * as migration_20260804_140000_delete_property_list_cms_dual_translation_keys from './20260804_140000_delete_property_list_cms_dual_translation_keys'
-import * as migration_20260805_120000_countries_price_ranges from './20260805_120000_countries_price_ranges'
-import * as migration_20260807_100000_hero_property_tabs_group from './20260807_100000_hero_property_tabs_group'
-import * as migration_20260807_110000_hero_property_tabs_visible_tabs_id from './20260807_110000_hero_property_tabs_visible_tabs_id'
+import * as migration_20260529_072521_kb_short_names from './20260529_072521_kb_short_names';
+import * as migration_20260605_104900_post_subtitle from './20260605_104900_post_subtitle';
+import * as migration_20260605_150500_header_nav_dropdown from './20260605_150500_header_nav_dropdown';
+import * as migration_20260608_161200_translations_collection from './20260608_161200_translations_collection';
+import * as migration_20260608_161500_translations_rels from './20260608_161500_translations_rels';
+import * as migration_20260609_095300_property_map_global from './20260609_095300_property_map_global';
+import * as migration_20260609_120000_property_list_block_show_map_version from './20260609_120000_property_list_block_show_map_version';
+import * as migration_20260609_124500_email_settings from './20260609_124500_email_settings';
+import * as migration_20260609_150000_property_filters_global from './20260609_150000_property_filters_global';
+import * as migration_20260610_120000_integration_settings_globals from './20260610_120000_integration_settings_globals';
+import * as migration_20260610_170500_email_template_fields from './20260610_170500_email_template_fields';
+import * as migration_20260610_180000_client_confirmation_contact_fields from './20260610_180000_client_confirmation_contact_fields';
+import * as migration_20260611_100700_hero_block_media from './20260611_100700_hero_block_media';
+import * as migration_20260611_140000_weather_settings from './20260611_140000_weather_settings';
+import * as migration_20260612_100000_hero_search_results_link from './20260612_100000_hero_search_results_link';
+import * as migration_20260612_110000_logo_app_name from './20260612_110000_logo_app_name';
+import * as migration_20260612_120000_footer_copyright_app_name from './20260612_120000_footer_copyright_app_name';
+import * as migration_20260612_160000_posts_localized_content from './20260612_160000_posts_localized_content';
+import * as migration_20260612_170000_posts_localized_backfill from './20260612_170000_posts_localized_backfill';
+import * as migration_20260615_100000_theme_custom_css from './20260615_100000_theme_custom_css';
+import * as migration_20260615_120000_property_filters_sort_options from './20260615_120000_property_filters_sort_options';
+import * as migration_20260615_130000_property_filters_sort_params_column from './20260615_130000_property_filters_sort_params_column';
+import * as migration_20260615_140000_footer_copyright_localized from './20260615_140000_footer_copyright_localized';
+import * as migration_20260615_140000_optima_crm_similar_commercials from './20260615_140000_optima_crm_similar_commercials';
+import * as migration_20260617_100000_contact_section_office_coordinates from './20260617_100000_contact_section_office_coordinates';
+import * as migration_20260617_110000_map_block_center from './20260617_110000_map_block_center';
+import * as migration_20260702_125500_property_filters_bathrooms from './20260702_125500_property_filters_bathrooms';
+import * as migration_20260703_170000_hero_block_search_tabs from './20260703_170000_hero_block_search_tabs';
+import * as migration_20260706_120000_property_filters_holiday from './20260706_120000_property_filters_holiday';
+import * as migration_20260715_140000_email_holiday_booking_template from './20260715_140000_email_holiday_booking_template';
+import * as migration_20260722_143000_optima_project_brochure_and_constructions_image from './20260722_143000_optima_project_brochure_and_constructions_image';
+import * as migration_20260723_100000_footer_powered_by from './20260723_100000_footer_powered_by';
+import * as migration_20260727_100000_localization_default_locale from './20260727_100000_localization_default_locale';
+import * as migration_20260727_150000_countries_global from './20260727_150000_countries_global';
+import * as migration_20260727_180000_countries_collection from './20260727_180000_countries_collection';
+import * as migration_20260728_100000_countries_is_default from './20260728_100000_countries_is_default';
+import * as migration_20260728_120000_integrations_whatsapp from './20260728_120000_integrations_whatsapp';
+import * as migration_20260728_121000_integrations_whatsapp_ensure from './20260728_121000_integrations_whatsapp_ensure';
+import * as migration_20260728_130000_integrations_virtual_assistant from './20260728_130000_integrations_virtual_assistant';
+import * as migration_20260728_140000_footer_certifications_image from './20260728_140000_footer_certifications_image';
+import * as migration_20260728_141000_footer_certifications_image_ensure from './20260728_141000_footer_certifications_image_ensure';
+import * as migration_20260728_150000_footer_certifications_link from './20260728_150000_footer_certifications_link';
+import * as migration_20260728_160000_theme_font_family from './20260728_160000_theme_font_family';
+import * as migration_20260728_170000_theme_google_fonts_library from './20260728_170000_theme_google_fonts_library';
+import * as migration_20260730_100000_email_save_search_template from './20260730_100000_email_save_search_template';
+import * as migration_20260803_100000_activity_logs from './20260803_100000_activity_logs';
+import * as migration_20260803_110000_activity_logs_locale_actor from './20260803_110000_activity_logs_locale_actor';
+import * as migration_20260804_100000_localization_display_name_localized from './20260804_100000_localization_display_name_localized';
+import * as migration_20260804_110000_footer_section_layout from './20260804_110000_footer_section_layout';
+import * as migration_20260804_120000_clear_property_list_empty_states from './20260804_120000_clear_property_list_empty_states';
+import * as migration_20260804_130000_delete_cms_dual_and_dead_translation_keys from './20260804_130000_delete_cms_dual_and_dead_translation_keys';
+import * as migration_20260804_140000_delete_property_list_cms_dual_translation_keys from './20260804_140000_delete_property_list_cms_dual_translation_keys';
+import * as migration_20260805_120000_countries_price_ranges from './20260805_120000_countries_price_ranges';
+import * as migration_20260807_100000_hero_property_tabs_group from './20260807_100000_hero_property_tabs_group';
+import * as migration_20260807_110000_hero_property_tabs_visible_tabs_id from './20260807_110000_hero_property_tabs_visible_tabs_id';
+import * as migration_20260810_110000_trash_and_versions from './20260810_110000_trash_and_versions'
+import * as migration_20260810_120000_global_version_snapshots from './20260810_120000_global_version_snapshots'
+import * as migration_20260810_130000_global_version_snapshots_rels from './20260810_130000_global_version_snapshots_rels'
+import * as migration_20260810_140000_nav_item_soft_delete from './20260810_140000_nav_item_soft_delete'
+import * as migration_20260810_150000_native_global_versions from './20260810_150000_native_global_versions'
+import * as migration_20260810_160000_rename_optima_crm_table from './20260810_160000_rename_optima_crm_table'
+import * as migration_20260810_170000_global_trashed_at_column from './20260810_170000_global_trashed_at_column'
+import * as migration_20260810_180000_global_version_trashed_at_column from './20260810_180000_global_version_trashed_at_column'
+import * as migration_20260810_190000_global_array_soft_delete from './20260810_190000_global_array_soft_delete'
+import * as migration_20260810_200000_global_version_array_soft_delete from './20260810_200000_global_version_array_soft_delete'
+import * as migration_20260810_210000_repair_property_filter_labels from './20260810_210000_repair_property_filter_labels'
+import * as migration_20260810_220000_users_search_trash from './20260810_220000_users_search_trash'
 
 export const migrations = [
   {
@@ -90,14 +103,14 @@ export const migrations = [
     name: '20260609_120000_property_list_block_show_map_version',
   },
   {
-    up: migration_20260609_150000_property_filters_global.up,
-    down: migration_20260609_150000_property_filters_global.down,
-    name: '20260609_150000_property_filters_global',
-  },
-  {
     up: migration_20260609_124500_email_settings.up,
     down: migration_20260609_124500_email_settings.down,
     name: '20260609_124500_email_settings',
+  },
+  {
+    up: migration_20260609_150000_property_filters_global.up,
+    down: migration_20260609_150000_property_filters_global.down,
+    name: '20260609_150000_property_filters_global',
   },
   {
     up: migration_20260610_120000_integration_settings_globals.up,
@@ -203,6 +216,11 @@ export const migrations = [
     up: migration_20260715_140000_email_holiday_booking_template.up,
     down: migration_20260715_140000_email_holiday_booking_template.down,
     name: '20260715_140000_email_holiday_booking_template',
+  },
+  {
+    up: migration_20260722_143000_optima_project_brochure_and_constructions_image.up,
+    down: migration_20260722_143000_optima_project_brochure_and_constructions_image.down,
+    name: '20260722_143000_optima_project_brochure_and_constructions_image',
   },
   {
     up: migration_20260723_100000_footer_powered_by.up,
@@ -323,5 +341,65 @@ export const migrations = [
     up: migration_20260807_110000_hero_property_tabs_visible_tabs_id.up,
     down: migration_20260807_110000_hero_property_tabs_visible_tabs_id.down,
     name: '20260807_110000_hero_property_tabs_visible_tabs_id',
+  },
+  {
+    up: migration_20260810_110000_trash_and_versions.up,
+    down: migration_20260810_110000_trash_and_versions.down,
+    name: '20260810_110000_trash_and_versions',
+  },
+  {
+    up: migration_20260810_120000_global_version_snapshots.up,
+    down: migration_20260810_120000_global_version_snapshots.down,
+    name: '20260810_120000_global_version_snapshots',
+  },
+  {
+    up: migration_20260810_130000_global_version_snapshots_rels.up,
+    down: migration_20260810_130000_global_version_snapshots_rels.down,
+    name: '20260810_130000_global_version_snapshots_rels',
+  },
+  {
+    up: migration_20260810_140000_nav_item_soft_delete.up,
+    down: migration_20260810_140000_nav_item_soft_delete.down,
+    name: '20260810_140000_nav_item_soft_delete',
+  },
+  {
+    up: migration_20260810_150000_native_global_versions.up,
+    down: migration_20260810_150000_native_global_versions.down,
+    name: '20260810_150000_native_global_versions',
+  },
+  {
+    up: migration_20260810_160000_rename_optima_crm_table.up,
+    down: migration_20260810_160000_rename_optima_crm_table.down,
+    name: '20260810_160000_rename_optima_crm_table',
+  },
+  {
+    up: migration_20260810_170000_global_trashed_at_column.up,
+    down: migration_20260810_170000_global_trashed_at_column.down,
+    name: '20260810_170000_global_trashed_at_column',
+  },
+  {
+    up: migration_20260810_180000_global_version_trashed_at_column.up,
+    down: migration_20260810_180000_global_version_trashed_at_column.down,
+    name: '20260810_180000_global_version_trashed_at_column',
+  },
+  {
+    up: migration_20260810_190000_global_array_soft_delete.up,
+    down: migration_20260810_190000_global_array_soft_delete.down,
+    name: '20260810_190000_global_array_soft_delete',
+  },
+  {
+    up: migration_20260810_200000_global_version_array_soft_delete.up,
+    down: migration_20260810_200000_global_version_array_soft_delete.down,
+    name: '20260810_200000_global_version_array_soft_delete',
+  },
+  {
+    up: migration_20260810_210000_repair_property_filter_labels.up,
+    down: migration_20260810_210000_repair_property_filter_labels.down,
+    name: '20260810_210000_repair_property_filter_labels',
+  },
+  {
+    up: migration_20260810_220000_users_search_trash.up,
+    down: migration_20260810_220000_users_search_trash.down,
+    name: '20260810_220000_users_search_trash',
   },
 ]

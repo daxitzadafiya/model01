@@ -131,6 +131,8 @@ export async function syncCountriesFromCRM(payload: Payload): Promise<SyncCountr
       depth: 0,
       limit: 1000,
       pagination: false,
+      // Soft-deleted rows still hold unique `key`; include them so sync updates/restores.
+      trash: true,
     })
 
     const existingByKey = new Map(
@@ -154,8 +156,13 @@ export async function syncCountriesFromCRM(payload: Payload): Promise<SyncCountr
         await payload.update({
           collection: 'countries',
           id: existing.id,
-          data,
+          data: {
+            ...data,
+            // Restore if this country was soft-deleted.
+            deletedAt: null,
+          },
           depth: 0,
+          trash: true,
           context: { disableRevalidate: true },
         })
         updated += 1
@@ -188,6 +195,7 @@ export async function syncCountriesFromCRM(payload: Payload): Promise<SyncCountr
 export async function ensureCountriesSeeded(payload: Payload): Promise<void> {
   const counted = await payload.count({
     collection: 'countries',
+    trash: true,
   })
 
   if (counted.totalDocs > 0) return

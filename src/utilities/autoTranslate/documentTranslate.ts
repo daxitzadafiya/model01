@@ -198,18 +198,43 @@ function newArrayRowId(): string {
  * Reusing source-locale row IDs when writing another locale causes:
  * `UNIQUE constraint failed: footer_nav_items.id`
  *
- * Prefer existing target-locale IDs by index; otherwise mint new IDs.
+ * Prefer existing target-locale IDs by matching each source row to its index in the
+ * previous source doc (so deletions/reorders do not shift IDs onto the wrong rows).
+ * Fall back to current index; otherwise mint new IDs.
  */
-function ensureUniqueLocalizedArrayIds(node: unknown, targetNode: unknown): void {
+function ensureUniqueLocalizedArrayIds(
+  node: unknown,
+  targetNode: unknown,
+  previousSourceNode?: unknown,
+): void {
   if (Array.isArray(node)) {
     const targetArray = Array.isArray(targetNode) ? targetNode : null
+    const previousArray = Array.isArray(previousSourceNode) ? previousSourceNode : null
 
     for (let index = 0; index < node.length; index++) {
       const item = node[index]
       if (!item || typeof item !== 'object' || Array.isArray(item)) continue
 
       const record = item as Record<string, unknown>
-      const targetItem = targetArray?.[index]
+      const sourceId =
+        typeof record.id === 'string' || typeof record.id === 'number'
+          ? String(record.id).trim()
+          : ''
+
+      let matchedPrevIndex = -1
+      if (sourceId && previousArray) {
+        matchedPrevIndex = previousArray.findIndex((prev) => {
+          if (!prev || typeof prev !== 'object' || Array.isArray(prev)) return false
+          const prevId = (prev as Record<string, unknown>).id
+          return prevId != null && String(prevId).trim() === sourceId
+        })
+      }
+
+      const targetItem =
+        matchedPrevIndex >= 0 ? targetArray?.[matchedPrevIndex] : targetArray?.[index]
+      const previousItem =
+        matchedPrevIndex >= 0 ? previousArray?.[matchedPrevIndex] : previousArray?.[index]
+
       const targetId =
         targetItem && typeof targetItem === 'object' && !Array.isArray(targetItem)
           ? (targetItem as Record<string, unknown>).id
@@ -217,6 +242,8 @@ function ensureUniqueLocalizedArrayIds(node: unknown, targetNode: unknown): void
 
       if (typeof targetId === 'string' && targetId.trim()) {
         record.id = targetId.trim()
+      } else if (typeof targetId === 'number') {
+        record.id = targetId
       } else {
         record.id = newArrayRowId()
       }
@@ -224,6 +251,7 @@ function ensureUniqueLocalizedArrayIds(node: unknown, targetNode: unknown): void
       ensureUniqueLocalizedArrayIds(
         record,
         targetItem && typeof targetItem === 'object' ? targetItem : null,
+        previousItem && typeof previousItem === 'object' ? previousItem : null,
       )
     }
     return
@@ -236,10 +264,16 @@ function ensureUniqueLocalizedArrayIds(node: unknown, targetNode: unknown): void
     targetNode && typeof targetNode === 'object' && !Array.isArray(targetNode)
       ? (targetNode as Record<string, unknown>)
       : null
+  const previousRecord =
+    previousSourceNode &&
+    typeof previousSourceNode === 'object' &&
+    !Array.isArray(previousSourceNode)
+      ? (previousSourceNode as Record<string, unknown>)
+      : null
 
   for (const [key, value] of Object.entries(record)) {
     if (key === 'id') continue
-    ensureUniqueLocalizedArrayIds(value, targetRecord?.[key])
+    ensureUniqueLocalizedArrayIds(value, targetRecord?.[key], previousRecord?.[key])
   }
 }
 
@@ -250,6 +284,8 @@ export function buildUpdateDataFromPatches(
     baseDoc?: Record<string, unknown> | null
     /** Existing target-locale doc — reuse its array row IDs when present. */
     targetDoc?: Record<string, unknown> | null
+    /** Pre-change source doc — map IDs by stable row identity after deletions/reorders. */
+    previousSourceDoc?: Record<string, unknown> | null
   },
 ): Record<string, unknown> | null {
   if (patches.size === 0) return null
@@ -283,7 +319,11 @@ export function buildUpdateDataFromPatches(
 
   if (appliedCount === 0) return null
 
-  ensureUniqueLocalizedArrayIds(data, options?.targetDoc ?? null)
+  ensureUniqueLocalizedArrayIds(
+    data,
+    options?.targetDoc ?? null,
+    options?.previousSourceDoc ?? null,
+  )
 
   return data
 }

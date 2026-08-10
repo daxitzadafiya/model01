@@ -12,6 +12,7 @@ import { isAutoTranslating } from '@/utilities/autoTranslate/context'
 import { ACTIVITY_LOGS_SLUG, type AuditAction, type FieldChange } from './constants'
 import { diffDocuments } from './diffDocuments'
 import { buildChangesSummary } from './humanizeFieldPath'
+import { inferSoftDeleteAuditAction } from './inferSoftDeleteAuditAction'
 import { maskFieldChanges } from './maskSensitive'
 import { resolveActor, resolveLocale, resolveLocaleLabel } from './resolveActor'
 import { resolveDocumentTitle, resolveModule, resolveSection } from './resolveModule'
@@ -116,10 +117,14 @@ export function createCollectionAuditAfterChange(
     const next = asDoc(doc)
     const prev = operation === 'create' ? null : asDoc(previousDoc)
     const changes = diffDocuments(prev, next)
+    const softAction =
+      operation === 'create' ? null : inferSoftDeleteAuditAction(prev, next, changes)
+    const action: AuditAction =
+      operation === 'create' ? 'create' : softAction ?? 'update'
 
     await writeAuditLog({
       req,
-      action: operation === 'create' ? 'create' : 'update',
+      action,
       module,
       section,
       documentId: String(next?.id ?? ''),
@@ -170,10 +175,12 @@ export function createGlobalAuditAfterChange(global: GlobalConfig): GlobalAfterC
     // Globals have no `operation` on afterChange — treat missing previous as create.
     const isCreate = !prev || Object.keys(prev).length === 0
     const changes = diffDocuments(isCreate ? null : prev, next)
+    const softAction = isCreate ? null : inferSoftDeleteAuditAction(prev, next, changes)
+    const action: AuditAction = isCreate ? 'create' : softAction ?? 'update'
 
     await writeAuditLog({
       req,
-      action: isCreate ? 'create' : 'update',
+      action,
       module,
       section,
       documentId: global.slug,

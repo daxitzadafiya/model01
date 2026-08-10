@@ -7,6 +7,8 @@ import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
 export const OptimaCrmSettings: GlobalConfig = {
   slug: 'optimaCrmSettings',
+  // Shorten versioned table/enum identifiers (SQLite 63-char limit).
+  dbName: 'optima_crm',
   label: a('admin.optimaCrmSettings.label', 'Optima CRM'),
   access: {
     read: authenticated,
@@ -169,6 +171,7 @@ export const OptimaCrmSettings: GlobalConfig = {
       fields: [
         {
           name: 'similarCommercials',
+          dbName: 'simCom',
           type: 'select',
           label: a('admin.optimaCrmSettings.properties.similarCommercials', 'Similar commercials'),
           defaultValue: 'exclude_similar',

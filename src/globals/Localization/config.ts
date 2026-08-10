@@ -120,7 +120,7 @@ export const Localization: GlobalConfig = {
       admin: {
         description: a(
           'admin.localization.languages.description',
-          'Add languages with + Add Language. Content locale must be a code from the list (not a display name like "Deutsch").',
+          'Add languages with + Add Language. Removing a language moves it to Globals Trash. Content locale must be a code from the list (not a display name like "Deutsch").',
         ),
         initCollapsed: false,
       },

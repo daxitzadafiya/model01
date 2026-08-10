@@ -30,7 +30,7 @@ export const HeaderNav: React.FC<Props> = ({
   onDarkBackground = false,
 }) => {
   const pathname = usePathname()
-  const navItems = data?.navItems || []
+  const navItems = (data?.navItems || []).filter((item) => !item?.isDeleted)
 
   return (
     <>

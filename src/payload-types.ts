@@ -297,6 +297,7 @@ export interface Page {
   slug: string;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
   _status?: ('draft' | 'published') | null;
 }
 /**
@@ -357,6 +358,7 @@ export interface Post {
   slug: string;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
   _status?: ('draft' | 'published') | null;
 }
 /**
@@ -384,6 +386,7 @@ export interface Media {
   folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
   url?: string | null;
   thumbnailURL?: string | null;
   filename?: string | null;
@@ -501,6 +504,7 @@ export interface Category {
     | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -512,6 +516,7 @@ export interface User {
   roles: ('admin' | 'editor' | 'user')[];
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
   email: string;
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;
@@ -870,6 +875,7 @@ export interface Form {
     | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1679,6 +1685,7 @@ export interface Translation {
     | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * CRM countries cached in the CMS. Sync from Optima, then toggle Sale / Rental / Holiday to control which countries appear in each transaction filter. Choose the Default country from the dropdown above the list (Sale-only).
@@ -1762,6 +1769,7 @@ export interface Country {
     | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1788,6 +1796,7 @@ export interface Redirect {
   };
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1812,6 +1821,7 @@ export interface FormSubmission {
   submissionLocale?: string | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * This is a collection of automatically created search results. These results are used by the global site search and will be updated automatically as documents in the CMS are created or updated.
@@ -1843,16 +1853,17 @@ export interface Search {
     | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
- * Read-only audit trail of create, update, and delete actions across collections, globals, and settings.
+ * Read-only audit trail of create, update, delete, and restore actions across collections, globals, and settings.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "activity-logs".
  */
 export interface ActivityLog {
   id: number;
-  action: 'create' | 'update' | 'delete';
+  action: 'create' | 'update' | 'delete' | 'restore';
   module: 'Collections' | 'Globals' | 'Settings' | 'MCP';
   section: string;
   localeLabel?: string | null;
@@ -2264,6 +2275,7 @@ export interface PagesSelect<T extends boolean = true> {
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
   _status?: T;
 }
 /**
@@ -2899,6 +2911,7 @@ export interface PostsSelect<T extends boolean = true> {
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
   _status?: T;
 }
 /**
@@ -2911,6 +2924,7 @@ export interface MediaSelect<T extends boolean = true> {
   folder?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
   url?: T;
   thumbnailURL?: T;
   filename?: T;
@@ -3014,6 +3028,7 @@ export interface CategoriesSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3024,6 +3039,7 @@ export interface UsersSelect<T extends boolean = true> {
   roles?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
   email?: T;
   resetPasswordToken?: T;
   resetPasswordExpiration?: T;
@@ -3048,6 +3064,7 @@ export interface TranslationsSelect<T extends boolean = true> {
   translations?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3069,6 +3086,7 @@ export interface CountriesSelect<T extends boolean = true> {
   holidayBudgetRanges?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3085,6 +3103,7 @@ export interface RedirectsSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3218,6 +3237,7 @@ export interface FormsSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3238,6 +3258,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
   submissionLocale?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3265,6 +3286,7 @@ export interface SearchSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3429,7 +3451,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Edit localized header copy in English; other locales update via DeepL on save when DeepL is enabled.
+ * Edit localized header copy in English; other locales update via DeepL on save when DeepL is enabled. Removed menu items go to Globals Trash; use Versions to compare and restore earlier Header states.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header".
@@ -3455,7 +3477,7 @@ export interface Header {
     label: string;
   };
   /**
-   * Navigation links for the current locale (switch locale in the admin bar to edit each language).
+   * Navigation links for the current locale (switch locale in the admin bar to edit each language). Removing an item moves it to Globals Trash (soft delete).
    */
   navItems?:
     | {
@@ -3494,9 +3516,13 @@ export interface Header {
                 url?: string | null;
                 label: string;
               };
+              isDeleted?: boolean | null;
+              deletedAt?: string | null;
               id?: string | null;
             }[]
           | null;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3504,7 +3530,7 @@ export interface Header {
   createdAt?: string | null;
 }
 /**
- * Edit localized footer copy in English; other locales update via DeepL on save when DeepL is enabled.
+ * Edit localized footer copy in English; other locales update via DeepL on save when DeepL is enabled. Removed links and icons go to Globals Trash; use Versions to compare and restore earlier Footer states.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "footer".
@@ -3528,7 +3554,7 @@ export interface Footer {
    */
   tagline?: string | null;
   /**
-   * Social or external links shown as icons. you can use from https://react-icons.github.io/react-icons/icons/fi/
+   * Social or external links shown as icons. Removing a row moves it to Globals Trash.
    */
   socialLinks?:
     | {
@@ -3538,6 +3564,8 @@ export interface Footer {
         icon: string;
         url: string;
         newTab?: boolean | null;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3555,7 +3583,7 @@ export interface Footer {
   quickLinksColumnWidth?: ('2' | '3' | '4') | null;
   quickLinksTitle?: string | null;
   /**
-   * Footer links for the current locale (switch locale in the admin bar to edit each language).
+   * Footer links for the current locale (switch locale in the admin bar to edit each language). Removing an item moves it to Globals Trash (soft delete).
    */
   navItems?:
     | {
@@ -3574,6 +3602,8 @@ export interface Footer {
           url?: string | null;
           label: string;
         };
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3625,6 +3655,9 @@ export interface Footer {
         } | null);
     url?: string | null;
   };
+  /**
+   * Certification badges in the footer. Removing a row moves it to Globals Trash.
+   */
   certifications?:
     | {
         /**
@@ -3635,6 +3668,8 @@ export interface Footer {
          * Optional name for this certification (admin list + image alt fallback).
          */
         label?: string | null;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3664,7 +3699,7 @@ export interface Footer {
     url?: string | null;
   };
   /**
-   * Legal and policy links shown in the bottom bar.
+   * Legal and policy links shown in the bottom bar. Removing a row moves it to Globals Trash.
    */
   legalLinks?:
     | {
@@ -3683,6 +3718,8 @@ export interface Footer {
           url?: string | null;
           label: string;
         };
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3714,6 +3751,8 @@ export interface Theme {
          * Only one font can be active at a time.
          */
         active?: boolean | null;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3737,7 +3776,7 @@ export interface Localization {
    */
   defaultLocale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
   /**
-   * Add languages with + Add Language. Content locale must be a code from the list (not a display name like "Deutsch").
+   * Add languages with + Add Language. Removing a language moves it to Globals Trash. Content locale must be a code from the list (not a display name like "Deutsch").
    */
   languages?:
     | {
@@ -3755,6 +3794,8 @@ export interface Localization {
          */
         shortCode: string;
         flag: 'gb' | 'us' | 'de' | 'fr' | 'es' | 'gr' | 'it' | 'nl';
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3917,6 +3958,8 @@ export interface PropertyFilter {
          * JSON merged into options.sort (e.g. {"created_at": -1}, {"current_price": 1}, {"updated_at": true}).
          */
         sortParams: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3938,6 +3981,8 @@ export interface PropertyFilter {
          * CRM value or "any".
          */
         max: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3951,6 +3996,8 @@ export interface PropertyFilter {
          */
         value: string;
         label: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3964,6 +4011,8 @@ export interface PropertyFilter {
          */
         value: string;
         label: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3974,6 +4023,8 @@ export interface PropertyFilter {
          */
         value: string;
         label: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3984,6 +4035,8 @@ export interface PropertyFilter {
          */
         value: string;
         label: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3997,6 +4050,8 @@ export interface PropertyFilter {
          */
         value: string;
         label: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -4010,6 +4065,8 @@ export interface PropertyFilter {
          */
         value: string;
         label: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -4031,6 +4088,8 @@ export interface PropertyFilter {
          * CRM value or "any".
          */
         max: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -4380,8 +4439,12 @@ export interface HeaderSelect<T extends boolean = true> {
                     url?: T;
                     label?: T;
                   };
+              isDeleted?: T;
+              deletedAt?: T;
               id?: T;
             };
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -4403,6 +4466,8 @@ export interface FooterSelect<T extends boolean = true> {
         icon?: T;
         url?: T;
         newTab?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   quickLinksShowOnSite?: T;
@@ -4421,6 +4486,8 @@ export interface FooterSelect<T extends boolean = true> {
               url?: T;
               label?: T;
             };
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   contactShowOnSite?: T;
@@ -4451,6 +4518,8 @@ export interface FooterSelect<T extends boolean = true> {
     | {
         image?: T;
         label?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   bottomBarShowOnSite?: T;
@@ -4474,6 +4543,8 @@ export interface FooterSelect<T extends boolean = true> {
               url?: T;
               label?: T;
             };
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -4491,6 +4562,8 @@ export interface ThemeSelect<T extends boolean = true> {
     | {
         family?: T;
         active?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   customCSS?: T;
@@ -4512,6 +4585,8 @@ export interface LocalizationSelect<T extends boolean = true> {
         label?: T;
         shortCode?: T;
         flag?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -4599,6 +4674,8 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
         value?: T;
         label?: T;
         sortParams?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   priceRanges?:
@@ -4608,6 +4685,8 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
         label?: T;
         min?: T;
         max?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   bedrooms?:
@@ -4615,6 +4694,8 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
     | {
         value?: T;
         label?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   bathrooms?:
@@ -4622,6 +4703,8 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
     | {
         value?: T;
         label?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   minPrices?:
@@ -4629,6 +4712,8 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
     | {
         value?: T;
         label?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   maxPrices?:
@@ -4636,6 +4721,8 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
     | {
         value?: T;
         label?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   features?:
@@ -4643,6 +4730,8 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
     | {
         value?: T;
         label?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   guests?:
@@ -4650,6 +4739,8 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
     | {
         value?: T;
         label?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   holidayBudgetRanges?:
@@ -4659,6 +4750,8 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
         label?: T;
         min?: T;
         max?: T;
+        isDeleted?: T;
+        deletedAt?: T;
         id?: T;
       };
   updatedAt?: T;
