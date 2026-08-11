@@ -13,7 +13,7 @@ export type CMSLinkType = {
   newTab?: boolean | null
   reference?: {
     relationTo: 'pages' | 'posts'
-    value: Page | Post | string | number
+    value: Page | Post | string | number | null
   } | null
   size?: ButtonProps['size'] | null
   type?: 'custom' | 'reference' | null
@@ -25,10 +25,12 @@ export function getCMSLinkHref({
   reference,
   url,
 }: Pick<CMSLinkType, 'type' | 'reference' | 'url'>): string | null {
-  if (type === 'reference' && typeof reference?.value === 'object' && reference.value.slug) {
+  // `typeof null === 'object'` — guard null (e.g. trashed / missing populated docs)
+  const value = reference?.value
+  if (type === 'reference' && value && typeof value === 'object' && value.slug) {
     return reference.relationTo !== 'pages'
-      ? `/${reference.relationTo}/${reference.value.slug}`
-      : `/${reference.value.slug}`
+      ? `/${reference.relationTo}/${value.slug}`
+      : `/${value.slug}`
   }
 
   return url ?? null
