@@ -4,6 +4,7 @@ import Link from 'next/link'
 import React, { useEffect, useMemo, useState } from 'react'
 import { MapPin } from 'lucide-react'
 
+import { DetailReference } from '@/components/DetailReference'
 import {
   PropertyDetailFavoriteButton,
   PropertyDetailFooterActions,
@@ -239,6 +240,11 @@ export const PropertyDetailView: React.FC<Props> = ({
             </div>
           )}
 
+          <DetailReference
+            prefix={refPrefixLabel}
+            reference={property.displayReference || property.reference || ''}
+          />
+
           {isHolidayRental ? (
             <div className="mb-6 md:mb-10">
               {liveHolidayQuote ? (
@@ -326,7 +332,11 @@ export const PropertyDetailView: React.FC<Props> = ({
           longitude={longitude}
           title={property.title}
           locationLabel={locationSubtitle || property.location}
-          description={property.reference ? `${refPrefixLabel} ${property.reference}` : undefined}
+          description={
+            property.displayReference || property.reference
+              ? `${refPrefixLabel} ${property.displayReference || property.reference}`
+              : undefined
+          }
         />
       )}
 

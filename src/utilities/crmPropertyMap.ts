@@ -259,7 +259,7 @@ export const buildCRMMapQuery = ({
 
   let query = mergeCRMQueryObjects(
     baseQuery,
-    buildFilterQuery(filters, { referenceAsNumber: true, includeMapReferences: true }),
+    buildFilterQuery(filters, { includeMapReferences: true }),
   )
 
   if (preset === 'favorites' && restrictToFavoriteIds?.length) {

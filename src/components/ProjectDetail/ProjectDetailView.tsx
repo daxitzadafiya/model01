@@ -4,6 +4,7 @@ import Link from 'next/link'
 import React from 'react'
 import { Clock, KeyRound, MapPin } from 'lucide-react'
 
+import { DetailReference } from '@/components/DetailReference'
 import {
   PropertyDetailFavoriteButton,
   PropertyDetailFooterActions,
@@ -176,11 +177,10 @@ export const ProjectDetailView: React.FC<Props> = ({
             </div>
           )}
 
-          {project.reference && (
-            <p className="font-label-sm text-label-sm text-secondary uppercase mb-3">
-              {refPrefixLabel} {project.reference}
-            </p>
-          )}
+          <DetailReference
+            prefix={refPrefixLabel}
+            reference={project.displayReference || project.reference || ''}
+          />
 
           {displayPrice && (
             <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary mb-4">
@@ -279,7 +279,11 @@ export const ProjectDetailView: React.FC<Props> = ({
           longitude={longitude}
           title={project.title}
           locationLabel={locationSubtitle || project.location}
-          description={project.reference ? `${refPrefixLabel} ${project.reference}` : undefined}
+          description={
+            project.displayReference || project.reference
+              ? `${refPrefixLabel} ${project.displayReference || project.reference}`
+              : undefined
+          }
         />
       )}
 

@@ -2,6 +2,8 @@ import {
   EMPTY_OPTIMA_CRM_SETTINGS,
   similarCommercialsQueryClause,
   type OptimaImageConfig,
+  type PropertyReferenceField,
+  type ProjectReferenceField,
   type ResolvedOptimaCrmSettings,
   type SimilarCommercialsMode,
 } from '@/settings/optimaCrm/shared'
@@ -37,8 +39,24 @@ export function getSimilarCommercialsQuery(): { similar_commercials: SimilarComm
   return similarCommercialsQueryClause(resolveOptimaCrmSettings())
 }
 
+export function getPropertyReferenceField(): PropertyReferenceField {
+  return resolveOptimaCrmSettings().propertyReferenceField
+}
+
+export function getProjectReferenceField(): ProjectReferenceField {
+  return resolveOptimaCrmSettings().projectReferenceField
+}
+
 export type {
   OptimaImageConfig,
+  PropertyReferenceField,
+  ProjectReferenceField,
   ResolvedOptimaCrmSettings,
   SimilarCommercialsMode,
+} from '@/settings/optimaCrm/shared'
+
+export {
+  getShownReference,
+  resolvePropertyDisplayReference,
+  resolveProjectDisplayReference,
 } from '@/settings/optimaCrm/shared'

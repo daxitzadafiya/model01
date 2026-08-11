@@ -4302,6 +4302,19 @@ export interface OptimaCrmSetting {
      */
     similarCommercials: 'exclude_similar' | 'include_similar' | 'only_similar';
   };
+  /**
+   * Choose which CRM field is shown as REF on property/project lists, carousels, and detail pages. Falls back to system reference when empty.
+   */
+  reference: {
+    /**
+     * CRM key shown as REF for properties. If selected field value is empty on a listing then fallback to Reference instead to show as REF.
+     */
+    propertyField: 'reference' | 'external_reference' | 'other_reference';
+    /**
+     * CRM key shown as REF for Projects. If selected field value is empty on a listing then fallback to Reference instead to show as REF.
+     */
+    projectField: 'reference' | 'Agency_reference' | 'user_reference';
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -4846,6 +4859,12 @@ export interface OptimaCrmSettingsSelect<T extends boolean = true> {
     | T
     | {
         similarCommercials?: T;
+      };
+  reference?:
+    | T
+    | {
+        propertyField?: T;
+        projectField?: T;
       };
   updatedAt?: T;
   createdAt?: T;

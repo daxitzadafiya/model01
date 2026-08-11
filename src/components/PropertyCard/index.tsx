@@ -14,6 +14,7 @@ import {
   type PropertyDetailListingContext,
 } from '@/utilities/propertyDetailListingContext'
 import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
+import { getShownReference } from '@/settings/optimaCrm/shared'
 
 export type PropertyCardData = {
   imageResource?: PayloadMedia
@@ -23,6 +24,8 @@ export type PropertyCardData = {
   location: string
   city?: string
   reference?: string
+  /** Admin-selected REF for display; falls back to reference. */
+  displayReference?: string
   title: string
   beds?: number
   baths?: number
@@ -127,6 +130,7 @@ export const PropertyCard: React.FC<Props> = ({
   )
   const displayPrice = useLocalizedPropertyPrice(property.price)
   const displayPriceSubtext = useLocalizedPropertyPrice(property.priceSubtext)
+  const shownReference = getShownReference(property)
   const statusBadgeDisplay =
     statusBadgeLabel === 'SOLD'
       ? soldBadgeLabel
@@ -183,9 +187,9 @@ export const PropertyCard: React.FC<Props> = ({
         <p className="font-label-sm text-label-sm text-tertiary uppercase truncate">
           {property.location}
         </p>
-        {property.reference && (
+        {shownReference && (
           <span className="font-label-sm text-label-sm text-secondary uppercase whitespace-nowrap">
-            {refPrefixLabel} {property.reference}
+            {refPrefixLabel} {shownReference}
           </span>
         )}
       </div>

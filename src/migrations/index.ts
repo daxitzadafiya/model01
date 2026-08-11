@@ -64,7 +64,8 @@ import * as migration_20260810_180000_global_version_trashed_at_column from './2
 import * as migration_20260810_190000_global_array_soft_delete from './20260810_190000_global_array_soft_delete'
 import * as migration_20260810_200000_global_version_array_soft_delete from './20260810_200000_global_version_array_soft_delete'
 import * as migration_20260810_210000_repair_property_filter_labels from './20260810_210000_repair_property_filter_labels'
-import * as migration_20260810_220000_users_search_trash from './20260810_220000_users_search_trash'
+import * as migration_20260810_220000_users_search_trash from './20260810_220000_users_search_trash';
+import * as migration_20260811_163000_optima_crm_reference_fields from './20260811_163000_optima_crm_reference_fields'
 
 export const migrations = [
   {
@@ -401,5 +402,10 @@ export const migrations = [
     up: migration_20260810_220000_users_search_trash.up,
     down: migration_20260810_220000_users_search_trash.down,
     name: '20260810_220000_users_search_trash',
+  },
+  {
+    up: migration_20260811_163000_optima_crm_reference_fields.up,
+    down: migration_20260811_163000_optima_crm_reference_fields.down,
+    name: '20260811_163000_optima_crm_reference_fields',
   },
 ]

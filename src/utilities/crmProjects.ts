@@ -25,6 +25,7 @@ import {
 import { resolveProjectDetailHref, resolvePropertyDetailHref } from '@/utilities/propertyUrl'
 import { parseCountFilterValue } from '@/utilities/propertyFilterParsing'
 import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
+import { resolveProjectDisplayReference } from '@/settings/optimaCrm/shared'
 
 export type CRMProjectDetailRecord = Record<string, unknown>
 
@@ -156,6 +157,8 @@ export type ProjectAvailabilityPhase = {
 export type NormalizedCRMProject = {
   id?: string
   reference?: string
+  /** Admin-selected REF for UI; falls back to system reference when empty. */
+  displayReference?: string
   title: string
   location: string
   city?: string
@@ -722,6 +725,11 @@ export function normalizeCRMProject(
   return {
     id: pickString(mapped._id) || pickString(String(mapped.id ?? '')),
     reference: pickString(String(mapped.reference ?? '')),
+    displayReference:
+      resolveProjectDisplayReference(
+        mapped,
+        resolveOptimaCrmSettings().projectReferenceField,
+      ) || pickString(String(mapped.reference ?? '')) || undefined,
     title,
     location,
     city: pickString(mapped.city_name) || pickString(String(mapped.city ?? '')) || undefined,

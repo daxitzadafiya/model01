@@ -1,3 +1,4 @@
+import { seedOptimaCrmSettings } from '@/settings/optimaCrm/client'
 import {
   EMPTY_OPTIMA_CRM_SETTINGS,
   resolveOptimaCrmSettingsFromGlobal,
@@ -11,7 +12,10 @@ export async function getOptimaCrmSettings(): Promise<ResolvedOptimaCrmSettings>
   try {
     const getGlobal = getCachedGlobal('optimaCrmSettings', 0)
     const doc = await getGlobal()
-    return resolveOptimaCrmSettingsFromGlobal(doc)
+    const resolved = resolveOptimaCrmSettingsFromGlobal(doc)
+    // Seed sync runtime config so normalize helpers see admin REF field choices on the server.
+    seedOptimaCrmSettings(resolved)
+    return resolved
   } catch {
     return EMPTY_OPTIMA_CRM_SETTINGS
   }
@@ -24,4 +28,9 @@ export async function getSimilarCommercialsQuery(): Promise<{
   return similarCommercialsQueryClause(settings)
 }
 
-export type { ResolvedOptimaCrmSettings, SimilarCommercialsMode } from '@/settings/optimaCrm/shared'
+export type {
+  PropertyReferenceField,
+  ProjectReferenceField,
+  ResolvedOptimaCrmSettings,
+  SimilarCommercialsMode,
+} from '@/settings/optimaCrm/shared'

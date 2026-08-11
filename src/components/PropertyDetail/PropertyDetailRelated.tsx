@@ -30,6 +30,7 @@ export const PropertyDetailRelated: React.FC<Props> = ({
         crmStatus: property.crmStatus,
         location: property.location,
         reference: property.reference,
+        displayReference: property.displayReference,
         detailHref: property.detailHref,
         title: property.title,
         beds: property.beds,

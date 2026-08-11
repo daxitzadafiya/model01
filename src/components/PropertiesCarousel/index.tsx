@@ -36,6 +36,7 @@ export type PropertiesCarouselItem = {
   crmStatus?: string
   location: string
   reference?: string
+  displayReference?: string
   detailHref?: string
   title: string
   beds?: number

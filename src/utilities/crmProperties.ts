@@ -1,6 +1,7 @@
 import { getFromCRM, postToCRM } from '@/utilities/crmApi'
 import { crmListingBodyToSearchParams } from '@/utilities/crmPropertiesGetParams'
-import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
+import { getSimilarCommercialsQuery, resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
+import { resolvePropertyDisplayReference } from '@/settings/optimaCrm/shared'
 import {
   getPublishedPropertyAttachmentImage,
   getPublishedPropertyAttachmentImages,
@@ -106,6 +107,8 @@ export type NormalizedListProperty = {
   location: string
   city?: string
   reference?: string
+  /** Admin-selected REF for UI (lists/carousels/details); falls back to system reference. */
+  displayReference?: string
   /** Site path e.g. `/property-details/luxury-villa-in-calpe_618268` */
   detailHref?: string
   title: string
@@ -631,17 +634,47 @@ export const buildPropertyListingStatusQuery = (
 }
 
 export type BuildFilterQueryOptions = {
-  /** find-all expects numeric `reference` values; default listing API uses strings */
-  referenceAsNumber?: boolean
   /** Map polygon refs use find-all POST (`reference: { $in }`); omit from GET listing queries */
   includeMapReferences?: boolean
+}
+
+/** Escape user input for Mongo `$regex` (literal substring match). */
+const escapeRegexLiteral = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * Property reference search for commercial_properties POST:
+ * - numeric term → exact `reference` (number) OR regex on external/other_reference
+ * - non-numeric → only regex on external_reference + other_reference
+ */
+export const buildPropertyReferenceSearchOr = (
+  searchTerm: string,
+): Record<string, unknown>[] | null => {
+  const trimmed = searchTerm.trim()
+  if (!trimmed) return null
+
+  const escaped = escapeRegexLiteral(trimmed)
+  const regexClause = { $regex: `.*${escaped}.*`, $options: 'i' }
+  const orClauses: Record<string, unknown>[] = []
+
+  if (/^\d+$/.test(trimmed)) {
+    const numericRef = Number(trimmed)
+    if (Number.isFinite(numericRef)) {
+      orClauses.push({ reference: numericRef })
+    }
+  }
+
+  orClauses.push({ external_reference: regexClause })
+  orClauses.push({ other_reference: regexClause })
+
+  return orClauses
 }
 
 export const buildFilterQuery = (
   filters: PropertyListFilters,
   options: BuildFilterQueryOptions = {},
 ): Record<string, unknown> => {
-  const { referenceAsNumber = false, includeMapReferences = false } = options
+  const { includeMapReferences = false } = options
   const query: Record<string, unknown> = {}
   const andClauses: Record<string, unknown>[] = []
 
@@ -660,13 +693,9 @@ export const buildFilterQuery = (
       andClauses.push({ $or: orClauses })
     }
   } else if (filters.reference?.trim()) {
-    const trimmedRef = filters.reference.trim()
-    // Same pattern as projects: digits → reference, otherwise search by property name.
-    if (/^\d+$/.test(trimmedRef)) {
-      const numericRef = Number(trimmedRef)
-      query.reference = referenceAsNumber && Number.isFinite(numericRef) ? numericRef : trimmedRef
-    } else {
-      query.search_by_property_name = trimmedRef
+    const referenceOr = buildPropertyReferenceSearchOr(filters.reference)
+    if (referenceOr?.length) {
+      andClauses.push({ $or: referenceOr })
     }
   }
 
@@ -845,7 +874,6 @@ export const buildCRMListingQuery = ({
   const hasMapRefs = Boolean(filters.mapReferences?.length)
   const filterQuery = buildFilterQuery(filters, {
     includeMapReferences: hasMapRefs,
-    referenceAsNumber: hasMapRefs,
   })
 
   if (preset === 'custom' && typeof crmQueryJson === 'string' && crmQueryJson.trim()) {
@@ -1230,6 +1258,11 @@ export function normalizeCRMProperty(
   const referenceRaw = property.reference
   const reference =
     typeof referenceRaw === 'number' ? String(referenceRaw) : pickString(referenceRaw)
+  const displayReference =
+    resolvePropertyDisplayReference(
+      property,
+      resolveOptimaCrmSettings().propertyReferenceField,
+    ) || reference
   // in get method i get the  "sale": true, need to show the badge for Sale
   const statusBadgeLabel = resolveCRMStatusBadgeLabel(property.status)
   const crmStatus = pickString(property.status) || undefined
@@ -1252,6 +1285,7 @@ export function normalizeCRMProperty(
     city: localized.city || pickString(property.city_name) || undefined,
     region: localized.region || undefined,
     reference,
+    displayReference,
     detailHref,
     title: propertyTitle,
     description: localized.description || undefined,
@@ -1327,7 +1361,7 @@ export function resolveCRMPropertiesListMethod(): CRMPropertiesListMethod {
 
 /**
  * POST commercial_properties — required when GET cannot express multi-value filters
- * (map polygon `reference: { $in }`, favorites `_id: { $in }`).
+ * (map polygon `reference: { $in }`, favorites `_id: { $in }`, reference `$or` / `$regex`).
  */
 export function needsCRMPropertiesPost({
   filters,
@@ -1339,6 +1373,7 @@ export function needsCRMPropertiesPost({
   favoriteIds?: (string | number)[]
 }): boolean {
   if (filters?.mapReferences?.length) return true
+  if (filters?.reference?.trim()) return true
   if (preset === 'favorites' && favoriteIds?.length) return true
   return false
 }
@@ -1390,7 +1425,7 @@ export async function fetchCRMPropertiesPost({
 }: {
   body: Record<string, unknown>
   signal?: AbortSignal
-  reason?: 'map-area' | 'favorites' | 'holiday'
+  reason?: 'map-area' | 'favorites' | 'holiday' | 'reference'
 }): Promise<CRMFetchResult> {
   const postBody = withCRMPostListingOptions(body)
 

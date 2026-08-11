@@ -208,6 +208,99 @@ export const OptimaCrmSettings: GlobalConfig = {
         },
       ],
     },
+    {
+      name: 'reference',
+      type: 'group',
+      label: a('admin.optimaCrmSettings.reference', 'Reference'),
+      admin: {
+        description: a(
+          'admin.optimaCrmSettings.reference.description',
+          'Choose which CRM field is shown as REF on property/project lists, carousels, and detail pages. Falls back to system reference when empty.',
+        ),
+      },
+      fields: [
+        {
+          name: 'propertyField',
+          dbName: 'propRef',
+          type: 'select',
+          label: a(
+            'admin.optimaCrmSettings.reference.propertyField',
+            'Property reference field',
+          ),
+          defaultValue: 'reference',
+          required: true,
+          options: [
+            {
+              label: a(
+                'admin.optimaCrmSettings.reference.propertyField.reference',
+                'Reference',
+              ),
+              value: 'reference',
+            },
+            {
+              label: a(
+                'admin.optimaCrmSettings.reference.propertyField.externalReference',
+                'External reference',
+              ),
+              value: 'external_reference',
+            },
+            {
+              label: a(
+                'admin.optimaCrmSettings.reference.propertyField.otherReference',
+                'Other reference',
+              ),
+              value: 'other_reference',
+            },
+          ],
+          admin: {
+            description: a(
+              'admin.optimaCrmSettings.reference.propertyField.description',
+              'CRM key shown as REF for properties. If selected field value is empty on a listing then fallback to Reference instead to show as REF.',
+            ),
+          },
+        },
+        {
+          name: 'projectField',
+          dbName: 'projRef',
+          type: 'select',
+          label: a(
+            'admin.optimaCrmSettings.reference.projectField',
+            'Project reference field',
+          ),
+          defaultValue: 'reference',
+          required: true,
+          options: [
+            {
+              label: a(
+                'admin.optimaCrmSettings.reference.projectField.reference',
+                'Reference',
+              ),
+              value: 'reference',
+            },
+            {
+              label: a(
+                'admin.optimaCrmSettings.reference.projectField.otherReference',
+                'Other Reference',
+              ),
+              value: 'Agency_reference',
+            },
+            {
+              label: a(
+                'admin.optimaCrmSettings.reference.projectField.userReference',
+                'User Reference',
+              ),
+              value: 'user_reference',
+            },
+          ],
+          admin: {
+            description: a(
+              'admin.optimaCrmSettings.reference.projectField.description',
+              'CRM key shown as REF for Projects. If selected field value is empty on a listing then fallback to Reference instead to show as REF.',
+            ),
+          },
+        },
+      ],
+    },
   ],
   hooks: {
     afterChange: [

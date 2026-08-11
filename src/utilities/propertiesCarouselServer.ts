@@ -57,6 +57,7 @@ export async function fetchPropertiesCarouselServerData(
       crmStatus: normalized.crmStatus,
       location: normalized.location,
       reference: normalized.reference,
+      displayReference: normalized.displayReference,
       detailHref: normalized.detailHref,
       title: normalized.title,
       beds: normalized.beds,

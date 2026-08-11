@@ -10,6 +10,27 @@ export const SIMILAR_COMMERCIALS_MODES: SimilarCommercialsMode[] = [
 
 export const DEFAULT_SIMILAR_COMMERCIALS: SimilarCommercialsMode = 'exclude_similar'
 
+/** CRM keys that can be shown as property REF in lists/carousels/details. */
+export type PropertyReferenceField = 'reference' | 'external_reference' | 'other_reference'
+
+/** CRM keys that can be shown as project REF in lists/carousels/details. */
+export type ProjectReferenceField = 'reference' | 'Agency_reference' | 'user_reference'
+
+export const PROPERTY_REFERENCE_FIELDS: PropertyReferenceField[] = [
+  'reference',
+  'external_reference',
+  'other_reference',
+]
+
+export const PROJECT_REFERENCE_FIELDS: ProjectReferenceField[] = [
+  'reference',
+  'Agency_reference',
+  'user_reference',
+]
+
+export const DEFAULT_PROPERTY_REFERENCE_FIELD: PropertyReferenceField = 'reference'
+export const DEFAULT_PROJECT_REFERENCE_FIELD: ProjectReferenceField = 'reference'
+
 export type ResolvedOptimaCrmSettings = {
   apiUrl: string
   apiKey: string
@@ -24,6 +45,8 @@ export type ResolvedOptimaCrmSettings = {
   propertyResizeBase: string
   siteId: string
   similarCommercials: SimilarCommercialsMode
+  propertyReferenceField: PropertyReferenceField
+  projectReferenceField: ProjectReferenceField
 }
 
 export type OptimaImageConfig = Pick<
@@ -55,6 +78,8 @@ export const EMPTY_OPTIMA_CRM_SETTINGS: ResolvedOptimaCrmSettings = {
   brochureTemplateId: '39',
   ...IMAGE_DEFAULTS,
   similarCommercials: DEFAULT_SIMILAR_COMMERCIALS,
+  propertyReferenceField: DEFAULT_PROPERTY_REFERENCE_FIELD,
+  projectReferenceField: DEFAULT_PROJECT_REFERENCE_FIELD,
 }
 
 function pickString(value: unknown, fallback: string): string {
@@ -82,10 +107,90 @@ function pickSimilarCommercials(
   return fallback
 }
 
+function pickPropertyReferenceField(
+  value: unknown,
+  fallback: PropertyReferenceField,
+): PropertyReferenceField {
+  if (
+    typeof value === 'string' &&
+    PROPERTY_REFERENCE_FIELDS.includes(value as PropertyReferenceField)
+  ) {
+    return value as PropertyReferenceField
+  }
+  return fallback
+}
+
+function pickProjectReferenceField(
+  value: unknown,
+  fallback: ProjectReferenceField,
+): ProjectReferenceField {
+  if (
+    typeof value === 'string' &&
+    PROJECT_REFERENCE_FIELDS.includes(value as ProjectReferenceField)
+  ) {
+    return value as ProjectReferenceField
+  }
+  return fallback
+}
+
 export function similarCommercialsQueryClause(
   settings: Pick<ResolvedOptimaCrmSettings, 'similarCommercials'> = EMPTY_OPTIMA_CRM_SETTINGS,
 ): { similar_commercials: SimilarCommercialsMode } {
   return { similar_commercials: settings.similarCommercials }
+}
+
+/** Read a CRM reference-like value as a display string. */
+export function pickCrmReferenceValue(
+  record: Record<string, unknown>,
+  keys: string[],
+): string | undefined {
+  for (const key of keys) {
+    const raw = record[key]
+    if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+    if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  }
+  return undefined
+}
+
+/**
+ * Resolve the REF shown in UI for a property.
+ * Preferred admin field first; falls back to system `reference` when empty.
+ */
+export function resolvePropertyDisplayReference(
+  record: Record<string, unknown>,
+  preferred: PropertyReferenceField = DEFAULT_PROPERTY_REFERENCE_FIELD,
+): string | undefined {
+  const preferredKeys = preferred === 'reference' ? ['reference'] : [preferred]
+  return (
+    pickCrmReferenceValue(record, preferredKeys) ||
+    pickCrmReferenceValue(record, ['reference'])
+  )
+}
+
+/**
+ * Resolve the REF shown in UI for a project.
+ * Preferred admin field first; falls back to system `reference` when empty.
+ */
+export function resolveProjectDisplayReference(
+  record: Record<string, unknown>,
+  preferred: ProjectReferenceField = DEFAULT_PROJECT_REFERENCE_FIELD,
+): string | undefined {
+  const preferredKeys =
+    preferred === 'Agency_reference'
+      ? ['Agency_reference', 'agency_reference']
+      : [preferred]
+  return (
+    pickCrmReferenceValue(record, preferredKeys) ||
+    pickCrmReferenceValue(record, ['reference'])
+  )
+}
+
+/** UI helper: prefer displayReference, else system reference. */
+export function getShownReference(entity: {
+  displayReference?: string
+  reference?: string
+}): string {
+  return (entity.displayReference || entity.reference || '').trim()
 }
 
 export function resolveOptimaCrmSettingsFromGlobal(
@@ -94,6 +199,7 @@ export function resolveOptimaCrmSettingsFromGlobal(
   const api = doc?.api
   const images = doc?.images
   const properties = doc?.properties
+  const reference = doc?.reference
   const defaults = EMPTY_OPTIMA_CRM_SETTINGS
   const imageRecord = (images ?? {}) as Record<string, unknown>
 
@@ -122,6 +228,14 @@ export function resolveOptimaCrmSettingsFromGlobal(
     similarCommercials: pickSimilarCommercials(
       properties?.similarCommercials,
       defaults.similarCommercials,
+    ),
+    propertyReferenceField: pickPropertyReferenceField(
+      reference?.propertyField,
+      defaults.propertyReferenceField,
+    ),
+    projectReferenceField: pickProjectReferenceField(
+      reference?.projectField,
+      defaults.projectReferenceField,
     ),
   }
 }

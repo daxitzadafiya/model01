@@ -537,9 +537,11 @@ const PropertyListViewInner: React.FC<Props> = ({
             ? 'favorites'
             : hasMapAreaReferences(appliedFilters)
               ? 'map-area'
-              : listingPreset === 'forHoliday' || hasHolidayListingFilters(appliedFilters)
-                ? 'holiday'
-                : undefined
+              : appliedFilters.reference?.trim()
+                ? 'reference'
+                : listingPreset === 'forHoliday' || hasHolidayListingFilters(appliedFilters)
+                  ? 'holiday'
+                  : undefined
           const result = usePostListing
             ? await fetchCRMPropertiesPost({
                 body: listingBody,
@@ -853,6 +855,7 @@ const PropertyListViewInner: React.FC<Props> = ({
                   location: property.location,
                   city: property.city,
                   reference: property.reference,
+                  displayReference: property.displayReference,
                   title: property.title,
                   beds: property.beds,
                   baths: property.baths,

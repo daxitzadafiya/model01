@@ -9,6 +9,7 @@ import { formatPropertyAreaDisplay } from '@/components/PropertyCard'
 import { useProjectFavorites } from '@/providers/PropertyFavorites'
 import type { FavoriteProjectId } from '@/utilities/propertyFavorites'
 import type { NormalizedCRMProject, ProjectPhaseInfo } from '@/utilities/crmProjects'
+import { getShownReference } from '@/settings/optimaCrm/shared'
 import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
 import { cn } from '@/utilities/ui'
 
@@ -114,6 +115,7 @@ export const ProjectCard: React.FC<Props> = ({
   const airportLabel = useTranslation('projectList.card.airport', 'Airport')
   const beachLabel = useTranslation('projectList.card.beach', 'Beach')
   const displayPrice = useLocalizedPropertyPrice(project.price)
+  const shownReference = getShownReference(project)
 
   const visiblePhases = showAllPhases ? project.phases : project.phases.slice(0, 2)
   const hiddenPhaseCount = Math.max(0, project.phases.length - 2)
@@ -135,9 +137,9 @@ export const ProjectCard: React.FC<Props> = ({
         <h3 className="font-headline-sm text-headline-sm text-on-surface line-clamp-2">
           {project.title}
         </h3>
-        {project.reference && (
+        {shownReference && (
           <span className="font-label-sm text-label-sm text-secondary uppercase whitespace-nowrap shrink-0">
-            {refPrefixLabel} {project.reference}
+            {refPrefixLabel} {shownReference}
           </span>
         )}
       </div>
