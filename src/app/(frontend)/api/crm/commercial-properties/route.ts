@@ -1,11 +1,43 @@
 /**
- * Optional server-side CRM proxy using Globals → Optima CRM credentials.
+ * Same-origin proxy for NestJS property listings.
+ * Avoids browser CORS when Search (client) calls properties / commercial_properties.
  */
 import { NextResponse } from 'next/server'
 
-import { getCRMConfig, getFromCRM } from '@/utilities/crmApi.server'
-import { crmListingBodyToSearchParams } from '@/utilities/crmPropertiesGetParams'
-import { extractCRMList, extractCRMTotal } from '@/utilities/crmProperties'
+import { getCRMConfig, getFromCRM, postToCRM } from '@/utilities/crmApi.server'
+
+export async function GET(request: Request) {
+  const config = await getCRMConfig()
+
+  if (!config) {
+    return NextResponse.json(
+      {
+        error:
+          'CRM API is not configured. Set Optima CRM credentials in environment variables.',
+      },
+      { status: 500 },
+    )
+  }
+
+  try {
+    const searchParams = new URL(request.url).searchParams
+    const response = await getFromCRM('properties', searchParams)
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      return NextResponse.json(
+        { error: `CRM API failed (${response.status})`, details: errorText.slice(0, 500) },
+        { status: response.status },
+      )
+    }
+
+    const data = await response.json()
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('CRM properties GET proxy error:', error)
+    return NextResponse.json({ error: 'Failed to fetch properties' }, { status: 502 })
+  }
+}
 
 export async function POST(request: Request) {
   const config = await getCRMConfig()
@@ -14,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          'CRM API is not configured. Set credentials under Globals → Optima CRM in the admin panel.',
+          'CRM API is not configured. Set Optima CRM credentials in environment variables.',
       },
       { status: 500 },
     )
@@ -28,27 +60,23 @@ export async function POST(request: Request) {
   }
 
   try {
-    const searchParams = crmListingBodyToSearchParams(body)
-    const response = await getFromCRM('properties', searchParams)
+    const response = await postToCRM('commercial_properties', body)
 
     if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
       return NextResponse.json(
-        { error: `CRM API failed (${response.status})` },
+        {
+          error: `CRM commercial_properties API failed (${response.status})`,
+          details: errorText.slice(0, 500),
+        },
         { status: response.status },
       )
     }
 
-    const data = (await response.json()) as unknown
-    const list = extractCRMList(data)
-    const total = extractCRMTotal(data, list.length)
-
-    return NextResponse.json({
-      commercial_properties: list,
-      total,
-      totalDocs: total,
-    })
+    const data = await response.json()
+    return NextResponse.json(data)
   } catch (error) {
-    console.error('CRM proxy error:', error)
+    console.error('CRM commercial_properties POST proxy error:', error)
     return NextResponse.json({ error: 'Failed to fetch properties' }, { status: 502 })
   }
 }

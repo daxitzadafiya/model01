@@ -17,21 +17,24 @@ export const OptimaCrmSettings: GlobalConfig = {
   admin: {
     description: a(
       'admin.optimaCrmSettings.description',
-      'Optima CRM API credentials, contact endpoint, and image CDN settings. Stored in the database — not in environment variables.',
+      'Configure property listing queries and which CRM fields are shown as REF on property and project pages.',
     ),
     group: a('admin.groups.settings', 'Settings'),
   },
   fields: [
+    // Kept in schema for DB compatibility; values come from ENV (see settings/optimaCrm/shared.ts).
+    // Use top-level `hidden` (not admin.hidden) so RenderFields skips them entirely and
+    // the next group keeps :first-child spacing (admin.hidden leaves empty inputs that break that).
     {
       name: 'api',
       type: 'group',
+      hidden: true,
       label: a('admin.optimaCrmSettings.api', 'API credentials'),
       fields: [
         {
           name: 'apiUrl',
           type: 'text',
           label: a('admin.optimaCrmSettings.api.apiUrl', 'CRM API URL (v3)'),
-          required: true,
           admin: {
             description: a(
               'admin.optimaCrmSettings.api.apiUrl.description',
@@ -43,7 +46,6 @@ export const OptimaCrmSettings: GlobalConfig = {
           name: 'apiKey',
           type: 'text',
           label: a('admin.optimaCrmSettings.api.apiKey', 'CRM API key'),
-          required: true,
           admin: {
             description: a(
               'admin.optimaCrmSettings.api.apiKey.description',
@@ -55,7 +57,6 @@ export const OptimaCrmSettings: GlobalConfig = {
           name: 'contactUrl',
           type: 'text',
           label: a('admin.optimaCrmSettings.api.contactUrl', 'Contact form URL (Yii)'),
-          required: true,
           admin: {
             description: a(
               'admin.optimaCrmSettings.api.contactUrl.description',
@@ -67,7 +68,6 @@ export const OptimaCrmSettings: GlobalConfig = {
           name: 'userKey',
           type: 'text',
           label: a('admin.optimaCrmSettings.api.userKey', 'Optima user key'),
-          required: true,
           admin: {
             description: a(
               'admin.optimaCrmSettings.api.userKey.description',
@@ -80,7 +80,6 @@ export const OptimaCrmSettings: GlobalConfig = {
           type: 'number',
           label: a('admin.optimaCrmSettings.api.brochureTemplateId', 'Brochure template ID'),
           defaultValue: 39,
-          required: true,
           admin: {
             description: a(
               'admin.optimaCrmSettings.api.brochureTemplateId.description',
@@ -93,8 +92,8 @@ export const OptimaCrmSettings: GlobalConfig = {
     {
       name: 'images',
       type: 'group',
+      hidden: true,
       label: a('admin.optimaCrmSettings.images', 'Image CDN'),
-      required: true,
       admin: {
         description: a(
           'admin.optimaCrmSettings.images.description',
@@ -105,28 +104,24 @@ export const OptimaCrmSettings: GlobalConfig = {
         {
           name: 'imageUrlWithoutResize',
           type: 'text',
-          required: true,
           defaultValue: 'https://images.optima-crm.com/cms_medias/',
           label: a('admin.optimaCrmSettings.images.imageUrlWithoutResize', 'Image URL Without Resize'),
         },
         {
           name: 'imageUrl',
           type: 'text',
-          required: true,
           defaultValue: 'https://images.optima-crm.com/resize/cms_medias/',
           label: a('admin.optimaCrmSettings.images.imageUrl', 'Image URL'),
         },
         {
           name: 'commercialImageBase',
           type: 'text',
-          required: true,
           defaultValue: 'https://images.optima-crm.com/commercial_images',
           label: a('admin.optimaCrmSettings.images.commercialImageBase', 'Commercial Image Base'),
         },
         {
           name: 'constructionsImageBase',
           type: 'text',
-          required: true,
           defaultValue: 'https://images.optima-crm.com/constructions_images',
           label: a('admin.optimaCrmSettings.images.constructionsImageBase', 'Constructions Image Base'),
           admin: {
@@ -139,7 +134,6 @@ export const OptimaCrmSettings: GlobalConfig = {
         {
           name: 'agencyId',
           type: 'text',
-          required: true,
           label: a('admin.optimaCrmSettings.images.agencyId', 'Agency ID'),
           admin: {
             description: a(
@@ -151,14 +145,12 @@ export const OptimaCrmSettings: GlobalConfig = {
         {
           name: 'propertyResizeBase',
           type: 'text',
-          required: true,
           defaultValue: 'https://images.optima-crm.com/resize/',
           label: a('admin.optimaCrmSettings.images.propertyResizeBase', 'Property Resize Base'),
         },
         {
           name: 'siteId',
           type: 'text',
-          required: true,
           defaultValue: '237',
           label: a('admin.optimaCrmSettings.images.siteId', 'Site ID'),
         },

@@ -1,6 +1,7 @@
 import { seedOptimaCrmSettings } from '@/settings/optimaCrm/client'
 import {
   EMPTY_OPTIMA_CRM_SETTINGS,
+  readOptimaCrmEnvConfig,
   resolveOptimaCrmSettingsFromGlobal,
   similarCommercialsQueryClause,
   type ResolvedOptimaCrmSettings,
@@ -17,7 +18,10 @@ export async function getOptimaCrmSettings(): Promise<ResolvedOptimaCrmSettings>
     seedOptimaCrmSettings(resolved)
     return resolved
   } catch {
-    return EMPTY_OPTIMA_CRM_SETTINGS
+    return {
+      ...EMPTY_OPTIMA_CRM_SETTINGS,
+      ...readOptimaCrmEnvConfig(),
+    }
   }
 }
 

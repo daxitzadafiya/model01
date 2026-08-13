@@ -2,6 +2,7 @@
  * Optima CRM API helpers (server-only).
  */
 import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
+import { resolveCrmApiBaseUrl } from '@/settings/optimaCrm/shared'
 import { crmServerFetch } from '@/utilities/crmServerFetch'
 
 export type CRMConfig = {
@@ -19,9 +20,13 @@ export async function getCRMConfig(): Promise<CRMConfig | null> {
   return { apiUrl, apiKey }
 }
 
+/**
+ * Exact `properties` / `commercial_properties` → NestJS base (MODE).
+ * Nested / other paths → legacy NEXT_PUBLIC_CRM_API_URL.
+ */
 export function buildCRMEndpoint(path: string, config: CRMConfig): string {
-  const baseUrl = config.apiUrl.replace(/\/+$/, '')
   const resource = path.replace(/^\//, '')
+  const baseUrl = resolveCrmApiBaseUrl(resource, config.apiUrl)
   return `${baseUrl}/${resource}?user_apikey=${encodeURIComponent(config.apiKey)}`
 }
 
@@ -208,6 +213,9 @@ export async function postToCRM(
   const { headers, ...restInit } = init ?? {}
 
   console.log('------[POST TO CRM - URL]------', url)
+  console.log('------[POST TO CRM - BODY]------')
+  console.dir(body, { depth: null })
+  console.log('------[POST TO CRM - BODY]------')
   return crmServerFetch(url, {
     ...restInit,
     method: 'POST',

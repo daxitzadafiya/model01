@@ -1,5 +1,6 @@
 import {
   EMPTY_OPTIMA_CRM_SETTINGS,
+  readOptimaCrmEnvConfig,
   similarCommercialsQueryClause,
   type OptimaImageConfig,
   type PropertyReferenceField,
@@ -10,6 +11,13 @@ import {
 
 let runtimeConfig: ResolvedOptimaCrmSettings | null = null
 
+function fallbackOptimaCrmSettings(): ResolvedOptimaCrmSettings {
+  return {
+    ...EMPTY_OPTIMA_CRM_SETTINGS,
+    ...readOptimaCrmEnvConfig(),
+  }
+}
+
 export function invalidateOptimaCrmSettingsCache(): void {
   runtimeConfig = null
 }
@@ -19,7 +27,7 @@ export function seedOptimaCrmSettings(settings: ResolvedOptimaCrmSettings): void
 }
 
 export function getRuntimeOptimaImageConfig(): OptimaImageConfig {
-  const source = runtimeConfig ?? EMPTY_OPTIMA_CRM_SETTINGS
+  const source = runtimeConfig ?? fallbackOptimaCrmSettings()
   return {
     imageUrlWithoutResize: source.imageUrlWithoutResize,
     imageUrl: source.imageUrl,
@@ -32,7 +40,7 @@ export function getRuntimeOptimaImageConfig(): OptimaImageConfig {
 }
 
 export function resolveOptimaCrmSettings(): ResolvedOptimaCrmSettings {
-  return runtimeConfig ?? EMPTY_OPTIMA_CRM_SETTINGS
+  return runtimeConfig ?? fallbackOptimaCrmSettings()
 }
 
 export function getSimilarCommercialsQuery(): { similar_commercials: SimilarCommercialsMode } {

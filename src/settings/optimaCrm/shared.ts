@@ -94,6 +94,100 @@ function pickBrochureTemplateId(value: unknown, fallback: string): string {
   return fallback
 }
 
+/** NestJS listing hosts — only exact `properties` / `commercial_properties` paths. */
+export type CrmApiMode = 'dev' | 'prod'
+
+/** Exact listing paths that use NestJS base (not nested like properties/view-by-ref). */
+const NEST_CRM_LISTING_PATHS = new Set(['properties', 'commercial_properties'])
+
+export function isNestCrmListingPath(path: string): boolean {
+  return NEST_CRM_LISTING_PATHS.has(path.replace(/^\/+|\/+$/g, ''))
+}
+
+export function getCrmApiMode(): CrmApiMode {
+  const raw = (process.env.NEXT_PUBLIC_CRM_API_MODE ?? 'prod').trim().toLowerCase()
+  return raw === 'dev' ? 'dev' : 'prod'
+}
+
+/**
+ * NestJS CRM base for property listings, selected by NEXT_PUBLIC_CRM_API_MODE.
+ * Host only — no `/v3` suffix (unlike legacy NEXT_PUBLIC_CRM_API_URL).
+ */
+export function getNestCrmApiBaseUrl(): string {
+  const mode = getCrmApiMode()
+  const fromEnv =
+    mode === 'dev'
+      ? process.env.NEXT_PUBLIC_CRM_NEST_API_URL_DEV
+      : process.env.NEXT_PUBLIC_CRM_NEST_API_URL_PROD
+  return pickString(fromEnv, '').replace(/\/+$/, '')
+}
+
+/**
+ * Pick API base for a CRM path.
+ * - `properties` / `commercial_properties` → NestJS (MODE) when configured
+ * - everything else → legacy `NEXT_PUBLIC_CRM_API_URL` (settings.apiUrl)
+ */
+export function resolveCrmApiBaseUrl(path: string, legacyApiUrl: string): string {
+  const resource = path.replace(/^\/+|\/+$/g, '')
+  const legacy = legacyApiUrl.replace(/\/+$/, '')
+  if (NEST_CRM_LISTING_PATHS.has(resource)) {
+    const nestBase = getNestCrmApiBaseUrl()
+    if (nestBase) return nestBase
+  }
+  return legacy
+}
+
+/**
+ * API credentials + Image CDN from ENV (not Payload admin).
+ */
+export function readOptimaCrmEnvConfig(): Pick<
+  ResolvedOptimaCrmSettings,
+  | 'apiUrl'
+  | 'apiKey'
+  | 'contactUrl'
+  | 'userKey'
+  | 'brochureTemplateId'
+  | 'imageUrlWithoutResize'
+  | 'imageUrl'
+  | 'commercialImageBase'
+  | 'constructionsImageBase'
+  | 'agencyId'
+  | 'propertyResizeBase'
+  | 'siteId'
+> {
+  const defaults = EMPTY_OPTIMA_CRM_SETTINGS
+
+  return {
+    apiUrl: pickString(process.env.NEXT_PUBLIC_CRM_API_URL, defaults.apiUrl),
+    apiKey: pickString(process.env.NEXT_PUBLIC_CRM_API_KEY, defaults.apiKey),
+    contactUrl: pickString(process.env.NEXT_PUBLIC_CRM_API_URL_CONTACT, defaults.contactUrl),
+    userKey: pickString(process.env.NEXT_PUBLIC_OPTIMA_USER_KEY, defaults.userKey),
+    brochureTemplateId: pickBrochureTemplateId(
+      process.env.NEXT_PUBLIC_OPTIMA_BROCHURE_TEMPLATE_ID,
+      defaults.brochureTemplateId,
+    ),
+    imageUrlWithoutResize: pickString(
+      process.env.NEXT_PUBLIC_OPTIMA_IMAGE_URL_WITHOUT_RESIZE,
+      defaults.imageUrlWithoutResize,
+    ),
+    imageUrl: pickString(process.env.NEXT_PUBLIC_OPTIMA_IMAGE_URL, defaults.imageUrl),
+    commercialImageBase: pickString(
+      process.env.NEXT_PUBLIC_OPTIMA_COMMERCIAL_IMAGE_BASE,
+      defaults.commercialImageBase,
+    ),
+    constructionsImageBase: pickString(
+      process.env.NEXT_PUBLIC_OPTIMA_CONSTRUCTIONS_IMAGE_BASE,
+      defaults.constructionsImageBase,
+    ),
+    agencyId: pickString(process.env.NEXT_PUBLIC_OPTIMA_AGENCY_ID, defaults.agencyId),
+    propertyResizeBase: pickString(
+      process.env.NEXT_PUBLIC_OPTIMA_PROPERTY_RESIZE_BASE,
+      defaults.propertyResizeBase,
+    ),
+    siteId: pickString(process.env.NEXT_PUBLIC_OPTIMA_SITE_ID, defaults.siteId),
+  }
+}
+
 function pickSimilarCommercials(
   value: unknown,
   fallback: SimilarCommercialsMode,
@@ -196,35 +290,13 @@ export function getShownReference(entity: {
 export function resolveOptimaCrmSettingsFromGlobal(
   doc: OptimaCrmSetting | null | undefined,
 ): ResolvedOptimaCrmSettings {
-  const api = doc?.api
-  const images = doc?.images
   const properties = doc?.properties
   const reference = doc?.reference
   const defaults = EMPTY_OPTIMA_CRM_SETTINGS
-  const imageRecord = (images ?? {}) as Record<string, unknown>
+  const fromEnv = readOptimaCrmEnvConfig()
 
   return {
-    apiUrl: pickString(api?.apiUrl, defaults.apiUrl),
-    apiKey: pickString(api?.apiKey, defaults.apiKey),
-    contactUrl: pickString(api?.contactUrl, defaults.contactUrl),
-    userKey: pickString(api?.userKey, defaults.userKey),
-    brochureTemplateId: pickBrochureTemplateId(
-      api?.brochureTemplateId,
-      defaults.brochureTemplateId,
-    ),
-    imageUrlWithoutResize: pickString(
-      images?.imageUrlWithoutResize,
-      defaults.imageUrlWithoutResize,
-    ),
-    imageUrl: pickString(images?.imageUrl, defaults.imageUrl),
-    commercialImageBase: pickString(images?.commercialImageBase, defaults.commercialImageBase),
-    constructionsImageBase: pickString(
-      imageRecord.constructionsImageBase,
-      defaults.constructionsImageBase,
-    ),
-    agencyId: pickString(images?.agencyId, defaults.agencyId),
-    propertyResizeBase: pickString(images?.propertyResizeBase, defaults.propertyResizeBase),
-    siteId: pickString(images?.siteId, defaults.siteId),
+    ...fromEnv,
     similarCommercials: pickSimilarCommercials(
       properties?.similarCommercials,
       defaults.similarCommercials,

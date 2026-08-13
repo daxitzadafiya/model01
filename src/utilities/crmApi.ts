@@ -1,14 +1,19 @@
 /**
  * Optima CRM API helpers (client-safe).
- * Credentials are loaded from Globals → Optima CRM on the server and seeded in the root layout.
+ * NestJS listing paths (`properties` / `commercial_properties`) go through a same-origin
+ * Next.js proxy to avoid browser CORS. Other CRM paths still call the legacy host directly.
  */
 
 import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
+import { isNestCrmListingPath, resolveCrmApiBaseUrl } from '@/settings/optimaCrm/shared'
 
 export type CRMConfig = {
   apiUrl: string
   apiKey: string
 }
+
+/** Same-origin proxy for NestJS property listing endpoints. */
+const NEST_LISTING_PROXY = '/api/crm/commercial-properties'
 
 export async function getCRMConfig(): Promise<CRMConfig | null> {
   const settings = resolveOptimaCrmSettings()
@@ -20,10 +25,13 @@ export async function getCRMConfig(): Promise<CRMConfig | null> {
   return { apiUrl, apiKey }
 }
 
-/** e.g. commercial_properties → https://…/v3/commercial_properties?user_apikey=… */
+/**
+ * e.g. commercial_properties → NestJS …/commercial_properties (MODE)
+ * other paths → legacy NEXT_PUBLIC_CRM_API_URL
+ */
 export function buildCRMEndpoint(path: string, config: CRMConfig): string {
-  const baseUrl = config.apiUrl.replace(/\/+$/, '')
   const resource = path.replace(/^\//, '')
+  const baseUrl = resolveCrmApiBaseUrl(resource, config.apiUrl)
   return `${baseUrl}/${resource}?user_apikey=${encodeURIComponent(config.apiKey)}`
 }
 
@@ -32,6 +40,16 @@ export async function getFromCRM(
   searchParams: URLSearchParams,
   init?: Omit<RequestInit, 'method'>,
 ): Promise<Response> {
+  if (isNestCrmListingPath(path)) {
+    const queryString = searchParams.toString()
+    const url = queryString ? `${NEST_LISTING_PROXY}?${queryString}` : NEST_LISTING_PROXY
+    return fetch(url, {
+      ...init,
+      method: 'GET',
+      cache: 'no-store',
+    })
+  }
+
   const config = await getCRMConfig()
   if (!config) {
     throw new Error(
@@ -54,6 +72,20 @@ export async function postToCRM(
   body: Record<string, unknown>,
   init?: Omit<RequestInit, 'method' | 'body'>,
 ): Promise<Response> {
+  if (isNestCrmListingPath(path)) {
+    const { headers, ...restInit } = init ?? {}
+    return fetch(NEST_LISTING_PROXY, {
+      ...restInit,
+      method: 'POST',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+      body: JSON.stringify(body),
+    })
+  }
+
   const config = await getCRMConfig()
   if (!config) {
     throw new Error(
@@ -75,4 +107,3 @@ export async function postToCRM(
     body: JSON.stringify(body),
   })
 }
-

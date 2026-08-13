@@ -4249,52 +4249,52 @@ export interface EmailSetting {
   createdAt?: string | null;
 }
 /**
- * Optima CRM API credentials, contact endpoint, and image CDN settings. Stored in the database — not in environment variables.
+ * Configure property listing queries and which CRM fields are shown as REF on property and project pages.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "optimaCrmSettings".
  */
 export interface OptimaCrmSetting {
   id: number;
-  api: {
+  api?: {
     /**
      * Base URL for Optima v3 API (e.g. https://your-crm.optima-crm.com/v3).
      */
-    apiUrl: string;
+    apiUrl?: string | null;
     /**
      * Sent as user_apikey on CRM requests.
      */
-    apiKey: string;
+    apiKey?: string | null;
     /**
      * Yii endpoint for contact submissions and PDF brochures (?r=accounts/index or ?r=pdf).
      */
-    contactUrl: string;
+    contactUrl?: string | null;
     /**
      * Used for property detail view and PDF brochure generation.
      */
-    userKey: string;
+    userKey?: string | null;
     /**
      * Optima PDF template ID for property brochures.
      */
-    brochureTemplateId: number;
+    brochureTemplateId?: number | null;
   };
   /**
    * Optima image URL bases. Defaults match the standard Optima CDN if left empty.
    */
-  images: {
-    imageUrlWithoutResize: string;
-    imageUrl: string;
-    commercialImageBase: string;
+  images?: {
+    imageUrlWithoutResize?: string | null;
+    imageUrl?: string | null;
+    commercialImageBase?: string | null;
     /**
      * Base URL for construction/project document files.
      */
-    constructionsImageBase: string;
+    constructionsImageBase?: string | null;
     /**
      * Optima agency ID for commercial images.
      */
-    agencyId: string;
-    propertyResizeBase: string;
-    siteId: string;
+    agencyId?: string | null;
+    propertyResizeBase?: string | null;
+    siteId?: string | null;
   };
   properties: {
     /**
