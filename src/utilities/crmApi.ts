@@ -1,7 +1,7 @@
 /**
  * Optima CRM API helpers (client-safe).
- * NestJS listing paths (`properties` / `commercial_properties`) go through a same-origin
- * Next.js proxy to avoid browser CORS. Other CRM paths still call the legacy host directly.
+ * Browser-used NestJS paths go through same-origin Next.js proxies to avoid CORS.
+ * Other CRM paths still call the legacy host directly.
  */
 
 import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
@@ -26,8 +26,8 @@ export async function getCRMConfig(): Promise<CRMConfig | null> {
 }
 
 /**
- * e.g. commercial_properties → NestJS …/commercial_properties (MODE)
- * other paths → legacy NEXT_PUBLIC_CRM_API_URL
+ * properties/* and commercial_properties/* → NestJS MODE base.
+ * Other paths → legacy NEXT_PUBLIC_CRM_API_URL.
  */
 export function buildCRMEndpoint(path: string, config: CRMConfig): string {
   const resource = path.replace(/^\//, '')

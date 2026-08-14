@@ -1393,7 +1393,7 @@ export function shouldUseCRMPropertiesPost({
   return needsCRMPropertiesPost({ filters, preset, favoriteIds })
 }
 
-/** GET /v3/properties/ using credentials from Globals → Optima CRM. */
+/** GET /properties through the MODE-selected NestJS base. */
 export async function fetchCRMProperties({
   body,
   signal,

@@ -1,5 +1,5 @@
 /**
- * Server-only CRM property listing fetch (GET /v3/properties/).
+ * Server-only property listing fetch through the MODE-selected NestJS base.
  */
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'

@@ -1,8 +1,9 @@
 /**
- * Optima CRM map markers — calls find-all directly from the browser (same as PHP).
- * Credentials are loaded from Globals → Optima CRM on the server and seeded in the root layout.
+ * Optima CRM map markers.
+ * Browser → `/api/crm/commercial-properties/find-all` → NestJS MODE base
+ * `commercial_properties/find-all?user=…&latLang=1&selectedFields=1` (same query as before).
  */
-import { getSimilarCommercialsQuery, resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
+import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 import {
   buildFavoriteIdsClause,
   buildFilterQuery,
@@ -26,16 +27,6 @@ export type MapPropertyPoint = {
   reference: string
   lat: number
   lng: number
-}
-
-function getCRMMapConfig(): { apiUrl: string; userKey: string } | null {
-  const settings = resolveOptimaCrmSettings()
-  const apiUrl = settings.apiUrl.trim()
-  const userKey = settings.userKey.trim()
-
-  if (!apiUrl || !userKey) return null
-
-  return { apiUrl, userKey }
 }
 
 const pickCoordinate = (value: unknown): number | null => {
@@ -290,14 +281,6 @@ export async function fetchCRMMapProperties({
   pageSize?: number
   signal?: AbortSignal
 }): Promise<{ properties: MapPropertyPoint[]; total: number }> {
-  const config = getCRMMapConfig()
-  if (!config) {
-    throw new Error('Optima CRM map config is missing (apiUrl and userKey required)')
-  }
-
-  const baseUrl = config.apiUrl.replace(/\/+$/, '')
-  const endpoint = `${baseUrl}/commercial_properties/find-all?user=${encodeURIComponent(config.userKey)}&latLang=1&selectedFields=1`
-
   const body = buildCRMMapQuery({
     preset,
     crmQueryJson,
@@ -307,7 +290,7 @@ export async function fetchCRMMapProperties({
     pageSize,
   })
 
-  const response = await fetch(endpoint, {
+  const response = await fetch('/api/crm/commercial-properties/find-all', {
     method: 'POST',
     cache: 'no-store',
     signal,

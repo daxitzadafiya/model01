@@ -1,9 +1,9 @@
 /**
- * Converts CRM listing bodies ({ options, query }) into GET /v3/properties/ query params.
+ * Converts CRM listing bodies ({ options, query }) into NestJS GET /properties query params.
  * Matches Optima GET API: status[]=…, sale=1, orderby[]=field,ASC, page_size, etc.
  *
  * POST /commercial_properties accepted Mongo-style filters (archived, has_images, etc.).
- * GET /v3/properties only documents flat query params — drop unsupported Mongo keys.
+ * GET /properties only documents flat query params — drop unsupported Mongo keys.
  */
 const GET_UNSUPPORTED_TOP_LEVEL_KEYS = new Set(['archived', 'has_images'])
 

@@ -94,14 +94,28 @@ function pickBrochureTemplateId(value: unknown, fallback: string): string {
   return fallback
 }
 
-/** NestJS listing hosts — only exact `properties` / `commercial_properties` paths. */
+/** NestJS hosts — MODE selects DEV vs PROD base. */
 export type CrmApiMode = 'dev' | 'prod'
 
-/** Exact listing paths that use NestJS base (not nested like properties/view-by-ref). */
-const NEST_CRM_LISTING_PATHS = new Set(['properties', 'commercial_properties'])
+/**
+ * Paths that use NestJS base (MODE).
+ * - `properties` and nested (`properties/view-by-ref`, …)
+ * - `commercial_properties` and all nested routes (`find-all`, `commercial-construction`, …)
+ * Project/constructions detail stays on Yii contact URL.
+ */
+export function usesNestCrmApiBase(path: string): boolean {
+  const resource = path.replace(/^\/+|\/+$/g, '')
+  if (resource === 'commercial_properties' || resource.startsWith('commercial_properties/')) {
+    return true
+  }
+  if (resource === 'properties' || resource.startsWith('properties/')) return true
+  return false
+}
 
+/** Same-origin proxy paths for browser listing calls (exact list endpoints only). */
 export function isNestCrmListingPath(path: string): boolean {
-  return NEST_CRM_LISTING_PATHS.has(path.replace(/^\/+|\/+$/g, ''))
+  const resource = path.replace(/^\/+|\/+$/g, '')
+  return resource === 'properties' || resource === 'commercial_properties'
 }
 
 export function getCrmApiMode(): CrmApiMode {
@@ -110,7 +124,7 @@ export function getCrmApiMode(): CrmApiMode {
 }
 
 /**
- * NestJS CRM base for property listings, selected by NEXT_PUBLIC_CRM_API_MODE.
+ * NestJS CRM base, selected by NEXT_PUBLIC_CRM_API_MODE.
  * Host only — no `/v3` suffix (unlike legacy NEXT_PUBLIC_CRM_API_URL).
  */
 export function getNestCrmApiBaseUrl(): string {
@@ -124,13 +138,12 @@ export function getNestCrmApiBaseUrl(): string {
 
 /**
  * Pick API base for a CRM path.
- * - `properties` / `commercial_properties` → NestJS (MODE) when configured
+ * - NestJS paths → MODE host when configured
  * - everything else → legacy `NEXT_PUBLIC_CRM_API_URL` (settings.apiUrl)
  */
 export function resolveCrmApiBaseUrl(path: string, legacyApiUrl: string): string {
-  const resource = path.replace(/^\/+|\/+$/g, '')
   const legacy = legacyApiUrl.replace(/\/+$/, '')
-  if (NEST_CRM_LISTING_PATHS.has(resource)) {
+  if (usesNestCrmApiBase(path)) {
     const nestBase = getNestCrmApiBaseUrl()
     if (nestBase) return nestBase
   }

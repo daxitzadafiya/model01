@@ -1,17 +1,10 @@
 import { fetchCRMProperties, unwrapCRMPropertyRecord } from '@/utilities/crmProperties'
-import { getSimilarCommercialsQuery, resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
+import { getSimilarCommercialsQuery } from '@/settings/optimaCrm/client'
 
 export type CRMPropertyDetailRecord = Record<string, unknown>
 
-function getCRMViewConfig(): { apiUrl: string; userKey: string } | null {
-  const settings = resolveOptimaCrmSettings()
-  const apiUrl = settings.apiUrl.trim()
-  const userKey = settings.userKey.trim()
-
-  if (!apiUrl || !userKey) return null
-
-  return { apiUrl, userKey }
-}
+/** Same-origin proxy → NestJS (MODE) `properties/view-by-ref` (avoids browser CORS). */
+const PROPERTY_DETAIL_PROXY = '/api/crm/properties/view-by-ref'
 
 /** GET /properties/view-by-ref?user={userKey}&ref={reference}&status[]=Sold */
 export async function fetchCRMPropertyDetail(
@@ -21,18 +14,10 @@ export async function fetchCRMPropertyDetail(
     init?: Omit<RequestInit, 'method' | 'body'>
   },
 ): Promise<CRMPropertyDetailRecord | null> {
-  const config = getCRMViewConfig()
-  if (!config) {
-    console.error('Optima CRM view config is missing (apiUrl and userKey required)')
-    return null
-  }
-
   const trimmedReference = reference.trim()
   if (!trimmedReference) return null
 
-  const baseUrl = config.apiUrl.replace(/\/+$/, '')
   const params = new URLSearchParams({
-    user: config.userKey,
     ref: trimmedReference,
   })
 
@@ -41,8 +26,7 @@ export async function fetchCRMPropertyDetail(
     if (trimmedStatus) params.append('status[]', trimmedStatus)
   }
 
-  const endpoint = `${baseUrl}/properties/view-by-ref?${params.toString()}`
-
+  const endpoint = `${PROPERTY_DETAIL_PROXY}?${params.toString()}`
   const { headers, ...restInit } = options?.init ?? {}
 
   console.log('-----[GET CRM PROPERTY DETAIL - URL]------', endpoint)

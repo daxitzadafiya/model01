@@ -1,21 +1,22 @@
 /**
  * Server proxy for Optima commercial units belonging to a construction (pedro Developments::getRelatedProjectProperties).
  *
- * POST {apiUrl}/commercial_properties/commercial-construction?user={userKey}&ref={constructionRef}
+ * POST {NestJS MODE base}/commercial_properties/commercial-construction?user={userKey}&ref={constructionRef}
  */
 import { NextResponse } from 'next/server'
 
 import { postToCRMWithUserKey } from '@/utilities/crmApi.server'
 import { extractCRMList } from '@/utilities/crmProperties'
 import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
+import { getNestCrmApiBaseUrl } from '@/settings/optimaCrm/shared'
 
 export async function POST(request: Request) {
   const settings = await getOptimaCrmSettings()
-  if (!settings.apiUrl.trim() || !settings.userKey.trim()) {
+  if (!getNestCrmApiBaseUrl() || !settings.userKey.trim()) {
     return NextResponse.json(
       {
         error:
-          'CRM API URL / user key is not configured. Set credentials under Globals → Optima CRM.',
+          'NestJS CRM API URL / user key is not configured in environment variables.',
       },
       { status: 500 },
     )

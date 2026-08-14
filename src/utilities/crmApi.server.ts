@@ -21,8 +21,8 @@ export async function getCRMConfig(): Promise<CRMConfig | null> {
 }
 
 /**
- * Exact `properties` / `commercial_properties` → NestJS base (MODE).
- * Nested / other paths → legacy NEXT_PUBLIC_CRM_API_URL.
+ * `properties/*` and `commercial_properties/*` → NestJS base (MODE).
+ * Other paths (incl. constructions / Yii) → legacy NEXT_PUBLIC_CRM_API_URL / contact URL.
  */
 export function buildCRMEndpoint(path: string, config: CRMConfig): string {
   const resource = path.replace(/^\//, '')
@@ -126,6 +126,9 @@ export async function getFromCRMContactWithQueryUsingUserKey(
   const queryString = searchParams.toString()
   const url = queryString ? `${endpoint}&${queryString}` : endpoint
 
+  console.log('------[GET FROM CRM WITH QUERY USING USER KEY - URL]------', url)
+  // params 
+  console.log('------[GET FROM CRM WITH QUERY USING USER KEY - PARAMS]------', searchParams)
   // When `init.body` is set (e.g. constructions `{ project_ids }`), crmServerFetch
   // uses Node http so GET+body works like PHP curl in gestali/pedro.
   return crmServerFetch(url, {
@@ -166,17 +169,16 @@ export async function postToCRMWithUserKey(
   searchParams?: URLSearchParams,
 ): Promise<Response> {
   const settings = await getOptimaCrmSettings()
-  const apiUrl = settings.apiUrl.trim()
   const userKey = settings.userKey.trim()
+  const resource = path.replace(/^\//, '')
+  const baseUrl = resolveCrmApiBaseUrl(resource, settings.apiUrl.trim())
 
-  if (!apiUrl || !userKey) {
+  if (!baseUrl || !userKey) {
     throw new Error(
-      'CRM API user key is not configured. Set credentials under Globals → Optima CRM in the admin panel.',
+      'CRM API URL / user key is not configured in environment variables.',
     )
   }
 
-  const baseUrl = apiUrl.replace(/\/+$/, '')
-  const resource = path.replace(/^\//, '')
   const params = new URLSearchParams(searchParams)
   if (!params.has('user')) params.set('user', userKey)
   const endpoint = `${baseUrl}/${resource}?${params.toString()}`
