@@ -1,0 +1,38 @@
+/*
+ * Contact form invalid borders — keep in sync with
+ * .app-phone-input--invalid.app-phone-input--contact (phone-input.css).
+ * Uses theme token --color-error (#ba1a1a) exactly like the phone field.
+ */
+.contact-field--invalid,
+.contact-field--invalid:hover,
+.contact-field--invalid:focus,
+.contact-field--invalid:focus-visible,
+.contact-field--invalid[aria-invalid='true'],
+.contact-field--invalid[data-state] {
+  border-color: var(--color-error) !important;
+}
+
+.contact-field--invalid:focus,
+.contact-field--invalid:focus-visible {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-error) 15%, transparent) !important;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-color: transparent;
+  outline: none;
+}
+
+.contact-field-checkbox--invalid,
+.contact-field-checkbox--invalid:hover,
+.contact-field-checkbox--invalid:has(:focus-visible) {
+  border-color: var(--color-error) !important;
+}
+
+.contact-field-checkbox--invalid:has(:focus-visible) {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-error) 15%, transparent) !important;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-color: transparent;
+}
+
+/* Same token as invalid field borders (theme --color-error / #ba1a1a). */
+.contact-field-error {
+  color: var(--color-error);
+}

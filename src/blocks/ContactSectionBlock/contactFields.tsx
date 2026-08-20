@@ -10,7 +10,6 @@ import type { UseFormRegister } from 'react-hook-form'
 import { Controller } from 'react-hook-form'
 import { AlertCircle, Globe, Mail, MessageSquare, Tag, User } from 'lucide-react'
 import React from 'react'
-import { Error } from '@/blocks/Form/Error'
 import { PhoneInputField } from '@/components/PhoneInput/PhoneInputField'
 import { Checkbox as CheckboxUi } from '@/components/ui/checkbox'
 import { cn } from '@/utilities/ui'
@@ -32,8 +31,16 @@ import {
   useTranslation,
 } from '@/utilities/translateClient'
 
+import './contact-fields.css'
+
 const inputClassName =
   'w-full rounded-xl border border-outline-variant/35 bg-white pl-10 pr-4 py-3.5 text-on-surface outline-none transition-colors placeholder:text-on-surface-variant/60 focus:border-tertiary focus-visible:ring-4 focus-visible:ring-tertiary/20'
+
+/** Same invalid border as PhoneInput contact variant (`var(--color-error)`). */
+const inputInvalidClassName = 'contact-field--invalid'
+
+const selectTriggerClassName =
+  'w-full rounded-xl border bg-white border-outline-variant/35 pl-10 pr-4 py-3.5 h-auto min-h-[52px] focus-visible:ring-4 focus-visible:ring-tertiary/20'
 
 const labelClassName =
   'mb-2 block font-label-sm text-label-sm uppercase tracking-[0.18em] text-tertiary'
@@ -42,6 +49,10 @@ const iconClassName =
   'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant'
 
 const textareaIconClassName = 'pointer-events-none absolute left-3 top-4 text-on-surface-variant'
+
+function hasFieldError(errors: Partial<FieldErrorsImpl> | undefined, name: string): boolean {
+  return Boolean(errors?.[name])
+}
 
 type BaseFieldProps = {
   name: string
@@ -107,13 +118,18 @@ function ContactPhoneField({
               onChange={onChange}
             />
             {error?.message && (
-              <div className="mt-2 text-red-500 text-sm">{String(error.message)}</div>
+              <div className="contact-field-error mt-2 text-sm">{String(error.message)}</div>
             )}
           </>
         )}
       />
     </div>
   )
+}
+
+function ContactFieldError({ message }: { message?: string }) {
+  if (!message) return null
+  return <div className="contact-field-error mt-2 text-sm">{message}</div>
 }
 
 function ContactFieldWrapper({
@@ -125,6 +141,8 @@ function ContactFieldWrapper({
   textareaIcon,
   children,
 }: BaseFieldProps & { children: React.ReactNode; icon?: React.ReactNode; textareaIcon?: boolean }) {
+  const message = errors[name]?.message as string | undefined
+
   return (
     <div>
       {label && (
@@ -139,7 +157,7 @@ function ContactFieldWrapper({
         )}
         {children}
       </div>
-      {errors[name] && <Error name={name} />}
+      {errors[name] && <ContactFieldError message={message} />}
     </div>
   )
 }
@@ -173,6 +191,7 @@ export const ContactTextField: React.FC<
 
   const translatedLabel = useFormFieldLabel(name, label)
   const requiredMessage = useFormFieldRequiredMessage(name, label)
+  const invalid = hasFieldError(errors, name)
 
   return (
     <ContactFieldWrapper
@@ -184,7 +203,8 @@ export const ContactTextField: React.FC<
       required={required}
     >
       <input
-        className={inputClassName}
+        aria-invalid={invalid}
+        className={cn(inputClassName, invalid && inputInvalidClassName)}
         defaultValue={defaultValue}
         id={name}
         placeholder={translatedLabel}
@@ -206,6 +226,7 @@ export const ContactEmailField: React.FC<BaseFieldProps> = ({
   const translatedLabel = useFormFieldLabel(name, label)
   const requiredMessage = useFormFieldRequiredMessage(name, label)
   const invalidEmailMessage = useFormFieldInvalidEmailMessage(name)
+  const invalid = hasFieldError(errors, name)
 
   return (
     <ContactFieldWrapper
@@ -217,7 +238,8 @@ export const ContactEmailField: React.FC<BaseFieldProps> = ({
       required={required}
     >
       <input
-        className={inputClassName}
+        aria-invalid={invalid}
+        className={cn(inputClassName, invalid && inputInvalidClassName)}
         defaultValue={defaultValue}
         id={name}
         placeholder={translatedLabel}
@@ -249,6 +271,7 @@ export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> 
 }) => {
   const translatedLabel = useFormFieldLabel(name, label)
   const requiredMessage = useFormFieldRequiredMessage(name, label)
+  const invalid = hasFieldError(errors, name)
 
   return (
     <ContactFieldWrapper
@@ -261,7 +284,8 @@ export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> 
       textareaIcon
     >
       <textarea
-        className={inputClassName}
+        aria-invalid={invalid}
+        className={cn(inputClassName, invalid && inputInvalidClassName)}
         defaultValue={defaultValue}
         id={name}
         placeholder={translatedLabel}
@@ -316,6 +340,7 @@ export const ContactCheckboxField: React.FC<
     PRIVACY_POLICY_VALIDATION_KEY,
     PRIVACY_POLICY_VALIDATION_FALLBACK,
   )
+  const invalid = hasFieldError(errors, name)
 
   return (
     <div>
@@ -330,10 +355,12 @@ export const ContactCheckboxField: React.FC<
           <label
             className={cn(
               'flex cursor-pointer items-start gap-3 rounded-xl border bg-white px-4 py-3.5 transition-colors border-outline-variant/35 hover:border-tertiary/40 has-focus-visible:border-tertiary has-focus-visible:ring-4 has-focus-visible:ring-tertiary/20',
+              invalid && 'contact-field-checkbox--invalid',
             )}
             htmlFor={name}
           >
             <CheckboxUi
+              aria-invalid={invalid}
               checked={Boolean(value)}
               className={checkboxClassName}
               id={name}
@@ -343,9 +370,9 @@ export const ContactCheckboxField: React.FC<
           </label>
         )}
       />
-      {errors[name] && (
-        <p className="mt-2 flex items-start gap-1.5 font-body-sm text-body-sm text-error">
-          <AlertCircle className="shrink-0" size={16} strokeWidth={2} />
+      {invalid && (
+        <p className="contact-field-error mt-2 flex items-center gap-1.5 font-body-sm text-body-sm">
+          <AlertCircle className="shrink-0" size={16} strokeWidth={2} aria-hidden />
           <span>{(errors[name]?.message as string) || acceptanceError}</span>
         </p>
       )}
@@ -369,6 +396,7 @@ function ContactSelectField(
   const { name, control, errors, label, options, required, defaultValue } = props
   const translatedLabel = useFormFieldLabel(name, label)
   const requiredMessage = useFormFieldRequiredMessage(name, label)
+  const invalid = hasFieldError(errors, name)
 
   return (
     <div>
@@ -389,7 +417,8 @@ function ContactSelectField(
           return (
             <SelectComponent onValueChange={(val) => onChange(val)} value={controlledValue?.value}>
               <SelectTrigger
-                className="w-full rounded-xl bg-white border-outline-variant/35 pl-10 pr-4 py-3.5 h-auto min-h-[52px] focus-visible:ring-4 focus-visible:ring-tertiary/20"
+                aria-invalid={invalid}
+                className={cn(selectTriggerClassName, invalid && inputInvalidClassName)}
                 id={name}
               >
                 <Tag className={iconClassName} size={18} strokeWidth={2} />
@@ -406,7 +435,7 @@ function ContactSelectField(
           )
         }}
       />
-      {errors[name] && <Error name={name} />}
+      {invalid && <ContactFieldError message={errors[name]?.message as string | undefined} />}
     </div>
   )
 }
@@ -417,6 +446,7 @@ function ContactCountryField(
   const { name, control, errors, label, required } = props
   const translatedLabel = useFormFieldLabel(name, label)
   const requiredMessage = useFormFieldRequiredMessage(name, label)
+  const invalid = hasFieldError(errors, name)
 
   return (
     <div>
@@ -437,7 +467,8 @@ function ContactCountryField(
           return (
             <SelectComponent onValueChange={(val) => onChange(val)} value={controlledValue?.value}>
               <SelectTrigger
-                className="w-full rounded-xl bg-white border-outline-variant/35 pl-10 pr-4 py-3.5 h-auto min-h-[52px] focus-visible:ring-4 focus-visible:ring-tertiary/20"
+                aria-invalid={invalid}
+                className={cn(selectTriggerClassName, invalid && inputInvalidClassName)}
                 id={name}
               >
                 <Globe className={iconClassName} size={18} strokeWidth={2} />
@@ -454,7 +485,7 @@ function ContactCountryField(
           )
         }}
       />
-      {errors[name] && <Error name={name} />}
+      {invalid && <ContactFieldError message={errors[name]?.message as string | undefined} />}
     </div>
   )
 }

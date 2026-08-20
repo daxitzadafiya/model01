@@ -11,5 +11,5 @@ export const Error = ({ name }: { name: string }) => {
 
   if (!message) return null
 
-  return <div className="mt-2 text-red-500 text-sm">{message}</div>
+  return <div className="mt-2 text-sm text-[var(--color-error)]">{message}</div>
 }
