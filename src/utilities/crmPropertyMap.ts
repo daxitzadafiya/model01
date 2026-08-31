@@ -136,10 +136,10 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
   if (preset === 'seaView') {
     baseQuery['views.sea'] = true
   } else if (preset === 'golf') {
-    baseQuery['categories.golf'] = true
     baseQuery.$and = [
       {
         $or: [
+          { 'categories.golf': true },
           { 'settings.close_to_golf': true },
           { 'settings.frontline_golf': true },
           { 'views.golf': true },

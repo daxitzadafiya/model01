@@ -994,10 +994,10 @@ export const buildCRMListingQuery = ({
       // has_images: true,
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
-      'categories.golf': true,
       $and: [
         {
           $or: [
+            { 'categories.golf': true },
             { 'views.golf': true },
             { 'settings.frontline_golf': true },
             { 'settings.close_to_golf': true },
