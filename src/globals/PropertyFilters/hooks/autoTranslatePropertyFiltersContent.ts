@@ -1,10 +1,10 @@
 import type { GlobalAfterChangeHook } from 'payload'
 
-import { defaultLocale } from '@/i18n/locales'
 import { enqueueAutoTranslate } from '@/utilities/autoTranslate/autoTranslateQueue'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
 import { documentHasSourceTranslatableContent } from '@/utilities/autoTranslate/documentTranslate'
 import { PROPERTY_FILTERS_FIELD_REGISTRY } from '@/utilities/autoTranslate/propertyFiltersFieldRegistry'
+import { resolveAutoTranslateSourceLocale } from '@/utilities/autoTranslate/resolveSourceLocale'
 import { runDeferredPropertyFiltersAutoTranslate } from '@/utilities/autoTranslate/runDeferredPropertyFiltersAutoTranslate'
 
 export const autoTranslatePropertyFiltersContent: GlobalAfterChangeHook = async ({
@@ -15,8 +15,11 @@ export const autoTranslatePropertyFiltersContent: GlobalAfterChangeHook = async 
 }) => {
   if (isAutoTranslating(context)) return doc
 
-  const sourceLocale = (req.locale ?? defaultLocale).trim().toLowerCase()
-  if (sourceLocale !== defaultLocale) return doc
+  const { sourceLocale, shouldTranslate } = await resolveAutoTranslateSourceLocale(
+    req.payload,
+    req.locale,
+  )
+  if (!shouldTranslate) return doc
 
   const sourceRecord = doc as unknown as Record<string, unknown>
   if (!documentHasSourceTranslatableContent(sourceRecord, PROPERTY_FILTERS_FIELD_REGISTRY)) {

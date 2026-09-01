@@ -1,11 +1,11 @@
 import type { CollectionAfterChangeHook, PayloadRequest } from 'payload'
 
-import { defaultLocale } from '@/i18n/locales'
 import type { Post } from '@/payload-types'
 import { enqueueAutoTranslate } from '@/utilities/autoTranslate/autoTranslateQueue'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
 import { documentHasSourceTranslatableContent } from '@/utilities/autoTranslate/documentTranslate'
 import { POST_FIELD_REGISTRY } from '@/utilities/autoTranslate/postFieldRegistry'
+import { resolveAutoTranslateSourceLocale } from '@/utilities/autoTranslate/resolveSourceLocale'
 import { runDeferredPostAutoTranslate } from '@/utilities/autoTranslate/runDeferredPostAutoTranslate'
 
 function isAutosaveRequest(req: PayloadRequest): boolean {
@@ -22,8 +22,11 @@ export const autoTranslatePostContent: CollectionAfterChangeHook<Post> = async (
   if (isAutoTranslating(context)) return doc
   if (isAutosaveRequest(req)) return doc
 
-  const sourceLocale = (req.locale ?? defaultLocale).trim().toLowerCase()
-  if (sourceLocale !== defaultLocale) return doc
+  const { sourceLocale, shouldTranslate } = await resolveAutoTranslateSourceLocale(
+    req.payload,
+    req.locale,
+  )
+  if (!shouldTranslate) return doc
 
   if (
     !documentHasSourceTranslatableContent(

@@ -3764,7 +3764,7 @@ export interface Theme {
   createdAt?: string | null;
 }
 /**
- * Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save. Display names are localized — edit them in English; DeepL fills other languages on save. When DeepL is enabled, newly added or re-enabled languages are auto-filled from English across Pages, Posts, Header, Footer, Display names, and other localized content (empty fields only).
+ * Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save. Display names are localized — edit them in the DeepL source language; DeepL fills other languages on save. When DeepL is enabled, newly added or re-enabled languages are auto-filled from the DeepL source language (Settings → DeepL) across Pages, Posts, Header, Footer, Display names, and other localized content (empty fields only).
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "localization".
@@ -4328,6 +4328,10 @@ export interface DeeplSetting {
   id: number;
   enabled?: boolean | null;
   /**
+   * Content saved in this language is sent to DeepL to fill the other site languages. Options match Site languages in Globals → Localization. Switch the admin Locale to this language before editing translatable fields.
+   */
+  sourceLanguage?: ('en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl') | null;
+  /**
    * Use https://api-free.deepl.com for free-tier accounts.
    */
   apiUrl?: string | null;
@@ -4876,6 +4880,7 @@ export interface OptimaCrmSettingsSelect<T extends boolean = true> {
  */
 export interface DeeplSettingsSelect<T extends boolean = true> {
   enabled?: T;
+  sourceLanguage?: T;
   apiUrl?: T;
   apiKey?: T;
   updatedAt?: T;

@@ -1,6 +1,5 @@
 import type { GlobalAfterChangeHook } from 'payload'
 
-import { defaultLocale } from '@/i18n/locales'
 import { enqueueAutoTranslate } from '@/utilities/autoTranslate/autoTranslateQueue'
 import { GLOBAL_DELETED_AT_FIELD } from '@/plugins/trashAndVersions/constants'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
@@ -9,6 +8,7 @@ import {
   documentLocalizedFieldsChanged,
 } from '@/utilities/autoTranslate/documentTranslate'
 import { FOOTER_FIELD_REGISTRY } from '@/utilities/autoTranslate/footerFieldRegistry'
+import { resolveAutoTranslateSourceLocale } from '@/utilities/autoTranslate/resolveSourceLocale'
 import { runDeferredFooterAutoTranslate } from '@/utilities/autoTranslate/runDeferredFooterAutoTranslate'
 
 export const autoTranslateFooterContent: GlobalAfterChangeHook = async ({
@@ -31,8 +31,11 @@ export const autoTranslateFooterContent: GlobalAfterChangeHook = async ({
     return doc
   }
 
-  const sourceLocale = (req.locale ?? defaultLocale).trim().toLowerCase()
-  if (sourceLocale !== defaultLocale) return doc
+  const { sourceLocale, shouldTranslate } = await resolveAutoTranslateSourceLocale(
+    req.payload,
+    req.locale,
+  )
+  if (!shouldTranslate) return doc
 
   const sourceRecord = doc as unknown as Record<string, unknown>
   const previousRecord = previousDoc

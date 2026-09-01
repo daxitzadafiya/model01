@@ -38,7 +38,7 @@ export const Localization: GlobalConfig = {
   admin: {
     description: a(
       'admin.localization.description',
-      'Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save. Display names are localized — edit them in English; DeepL fills other languages on save. When DeepL is enabled, newly added or re-enabled languages are auto-filled from English across Pages, Posts, Header, Footer, Display names, and other localized content (empty fields only).',
+      'Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save. Display names are localized — edit them in the DeepL source language; DeepL fills other languages on save. When DeepL is enabled, newly added or re-enabled languages are auto-filled from the DeepL source language (Settings → DeepL) across Pages, Posts, Header, Footer, Display names, and other localized content (empty fields only).',
     ),
   },
   fields: [

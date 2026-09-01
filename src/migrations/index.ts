@@ -66,6 +66,7 @@ import * as migration_20260810_200000_global_version_array_soft_delete from './2
 import * as migration_20260810_210000_repair_property_filter_labels from './20260810_210000_repair_property_filter_labels'
 import * as migration_20260810_220000_users_search_trash from './20260810_220000_users_search_trash';
 import * as migration_20260811_163000_optima_crm_reference_fields from './20260811_163000_optima_crm_reference_fields'
+import * as migration_20260901_100000_deepl_source_language from './20260901_100000_deepl_source_language'
 
 export const migrations = [
   {
@@ -407,5 +408,10 @@ export const migrations = [
     up: migration_20260811_163000_optima_crm_reference_fields.up,
     down: migration_20260811_163000_optima_crm_reference_fields.down,
     name: '20260811_163000_optima_crm_reference_fields',
+  },
+  {
+    up: migration_20260901_100000_deepl_source_language.up,
+    down: migration_20260901_100000_deepl_source_language.down,
+    name: '20260901_100000_deepl_source_language',
   },
 ]

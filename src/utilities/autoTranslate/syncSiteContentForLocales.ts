@@ -1,8 +1,9 @@
 import type { Payload } from 'payload'
 
-import { defaultLocale, localeCodes, type Locale } from '@/i18n/locales'
+import { localeCodes, type Locale } from '@/i18n/locales'
 import type { Page, Post } from '@/payload-types'
 import { getDeepLSettingsFromPayload } from '@/settings/deepl/server'
+import { resolveDeepLSourceLanguage } from '@/settings/deepl/shared'
 import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 import { seedMissingTranslationLocales } from '@/utilities/seedMissingTranslationLocales'
 
@@ -203,11 +204,10 @@ async function syncPosts(
 export async function syncSiteContentForLocales({
   payload,
   targetLocales,
-  sourceLocale = defaultLocale,
+  sourceLocale,
 }: SyncSiteContentForLocalesArgs): Promise<void> {
-  const normalizedSource = (
-    sourceLocale.trim().toLowerCase() || defaultLocale
-  ) as Locale
+  const deepl = await getDeepLSettingsFromPayload(payload)
+  const normalizedSource = resolveDeepLSourceLanguage(sourceLocale ?? deepl.sourceLanguage)
   const locales = targetLocales
     .map((code) => String(code).trim().toLowerCase())
     .filter((code): code is Locale => localeCodes.includes(code as Locale))
@@ -215,7 +215,6 @@ export async function syncSiteContentForLocales({
 
   if (locales.length === 0) return
 
-  const deepl = await getDeepLSettingsFromPayload(payload)
   if (!deepl.enabled || !deepl.apiKey.trim()) {
     payload.logger.info(
       `[autoTranslate] Localization sync skipped — DeepL disabled (locales: ${locales.join(', ')})`,

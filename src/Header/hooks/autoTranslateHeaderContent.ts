@@ -1,11 +1,11 @@
 import type { GlobalAfterChangeHook } from 'payload'
 
-import { defaultLocale } from '@/i18n/locales'
 import { GLOBAL_DELETED_AT_FIELD } from '@/plugins/trashAndVersions/constants'
 import { enqueueAutoTranslate } from '@/utilities/autoTranslate/autoTranslateQueue'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
 import { documentHasSourceTranslatableContent } from '@/utilities/autoTranslate/documentTranslate'
 import { HEADER_FIELD_REGISTRY } from '@/utilities/autoTranslate/headerFieldRegistry'
+import { resolveAutoTranslateSourceLocale } from '@/utilities/autoTranslate/resolveSourceLocale'
 import { runDeferredHeaderAutoTranslate } from '@/utilities/autoTranslate/runDeferredHeaderAutoTranslate'
 
 export const autoTranslateHeaderContent: GlobalAfterChangeHook = async ({
@@ -28,8 +28,11 @@ export const autoTranslateHeaderContent: GlobalAfterChangeHook = async ({
     return doc
   }
 
-  const sourceLocale = (req.locale ?? defaultLocale).trim().toLowerCase()
-  if (sourceLocale !== defaultLocale) return doc
+  const { sourceLocale, shouldTranslate } = await resolveAutoTranslateSourceLocale(
+    req.payload,
+    req.locale,
+  )
+  if (!shouldTranslate) return doc
 
   const sourceRecord = doc as unknown as Record<string, unknown>
   if (!documentHasSourceTranslatableContent(sourceRecord, HEADER_FIELD_REGISTRY)) {

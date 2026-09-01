@@ -1,10 +1,10 @@
 import type { CollectionAfterChangeHook, PayloadRequest } from 'payload'
 
-import { defaultLocale } from '@/i18n/locales'
 import type { Page } from '@/payload-types'
 import { layoutHasTranslatableBlocks } from '@/utilities/autoTranslate/blockRegistry'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
 import { enqueueAutoTranslate } from '@/utilities/autoTranslate/autoTranslateQueue'
+import { resolveAutoTranslateSourceLocale } from '@/utilities/autoTranslate/resolveSourceLocale'
 import { runDeferredPageAutoTranslate } from '@/utilities/autoTranslate/runDeferredPageAutoTranslate'
 
 function isAutosaveRequest(req: PayloadRequest): boolean {
@@ -22,8 +22,11 @@ export const autoTranslatePageContent: CollectionAfterChangeHook<Page> = async (
   // Autosave drafts race with publish and only write draft locales — wait for an explicit save.
   if (isAutosaveRequest(req)) return doc
 
-  const sourceLocale = (req.locale ?? defaultLocale).trim().toLowerCase()
-  if (sourceLocale !== defaultLocale) return doc
+  const { sourceLocale, shouldTranslate } = await resolveAutoTranslateSourceLocale(
+    req.payload,
+    req.locale,
+  )
+  if (!shouldTranslate) return doc
 
   if (!doc.layout?.length || !layoutHasTranslatableBlocks(doc.layout)) return doc
 
