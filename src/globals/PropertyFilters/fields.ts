@@ -2,6 +2,12 @@ import type { ArrayField, Field } from 'payload'
 
 import { a } from '@/utilities/adminI18n'
 
+import {
+  dropEmptyOptionRows,
+  ensureLocalizedOptionLabel,
+  flattenOptionLabelsForSave,
+} from './hooks/ensureOptionLabels'
+
 const COL_HALF = '50%' as const
 
 const sortOptionFields: Field[] = [
@@ -27,6 +33,9 @@ const sortOptionFields: Field[] = [
         label: a('admin.propertyFilters.sortOptions.label', 'Label'),
         required: true,
         localized: true,
+        hooks: {
+          beforeChange: [ensureLocalizedOptionLabel],
+        },
         admin: {
           width: '30%',
         },
@@ -71,6 +80,9 @@ const filterOptionFields: Field[] = [
         label: a('admin.propertyFilters.filterOptions.label', 'Label'),
         required: true,
         localized: true,
+        hooks: {
+          beforeChange: [ensureLocalizedOptionLabel],
+        },
         admin: {
           width: '60%',
         },
@@ -102,8 +114,15 @@ const priceRangeFields: Field[] = [
         label: a('admin.propertyFilters.priceRanges.label', 'Label'),
         required: true,
         localized: true,
+        hooks: {
+          beforeChange: [ensureLocalizedOptionLabel],
+        },
         admin: {
           width: '25%',
+          description: a(
+            'admin.propertyFilters.priceRanges.label.description',
+            'Shown in the filter dropdown. If empty, the Value is used.',
+          ),
         },
       },
       {
@@ -141,11 +160,24 @@ function filterArrayField(
     admin?: ArrayField['admin'] & { width?: string }
   },
 ): ArrayField {
-  const { admin, ...field } = config
+  const { admin, hooks, ...field } = config
 
   return {
     ...field,
     type: 'array',
+    hooks: {
+      ...hooks,
+      beforeChange: [
+        ({ value, req }) =>
+          dropEmptyOptionRows(
+            flattenOptionLabelsForSave(
+              value,
+              typeof req?.locale === 'string' ? req.locale : undefined,
+            ),
+          ),
+        ...(hooks?.beforeChange || []),
+      ],
+    },
     admin: {
       initCollapsed: true,
       ...admin,

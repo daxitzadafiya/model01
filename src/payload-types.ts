@@ -3972,6 +3972,9 @@ export interface PropertyFilter {
          * Unique key (e.g. 500k-1m).
          */
         value: string;
+        /**
+         * Shown in the filter dropdown. If empty, the Value is used.
+         */
         label: string;
         /**
          * CRM value or "any".
@@ -4079,6 +4082,9 @@ export interface PropertyFilter {
          * Unique key (e.g. 500k-1m).
          */
         value: string;
+        /**
+         * Shown in the filter dropdown. If empty, the Value is used.
+         */
         label: string;
         /**
          * CRM value or "any".

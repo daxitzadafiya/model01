@@ -136,11 +136,31 @@ function stripDeleted(
     })
 }
 
+function submittedLabelForResponse(
+  submittedLabel: unknown,
+  savedLabel: unknown,
+  locale?: string,
+): unknown {
+  if (typeof submittedLabel === 'string' && submittedLabel.trim()) return submittedLabel.trim()
+  if (
+    submittedLabel &&
+    typeof submittedLabel === 'object' &&
+    !Array.isArray(submittedLabel) &&
+    locale &&
+    locale !== 'all'
+  ) {
+    const current = (submittedLabel as Record<string, unknown>)[locale]
+    if (typeof current === 'string' && current.trim()) return current.trim()
+  }
+  return savedLabel
+}
+
 /** Keep only rows the editor submitted (plus nested), matching a page refresh. */
 function filterToSubmitted(
   items: SoftDeletableItem[] | null | undefined,
   submitted: SoftDeletableItem[] | null | undefined,
   nestedKey?: string,
+  locale?: string,
 ): SoftDeletableItem[] {
   if (!Array.isArray(items)) return []
   if (!Array.isArray(submitted)) {
@@ -155,16 +175,26 @@ function filterToSubmitted(
     .filter((item) => item?.id && submittedById.has(String(item.id)))
     .map((item) => {
       const submittedItem = submittedById.get(String(item.id))
-      if (!nestedKey || !Array.isArray(item[nestedKey])) {
-        return { ...item, isDeleted: false, deletedAt: null }
+      const withLabel =
+        submittedItem && ('label' in submittedItem || 'label' in item)
+          ? {
+              ...item,
+              label: submittedLabelForResponse(submittedItem.label, item.label, locale),
+            }
+          : item
+
+      if (!nestedKey || !Array.isArray(withLabel[nestedKey])) {
+        return { ...withLabel, isDeleted: false, deletedAt: null }
       }
       return {
-        ...item,
+        ...withLabel,
         isDeleted: false,
         deletedAt: null,
         [nestedKey]: filterToSubmitted(
-          item[nestedKey] as SoftDeletableItem[],
+          withLabel[nestedKey] as SoftDeletableItem[],
           submittedItem?.[nestedKey] as SoftDeletableItem[] | undefined,
+          nestedKey,
+          locale,
         ),
       }
     })
@@ -252,6 +282,44 @@ export function fillLocalizedLabels(
   })
 }
 
+/**
+ * Fill empty labels from `value` without expanding a single-locale string into
+ * every locale (that would overwrite translations on a normal admin save).
+ */
+export function ensureArrayOptionLabels(
+  items: SoftDeletableItem[] | null | undefined,
+): SoftDeletableItem[] {
+  if (!Array.isArray(items)) return []
+
+  return items.map((item) => {
+    const fallbackFromValue =
+      (typeof item.value === 'string' && item.value.trim()) ||
+      (typeof item.family === 'string' && item.family.trim()) ||
+      ''
+    const fallback = fallbackFromValue
+      ? fallbackFromValue.charAt(0).toUpperCase() + fallbackFromValue.slice(1)
+      : 'Option'
+
+    const label = item.label as string | Record<string, string | null | undefined> | null | undefined
+
+    if (typeof label === 'string') {
+      return { ...item, label: label.trim() || fallback }
+    }
+
+    if (label && typeof label === 'object') {
+      const record = { ...label }
+      for (const [locale, current] of Object.entries(record)) {
+        if (typeof current !== 'string' || !current.trim()) {
+          record[locale] = fallback
+        }
+      }
+      return { ...item, label: record }
+    }
+
+    return { ...item, label: fallback }
+  })
+}
+
 function resolveFindLocale(spec: SoftDeleteFieldSpec, reqLocale: string | undefined) {
   if (spec.localized) return reqLocale
   if (spec.hasLocalizedFields) return 'all'
@@ -309,6 +377,10 @@ export function createGlobalSoftDeleteBeforeChange(
         record[spec.field],
         spec.nested?.[0],
       )
+
+      if (spec.hasLocalizedFields && Array.isArray(record[spec.field])) {
+        record[spec.field] = ensureArrayOptionLabels(record[spec.field])
+      }
     }
 
     ctx[SUBMITTED_SOFT_DELETE_ARRAYS] = submittedSnapshots
@@ -341,7 +413,7 @@ export function createGlobalSoftDeleteAfterRead(
 export function createGlobalSoftDeleteAfterChange(
   specs: SoftDeleteFieldSpec[],
 ): GlobalAfterChangeHook {
-  return ({ doc, context }) => {
+  return ({ doc, req, context }) => {
     if (!doc || specs.length === 0) return doc
     if (context?.[RESTORE_ARRAY_ITEM] || context?.restoreNavItem) return doc
 
@@ -349,6 +421,7 @@ export function createGlobalSoftDeleteAfterChange(
     const submittedSnapshots =
       (context?.[SUBMITTED_SOFT_DELETE_ARRAYS] as Record<string, SoftDeletableItem[]> | undefined) ||
       {}
+    const locale = typeof req?.locale === 'string' ? req.locale : undefined
 
     for (const spec of specs) {
       if (!Array.isArray(record[spec.field])) continue
@@ -358,6 +431,7 @@ export function createGlobalSoftDeleteAfterChange(
           record[spec.field],
           submittedSnapshots[spec.field],
           spec.nested?.[0],
+          locale,
         )
       } else {
         record[spec.field] = stripDeleted(
