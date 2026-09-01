@@ -6,6 +6,7 @@ import { seoPlugin } from '@payloadcms/plugin-seo'
 import { searchPlugin } from '@payloadcms/plugin-search'
 import { Plugin } from 'payload'
 import { activityLogPlugin } from '@/plugins/activityLogPlugin'
+import { forceTranslatePlugin } from '@/plugins/forceTranslatePlugin'
 import { trashAndVersionsPlugin } from '@/plugins/trashAndVersionsPlugin'
 import { a } from '@/utilities/adminI18n'
 import { revalidateRedirects } from '@/hooks/revalidateRedirects'
@@ -75,6 +76,7 @@ export const plugins: Plugin[] = [
     generateTitle,
     generateURL,
   }),
+  forceTranslatePlugin(),
   formBuilderPlugin({
     fields: {
       payment: false,

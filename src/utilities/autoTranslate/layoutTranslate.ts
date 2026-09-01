@@ -116,45 +116,40 @@ export function layoutLocalizedFieldsChanged(
 
 export async function buildLayoutPatches(
   sourceLayout: Page['layout'] | null | undefined,
-  previousLayout: Page['layout'] | null | undefined,
+  _previousLayout: Page['layout'] | null | undefined,
   targetLayout: Page['layout'] | null | undefined,
   translate: (text: string, targetLocale: string) => Promise<string | null>,
   targetLocale: string,
 ): Promise<LayoutFieldPatches> {
   const patches: LayoutFieldPatches = new Map()
+  let translatedAny = false
 
   if (!sourceLayout?.length) return patches
 
   for (const sourceBlock of sourceLayout) {
     if (!sourceBlock.id || !blockHasTranslatableFields(sourceBlock)) continue
 
-    const previousBlock = previousLayout ? findBlockById(previousLayout, sourceBlock.id) : undefined
     const targetBlock = targetLayout ? findBlockById(targetLayout, sourceBlock.id) : undefined
 
     const sourceStrings = collectBlockStringFingerprints(sourceBlock)
-    const previousStrings = previousBlock
-      ? collectBlockStringFingerprints(previousBlock)
-      : new Map()
     const targetStrings = targetBlock ? collectBlockStringFingerprints(targetBlock) : new Map()
 
     const sourceRichText = collectBlockRichTextValues(sourceBlock)
-    const previousRichText = previousBlock ? collectBlockRichTextValues(previousBlock) : new Map()
     const targetRichText = targetBlock ? collectBlockRichTextValues(targetBlock) : new Map()
 
     const blockPatches = new Map<string, LayoutFieldPatch>()
 
     for (const [path, sourceText] of sourceStrings) {
-      const previousSourceText = previousStrings.get(path) ?? ''
-      const sourceChanged = sourceText !== previousSourceText
       const existingText = targetStrings.get(path) ?? ''
 
-      // Keep existing target copy when source did not change (identity patch so we can
-      // always apply onto a full sourceLayout base without wiping prior translations).
-      if (!sourceChanged && existingText) {
+      // Empty-only: keep existing target copy. Identity patch so applying onto a
+      // full sourceLayout base does not wipe prior translations.
+      if (existingText) {
         blockPatches.set(path, { kind: 'string', value: existingText })
         continue
       }
 
+      translatedAny = true
       const translated = await translate(sourceText, targetLocale)
       if (translated) {
         blockPatches.set(path, { kind: 'string', value: translated })
@@ -165,20 +160,17 @@ export async function buildLayoutPatches(
       const sourceFingerprint = lexicalPlainText(sourceValue)
       if (!sourceFingerprint) continue
 
-      const previousFingerprint = previousRichText.has(path)
-        ? lexicalPlainText(previousRichText.get(path))
-        : ''
-      const sourceChanged = sourceFingerprint !== previousFingerprint
       const existingRichText = targetRichText.get(path)
       const existingFingerprint = existingRichText
         ? lexicalPlainText(existingRichText)
         : ''
 
-      if (!sourceChanged && existingFingerprint && existingRichText) {
+      if (existingFingerprint && existingRichText) {
         blockPatches.set(path, { kind: 'richtext', value: existingRichText })
         continue
       }
 
+      translatedAny = true
       const translated = await translateLexicalRichText(sourceValue, (text) =>
         translate(text, targetLocale),
       )
@@ -193,7 +185,7 @@ export async function buildLayoutPatches(
     }
   }
 
-  return patches
+  return translatedAny ? patches : new Map()
 }
 
 export function applyLayoutPatches(

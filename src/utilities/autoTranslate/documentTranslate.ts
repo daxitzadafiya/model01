@@ -117,7 +117,7 @@ export function documentLocalizedFieldsChanged(
 
 export async function buildDocumentPatches(
   source: Record<string, unknown>,
-  previous: Record<string, unknown> | null | undefined,
+  _previous: Record<string, unknown> | null | undefined,
   target: Record<string, unknown> | null | undefined,
   registry: DocumentFieldRegistry,
   translate: (text: string, targetLocale: string) => Promise<string | null>,
@@ -127,22 +127,18 @@ export async function buildDocumentPatches(
   let hasChanges = false
 
   const sourceStrings = collectStringFingerprints(source, registry.strings)
-  const previousStrings = previous ? collectStringFingerprints(previous, registry.strings) : new Map()
   const targetStrings = target ? collectStringFingerprints(target, registry.strings) : new Map()
 
   const sourceRichText = collectRichTextValues(source, registry.richText)
-  const previousRichText = previous ? collectRichTextValues(previous, registry.richText) : new Map()
   const targetRichText = target ? collectRichTextValues(target, registry.richText) : new Map()
 
   for (const [path, sourceText] of sourceStrings) {
-    const previousSourceText = previousStrings.get(path) ?? ''
-    const sourceChanged = sourceText !== previousSourceText
     const existingText = targetStrings.get(path) ?? ''
 
-    // Preserve existing target copy when source did not change (identity patch).
-    // Update payloads are built from the source doc shape, so skipped fields
-    // would otherwise be rewritten as English.
-    if (!sourceChanged && existingText) {
+    // Automatic DeepL is empty-only. Existing target copy is never overwritten
+    // on save (identity patch so source-shaped updates do not rewrite English).
+    // Force Translate is the only overwrite path.
+    if (existingText) {
       patches.set(path, { kind: 'string', value: existingText })
       continue
     }
@@ -158,16 +154,12 @@ export async function buildDocumentPatches(
     const sourceFingerprint = lexicalPlainText(sourceValue)
     if (!sourceFingerprint) continue
 
-    const previousFingerprint = previousRichText.has(path)
-      ? lexicalPlainText(previousRichText.get(path))
-      : ''
-    const sourceChanged = sourceFingerprint !== previousFingerprint
     const existingRichText = targetRichText.get(path)
     const existingFingerprint = existingRichText
       ? lexicalPlainText(existingRichText)
       : ''
 
-    if (!sourceChanged && existingFingerprint && existingRichText) {
+    if (existingFingerprint && existingRichText) {
       patches.set(path, { kind: 'richtext', value: existingRichText })
       continue
     }
