@@ -6,7 +6,7 @@ import type { Post } from '@/payload-types'
 import { getDeepLSettingsFromPayload } from '@/settings/deepl/server'
 import { translateWithDeepL } from '@/utilities/deepl'
 
-import { AUTO_TRANSLATING_CONTEXT_KEY } from './context'
+import { AUTO_TRANSLATING_CONTEXT_KEY, FORCE_TRANSLATE_TARGET_LOCALE_KEY } from './context'
 import {
   buildDocumentPatches,
   buildUpdateDataFromPatches,
@@ -121,6 +121,7 @@ export async function autoTranslatePost({
       data,
       context: {
         [AUTO_TRANSLATING_CONTEXT_KEY]: true,
+        [FORCE_TRANSLATE_TARGET_LOCALE_KEY]: targetLocale,
         disableRevalidate: true,
       },
       overrideAccess: true,

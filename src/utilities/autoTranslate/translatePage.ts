@@ -7,7 +7,7 @@ import { getDeepLSettingsFromPayload } from '@/settings/deepl/server'
 import { translateWithDeepL } from '@/utilities/deepl'
 
 import { layoutHasTranslatableBlocks } from './blockRegistry'
-import { AUTO_TRANSLATING_CONTEXT_KEY } from './context'
+import { AUTO_TRANSLATING_CONTEXT_KEY, FORCE_TRANSLATE_TARGET_LOCALE_KEY } from './context'
 import {
   applyLayoutPatches,
   buildLayoutPatches,
@@ -115,6 +115,7 @@ export async function autoTranslatePageLayout({
       },
       context: {
         [AUTO_TRANSLATING_CONTEXT_KEY]: true,
+        [FORCE_TRANSLATE_TARGET_LOCALE_KEY]: targetLocale,
         disableRevalidate: true,
       },
       overrideAccess: true,

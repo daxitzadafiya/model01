@@ -5,7 +5,10 @@ import { getCmsLocaleLabel, localeCodes, type Locale } from '@/i18n/locales'
 import { getDeepLSettingsFromPayload } from '@/settings/deepl/server'
 import { translateWithDeepL } from '@/utilities/deepl'
 
-import { AUTO_TRANSLATING_CONTEXT_KEY } from './context'
+import {
+  AUTO_TRANSLATING_CONTEXT_KEY,
+  FORCE_TRANSLATE_TARGET_LOCALE_KEY,
+} from './context'
 import { isLexicalRichText, lexicalPlainText, translateLexicalRichText } from './lexicalText'
 import { resolveTargetLocales } from './resolveTargetLocales'
 
@@ -221,6 +224,7 @@ async function writeEntity(
 ): Promise<void> {
   const context = {
     [AUTO_TRANSLATING_CONTEXT_KEY]: true,
+    [FORCE_TRANSLATE_TARGET_LOCALE_KEY]: locale,
     disableRevalidate: true,
     skipAutoTranslate: true,
   }

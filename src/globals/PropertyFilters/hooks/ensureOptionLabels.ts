@@ -1,6 +1,10 @@
 import type { FieldHook } from 'payload'
 
 import { localeCodes } from '@/i18n/locales'
+import {
+  isTranslationWrite,
+  translationTargetLocale,
+} from '@/utilities/autoTranslate/context'
 
 function textOrEmpty(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
@@ -136,6 +140,7 @@ export const ensureLocalizedOptionLabel: FieldHook = ({
   previousValue,
   siblingData,
   siblingDocWithLocales,
+  context,
   req,
 }) => {
   const sibling = siblingData as Record<string, unknown> | undefined
@@ -144,22 +149,40 @@ export const ensureLocalizedOptionLabel: FieldHook = ({
   const locale = currentLocaleCode(req)
   const incomingIsObject = Boolean(asLocaleRecord(value))
   const stored = (siblingDocWithLocales as { label?: unknown } | undefined)?.label
-  const source = incomingIsObject ? value : stored
+  const reqWithContext = req as { context?: Record<string, unknown>; locale?: unknown }
+  const translating = isTranslationWrite(
+    context as Record<string, unknown> | undefined,
+    reqWithContext,
+  )
+  const writeLocale = translating
+    ? translationTargetLocale(context as Record<string, unknown> | undefined, reqWithContext) ||
+      locale
+    : locale
+  const source = incomingIsObject && !translating ? value : stored
 
   const incomingText = incomingIsObject
-    ? labelForLocale(value, locale)
+    ? labelForLocale(value, writeLocale)
     : textOrEmpty(value)
 
-  const filled = fillAllLocaleLabels(source, incomingText || fallback, locales)
+  // Target-locale writes (Force Translate / DeepL) must not use the translation as
+  // a fallback for other locales — that is what mixed ES/NL labels.
+  const filled = fillAllLocaleLabels(
+    source,
+    translating ? fallback : incomingText || fallback,
+    locales,
+  )
   const previousCurrent =
-    labelForLocale(previousValue, locale) || (locale ? textOrEmpty(asLocaleRecord(stored)?.[locale]) : '')
+    labelForLocale(previousValue, writeLocale) ||
+    (writeLocale ? textOrEmpty(asLocaleRecord(stored)?.[writeLocale]) : '')
 
-  if (incomingText) {
+  if (incomingText && translating) {
+    if (writeLocale) filled[writeLocale] = incomingText
+  } else if (incomingText) {
     applyIncomingLabel({
       filled,
       incomingText,
       locales,
-      locale,
+      locale: writeLocale,
       previousCurrent,
       rowValue: textOrEmpty(sibling?.value),
       source,

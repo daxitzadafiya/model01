@@ -12,6 +12,7 @@ import {
   getAtPayloadPath,
   getForceTranslateMeta,
 } from '@/utilities/autoTranslate/forceTranslateField'
+import { resolveTargetLocales } from '@/utilities/autoTranslate/resolveTargetLocales'
 
 const CONTROL = FORCE_TRANSLATE_COMPONENT
 
@@ -148,6 +149,11 @@ describe('Force Translate', () => {
       if (afterInputIncludesControl(field)) formControls += 1
     })
     expect(formControls).toBe(0)
+  })
+
+  it('never includes the source language in Force Translate targets', () => {
+    expect(resolveTargetLocales(['de', 'en', 'es', 'nl'], 'es')).toEqual(['de', 'en', 'nl'])
+    expect(resolveTargetLocales(['de', 'en', 'es', 'nl'], 'es', ['es', 'nl'])).toEqual(['nl'])
   })
 
   it('registers force-translate endpoints and returns meta without an API key', async () => {

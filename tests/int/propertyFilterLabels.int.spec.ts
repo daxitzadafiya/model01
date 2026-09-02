@@ -175,4 +175,35 @@ describe('property filter option labels', () => {
 
     expect(rows).toEqual([{ value: '900k-1m', label: '€ 900 000 - 1 millón' }])
   })
+
+  it('does not copy a Force Translate target string onto the source locale', () => {
+    const source = 'huésped 01'
+    const siblingDocWithLocales = {
+      label: Object.fromEntries(LOCALES.map((locale) => [locale, source])),
+    }
+
+    const result = runHook({
+      context: { autoTranslating: true, skipAutoTranslate: true, forceTranslateTargetLocale: 'nl' },
+      previousValue: source,
+      req: {
+        locale: 'nl',
+        context: { autoTranslating: true, skipAutoTranslate: true, forceTranslateTargetLocale: 'nl' },
+        payload: { config: { localization: { localeCodes: [...LOCALES] } } },
+      },
+      siblingData: { value: '1', min: '', max: '' },
+      siblingDocWithLocales,
+      value: 'Gast 01',
+    })
+
+    expect(result).toBe('Gast 01')
+    expect(siblingDocWithLocales.label).toEqual({
+      en: source,
+      de: source,
+      el: source,
+      fr: source,
+      es: source,
+      it: source,
+      nl: 'Gast 01',
+    })
+  })
 })
