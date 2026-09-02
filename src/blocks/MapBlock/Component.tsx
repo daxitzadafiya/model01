@@ -3,17 +3,16 @@
 import React, { useMemo } from 'react'
 
 import { OfficeLocationsMap } from '@/components/OfficeLocationsMap/OfficeLocationsMap'
-import { useIntegrationsSettings } from '@/hooks/useIntegrationsSettings'
 import type { Page } from '@/payload-types'
 import type { ContactOfficeLocation } from '@/utilities/contactOfficeLocations'
 import { useTranslation } from '@/utilities/translateClient'
-import { useDeferredSiteLocale } from '@/utilities/useDeferredSiteLocale'
 
 type Props = Extract<Page['layout'][0], { blockType: 'mapBlock' }> & {
   officeLocations?: ContactOfficeLocation[]
 }
 
 const DEFAULT_CENTER = { lat: 48.9903224, lng: 12.1991392 }
+const DEFAULT_ZOOM = 6
 
 function resolveMapCenter(center?: Props['center']) {
   return {
@@ -24,6 +23,12 @@ function resolveMapCenter(center?: Props['center']) {
   }
 }
 
+function resolveMapZoom(value: unknown, fallback = DEFAULT_ZOOM): number {
+  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
+  if (!Number.isFinite(n) || n < 1) return fallback
+  return Math.min(20, n)
+}
+
 export const MapBlock: React.FC<Props> = ({
   center,
   defaultZoom,
@@ -31,20 +36,14 @@ export const MapBlock: React.FC<Props> = ({
   title,
   officeLocations = [],
 }) => {
-  const deferredLocale = useDeferredSiteLocale()
-  const { settings: integrations } = useIntegrationsSettings()
   const defaultTitle = useTranslation('mapBlock.title', 'Map')
   const mapTitle = useMemo(() => title || defaultTitle, [title, defaultTitle])
   const mapCenter = useMemo(() => resolveMapCenter(center), [center])
-  const zoom =
-    typeof defaultZoom === 'number' && Number.isFinite(defaultZoom) ? defaultZoom : 6
-
-  if (!deferredLocale || !integrations.googleMapsApiKey) return null
+  const zoom = resolveMapZoom(defaultZoom)
 
   return (
     <section>
       <OfficeLocationsMap
-        key={deferredLocale}
         center={mapCenter}
         defaultZoom={zoom}
         height={height}

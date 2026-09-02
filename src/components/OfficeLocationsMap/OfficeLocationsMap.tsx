@@ -28,40 +28,32 @@ type Props = {
 }
 
 const CLOSE_DELAY_MS = 450
+const DEFAULT_ZOOM = 6
+const DEFAULT_HEIGHT = 500
 
-const FitOfficeBounds: React.FC<{
-  locations: ContactOfficeLocation[]
-  isCompactPopup: boolean
-}> = ({ locations, isCompactPopup }) => {
+function resolveMapZoom(value: unknown, fallback = DEFAULT_ZOOM): number {
+  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
+  if (!Number.isFinite(n) || n < 1) return fallback
+  return Math.min(20, n)
+}
+
+/** Apply CMS center/zoom once the JS map is ready — do not fit to markers. */
+const ApplyInitialCamera: React.FC<{
+  center: { lat: number; lng: number }
+  zoom: number
+}> = ({ center, zoom }) => {
   const map = useMap()
-  const hasFittedRef = useRef(false)
+  const appliedKeyRef = useRef<string | null>(null)
+  const viewKey = `${center.lat},${center.lng},${zoom}`
 
   useEffect(() => {
-    hasFittedRef.current = false
-  }, [locations])
+    if (!map) return
+    if (appliedKeyRef.current === viewKey) return
 
-  useEffect(() => {
-    if (!map || !locations.length || hasFittedRef.current) return
-
-    if (locations.length === 1) {
-      map.setCenter({ lat: locations[0].lat, lng: locations[0].lon })
-      map.setZoom(isCompactPopup ? 10 : 14)
-      hasFittedRef.current = true
-      return
-    }
-
-    const bounds = new google.maps.LatLngBounds()
-    locations.forEach((location) => bounds.extend({ lat: location.lat, lng: location.lon }))
-
-    map.fitBounds(bounds, {
-      top: 72,
-      right: 32,
-      bottom: isCompactPopup ? 200 : 48,
-      left: 32,
-    })
-
-    hasFittedRef.current = true
-  }, [isCompactPopup, locations, map])
+    map.setCenter({ lat: center.lat, lng: center.lng })
+    map.setZoom(zoom)
+    appliedKeyRef.current = viewKey
+  }, [center.lat, center.lng, map, viewKey, zoom])
 
   return null
 }
@@ -228,7 +220,12 @@ const OfficeLocationDesktopPopup: React.FC<{
   )
 }
 
-const MapContent: React.FC<Props> = ({ locations, center, defaultZoom = 6, height = 500 }) => {
+const MapContent: React.FC<Props> = ({
+  locations,
+  center,
+  defaultZoom,
+  height = DEFAULT_HEIGHT,
+}) => {
   const faviconSrc = useFaviconSource()
   const isCoarsePointer = useCoarsePointer()
   const isCompactPopup = useCompactMapPopup()
@@ -242,7 +239,7 @@ const MapContent: React.FC<Props> = ({ locations, center, defaultZoom = 6, heigh
   const suppressMapClickRef = useRef(false)
   const mapSectionRef = useRef<HTMLDivElement>(null)
 
-  const zoom = typeof defaultZoom === 'number' && Number.isFinite(defaultZoom) ? defaultZoom : 6
+  const zoom = resolveMapZoom(defaultZoom)
 
   const clearCloseTimer = useCallback(() => {
     if (closeTimerRef.current) {
@@ -336,7 +333,7 @@ const MapContent: React.FC<Props> = ({ locations, center, defaultZoom = 6, heigh
   return (
     <div
       ref={mapSectionRef}
-      style={{ height: height ?? 500 }}
+      style={{ height: height ?? DEFAULT_HEIGHT }}
       className="relative isolate w-full overflow-hidden"
     >
       <Map
@@ -350,7 +347,7 @@ const MapContent: React.FC<Props> = ({ locations, center, defaultZoom = 6, heigh
         className="h-full w-full"
         onClick={handleMapClick}
       >
-        <FitOfficeBounds isCompactPopup={isCompactPopup} locations={locations} />
+        <ApplyInitialCamera center={center} zoom={zoom} />
         <OfficeMarkers
           faviconSrc={faviconSrc}
           isCoarsePointer={isTouchInteraction}
@@ -392,8 +389,13 @@ export const OfficeLocationsMap: React.FC<Props> = (props) => {
   const { settings: integrations } = useIntegrationsSettings()
   const mapsApiKey = integrations.googleMapsApiKey || ''
 
-  if (!deferredLocale || !mapsApiKey) {
-    return null
+  if (!deferredLocale) {
+    return (
+      <div
+        style={{ height: props.height ?? DEFAULT_HEIGHT }}
+        className="relative isolate w-full overflow-hidden bg-surface-container-low"
+      />
+    )
   }
 
   const googleHl = toGoogleHl(deferredLocale)
