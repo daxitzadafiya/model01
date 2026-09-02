@@ -73,11 +73,8 @@ export const GLOBAL_SOFT_DELETE_FIELDS: Record<string, SoftDeleteFieldSpec[]> = 
     {
       field: 'languages',
       fieldLabel: 'Language',
-      labelFrom: (item) => {
-        const locale = item.locale ? String(item.locale) : ''
-        const label = item.label ? String(item.label) : ''
-        return label || locale || String(item.id || 'Language')
-      },
+      hasLocalizedFields: true,
+      labelFrom: (item) => localizedOptionLabel(item, 'Language'),
     },
   ],
   propertyFilters: [

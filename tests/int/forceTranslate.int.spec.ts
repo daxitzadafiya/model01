@@ -91,6 +91,85 @@ describe('Force Translate', () => {
     })
   })
 
+  it('does not overwrite existing labels when array row ids differ per locale', async () => {
+    const registry: DocumentFieldRegistry = { strings: ['navItems[].link.label'], richText: [] }
+    const translate = async () => 'SHOULD_NOT_RUN'
+
+    const result = await buildDocumentPatches(
+      { navItems: [{ id: 'en-1', link: { label: 'Home' } }] },
+      { navItems: [{ id: 'en-1', link: { label: 'Home old' } }] },
+      { navItems: [{ id: 'nl-9', link: { label: 'Thuis' } }] },
+      registry,
+      translate,
+      'nl',
+    )
+
+    expect(result.hasChanges).toBe(false)
+    expect(result.patches.get('navItems[en-1].link.label')).toEqual({
+      kind: 'string',
+      value: 'Thuis',
+    })
+  })
+
+  it('translates an empty aligned array label and skips a filled sibling', async () => {
+    const registry: DocumentFieldRegistry = { strings: ['navItems[].link.label'], richText: [] }
+    const translate = async (text: string, locale: string) => `${locale}:${text}`
+
+    const result = await buildDocumentPatches(
+      {
+        navItems: [
+          { id: 'en-1', link: { label: 'Home' } },
+          { id: 'en-2', link: { label: 'About' } },
+        ],
+      },
+      {
+        navItems: [
+          { id: 'en-1', link: { label: 'Home' } },
+          { id: 'en-2', link: { label: 'About' } },
+        ],
+      },
+      {
+        navItems: [
+          { id: 'nl-1', link: { label: 'Thuis' } },
+          { id: 'nl-2', link: { label: '' } },
+        ],
+      },
+      registry,
+      translate,
+      'nl',
+    )
+
+    expect(result.hasChanges).toBe(true)
+    expect(result.patches.get('navItems[en-1].link.label')).toEqual({
+      kind: 'string',
+      value: 'Thuis',
+    })
+    expect(result.patches.get('navItems[en-2].link.label')).toEqual({
+      kind: 'string',
+      value: 'nl:About',
+    })
+  })
+
+  it('fills a source-identical copy after the source label changes', async () => {
+    const registry: DocumentFieldRegistry = { strings: ['title'], richText: [] }
+    const translate = async (text: string, locale: string) => `${locale}:${text}`
+
+    const result = await buildDocumentPatches(
+      { title: 'Apartments' },
+      { title: 'Apartment' },
+      { title: 'Apartments' },
+      registry,
+      translate,
+      'nl',
+    )
+
+    expect(result.hasChanges).toBe(true)
+    expect(result.patches.get('title')).toEqual({
+      kind: 'string',
+      value: 'nl:Apartments',
+    })
+  })
+
   it('gets and sets a nested payload path without touching siblings', () => {
     const source = {
       title: 'Home',

@@ -3,6 +3,8 @@ import { randomBytes } from 'node:crypto'
 import {
   collectLocalizedRichText,
   collectLocalizedStrings,
+  getAtAlignedPath,
+  itemId,
   setLocalizedRichText,
   setLocalizedString,
 } from './fieldPaths'
@@ -64,6 +66,44 @@ function collectFingerprints(
   ])
 }
 
+function alignedStringAtPath(
+  target: Record<string, unknown> | null | undefined,
+  path: string,
+  source: Record<string, unknown>,
+  previous: Record<string, unknown> | null | undefined,
+): string {
+  const value = getAtAlignedPath(target, path, source, previous)
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function alignedRichTextAtPath(
+  target: Record<string, unknown> | null | undefined,
+  path: string,
+  source: Record<string, unknown>,
+  previous: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | undefined {
+  const value = getAtAlignedPath(target, path, source, previous)
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined
+}
+
+/**
+ * Automatic DeepL fills empty target copy only.
+ * Existing unique translations are never overwritten (Force Translate does that).
+ * Source-identical target text is treated as untranslated (e.g. English copied
+ * into empty locale columns) and is filled when the source field changed.
+ */
+export function shouldAutoTranslateTarget(
+  sourceText: string,
+  previousSourceText: string,
+  existingText: string,
+): boolean {
+  if (!existingText) return true
+  if (existingText !== sourceText) return false
+  return sourceText !== previousSourceText
+}
+
 function collectRichTextValues(
   doc: Record<string, unknown>,
   paths: readonly string[],
@@ -117,7 +157,7 @@ export function documentLocalizedFieldsChanged(
 
 export async function buildDocumentPatches(
   source: Record<string, unknown>,
-  _previous: Record<string, unknown> | null | undefined,
+  previous: Record<string, unknown> | null | undefined,
   target: Record<string, unknown> | null | undefined,
   registry: DocumentFieldRegistry,
   translate: (text: string, targetLocale: string) => Promise<string | null>,
@@ -127,19 +167,19 @@ export async function buildDocumentPatches(
   let hasChanges = false
 
   const sourceStrings = collectStringFingerprints(source, registry.strings)
-  const targetStrings = target ? collectStringFingerprints(target, registry.strings) : new Map()
+  const previousStrings = previous ? collectStringFingerprints(previous, registry.strings) : new Map()
 
   const sourceRichText = collectRichTextValues(source, registry.richText)
-  const targetRichText = target ? collectRichTextValues(target, registry.richText) : new Map()
+  const previousRichText = previous ? collectRichTextValues(previous, registry.richText) : new Map()
 
   for (const [path, sourceText] of sourceStrings) {
-    const existingText = targetStrings.get(path) ?? ''
+    const previousSourceText = previousStrings.get(path) ?? ''
+    const existingText = alignedStringAtPath(target, path, source, previous)
 
-    // Automatic DeepL is empty-only. Existing target copy is never overwritten
-    // on save (identity patch so source-shaped updates do not rewrite English).
-    // Force Translate is the only overwrite path.
-    if (existingText) {
-      patches.set(path, { kind: 'string', value: existingText })
+    // Identity patch so source-shaped updates do not rewrite existing copy.
+    // Force Translate is the only overwrite path for unique translations.
+    if (!shouldAutoTranslateTarget(sourceText, previousSourceText, existingText)) {
+      if (existingText) patches.set(path, { kind: 'string', value: existingText })
       continue
     }
 
@@ -154,13 +194,18 @@ export async function buildDocumentPatches(
     const sourceFingerprint = lexicalPlainText(sourceValue)
     if (!sourceFingerprint) continue
 
-    const existingRichText = targetRichText.get(path)
-    const existingFingerprint = existingRichText
-      ? lexicalPlainText(existingRichText)
+    const previousFingerprint = previousRichText.has(path)
+      ? lexicalPlainText(previousRichText.get(path))
       : ''
+    const existingRichText = alignedRichTextAtPath(target, path, source, previous)
+    const existingFingerprint = existingRichText ? lexicalPlainText(existingRichText) : ''
 
-    if (existingFingerprint && existingRichText) {
-      patches.set(path, { kind: 'richtext', value: existingRichText })
+    if (
+      !shouldAutoTranslateTarget(sourceFingerprint, previousFingerprint, existingFingerprint)
+    ) {
+      if (existingFingerprint && existingRichText) {
+        patches.set(path, { kind: 'richtext', value: existingRichText })
+      }
       continue
     }
 
@@ -208,10 +253,7 @@ function ensureUniqueLocalizedArrayIds(
       if (!item || typeof item !== 'object' || Array.isArray(item)) continue
 
       const record = item as Record<string, unknown>
-      const sourceId =
-        typeof record.id === 'string' || typeof record.id === 'number'
-          ? String(record.id).trim()
-          : ''
+      const sourceId = itemId(record)
 
       let matchedPrevIndex = -1
       if (sourceId && previousArray) {

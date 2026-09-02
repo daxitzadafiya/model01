@@ -8,6 +8,7 @@ import {
   setLocalizedString,
 } from './fieldPaths'
 import { isLexicalRichText, lexicalPlainText, translateLexicalRichText } from './lexicalText'
+import { shouldAutoTranslateTarget } from './documentTranslate'
 
 export type LayoutBlock = NonNullable<Page['layout']>[number]
 
@@ -26,6 +27,26 @@ function findBlockById(
   blockId: string,
 ): LayoutBlock | undefined {
   return layout?.find((block) => block.id === blockId)
+}
+
+function findAlignedBlock(
+  sourceBlock: LayoutBlock,
+  sourceLayout: Page['layout'] | null | undefined,
+  targetLayout: Page['layout'] | null | undefined,
+  previousLayout: Page['layout'] | null | undefined,
+): LayoutBlock | undefined {
+  if (!targetLayout?.length || !sourceBlock.id) return undefined
+
+  const byId = findBlockById(targetLayout, sourceBlock.id)
+  if (byId) return byId
+
+  const previousIndex = previousLayout?.findIndex((block) => block.id === sourceBlock.id) ?? -1
+  if (previousIndex >= 0 && targetLayout[previousIndex]) return targetLayout[previousIndex]
+
+  const sourceIndex = sourceLayout?.findIndex((block) => block.id === sourceBlock.id) ?? -1
+  if (sourceIndex >= 0) return targetLayout[sourceIndex]
+
+  return undefined
 }
 
 function collectBlockStringFingerprints(block: LayoutBlock): Map<string, string> {
@@ -116,7 +137,7 @@ export function layoutLocalizedFieldsChanged(
 
 export async function buildLayoutPatches(
   sourceLayout: Page['layout'] | null | undefined,
-  _previousLayout: Page['layout'] | null | undefined,
+  previousLayout: Page['layout'] | null | undefined,
   targetLayout: Page['layout'] | null | undefined,
   translate: (text: string, targetLocale: string) => Promise<string | null>,
   targetLocale: string,
@@ -129,23 +150,36 @@ export async function buildLayoutPatches(
   for (const sourceBlock of sourceLayout) {
     if (!sourceBlock.id || !blockHasTranslatableFields(sourceBlock)) continue
 
-    const targetBlock = targetLayout ? findBlockById(targetLayout, sourceBlock.id) : undefined
+    const previousBlock = previousLayout
+      ? findBlockById(previousLayout, sourceBlock.id)
+      : undefined
+    const targetBlock = findAlignedBlock(
+      sourceBlock,
+      sourceLayout,
+      targetLayout,
+      previousLayout,
+    )
 
     const sourceStrings = collectBlockStringFingerprints(sourceBlock)
+    const previousStrings = previousBlock
+      ? collectBlockStringFingerprints(previousBlock)
+      : new Map()
     const targetStrings = targetBlock ? collectBlockStringFingerprints(targetBlock) : new Map()
 
     const sourceRichText = collectBlockRichTextValues(sourceBlock)
+    const previousRichText = previousBlock
+      ? collectBlockRichTextValues(previousBlock)
+      : new Map()
     const targetRichText = targetBlock ? collectBlockRichTextValues(targetBlock) : new Map()
 
     const blockPatches = new Map<string, LayoutFieldPatch>()
 
     for (const [path, sourceText] of sourceStrings) {
+      const previousSourceText = previousStrings.get(path) ?? ''
       const existingText = targetStrings.get(path) ?? ''
 
-      // Empty-only: keep existing target copy. Identity patch so applying onto a
-      // full sourceLayout base does not wipe prior translations.
-      if (existingText) {
-        blockPatches.set(path, { kind: 'string', value: existingText })
+      if (!shouldAutoTranslateTarget(sourceText, previousSourceText, existingText)) {
+        if (existingText) blockPatches.set(path, { kind: 'string', value: existingText })
         continue
       }
 
@@ -160,13 +194,20 @@ export async function buildLayoutPatches(
       const sourceFingerprint = lexicalPlainText(sourceValue)
       if (!sourceFingerprint) continue
 
+      const previousFingerprint = previousRichText.has(path)
+        ? lexicalPlainText(previousRichText.get(path))
+        : ''
       const existingRichText = targetRichText.get(path)
       const existingFingerprint = existingRichText
         ? lexicalPlainText(existingRichText)
         : ''
 
-      if (existingFingerprint && existingRichText) {
-        blockPatches.set(path, { kind: 'richtext', value: existingRichText })
+      if (
+        !shouldAutoTranslateTarget(sourceFingerprint, previousFingerprint, existingFingerprint)
+      ) {
+        if (existingFingerprint && existingRichText) {
+          blockPatches.set(path, { kind: 'richtext', value: existingRichText })
+        }
         continue
       }
 

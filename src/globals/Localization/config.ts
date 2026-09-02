@@ -8,6 +8,12 @@ import {
 } from '@/i18n/locales'
 import { a, aString } from '@/utilities/adminI18n'
 
+import {
+  ensureLocalizedOptionLabel,
+  flattenOptionLabelsForSave,
+  pinRequestLocale,
+} from '@/globals/PropertyFilters/hooks/ensureOptionLabels'
+
 import { autoTranslateLocalizationContent } from './hooks/autoTranslateLocalizationContent'
 import { revalidateLocalization } from './hooks/revalidateLocalization'
 import { syncAdminLocaleOnDefaultChange } from './hooks/syncAdminLocaleOnDefaultChange'
@@ -117,6 +123,12 @@ export const Localization: GlobalConfig = {
       name: 'languages',
       type: 'array',
       label: a('admin.localization.languages', 'Site languages'),
+      hooks: {
+        beforeChange: [
+          ({ value, req }) =>
+            flattenOptionLabelsForSave(value, pinRequestLocale(req)),
+        ],
+      },
       admin: {
         description: a(
           'admin.localization.languages.description',
@@ -189,6 +201,9 @@ export const Localization: GlobalConfig = {
           localized: true,
           label: a('admin.localization.languages.displayName', 'Display name'),
           required: true,
+          hooks: {
+            beforeChange: [ensureLocalizedOptionLabel],
+          },
           admin: {
             description: a(
               'admin.localization.languages.displayName.description',

@@ -9,13 +9,18 @@ function asContext(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined
 }
 
-/** Force Translate and automatic DeepL writes — never copy the target text onto other locales. */
+/**
+ * Nested DeepL / Force Translate writes.
+ * `skipAutoTranslate` is NOT this — that flag only means "do not queue DeepL
+ * after this save" (tests, trash restore). Treating it as a translation write
+ * dropped other locale labels and rolled the editor's save back.
+ */
 export function isTranslationWrite(
   context?: Record<string, unknown>,
   req?: { context?: Record<string, unknown> },
 ): boolean {
   const merged = { ...asContext(req?.context), ...asContext(context) }
-  return isAutoTranslating(merged) || merged?.skipAutoTranslate === true
+  return isAutoTranslating(merged)
 }
 
 export function translationTargetLocale(

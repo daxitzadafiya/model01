@@ -1,6 +1,6 @@
 import type { FieldHook } from 'payload'
 
-import { localeCodes } from '@/i18n/locales'
+import { defaultLocale, localeCodes } from '@/i18n/locales'
 import {
   isTranslationWrite,
   translationTargetLocale,
@@ -35,9 +35,51 @@ function asLocaleRecord(value: unknown): Record<string, unknown> | null {
   return null
 }
 
-function currentLocaleCode(req: unknown): string | undefined {
-  const locale = (req as { locale?: unknown } | null)?.locale
-  return typeof locale === 'string' && locale && locale !== 'all' ? locale : undefined
+function localeFromUnknown(value: unknown): string | undefined {
+  if (typeof value === 'string' && value.trim() && value !== 'all') {
+    return value.trim().toLowerCase()
+  }
+  if (Array.isArray(value) && value.length > 0) {
+    return localeFromUnknown(value[0])
+  }
+  if (value && typeof value === 'object' && 'code' in value) {
+    return localeFromUnknown((value as { code?: unknown }).code)
+  }
+  return undefined
+}
+
+/**
+ * Content locale for this save. Prefer the admin query (`?locale=es`) over
+ * `req.locale`, because `findGlobal({ locale: 'all', req })` mutates the parent
+ * request to `locale: 'all'` and Payload then ignores the field-hook return.
+ */
+export function resolveRequestLocale(req: unknown): string | undefined {
+  const record = req as {
+    locale?: unknown
+    query?: { locale?: unknown; get?: (key: string) => unknown }
+    searchParams?: { get?: (key: string) => unknown }
+  } | null
+
+  const fromQueryGet =
+    typeof record?.query?.get === 'function' ? record.query.get('locale') : undefined
+  const fromSearch =
+    typeof record?.searchParams?.get === 'function' ? record.searchParams.get('locale') : undefined
+
+  const candidates = [record?.query?.locale, fromQueryGet, fromSearch, record?.locale]
+  for (const candidate of candidates) {
+    const locale = localeFromUnknown(candidate)
+    if (locale) return locale
+  }
+  return undefined
+}
+
+/** Keep mergeLocaleActions on the content locale, not `all` leftover from findGlobal. */
+export function pinRequestLocale(req: unknown): string | undefined {
+  const locale = resolveRequestLocale(req)
+  if (!locale || !req || typeof req !== 'object') return locale
+  const record = req as { locale?: unknown }
+  if (record.locale !== locale) record.locale = locale
+  return locale
 }
 
 function isValuePlaceholder(text: string, rowValue: string): boolean {
@@ -102,27 +144,43 @@ function applyIncomingLabel(args: {
   incomingText: string
   locales: readonly string[]
   locale: string | undefined
-  previousCurrent: string
+  previousText: string
   rowValue: string
   source: unknown
 }): void {
-  const { filled, incomingText, locales, locale, previousCurrent, rowValue, source } = args
+  const { filled, incomingText, locales, locale, previousText, rowValue, source } = args
   const sourceRecord = asLocaleRecord(source)
 
-  if (locale) filled[locale] = incomingText
+  if (locale) {
+    filled[locale] = incomingText
+    // Only English (source) saves fill empty/placeholder locales for DeepL.
+    // A Spanish edit must not copy Spanish onto English or other languages.
+    if (locale !== defaultLocale) return
 
-  for (const code of locales) {
-    if (code === locale) continue
-    const existing = textOrEmpty(sourceRecord?.[code])
-    if (isValuePlaceholder(existing, rowValue)) {
-      filled[code] = incomingText
-      continue
+    for (const code of locales) {
+      if (code === locale) continue
+      const existing = textOrEmpty(sourceRecord?.[code])
+      if (isValuePlaceholder(existing, rowValue)) {
+        filled[code] = incomingText
+      }
     }
-    // Same display string in another locale was copied, not translated.
-    if (previousCurrent && existing === previousCurrent && incomingText !== previousCurrent) {
-      filled[code] = incomingText
-    }
+    return
   }
+
+  // Payload nested array hooks sometimes omit req.locale. Update only locales
+  // that still have the previous current-locale string (the row being edited).
+  if (previousText) {
+    let matched = false
+    for (const code of locales) {
+      if (filled[code] === previousText) {
+        filled[code] = incomingText
+        matched = true
+      }
+    }
+    if (matched) return
+  }
+
+  filled[defaultLocale] = incomingText
 }
 
 /**
@@ -146,7 +204,7 @@ export const ensureLocalizedOptionLabel: FieldHook = ({
   const sibling = siblingData as Record<string, unknown> | undefined
   const fallback = fallbackLabel(sibling)
   const locales = resolveLocales(req)
-  const locale = currentLocaleCode(req)
+  const locale = pinRequestLocale(req)
   const incomingIsObject = Boolean(asLocaleRecord(value))
   const stored = (siblingDocWithLocales as { label?: unknown } | undefined)?.label
   const reqWithContext = req as { context?: Record<string, unknown>; locale?: unknown }
@@ -164,32 +222,31 @@ export const ensureLocalizedOptionLabel: FieldHook = ({
     ? labelForLocale(value, writeLocale)
     : textOrEmpty(value)
 
-  // Target-locale writes (Force Translate / DeepL) must not use the translation as
-  // a fallback for other locales — that is what mixed ES/NL labels.
-  const filled = fillAllLocaleLabels(
-    source,
-    translating ? fallback : incomingText || fallback,
-    locales,
-  )
-  const previousCurrent =
-    labelForLocale(previousValue, writeLocale) ||
-    (writeLocale ? textOrEmpty(asLocaleRecord(stored)?.[writeLocale]) : '')
+  const docWithLocales = siblingDocWithLocales as { label?: unknown } | undefined
 
-  if (incomingText && translating) {
-    if (writeLocale) filled[writeLocale] = incomingText
+  // Always keep a full locale map. Version tables insert one row per locale
+  // (label is NOT NULL); dropping keys makes that insert fail and Payload rolls
+  // the whole global save back — the editor sees the old label return.
+  // DeepL must not use the translated string as the fill for missing locales
+  // (that would copy Dutch onto English).
+  const fillFallback = translating ? fallback : incomingText || fallback
+  const filled = fillAllLocaleLabels(source, fillFallback, locales)
+
+  if (translating) {
+    if (incomingText && writeLocale) filled[writeLocale] = incomingText
   } else if (incomingText) {
     applyIncomingLabel({
       filled,
       incomingText,
       locales,
       locale: writeLocale,
-      previousCurrent,
+      previousText:
+        textOrEmpty(previousValue) || labelForLocale(previousValue, writeLocale),
       rowValue: textOrEmpty(sibling?.value),
       source,
     })
   }
 
-  const docWithLocales = siblingDocWithLocales as { label?: unknown } | undefined
   if (docWithLocales && typeof docWithLocales === 'object') {
     docWithLocales.label = filled
   }

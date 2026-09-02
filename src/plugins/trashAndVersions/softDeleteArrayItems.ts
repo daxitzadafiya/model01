@@ -136,22 +136,27 @@ function stripDeleted(
     })
 }
 
+function textFromLabel(label: unknown, locale?: string): string {
+  if (typeof label === 'string' && label.trim()) return label.trim()
+  if (label && typeof label === 'object' && !Array.isArray(label) && locale && locale !== 'all') {
+    const current = (label as Record<string, unknown>)[locale]
+    if (typeof current === 'string' && current.trim()) return current.trim()
+  }
+  return ''
+}
+
 function submittedLabelForResponse(
   submittedLabel: unknown,
   savedLabel: unknown,
   locale?: string,
 ): unknown {
-  if (typeof submittedLabel === 'string' && submittedLabel.trim()) return submittedLabel.trim()
-  if (
-    submittedLabel &&
-    typeof submittedLabel === 'object' &&
-    !Array.isArray(submittedLabel) &&
-    locale &&
-    locale !== 'all'
-  ) {
-    const current = (submittedLabel as Record<string, unknown>)[locale]
-    if (typeof current === 'string' && current.trim()) return current.trim()
-  }
+  // Field hooks persist the real label. The submitted snapshot is captured in
+  // global beforeChange *before* those hooks, so a locale map here is often stale
+  // ("1 Guest" while the editor saved "1 people"). Prefer what was saved.
+  const savedText = textFromLabel(savedLabel, locale)
+  if (savedText) return savedText
+  const submittedText = textFromLabel(submittedLabel, locale)
+  if (submittedText) return submittedText
   return savedLabel
 }
 
@@ -341,6 +346,12 @@ export function createGlobalSoftDeleteBeforeChange(
       ...((ctx[SUBMITTED_SOFT_DELETE_ARRAYS] as Record<string, SoftDeletableItem[]>) || {}),
     }
 
+    // findGlobal({ locale: 'all', req }) mutates this same request to locale
+    // 'all'. mergeLocaleActions then ignores the field-hook return and writes
+    // the old locale map — Spanish/admin edits look like they snap back.
+    const contentLocale = req.locale
+    const contentFallbackLocale = req.fallbackLocale
+
     for (const spec of specs) {
       if (!Object.prototype.hasOwnProperty.call(data, spec.field)) continue
 
@@ -355,7 +366,10 @@ export function createGlobalSoftDeleteBeforeChange(
         const full = await req.payload.findGlobal({
           slug: global.slug as never,
           depth: 0,
-          locale: resolveFindLocale(spec, req.locale) as never,
+          locale: resolveFindLocale(
+            spec,
+            typeof contentLocale === 'string' ? contentLocale : undefined,
+          ) as never,
           fallbackLocale: false,
           req,
           overrideAccess: true,
@@ -366,6 +380,8 @@ export function createGlobalSoftDeleteBeforeChange(
       } catch {
         // keep previous from originalDoc
       } finally {
+        req.locale = contentLocale
+        req.fallbackLocale = contentFallbackLocale
         // Local API merges context onto the parent req — clear so save response can strip.
         clearIncludeSoftDeletedFlag(req)
       }

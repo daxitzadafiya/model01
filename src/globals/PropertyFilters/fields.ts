@@ -6,6 +6,7 @@ import {
   dropEmptyOptionRows,
   ensureLocalizedOptionLabel,
   flattenOptionLabelsForSave,
+  pinRequestLocale,
 } from './hooks/ensureOptionLabels'
 
 const COL_HALF = '50%' as const
@@ -170,10 +171,7 @@ function filterArrayField(
       beforeChange: [
         ({ value, req }) =>
           dropEmptyOptionRows(
-            flattenOptionLabelsForSave(
-              value,
-              typeof req?.locale === 'string' ? req.locale : undefined,
-            ),
+            flattenOptionLabelsForSave(value, pinRequestLocale(req)),
           ),
         ...(hooks?.beforeChange || []),
       ],

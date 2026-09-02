@@ -34,13 +34,87 @@ export function parseFieldPath(fieldPath: string): Array<string | '[]'> {
   return segments
 }
 
+export function itemId(item: unknown): string {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return ''
+  const id = (item as { id?: unknown }).id
+  if (typeof id === 'string' && id.trim()) return id.trim()
+  if (typeof id === 'number' && Number.isFinite(id)) return String(id)
+  return ''
+}
+
 function arraySelector(item: unknown, index: number): string {
-  if (typeof item === 'object' && item !== null && 'id' in item) {
-    const id = (item as { id?: string | null }).id
-    if (typeof id === 'string' && id.trim()) return id.trim()
+  return itemId(item) || String(index)
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function matchAlignedArrayItem(
+  sourceArray: unknown[],
+  targetArray: unknown[],
+  previousArray: unknown[],
+  selector: string,
+): { source: unknown; target: unknown; previous: unknown } {
+  const sourceItem = resolveArrayItem(sourceArray, selector)
+  const sourceIndex = sourceItem ? sourceArray.indexOf(sourceItem) : Number(selector)
+  const sourceItemId = itemId(sourceItem)
+
+  let previousIndex = -1
+  if (sourceItemId) {
+    previousIndex = previousArray.findIndex((item) => itemId(item) === sourceItemId)
+  }
+  if (previousIndex < 0 && Number.isInteger(sourceIndex) && sourceIndex >= 0) {
+    previousIndex = sourceIndex
   }
 
-  return String(index)
+  const targetById = sourceItemId ? resolveArrayItem(targetArray, sourceItemId) : null
+  const targetItem =
+    targetById ??
+    (previousIndex >= 0 ? targetArray[previousIndex] : undefined) ??
+    (Number.isInteger(sourceIndex) && sourceIndex >= 0 ? targetArray[sourceIndex] : undefined)
+
+  const previousItem = previousIndex >= 0 ? previousArray[previousIndex] : undefined
+
+  return { source: sourceItem, target: targetItem, previous: previousItem }
+}
+
+/**
+ * Read a value from `target` using a source-locale canonical path.
+ * Localized arrays mint different row IDs per locale, so matching falls back to
+ * the previous source row index (same logic as ensureUniqueLocalizedArrayIds).
+ */
+export function getAtAlignedPath(
+  target: unknown,
+  canonicalPath: string,
+  source: unknown,
+  previousSource?: unknown,
+): unknown {
+  const tokens = tokenizeCanonicalPath(canonicalPath)
+  let sourceNode: unknown = source
+  let targetNode: unknown = target
+  let previousNode: unknown = previousSource ?? null
+
+  for (const token of tokens) {
+    if (token.type === 'key') {
+      sourceNode = isRecord(sourceNode) ? sourceNode[token.name] : undefined
+      targetNode = isRecord(targetNode) ? targetNode[token.name] : undefined
+      previousNode = isRecord(previousNode) ? previousNode[token.name] : undefined
+      continue
+    }
+
+    const matched = matchAlignedArrayItem(
+      Array.isArray(sourceNode) ? sourceNode : [],
+      Array.isArray(targetNode) ? targetNode : [],
+      Array.isArray(previousNode) ? previousNode : [],
+      token.selector,
+    )
+    sourceNode = matched.source
+    targetNode = matched.target
+    previousNode = matched.previous
+  }
+
+  return targetNode
 }
 
 function tokenizeCanonicalPath(path: string): PathToken[] {

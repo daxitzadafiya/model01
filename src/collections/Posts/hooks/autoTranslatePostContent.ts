@@ -1,17 +1,18 @@
-import type { CollectionAfterChangeHook, PayloadRequest } from 'payload'
+import type { CollectionAfterChangeHook } from 'payload'
 
 import type { Post } from '@/payload-types'
-import { enqueueAutoTranslate } from '@/utilities/autoTranslate/autoTranslateQueue'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
-import { documentHasSourceTranslatableContent } from '@/utilities/autoTranslate/documentTranslate'
+import {
+  documentHasSourceTranslatableContent,
+  documentLocalizedFieldsChanged,
+} from '@/utilities/autoTranslate/documentTranslate'
 import { POST_FIELD_REGISTRY } from '@/utilities/autoTranslate/postFieldRegistry'
 import { resolveAutoTranslateSourceLocale } from '@/utilities/autoTranslate/resolveSourceLocale'
 import { runDeferredPostAutoTranslate } from '@/utilities/autoTranslate/runDeferredPostAutoTranslate'
-
-function isAutosaveRequest(req: PayloadRequest): boolean {
-  const value = req.query?.autosave
-  return value === true || value === 'true'
-}
+import {
+  isAutosaveRequest,
+  scheduleAutoTranslate,
+} from '@/utilities/autoTranslate/scheduleAutoTranslate'
 
 export const autoTranslatePostContent: CollectionAfterChangeHook<Post> = async ({
   doc,
@@ -28,12 +29,13 @@ export const autoTranslatePostContent: CollectionAfterChangeHook<Post> = async (
   )
   if (!shouldTranslate) return doc
 
-  if (
-    !documentHasSourceTranslatableContent(
-      doc as unknown as Record<string, unknown>,
-      POST_FIELD_REGISTRY,
-    )
-  ) {
+  const sourceRecord = doc as unknown as Record<string, unknown>
+  const previousRecord = previousDoc
+    ? (previousDoc as unknown as Record<string, unknown>)
+    : null
+
+  if (!documentHasSourceTranslatableContent(sourceRecord, POST_FIELD_REGISTRY)) return doc
+  if (!documentLocalizedFieldsChanged(sourceRecord, previousRecord, POST_FIELD_REGISTRY)) {
     return doc
   }
 
@@ -46,14 +48,15 @@ export const autoTranslatePostContent: CollectionAfterChangeHook<Post> = async (
     sourceLocale,
   }
 
-  queueMicrotask(() => {
-    void enqueueAutoTranslate(() => runDeferredPostAutoTranslate(job)).catch((error) => {
+  scheduleAutoTranslate(
+    () => runDeferredPostAutoTranslate(job),
+    (error) => {
       req.payload.logger.error({
         err: error,
-        msg: '[autoTranslate] Deferred post translation failed',
+        msg: '[autoTranslate] post translation failed',
       })
-    })
-  })
+    },
+  )
 
   return doc
 }
