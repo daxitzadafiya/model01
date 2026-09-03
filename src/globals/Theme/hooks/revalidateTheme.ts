@@ -8,6 +8,8 @@ export const revalidateTheme: GlobalAfterChangeHook = async ({ doc, req: { paylo
 
     await revalidateCacheTag('global_theme')
     await revalidateCachePath('/')
+    // Admin chrome (and auth pages) read Theme CSS via AdminThemeStyles.
+    await revalidateCachePath('/admin')
   }
 
   return doc

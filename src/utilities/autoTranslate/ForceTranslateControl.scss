@@ -42,9 +42,9 @@
     }
   
     &[aria-expanded='true'] {
-      background: var(--theme-success-100, #e8f6ee);
-      border-color: var(--theme-success-500, #3fa066);
-      color: var(--theme-success-600, #2f7a4d);
+      background: var(--theme-success-100, #f8f1dc);
+      border-color: var(--theme-success-500, #755b00);
+      color: var(--theme-success-600, #755b00);
     }
   
     &:disabled {
@@ -53,7 +53,7 @@
     }
   
     &:focus-visible {
-      outline: 2px solid var(--theme-success-500, #3fa066);
+      outline: 2px solid var(--theme-success-500, #755b00);
       outline-offset: 1px;
     }
   }
@@ -132,8 +132,8 @@
   }
   
   .force-translate__go {
-    border: 1px solid var(--theme-success-500, #3fa066);
-    background: var(--theme-success-500, #3fa066);
+    border: 1px solid var(--theme-success-500, #755b00);
+    background: var(--theme-success-500, #755b00);
     color: #fff;
   
     &:hover:not(:disabled) {

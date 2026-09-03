@@ -6,6 +6,7 @@ import { formatAdminURL } from 'payload/shared'
 import React from 'react'
 
 import { AdminBrandLogo } from '@/components/AdminBrandLogo'
+import AuthAtmosphere from '@/components/AuthAtmosphere'
 import { ForgotPasswordForm } from './ForgotPasswordForm'
 import { FormHeader } from './FormHeader'
 
@@ -62,6 +63,7 @@ export default async function ForgotPasswordView({
 
   return (
     <>
+      <AuthAtmosphere />
       <AdminBrandLogo payload={payload} />
       <ForgotPasswordForm />
       <Link

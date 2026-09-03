@@ -6,6 +6,7 @@ import { formatAdminURL } from 'payload/shared'
 import React from 'react'
 
 import { AdminBrandLogo } from '@/components/AdminBrandLogo'
+import AuthAtmosphere from '@/components/AuthAtmosphere'
 import { FormHeader } from '../ForgotPasswordView/FormHeader'
 import { ResetPasswordForm } from './ResetPasswordForm'
 
@@ -66,6 +67,7 @@ export default async function ResetPasswordView({
 
   return (
     <div className="reset-password__wrap">
+      <AuthAtmosphere />
       <AdminBrandLogo payload={payload} />
       <ResetPasswordForm token={token} />
       <Link

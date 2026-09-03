@@ -3727,7 +3727,7 @@ export interface Footer {
   createdAt?: string | null;
 }
 /**
- * Site-wide CSS variables for Tailwind classes (bg-primary, text-tertiary, border-outline-variant, etc.).
+ * Site-wide CSS variables for Tailwind classes (bg-primary, text-tertiary, border-outline-variant, etc.). Also drives admin panel + auth page colors.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "theme".
@@ -3757,7 +3757,7 @@ export interface Theme {
       }[]
     | null;
   /**
-   * Defines :root variables used by Tailwind classes (e.g. --color-primary for bg-primary / text-primary). When empty, the default palette is used.
+   * Defines :root variables used by Tailwind classes (e.g. --color-primary for bg-primary / text-primary). When empty, the default palette is used. These colors also theme the admin panel and auth pages.
    */
   customCSS?: string | null;
   updatedAt?: string | null;

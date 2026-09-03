@@ -35,6 +35,7 @@ import { hasAdminCredentials } from './constants/adminUser'
 import { ensureAdminUser } from './utilities/ensureAdminUser'
 import { seedAdminTranslations } from './utilities/adminI18n'
 import { migrations } from './migrations'
+import './components/AdminDashboardHero/i18n'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -90,6 +91,8 @@ export default buildConfig({
   admin: {
     // Avoid recoverable hydration mismatches in admin (style FOUC / extensions / Next 16)
     suppressHydrationWarning: true,
+    // Lock admin chrome to light; hides Account → Payload Settings → Admin Theme.
+    theme: 'light',
     components: {
       graphics: {
         Icon: '@/components/Icon/Icon',
@@ -104,9 +107,10 @@ export default buildConfig({
         },
       },
 
-      // // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
-      // // Feel free to delete this at any time. Simply remove the line below.
-      // beforeLogin: ['@/components/BeforeLogin'],
+      // Atmosphere for admin auth pages (visual only).
+      beforeLogin: ['@/components/BeforeLogin'],
+      // Branded welcome strip above the dashboard collection grid (visual only).
+      beforeDashboard: ['@/components/AdminDashboardHero'],
       // // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // // Feel free to delete this at any time. Simply remove the line below.
       // beforeDashboard: ['@/components/BeforeDashboard'],

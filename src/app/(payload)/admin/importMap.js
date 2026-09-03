@@ -45,6 +45,8 @@ import { DeepLSourceLanguageField as DeepLSourceLanguageField_e862c48d232fb2c5b7
 import { default as default_c8f97ec34ecb4c45dad678c6203d9cb0 } from '@/components/Icon/Icon'
 import { default as default_a0bd5f2fa532ef2166f77171a2b9828a } from '@/components/Logo/Logo'
 import { GlobalsTrashNavLink as GlobalsTrashNavLink_f8a38483255000753e59c72c82da3536 } from '@/components/GlobalsTrash/GlobalsTrashNavLink'
+import { default as default_ef2a23403c83bd343adbc52e5b1d9559 } from '@/components/AdminDashboardHero'
+import { default as default_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
 import { default as default_3a0d2675453b772f02c1de6555319ff1 } from '@/components/ForgotPasswordView'
 import { default as default_b915deef35dfcf06f919ca32dc46e801 } from '@/components/ResetPasswordView'
 import { default as default_09df8b15a41db49454146dff86743e9e } from '@/components/GlobalsTrash/GlobalsTrashView'
@@ -99,6 +101,8 @@ export const importMap = {
   "@/components/Icon/Icon#default": default_c8f97ec34ecb4c45dad678c6203d9cb0,
   "@/components/Logo/Logo#default": default_a0bd5f2fa532ef2166f77171a2b9828a,
   "@/components/GlobalsTrash/GlobalsTrashNavLink#GlobalsTrashNavLink": GlobalsTrashNavLink_f8a38483255000753e59c72c82da3536,
+  "@/components/AdminDashboardHero#default": default_ef2a23403c83bd343adbc52e5b1d9559,
+  "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e,
   "@/components/ForgotPasswordView#default": default_3a0d2675453b772f02c1de6555319ff1,
   "@/components/ResetPasswordView#default": default_b915deef35dfcf06f919ca32dc46e801,
   "@/components/GlobalsTrash/GlobalsTrashView#default": default_09df8b15a41db49454146dff86743e9e,

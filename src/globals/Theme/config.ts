@@ -28,7 +28,7 @@ export const Theme: GlobalConfig = {
   admin: {
     description: a(
       'admin.theme.description',
-      'Site-wide CSS variables for Tailwind classes (bg-primary, text-tertiary, border-outline-variant, etc.).',
+      'Site-wide CSS variables for Tailwind classes (bg-primary, text-tertiary, border-outline-variant, etc.). Also drives admin panel + auth page colors.',
     ),
   },
   hooks: {
@@ -125,7 +125,7 @@ export const Theme: GlobalConfig = {
         language: 'css',
         description: a(
           'admin.theme.customCSS.description',
-          'Defines :root variables used by Tailwind classes (e.g. --color-primary for bg-primary / text-primary). When empty, the default palette is used.',
+          'Defines :root variables used by Tailwind classes (e.g. --color-primary for bg-primary / text-primary). When empty, the default palette is used. These colors also theme the admin panel and auth pages.',
         ),
       },
     },

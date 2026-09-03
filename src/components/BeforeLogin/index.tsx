@@ -1,14 +1,13 @@
 import React from 'react'
 
+import AuthAtmosphere from '@/components/AuthAtmosphere'
+
+/**
+ * Injected above the login form (inside MinimalTemplate).
+ * Atmosphere only — does not alter auth behaviour.
+ */
 const BeforeLogin: React.FC = () => {
-  return (
-    <div>
-      <p>
-        <b>Welcome to your dashboard!</b>
-        {' This is where site admins will log in to manage your website.'}
-      </p>
-    </div>
-  )
+  return <AuthAtmosphere />
 }
 
 export default BeforeLogin
