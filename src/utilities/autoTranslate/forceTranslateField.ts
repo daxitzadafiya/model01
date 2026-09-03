@@ -9,7 +9,13 @@ import {
   AUTO_TRANSLATING_CONTEXT_KEY,
   FORCE_TRANSLATE_TARGET_LOCALE_KEY,
 } from './context'
+import {
+  buildDocumentPatches,
+  buildUpdateDataFromPatches,
+  type DocumentFieldRegistry,
+} from './documentTranslate'
 import { isLexicalRichText, lexicalPlainText, translateLexicalRichText } from './lexicalText'
+import { POST_FIELD_REGISTRY } from './postFieldRegistry'
 import { resolveTargetLocales } from './resolveTargetLocales'
 
 export const FORCE_TRANSLATE_COLLECTIONS = ['pages', 'posts'] as const
@@ -24,6 +30,13 @@ export const FORCE_TRANSLATE_GLOBALS = [
 
 export type ForceTranslateCollection = (typeof FORCE_TRANSLATE_COLLECTIONS)[number]
 export type ForceTranslateGlobal = (typeof FORCE_TRANSLATE_GLOBALS)[number]
+
+/** Collections that translate top-level localized fields (not layout blocks). */
+const COLLECTION_FIELD_REGISTRIES: Partial<
+  Record<ForceTranslateCollection, DocumentFieldRegistry>
+> = {
+  posts: POST_FIELD_REGISTRY,
+}
 
 export type ForceTranslateEntity =
   | { type: 'collection'; slug: ForceTranslateCollection; id: number | string; draft: boolean }
@@ -300,6 +313,61 @@ export function parseForceTranslateEntity(body: {
   throw new Error('Unsupported collection or global')
 }
 
+/**
+ * Posts (and similar docs) have multiple required localized fields. Writing only
+ * the force-translated path to an empty locale fails validation. Fill empty
+ * siblings via empty-only patches, then overwrite the requested path.
+ */
+async function buildForceTranslateUpdateData(args: {
+  entity: ForceTranslateEntity
+  path: string
+  translated: unknown
+  sourceDoc: Record<string, unknown>
+  targetDoc: Record<string, unknown>
+  targetLocale: string
+  translate: (text: string, targetLocale: string) => Promise<string | null>
+}): Promise<Record<string, unknown> | null> {
+  const registry =
+    args.entity.type === 'collection'
+      ? COLLECTION_FIELD_REGISTRIES[args.entity.slug]
+      : undefined
+
+  if (!registry) {
+    return buildUpdateAtPayloadPath(
+      args.targetDoc,
+      args.sourceDoc,
+      args.path,
+      args.translated,
+    )
+  }
+
+  const { patches } = await buildDocumentPatches(
+    args.sourceDoc,
+    args.sourceDoc,
+    args.targetDoc,
+    registry,
+    args.translate,
+    args.targetLocale,
+  )
+
+  if (typeof args.translated === 'string') {
+    patches.set(args.path, { kind: 'string', value: args.translated })
+  } else if (isLexicalRichText(args.translated)) {
+    patches.set(args.path, {
+      kind: 'richtext',
+      value: args.translated as Record<string, unknown>,
+    })
+  } else {
+    return null
+  }
+
+  return buildUpdateDataFromPatches(patches, {
+    baseDoc: args.sourceDoc,
+    targetDoc: args.targetDoc,
+    previousSourceDoc: args.sourceDoc,
+  })
+}
+
 export async function forceTranslateField(args: {
   payload: Payload
   entity: ForceTranslateEntity
@@ -364,7 +432,15 @@ export async function forceTranslateField(args: {
       }
 
       const targetDoc = (await loadEntity(args.payload, args.entity, targetLocale)) ?? {}
-      const data = buildUpdateAtPayloadPath(targetDoc, sourceDoc, path, translated)
+      const data = await buildForceTranslateUpdateData({
+        entity: args.entity,
+        path,
+        translated,
+        sourceDoc,
+        targetDoc,
+        targetLocale,
+        translate,
+      })
       if (!data) throw new Error('Could not write the translated field')
 
       await writeEntity(args.payload, args.entity, targetLocale, data)

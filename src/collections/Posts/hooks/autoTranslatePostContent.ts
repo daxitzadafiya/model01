@@ -2,10 +2,7 @@ import type { CollectionAfterChangeHook } from 'payload'
 
 import type { Post } from '@/payload-types'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
-import {
-  documentHasSourceTranslatableContent,
-  documentLocalizedFieldsChanged,
-} from '@/utilities/autoTranslate/documentTranslate'
+import { documentHasSourceTranslatableContent } from '@/utilities/autoTranslate/documentTranslate'
 import { POST_FIELD_REGISTRY } from '@/utilities/autoTranslate/postFieldRegistry'
 import { resolveAutoTranslateSourceLocale } from '@/utilities/autoTranslate/resolveSourceLocale'
 import { runDeferredPostAutoTranslate } from '@/utilities/autoTranslate/runDeferredPostAutoTranslate'
@@ -30,15 +27,13 @@ export const autoTranslatePostContent: CollectionAfterChangeHook<Post> = async (
   if (!shouldTranslate) return doc
 
   const sourceRecord = doc as unknown as Record<string, unknown>
-  const previousRecord = previousDoc
-    ? (previousDoc as unknown as Record<string, unknown>)
-    : null
 
   if (!documentHasSourceTranslatableContent(sourceRecord, POST_FIELD_REGISTRY)) return doc
-  if (!documentLocalizedFieldsChanged(sourceRecord, previousRecord, POST_FIELD_REGISTRY)) {
-    return doc
-  }
 
+  // Do not gate on previousDoc field equality. Draft autosave is skipped above, so
+  // Publish often lands with identical previous/current content — empty target
+  // locales must still be filled. buildDocumentPatches already no-ops when every
+  // target field is already a unique translation.
   const job = {
     postId: doc.id,
     slug: doc.slug,

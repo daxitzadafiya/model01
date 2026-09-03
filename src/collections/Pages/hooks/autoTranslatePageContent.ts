@@ -3,7 +3,6 @@ import type { CollectionAfterChangeHook } from 'payload'
 import type { Page } from '@/payload-types'
 import { layoutHasTranslatableBlocks } from '@/utilities/autoTranslate/blockRegistry'
 import { isAutoTranslating } from '@/utilities/autoTranslate/context'
-import { layoutLocalizedFieldsChanged } from '@/utilities/autoTranslate/layoutTranslate'
 import { resolveAutoTranslateSourceLocale } from '@/utilities/autoTranslate/resolveSourceLocale'
 import { runDeferredPageAutoTranslate } from '@/utilities/autoTranslate/runDeferredPageAutoTranslate'
 import {
@@ -28,13 +27,9 @@ export const autoTranslatePageContent: CollectionAfterChangeHook<Page> = async (
 
   if (!doc.layout?.length || !layoutHasTranslatableBlocks(doc.layout)) return doc
 
-  if (
-    previousDoc &&
-    !layoutLocalizedFieldsChanged(doc.layout, previousDoc.layout)
-  ) {
-    return doc
-  }
-
+  // Do not gate on previous layout equality — draft autosave is skipped above, so
+  // Publish often has identical previous/current layouts while target locales are
+  // still empty. Layout patching already preserves unique translations.
   const job = {
     pageId: doc.id,
     slug: doc.slug,

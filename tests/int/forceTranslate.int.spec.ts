@@ -4,14 +4,16 @@ import { describe, it, beforeAll, expect } from 'vitest'
 import config from '@/payload.config'
 import { FORCE_TRANSLATE_COMPONENT } from '@/plugins/forceTranslatePlugin'
 import {
-  buildDocumentPatches,
-  type DocumentFieldRegistry,
-} from '@/utilities/autoTranslate/documentTranslate'
-import {
   buildUpdateAtPayloadPath,
   getAtPayloadPath,
   getForceTranslateMeta,
 } from '@/utilities/autoTranslate/forceTranslateField'
+import {
+  buildDocumentPatches,
+  buildUpdateDataFromPatches,
+  type DocumentFieldRegistry,
+} from '@/utilities/autoTranslate/documentTranslate'
+import { POST_FIELD_REGISTRY } from '@/utilities/autoTranslate/postFieldRegistry'
 import { resolveTargetLocales } from '@/utilities/autoTranslate/resolveTargetLocales'
 
 const CONTROL = FORCE_TRANSLATE_COMPONENT
@@ -250,5 +252,115 @@ describe('Force Translate', () => {
     )
     expect(meta).not.toHaveProperty('apiKey')
     expect(JSON.stringify(meta)).not.toMatch(/apiKey/i)
+  })
+
+  it('builds a viable Posts force-translate update that fills empty required siblings', async () => {
+    const source = {
+      title: 'Market Trends',
+      subtitle: 'A short summary',
+      content: {
+        root: {
+          type: 'root',
+          children: [
+            {
+              type: 'paragraph',
+              version: 1,
+              children: [{ type: 'text', text: 'Hello world', version: 1 }],
+            },
+          ],
+          direction: 'ltr',
+          format: '',
+          indent: 0,
+          version: 1,
+        },
+      },
+      meta: { title: 'SEO title', description: 'SEO description' },
+    }
+    const target = {}
+    const translate = async (text: string, locale: string) => `${locale}:${text}`
+
+    const { patches } = await buildDocumentPatches(
+      source,
+      source,
+      target,
+      POST_FIELD_REGISTRY,
+      translate,
+      'nl',
+    )
+
+    patches.set('title', { kind: 'string', value: 'nl:FORCED Market Trends' })
+
+    const data = buildUpdateDataFromPatches(patches, {
+      baseDoc: source,
+      targetDoc: target,
+      previousSourceDoc: source,
+    })
+
+    expect(data).toMatchObject({
+      title: 'nl:FORCED Market Trends',
+      subtitle: 'nl:A short summary',
+      meta: {
+        title: 'nl:SEO title',
+        description: 'nl:SEO description',
+      },
+    })
+    expect(data?.content).toBeTruthy()
+  })
+
+  it('keeps unique Posts translations when force-filling empty siblings only', async () => {
+    const source = {
+      title: 'Market Trends',
+      subtitle: 'A short summary',
+      content: {
+        root: {
+          type: 'root',
+          children: [
+            {
+              type: 'paragraph',
+              version: 1,
+              children: [{ type: 'text', text: 'Hello world', version: 1 }],
+            },
+          ],
+          direction: 'ltr',
+          format: '',
+          indent: 0,
+          version: 1,
+        },
+      },
+    }
+    const target = {
+      title: 'Tendencias del mercado',
+      subtitle: 'Un resumen corto',
+      content: {
+        root: {
+          type: 'root',
+          children: [
+            {
+              type: 'paragraph',
+              version: 1,
+              children: [{ type: 'text', text: 'Hola mundo', version: 1 }],
+            },
+          ],
+          direction: 'ltr',
+          format: '',
+          indent: 0,
+          version: 1,
+        },
+      },
+    }
+    const translate = async () => 'SHOULD_NOT_RUN'
+
+    const { patches, hasChanges } = await buildDocumentPatches(
+      source,
+      source,
+      target,
+      POST_FIELD_REGISTRY,
+      translate,
+      'es',
+    )
+
+    expect(hasChanges).toBe(false)
+    expect(patches.get('title')).toEqual({ kind: 'string', value: 'Tendencias del mercado' })
+    expect(patches.get('subtitle')).toEqual({ kind: 'string', value: 'Un resumen corto' })
   })
 })
