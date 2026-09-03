@@ -9,10 +9,12 @@ import {
   filterRangeOptions,
   type PropertySortOption,
 } from '@/utilities/propertyFilterOptions.shared'
+import { useTranslation } from '@/utilities/translateClient'
 
 /**
  * Option labels come from the Property Filters global (localized + DeepL).
  * Do not overlay Translations-collection keys — those duplicate CMS content.
+ * Exception: derived Min/Max “any” labels are static UI strings, not CMS rows.
  */
 
 export function useSortOptions(): PropertySortOption[] {
@@ -40,17 +42,19 @@ export function useBathroomOptions() {
 
 export function useMinPriceOptions(selectedValues?: readonly string[] | null) {
   const { priceRanges } = usePropertyFilterOptions()
+  const anyLabel = useTranslation('propertyList.filters.anyMinPrice', 'Any Min Price')
   return useMemo(
-    () => deriveMinPriceOptions(filterRangeOptions(priceRanges, selectedValues)),
-    [priceRanges, selectedValues],
+    () => deriveMinPriceOptions(filterRangeOptions(priceRanges, selectedValues), anyLabel),
+    [priceRanges, selectedValues, anyLabel],
   )
 }
 
 export function useMaxPriceOptions(selectedValues?: readonly string[] | null) {
   const { priceRanges } = usePropertyFilterOptions()
+  const anyLabel = useTranslation('propertyList.filters.anyMaxPrice', 'Any Max Price')
   return useMemo(
-    () => deriveMaxPriceOptions(filterRangeOptions(priceRanges, selectedValues)),
-    [priceRanges, selectedValues],
+    () => deriveMaxPriceOptions(filterRangeOptions(priceRanges, selectedValues), anyLabel),
+    [priceRanges, selectedValues, anyLabel],
   )
 }
 
