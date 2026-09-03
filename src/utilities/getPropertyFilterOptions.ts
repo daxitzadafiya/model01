@@ -42,10 +42,14 @@ function normalizeSimpleOptions(
   fallback: readonly FilterSelectOption[],
 ): FilterSelectOption[] {
   const mapped = (rows ?? [])
-    .map((row) => ({
-      value: row.value?.trim() ?? '',
-      label: row.label?.trim() ?? '',
-    }))
+    .map((row) => {
+      const trimmed = row.value?.trim() ?? ''
+      return {
+        // Blank / whitespace CRM “any” rows → canonical `any`.
+        value: trimmed || 'any',
+        label: row.label?.trim() ?? '',
+      }
+    })
     .filter((row) => row.label.length > 0)
 
   return mapped.length > 0 ? mapped : [...fallback]
@@ -86,6 +90,14 @@ export function normalizePropertyFilterOptions(
     minPrices: deriveMinPriceOptions(priceRanges),
     maxPrices: deriveMaxPriceOptions(priceRanges),
     features: normalizeSimpleOptions(doc.features, DEFAULT_PROPERTY_FILTER_OPTIONS.features),
+    deliveryDates: normalizeSimpleOptions(
+      doc.deliveryDates,
+      DEFAULT_PROPERTY_FILTER_OPTIONS.deliveryDates,
+    ),
+    distanceToSea: normalizeSimpleOptions(
+      doc.distanceToSea,
+      DEFAULT_PROPERTY_FILTER_OPTIONS.distanceToSea,
+    ),
     guests: normalizeSimpleOptions(doc.guests, DEFAULT_PROPERTY_FILTER_OPTIONS.guests),
     holidayBudgetRanges: normalizePriceRanges(
       doc.holidayBudgetRanges,

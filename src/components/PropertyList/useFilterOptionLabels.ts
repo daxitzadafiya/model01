@@ -63,6 +63,16 @@ export function useFeatureFilterOptions() {
   return features
 }
 
+export function useDeliveryDateOptions() {
+  const { deliveryDates } = usePropertyFilterOptions()
+  return deliveryDates
+}
+
+export function useDistanceToSeaOptions() {
+  const { distanceToSea } = usePropertyFilterOptions()
+  return distanceToSea
+}
+
 export function useGuestOptions() {
   const { guests } = usePropertyFilterOptions()
   return guests

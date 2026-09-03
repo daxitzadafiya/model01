@@ -27,11 +27,12 @@ import { parseCountryFilter, parseFeaturesFilter, parsePropertyTypeFilter } from
 import {
   useBathroomOptions,
   useBedroomOptions,
+  useDeliveryDateOptions,
+  useDistanceToSeaOptions,
   useFeatureFilterOptions,
   useMaxPriceOptions,
   useMinPriceOptions,
 } from './useFilterOptionLabels'
-import { DELIVERY_OPTIONS, DISTANCE_OPTIONS } from './filterOptions'
 import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
@@ -153,6 +154,8 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
   const minPriceOptions = useMinPriceOptions(priceRangeValues)
   const maxPriceOptions = useMaxPriceOptions(priceRangeValues)
   const featureFilterOptions = useFeatureFilterOptions()
+  const deliveryDateOptions = useDeliveryDateOptions()
+  const distanceToSeaOptions = useDistanceToSeaOptions()
 
   useEffect(() => {
     if (!open) return
@@ -352,10 +355,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                   <ModalFieldSelect
                     label={deliveryDateLabel}
                     value={filters.delivery ?? 'any'}
-                    options={DELIVERY_OPTIONS.map((opt) => ({
-                      value: opt.value,
-                      label: opt.label,
-                    }))}
+                    options={deliveryDateOptions}
                     onChange={(v) => onChange('delivery', v)}
                     icon={<Tag {...filterFieldIcon} />}
                   />
@@ -364,10 +364,7 @@ export const PropertyListMoreFiltersModal: React.FC<Props> = ({
                   <ModalFieldSelect
                     label={distanceToSeaLabel}
                     value={filters.distanceToSea ?? 'any'}
-                    options={DISTANCE_OPTIONS.map((opt) => ({
-                      value: opt.value,
-                      label: opt.label,
-                    }))}
+                    options={distanceToSeaOptions}
                     onChange={(v) => onChange('distanceToSea', v)}
                     icon={<Globe {...filterFieldIcon} />}
                   />

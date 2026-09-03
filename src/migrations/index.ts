@@ -67,6 +67,7 @@ import * as migration_20260810_210000_repair_property_filter_labels from './2026
 import * as migration_20260810_220000_users_search_trash from './20260810_220000_users_search_trash';
 import * as migration_20260811_163000_optima_crm_reference_fields from './20260811_163000_optima_crm_reference_fields'
 import * as migration_20260901_100000_deepl_source_language from './20260901_100000_deepl_source_language'
+import * as migration_20260903_120000_property_filters_delivery_distance from './20260903_120000_property_filters_delivery_distance'
 
 export const migrations = [
   {
@@ -413,5 +414,10 @@ export const migrations = [
     up: migration_20260901_100000_deepl_source_language.up,
     down: migration_20260901_100000_deepl_source_language.down,
     name: '20260901_100000_deepl_source_language',
+  },
+  {
+    up: migration_20260903_120000_property_filters_delivery_distance.up,
+    down: migration_20260903_120000_property_filters_delivery_distance.down,
+    name: '20260903_120000_property_filters_delivery_distance',
   },
 ]

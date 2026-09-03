@@ -318,6 +318,53 @@ export const propertyFiltersFields: Field[] = [
     type: 'row',
     fields: [
       filterArrayField({
+        name: 'deliveryDates',
+        label: a('admin.propertyFilters.deliveryDates', 'Delivery date'),
+        admin: {
+          width: COL_HALF,
+          description: a(
+            'admin.propertyFilters.deliveryDates.description',
+            'Project listing “Delivery date” options. Value is months (1 = key ready / handover). Use "any" for no filter.',
+          ),
+        },
+        defaultValue: [
+          { value: 'any', label: 'Any delivery' },
+          { value: '1', label: 'Key ready' },
+          { value: '3', label: '3 months' },
+          { value: '6', label: '6 months' },
+          { value: '12', label: '12 months' },
+          { value: '18', label: '18 months' },
+          { value: '60', label: '18 months or older' },
+        ],
+        fields: filterOptionFields,
+      }),
+      filterArrayField({
+        name: 'distanceToSea',
+        label: a('admin.propertyFilters.distanceToSea', 'Distance to the sea'),
+        admin: {
+          width: COL_HALF,
+          description: a(
+            'admin.propertyFilters.distanceToSea.description',
+            'Project listing distance options. Value is meters. Use "any" or "1000000" for no filter.',
+          ),
+        },
+        defaultValue: [
+          { value: 'any', label: 'Distance to the sea' },
+          { value: '600', label: 'Less than 600 m' },
+          { value: '1000', label: 'Less than 1 km' },
+          { value: '3000', label: 'Less than 3 km' },
+          { value: '6000', label: 'Less than 6 km' },
+          { value: '12000', label: 'Less than 12 km' },
+          { value: '1000000', label: 'Indifferent' },
+        ],
+        fields: filterOptionFields,
+      }),
+    ],
+  },
+  {
+    type: 'row',
+    fields: [
+      filterArrayField({
         name: 'guests',
         label: a('admin.propertyFilters.guests', 'Holiday guests'),
         admin: {

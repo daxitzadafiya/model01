@@ -4059,6 +4059,36 @@ export interface PropertyFilter {
       }[]
     | null;
   /**
+   * Project listing “Delivery date” options. Value is months (1 = key ready / handover). Use "any" for no filter.
+   */
+  deliveryDates?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Project listing distance options. Value is meters. Use "any" or "1000000" for no filter.
+   */
+  distanceToSea?:
+    | {
+        /**
+         * CRM filter value sent with the search query.
+         */
+        value: string;
+        label: string;
+        isDeleted?: boolean | null;
+        deletedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Guest count options for holiday rental search.
    */
   guests?:
@@ -4749,6 +4779,24 @@ export interface PropertyFiltersSelect<T extends boolean = true> {
         id?: T;
       };
   features?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        isDeleted?: T;
+        deletedAt?: T;
+        id?: T;
+      };
+  deliveryDates?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        isDeleted?: T;
+        deletedAt?: T;
+        id?: T;
+      };
+  distanceToSea?:
     | T
     | {
         value?: T;

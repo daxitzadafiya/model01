@@ -109,6 +109,18 @@ export const GLOBAL_SOFT_DELETE_FIELDS: Record<string, SoftDeleteFieldSpec[]> = 
       labelFrom: (item) => localizedOptionLabel(item, 'Feature'),
     },
     {
+      field: 'deliveryDates',
+      fieldLabel: 'Delivery date',
+      hasLocalizedFields: true,
+      labelFrom: (item) => localizedOptionLabel(item, 'Delivery date'),
+    },
+    {
+      field: 'distanceToSea',
+      fieldLabel: 'Distance to sea',
+      hasLocalizedFields: true,
+      labelFrom: (item) => localizedOptionLabel(item, 'Distance to sea'),
+    },
+    {
       field: 'guests',
       fieldLabel: 'Guests option',
       hasLocalizedFields: true,
