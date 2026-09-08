@@ -1,7 +1,12 @@
 import { isCRMTruthy } from '@/utilities/localizedValue'
 import { isHolidayRentalProperty } from '@/utilities/crmHoliday'
 
-export type PropertyDetailListingContext = 'forSale' | 'forRent' | 'forHoliday' | 'forSold'
+export type PropertyDetailListingContext =
+  | 'forSale'
+  | 'forRent'
+  | 'forHoliday'
+  | 'forSold'
+  | 'cityWise'
 
 export const PROPERTY_DETAIL_FOR_QUERY_KEY = 'for'
 
@@ -19,6 +24,8 @@ const FOR_QUERY_TO_CONTEXT: Record<string, PropertyDetailListingContext> = {
   forsale: 'forSale',
   sold: 'forSold',
   forsold: 'forSold',
+  city_wise: 'cityWise',
+  citywise: 'cityWise',
 }
 
 type StashedPropertyDetailListingContext = {
@@ -32,7 +39,8 @@ const isPropertyDetailListingContext = (
   value === 'forSale' ||
   value === 'forRent' ||
   value === 'forHoliday' ||
-  value === 'forSold'
+  value === 'forSold' ||
+  value === 'cityWise'
 
 /** Map CMS / CRM listing preset to detail-page listing context. */
 export function listingPresetToDetailContext(
@@ -45,6 +53,8 @@ export function listingPresetToDetailContext(
       return 'forRent'
     case 'forSale':
       return 'forSale'
+    case 'cityWise':
+      return 'cityWise'
     case 'sold':
       return 'forSold'
     default:
@@ -78,7 +88,13 @@ export function listingContextToListingMode(
   listingContext: PropertyDetailListingContext | undefined,
 ): 'sale' | 'rent' | undefined {
   if (listingContext === 'forHoliday' || listingContext === 'forRent') return 'rent'
-  if (listingContext === 'forSale' || listingContext === 'forSold') return 'sale'
+  if (
+    listingContext === 'forSale' ||
+    listingContext === 'forSold' ||
+    listingContext === 'cityWise'
+  ) {
+    return 'sale'
+  }
   return undefined
 }
 
@@ -103,6 +119,8 @@ export function listingContextToForQueryValue(
       return 'sales'
     case 'forSold':
       return 'sold'
+    case 'cityWise':
+      return 'city_wise'
   }
 }
 
@@ -148,7 +166,8 @@ export function resolvePropertyDetailHolidayMode(
   if (
     listingContext === 'forRent' ||
     listingContext === 'forSale' ||
-    listingContext === 'forSold'
+    listingContext === 'forSold' ||
+    listingContext === 'cityWise'
   ) {
     return false
   }

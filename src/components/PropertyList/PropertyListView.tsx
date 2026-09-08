@@ -79,6 +79,9 @@ export type { PropertyListInitialData } from './PropertyListServerData'
 
 type Props = {
   listingPreset: CRMListingPreset
+  /** When listingPreset is `cityWise`, CRM city key for `city: { $in: [id] }`. */
+  crmCity?: number | null
+  crmQueryJson?: string | null
   pageSize?: number | null
   showFilters?: boolean | null
   showMap?: boolean | null
@@ -119,6 +122,8 @@ export const PropertyListView: React.FC<Props> = (props) => (
 
 const PropertyListViewInner: React.FC<Props> = ({
   listingPreset,
+  crmCity,
+  crmQueryJson,
   pageSize: pageSizeProp,
   showFilters = true,
   showMap = false,
@@ -527,6 +532,8 @@ const PropertyListViewInner: React.FC<Props> = ({
           })
           const listingBody = buildCRMListingQuery({
             preset: listingPreset,
+            crmCity,
+            crmQueryJson,
             page,
             pageSize,
             filters: appliedFilters,
@@ -573,6 +580,8 @@ const PropertyListViewInner: React.FC<Props> = ({
     activeFavoriteIds,
     activeLocale,
     appliedFilters,
+    crmCity,
+    crmQueryJson,
     favoriteIdsKey,
     filtersHydrated,
     isFavoritesList,
@@ -910,6 +919,8 @@ const PropertyListViewInner: React.FC<Props> = ({
           open={mapModalOpen}
           onClose={() => setMapModalOpen(false)}
           listingPreset={listingPreset}
+          crmCity={crmCity}
+          crmQueryJson={crmQueryJson}
           appliedFilters={appliedFilters}
           favoriteIds={isFavoritesPropertiesTab ? activeFavoriteIds : undefined}
           onDrawApply={handleMapDrawApply}

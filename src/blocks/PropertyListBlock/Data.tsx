@@ -12,6 +12,8 @@ import { fetchPropertyListServerData } from '@/utilities/propertyListServer'
 
 type Props = {
   preset: CRMListingPreset
+  crmCity?: number | null
+  crmQueryJson?: string | null
   resolvedPageSize: number
   page: number
   sortValue?: string | null
@@ -21,6 +23,8 @@ type Props = {
 
 export async function PropertyListBlockData({
   preset,
+  crmCity,
+  crmQueryJson,
   resolvedPageSize,
   page,
   sortValue,
@@ -41,6 +45,8 @@ export async function PropertyListBlockData({
       const locale = await getLocale()
       const fetched = await fetchPropertyListServerData({
         preset,
+        crmCity,
+        crmQueryJson,
         pageSize: resolvedPageSize,
         page,
         sortValue,

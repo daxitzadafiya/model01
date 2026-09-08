@@ -27,6 +27,8 @@ type Props = {
   open: boolean
   onClose: () => void
   listingPreset: CRMListingPreset
+  crmCity?: number | null
+  crmQueryJson?: string | null
   appliedFilters: PropertyListFilters
   favoriteIds?: (string | number)[]
   onDrawApply?: (references: string[]) => void
@@ -36,6 +38,8 @@ export const PropertyMapModal: React.FC<Props> = ({
   open,
   onClose,
   listingPreset,
+  crmCity,
+  crmQueryJson,
   appliedFilters,
   favoriteIds,
   onDrawApply,
@@ -95,6 +99,8 @@ export const PropertyMapModal: React.FC<Props> = ({
               })
             : await fetchCRMMapProperties({
                 preset: listingPreset,
+                crmCity,
+                crmQueryJson,
                 filters: mapFilters,
                 restrictToFavoriteIds: favoriteIds?.length ? favoriteIds : undefined,
                 pageSize: settings.mapFetchLimit,
@@ -118,7 +124,7 @@ export const PropertyMapModal: React.FC<Props> = ({
 
     void load()
     return () => controller.abort()
-  }, [open, settingsLoading, listingPreset, mapFiltersKey, favoriteIdsKey, settings.mapFetchLimit])
+  }, [open, settingsLoading, listingPreset, crmCity, crmQueryJson, mapFiltersKey, favoriteIdsKey, settings.mapFetchLimit])
 
   const handleMarkerClick = useCallback(
     (point: MapPropertyPoint) => {

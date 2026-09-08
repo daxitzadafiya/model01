@@ -13,6 +13,18 @@ const favoritesEmptyStateHooks = {
   afterRead: [clearEmptyStateUnlessFavorites],
 }
 
+/** City key only applies when Property collection is city-wise. */
+const clearCrmCityUnlessCityWise: FieldHook = ({ siblingData, value }) => {
+  if (siblingData?.listingPreset !== 'cityWise') return null
+  return value
+}
+
+/** Custom CRM JSON only applies when Property collection is Custom CRM Query. */
+const clearCrmQueryUnlessCustom: FieldHook = ({ siblingData, value }) => {
+  if (siblingData?.listingPreset !== 'custom') return null
+  return value
+}
+
 export const PropertyListBlock: Block = {
   slug: 'propertyListBlock',
   interfaceName: 'PropertyListBlock',
@@ -102,14 +114,88 @@ export const PropertyListBlock: Block = {
           value: 'seaView',
         },
         {
+          label: a('admin.blocks.propertyListBlock.listingBeachSide', 'Beach Side Properties'),
+          value: 'beachSide',
+        },
+        {
           label: a('admin.blocks.propertyListBlock.listingGolf', 'Golf Properties'),
           value: 'golf',
         },
         {
-          label: a('admin.blocks.propertyListBlock.listingCustom', 'Custom CRM query'),
+          label: a('admin.blocks.propertyListBlock.listingLuxury', 'Luxury Properties'),
+          value: 'luxury',
+        },
+        {
+          label: a('admin.blocks.propertyListBlock.listingNewDevelopments', 'New Developments'),
+          value: 'newDevelopments',
+        },
+        {
+          label: a('admin.blocks.propertyListBlock.listingNewListings', 'New Listings'),
+          value: 'newListings',
+        },
+        {
+          label: a('admin.blocks.propertyListBlock.listingCityWise', 'City-wise Properties'),
+          value: 'cityWise',
+        },
+        {
+          label: a('admin.blocks.propertyListBlock.listingResaleHomes', 'Resale Homes'),
+          value: 'resaleHomes',
+        },
+        {
+          label: a('admin.blocks.propertyListBlock.listingCustom', 'Custom CRM Query'),
           value: 'custom',
         },
       ],
+    },
+    {
+      name: 'crmCity',
+      type: 'number',
+      label: a('admin.blocks.propertyListBlock.crmCityLabel', 'City'),
+      hooks: {
+        beforeChange: [clearCrmCityUnlessCityWise],
+      },
+      admin: {
+        condition: (_, siblingData) => siblingData?.listingPreset === 'cityWise',
+        components: {
+          Field: '@/blocks/PropertyListBlock/CRMCityField#CRMCityField',
+        },
+      },
+      validate: (value: unknown, { siblingData }: { siblingData?: unknown }) => {
+        if (siblingData && typeof siblingData === 'object' && 'listingPreset' in siblingData) {
+          if ((siblingData as { listingPreset?: string }).listingPreset !== 'cityWise') return true
+        }
+        if (value == null || !Number.isFinite(Number(value))) {
+          return 'Select a city for city-wise properties.'
+        }
+        return true
+      },
+    },
+    {
+      name: 'crmQueryJson',
+      type: 'textarea',
+      label: a('admin.blocks.propertyListBlock.crmQueryJsonLabel', 'Custom CRM query'),
+      hooks: {
+        beforeChange: [clearCrmQueryUnlessCustom],
+        afterRead: [clearCrmQueryUnlessCustom],
+      },
+      admin: {
+        condition: (_, siblingData) => siblingData?.listingPreset === 'custom',
+        description: a(
+          'admin.blocks.propertyListBlock.crmQueryJsonDescription',
+          'Paste a CRM JSON object. You can paste a full `{ "options": ..., "query": ... }` payload or just the query body.',
+        ),
+        placeholder: '{ "query": { "sale": true } }',
+        rows: 10,
+      },
+      validate: (value: unknown, { siblingData }: { siblingData?: unknown }) => {
+        if (siblingData && typeof siblingData === 'object' && 'listingPreset' in siblingData) {
+          if ((siblingData as { listingPreset?: string }).listingPreset !== 'custom') return true
+        }
+        if (typeof value !== 'string' || !value.trim()) {
+          return 'Enter a CRM query JSON object.'
+        }
+        return true
+      },
     },
     {
       name: 'pageSize',

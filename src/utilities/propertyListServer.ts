@@ -8,6 +8,8 @@ import { resolveListingSortOption } from '@/utilities/resolveListingSortOption'
 
 export async function fetchPropertyListServerData({
   preset,
+  crmCity,
+  crmQueryJson,
   pageSize,
   page,
   sortValue,
@@ -15,6 +17,8 @@ export async function fetchPropertyListServerData({
   locale = 'en',
 }: {
   preset: CRMListingPreset
+  crmCity?: number | null
+  crmQueryJson?: string | null
   pageSize: number
   page: number
   sortValue?: string | null
@@ -43,8 +47,21 @@ export async function fetchPropertyListServerData({
     }
   }
 
+  // City-wise without a city must not return the full for-sale catalogue.
+  if (preset === 'cityWise' && (crmCity == null || !Number.isFinite(Number(crmCity)))) {
+    return {
+      page,
+      properties: [],
+      total: 0,
+      sort: sortOption.value,
+      preloadImageUrls: [],
+    }
+  }
+
   const body = buildCRMListingQuery({
     preset,
+    crmCity,
+    crmQueryJson,
     page,
     pageSize,
     filters: {},

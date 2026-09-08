@@ -135,6 +135,14 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
 
   if (preset === 'seaView') {
     baseQuery['views.sea'] = true
+  } else if (preset === 'beachSide') {
+    baseQuery['views.beach'] = true
+  } else if (preset === 'newDevelopments') {
+    baseQuery.$and = [
+      {
+        $or: [{ project: true }, { 'categories.new_construction': true }],
+      },
+    ]
   } else if (preset === 'golf') {
     baseQuery.$and = [
       {
@@ -143,6 +151,17 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
           { 'settings.close_to_golf': true },
           { 'settings.frontline_golf': true },
           { 'views.golf': true },
+        ],
+      },
+    ]
+  } else if (preset === 'resaleHomes') {
+    baseQuery.$and = [
+      {
+        $or: [
+          {
+            $and: [{ project: { $ne: true } }, { 'categories.new_construction': false }],
+          },
+          { 'categories.resale': true },
         ],
       },
     ]
@@ -196,7 +215,7 @@ export const normalizeMapFindAllQuery = (
 
   if (preset === 'sold') {
     normalized.status = { $in: [...MAP_SOLD_STATUSES] }
-  } else if (preset === 'custom' || preset === 'favorites') {
+  } else if (preset === 'custom' || preset === 'favorites' || preset === 'resaleHomes') {
     if (!normalized.status) {
       normalized.status = { $in: [...MAP_AVAILABLE_STATUSES] }
     }
@@ -212,6 +231,7 @@ export const normalizeMapFindAllQuery = (
 export const buildCRMMapQuery = ({
   preset,
   crmQueryJson,
+  crmCity,
   filters = {},
   restrictToFavoriteIds,
   page,
@@ -220,6 +240,7 @@ export const buildCRMMapQuery = ({
 }: {
   preset: CRMListingPreset
   crmQueryJson?: string | null
+  crmCity?: number | string | null
   filters?: PropertyListFilters
   restrictToFavoriteIds?: (string | number)[]
   page: number
@@ -253,6 +274,13 @@ export const buildCRMMapQuery = ({
     buildFilterQuery(filters, { includeMapReferences: true }),
   )
 
+  if (preset === 'cityWise') {
+    const cityId = Number(crmCity)
+    if (Number.isFinite(cityId)) {
+      query = { ...query, city: { $in: [cityId] } }
+    }
+  }
+
   if (preset === 'favorites' && restrictToFavoriteIds?.length) {
     const favoriteClause = buildFavoriteIdsClause(restrictToFavoriteIds)
     if (favoriteClause) {
@@ -269,6 +297,7 @@ export const buildCRMMapQuery = ({
 export async function fetchCRMMapProperties({
   preset,
   crmQueryJson,
+  crmCity,
   filters = {},
   restrictToFavoriteIds,
   pageSize = 5000,
@@ -276,6 +305,7 @@ export async function fetchCRMMapProperties({
 }: {
   preset: CRMListingPreset
   crmQueryJson?: string | null
+  crmCity?: number | string | null
   filters?: PropertyListFilters
   restrictToFavoriteIds?: (string | number)[]
   pageSize?: number
@@ -284,6 +314,7 @@ export async function fetchCRMMapProperties({
   const body = buildCRMMapQuery({
     preset,
     crmQueryJson,
+    crmCity,
     filters,
     restrictToFavoriteIds,
     page: 1,

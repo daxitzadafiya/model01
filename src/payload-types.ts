@@ -1086,8 +1086,19 @@ export interface PropertyListBlock {
     | 'sold'
     | 'featured'
     | 'seaView'
+    | 'beachSide'
     | 'golf'
+    | 'luxury'
+    | 'newDevelopments'
+    | 'newListings'
+    | 'cityWise'
+    | 'resaleHomes'
     | 'custom';
+  crmCity?: number | null;
+  /**
+   * Paste a CRM JSON object. You can paste a full `{ "options": ..., "query": ... }` payload or just the query body.
+   */
+  crmQueryJson?: string | null;
   pageSize?: number | null;
   showFilters?: boolean | null;
   /**
@@ -2489,6 +2500,8 @@ export interface PropertyListBlockSelect<T extends boolean = true> {
   pageTitle?: T;
   resultsLabel?: T;
   listingPreset?: T;
+  crmCity?: T;
+  crmQueryJson?: T;
   pageSize?: T;
   showFilters?: T;
   showMap?: T;

@@ -67,8 +67,22 @@ function resolveListingLabel(preset: CRMListingPreset): string {
       return 'Featured'
     case 'seaView':
       return 'Sea View'
+    case 'beachSide':
+      return 'Beach Side'
     case 'golf':
       return 'Golf Properties'
+    case 'luxury':
+      return 'Luxury Properties'
+    case 'newDevelopments':
+      return 'New Developments'
+    case 'newListings':
+      return 'New Listings'
+    case 'cityWise':
+      return 'City-wise Properties'
+    case 'resaleHomes':
+      return 'Resale Homes'
+    case 'custom':
+      return 'Custom CRM Query'
     default:
       return preset
   }

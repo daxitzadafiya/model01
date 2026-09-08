@@ -31,6 +31,8 @@ export const PropertyListBlockClient: React.FC<Props> = ({
   breadcrumbParentHref,
   pageTitle,
   listingPreset,
+  crmCity,
+  crmQueryJson,
   pageSize,
   showFilters,
   showMap,
@@ -54,6 +56,11 @@ export const PropertyListBlockClient: React.FC<Props> = ({
     if (payload.listingKey !== listingKeyRef.current) return
     setInitialData({ ...payload.data, listingKey: payload.listingKey })
   }, [])
+
+  // City-wise with zero results: hide heading + list (e.g. "Properties for sale in Estepona").
+  if (preset === 'cityWise' && initialData && initialData.total === 0) {
+    return null
+  }
 
   return (
     <section className="bg-surface pt-24 pb-12 md:pt-28 md:pb-16">
@@ -85,6 +92,8 @@ export const PropertyListBlockClient: React.FC<Props> = ({
       <PropertyListServerDataProvider onServerData={handleServerData}>
         <PropertyListView
           listingPreset={preset}
+          crmCity={crmCity}
+          crmQueryJson={crmQueryJson}
           pageSize={pageSize}
           showFilters={showFilters}
           showMap={showMap}

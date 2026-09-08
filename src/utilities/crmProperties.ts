@@ -17,7 +17,6 @@ import {
 } from '@/utilities/propertyUrl'
 import {
   HOLIDAY_SELECT_DATES_LABEL,
-  isHolidayRentalProperty,
   PRICE_ON_DEMAND_LABEL,
   resolveHolidayGuestsFilterCount,
   resolveHolidayPriceDisplay,
@@ -36,7 +35,13 @@ export type CRMListingPreset =
   | 'sold'
   | 'featured'
   | 'seaView'
+  | 'beachSide'
   | 'golf'
+  | 'luxury'
+  | 'newDevelopments'
+  | 'newListings'
+  | 'cityWise'
+  | 'resaleHomes'
   | 'custom'
   | 'favorites'
   | 'projects'
@@ -855,6 +860,7 @@ export const buildFavoriteIdsClause = (
 export const buildCRMListingQuery = ({
   preset,
   crmQueryJson,
+  crmCity,
   page,
   pageSize,
   filters = {},
@@ -863,6 +869,8 @@ export const buildCRMListingQuery = ({
 }: {
   preset: CRMListingPreset
   crmQueryJson?: string | null
+  /** City CRM key — used when preset is `cityWise`. */
+  crmCity?: number | string | null
   page: number
   pageSize: number
   filters?: PropertyListFilters
@@ -918,6 +926,7 @@ export const buildCRMListingQuery = ({
     }
   }
 
+  let defaultSort: Record<string, unknown> | undefined
   let baseQuery: Record<string, unknown> = {
     ...similarCommercials,
     remove_count: true,
@@ -949,6 +958,19 @@ export const buildCRMListingQuery = ({
       // coordinates query fields
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
+    }
+  } else if (preset === 'cityWise') {
+    const cityId = Number(crmCity)
+    baseQuery = {
+      ...similarCommercials,
+      remove_count: true,
+      sale: true,
+      archive: {
+        $ne: true,
+      },
+      ...CRM_COORDINATE_QUERY_FIELDS,
+      status: { $in: ['Available', 'Under Offer'] },
+      ...(Number.isFinite(cityId) ? { city: { $in: [cityId] } } : {}),
     }
   } else if (preset === 'forRent') {
     baseQuery = {
@@ -985,6 +1007,72 @@ export const buildCRMListingQuery = ({
         },
       ],
     }
+  } else if (preset === 'beachSide') {
+    baseQuery = {
+      ...similarCommercials,
+      sale: true,
+      remove_count: true,
+      archive: {
+        $ne: true,
+      },
+      // has_images: true,
+      // coordinates query fields
+      ...CRM_COORDINATE_QUERY_FIELDS,
+      status: { $in: ['Available', 'Under Offer'] },
+      $and: [
+        {
+          'views.beach': true,
+        },
+      ],
+    }
+  } else if (preset === 'luxury') {
+    baseQuery = {
+      ...similarCommercials,
+      sale: true,
+      remove_count: true,
+      archive: {
+        $ne: true,
+      },
+      // has_images: true,
+      // coordinates query fields
+      ...CRM_COORDINATE_QUERY_FIELDS,
+      status: { $in: ['Available', 'Under Offer'] },
+    }
+  } else if (preset === 'newDevelopments') {
+    baseQuery = {
+      ...similarCommercials,
+      sale: true,
+      remove_count: true,
+      archive: {
+        $ne: true,
+      },
+      // has_images: true,
+      // coordinates query fields
+      ...CRM_COORDINATE_QUERY_FIELDS,
+      status: { $in: ['Available', 'Under Offer'] },
+      $and: [
+        {
+          $or: [
+            {
+              project: true,
+            },
+            {
+              'categories.new_construction': true,
+            },
+          ],
+        },
+      ],
+    }
+  } else if (preset === 'newListings') {
+    baseQuery = {
+      ...similarCommercials,
+      sale: true,
+      remove_count: true,
+      // has_images: true,
+      // coordinates query fields
+      ...CRM_COORDINATE_QUERY_FIELDS,
+      status: { $in: ['Available', 'Under Offer'] },
+    }
   } else if (preset === 'golf') {
     baseQuery = {
       ...similarCommercials,
@@ -1016,6 +1104,26 @@ export const buildCRMListingQuery = ({
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
+  } else if (preset === 'resaleHomes') {
+    baseQuery = {
+      ...similarCommercials,
+      $and: [
+        {
+          $or: [
+            {
+              $and: [{ project: { $ne: true } }, { 'categories.new_construction': false }],
+            },
+            { 'categories.resale': true },
+          ],
+        },
+      ],
+      // has_images: true,
+      // coordinates query fields
+      ...CRM_COORDINATE_QUERY_FIELDS,
+      status: { $in: ['Available', 'Under Offer'] },
+      sale: true,
+      remove_count: true,
+    }
   } else if (preset === 'favorites') {
     // Favorites fetch by explicit _id $in — do not send similar_commercials.
     baseQuery = {
@@ -1035,7 +1143,10 @@ export const buildCRMListingQuery = ({
   }
 
   return {
-    options: mergeCRMListingOptions(paginationOptions, sortParams),
+    options: mergeCRMListingOptions(
+      defaultSort ? { ...paginationOptions, sort: defaultSort } : paginationOptions,
+      sortParams,
+    ),
     query: mergedQuery,
   }
 }
@@ -1375,6 +1486,7 @@ export function needsCRMPropertiesPost({
   if (filters?.mapReferences?.length) return true
   if (filters?.reference?.trim()) return true
   if (preset === 'favorites' && favoriteIds?.length) return true
+  if (preset === 'custom') return true
   return false
 }
 

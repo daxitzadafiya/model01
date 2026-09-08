@@ -22,6 +22,8 @@ const DEFAULT_SORT_OPTIONS = DEFAULT_PROPERTY_FILTER_OPTIONS.sortOptions
 
 export const PropertyListBlock = async ({
   listingPreset,
+  crmCity,
+  crmQueryJson,
   pageSize,
   searchParams,
   ...rest
@@ -34,12 +36,14 @@ export const PropertyListBlock = async ({
   const defaultSort = DEFAULT_SORT_OPTIONS[0]?.value ?? 'recent'
   const listSort = parsePropertyListSort(searchParams, defaultSort, DEFAULT_SORT_OPTIONS)
   const orderbyEntries = parseOrderbyEntriesFromSearchParams(searchParams)
-  const suspenseKey = `${preset}-${resolvedPageSize}-${listPage}-${orderbyEntries.join('|') || listSort || 'default'}`
+  const suspenseKey = `${preset}-${crmCity ?? ''}-${crmQueryJson ?? ''}-${resolvedPageSize}-${listPage}-${orderbyEntries.join('|') || listSort || 'default'}`
   const contactForm = await getContactForm()
 
   return (
     <PropertyListBlockClient
       listingPreset={preset}
+      crmCity={crmCity}
+      crmQueryJson={crmQueryJson}
       pageSize={pageSize}
       listingKey={suspenseKey}
       contactForm={contactForm}
@@ -48,6 +52,8 @@ export const PropertyListBlock = async ({
       <Suspense key={suspenseKey} fallback={null}>
         <PropertyListBlockData
           preset={preset}
+          crmCity={crmCity}
+          crmQueryJson={crmQueryJson}
           resolvedPageSize={resolvedPageSize}
           page={listPage}
           sortValue={listSort || null}
