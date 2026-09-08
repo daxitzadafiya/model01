@@ -1,6 +1,6 @@
 import type { Block, FieldHook } from 'payload'
 
-import { a } from '@/utilities/adminI18n'
+import { a, aString } from '@/utilities/adminI18n'
 
 /** Favorites-only copy — do not persist or expose when Property collection is anything else. */
 const clearEmptyStateUnlessFavorites: FieldHook = ({ siblingData, value }) => {
@@ -150,22 +150,45 @@ export const PropertyListBlock: Block = {
     {
       name: 'crmCity',
       type: 'number',
-      label: a('admin.blocks.propertyListBlock.crmCityLabel', 'City'),
+      label: a('admin.blocks.propertyListBlock.crmCityLabel.property_list_block', 'City'),
       hooks: {
         beforeChange: [clearCrmCityUnlessCityWise],
       },
       admin: {
         condition: (_, siblingData) => siblingData?.listingPreset === 'cityWise',
+        placeholder: a(
+          'admin.blocks.propertyListBlock.crmCityPlaceholder',
+          'Select a city…',
+        ),
+        custom: {
+          // Keep the locale map here. The custom Field component receives `field.label`
+          // already resolved to English, so it cannot switch with the admin language.
+          fieldLabel: a(
+            'admin.blocks.propertyListBlock.crmCityLabel.property_list_block',
+            'City',
+          ),
+          loadingPlaceholder: a(
+            'admin.blocks.propertyListBlock.crmCityLoadingPlaceholder',
+            'Loading cities…',
+          ),
+        },
         components: {
           Field: '@/blocks/PropertyListBlock/CRMCityField#CRMCityField',
         },
       },
-      validate: (value: unknown, { siblingData }: { siblingData?: unknown }) => {
+      validate: (
+        value: unknown,
+        { siblingData, req }: { siblingData?: unknown; req?: { i18n?: { language?: string } } },
+      ) => {
         if (siblingData && typeof siblingData === 'object' && 'listingPreset' in siblingData) {
           if ((siblingData as { listingPreset?: string }).listingPreset !== 'cityWise') return true
         }
         if (value == null || !Number.isFinite(Number(value))) {
-          return 'Select a city for city-wise properties.'
+          return aString(
+            'admin.blocks.propertyListBlock.crmCityRequired',
+            'Select a city for city-wise properties.',
+            req?.i18n?.language,
+          )
         }
         return true
       },

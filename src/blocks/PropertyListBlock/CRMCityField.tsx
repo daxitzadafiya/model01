@@ -1,7 +1,8 @@
 'use client'
 
+import { getTranslation } from '@payloadcms/translations'
 import type { NumberFieldClientComponent } from 'payload'
-import { useField } from '@payloadcms/ui'
+import { useField, useTranslation } from '@payloadcms/ui'
 import { SelectInput } from '@payloadcms/ui/fields/Select'
 import React, { useEffect, useMemo, useState } from 'react'
 
@@ -12,16 +13,37 @@ import {
   type CRMCityOption,
 } from '@/utilities/crmCoasts'
 
+const isLocaleMap = (value: unknown): value is Record<string, string> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+const resolveAdminText = (
+  value: unknown,
+  i18n: Parameters<typeof getTranslation>[1],
+  fallback: string,
+): string => {
+  if (typeof value === 'string' && value.trim()) return getTranslation(value, i18n)
+  if (isLocaleMap(value)) return getTranslation(value, i18n)
+  return fallback
+}
+
 /**
  * City dropdown for city-wise listings — same CRM city API as the home filter.
  * Uses Payload SelectInput so it matches native admin select fields.
  */
 export const CRMCityField: NumberFieldClientComponent = (props) => {
   const {
-    field: { admin: { className, style } = {}, label, required } = {},
+    field: { admin: { className, custom, placeholder, style } = {}, label, required } = {},
     path: pathFromProps,
     readOnly,
   } = props
+
+  const customRecord =
+    custom && typeof custom === 'object' ? (custom as Record<string, unknown>) : undefined
+  const loadingPlaceholder = customRecord?.loadingPlaceholder
+  const fieldLabel = customRecord?.fieldLabel
+
+  const { i18n } = useTranslation()
+  const resolvedLabel = resolveAdminText(fieldLabel ?? label, i18n, 'City')
 
   const { disabled, path, setValue, showError, value } = useField<number | null>({
     potentiallyStalePath: pathFromProps,
@@ -67,7 +89,7 @@ export const CRMCityField: NumberFieldClientComponent = (props) => {
     <SelectInput
       className={className}
       isClearable
-      label={label}
+      label={resolvedLabel}
       name={path}
       onChange={(option) => {
         if (!option || Array.isArray(option)) {
@@ -84,7 +106,11 @@ export const CRMCityField: NumberFieldClientComponent = (props) => {
       }}
       options={options}
       path={path}
-      placeholder={loading ? 'Loading cities…' : 'Select a city…'}
+      placeholder={resolveAdminText(
+        loading ? loadingPlaceholder : placeholder,
+        i18n,
+        loading ? 'Loading cities…' : 'Select a city…',
+      )}
       readOnly={Boolean(readOnly || disabled || loading)}
       required={required}
       showError={showError}
