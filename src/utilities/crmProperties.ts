@@ -1045,18 +1045,7 @@ export const buildCRMListingQuery = ({
       // coordinates query fields
       ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
-      $and: [
-        {
-          $or: [
-            {
-              project: true,
-            },
-            {
-              'categories.new_construction': true,
-            },
-          ],
-        },
-      ],
+      project: true,
     }
   } else if (preset === 'newListings') {
     baseQuery = {

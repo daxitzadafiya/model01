@@ -138,11 +138,7 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
   } else if (preset === 'beachSide') {
     baseQuery['views.beach'] = true
   } else if (preset === 'newDevelopments') {
-    baseQuery.$and = [
-      {
-        $or: [{ project: true }, { 'categories.new_construction': true }],
-      },
-    ]
+    baseQuery.project = true
   } else if (preset === 'golf') {
     baseQuery.$and = [
       {
