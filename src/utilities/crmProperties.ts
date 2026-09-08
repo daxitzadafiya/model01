@@ -472,12 +472,7 @@ const buildSinglePropertyListingStatusQuery = (status: string): Record<string, u
 
   if (status === 'resale') {
     return {
-      $or: [
-        {
-          $and: [{ project: { $ne: true } }, { 'categories.new_construction': false }],
-        },
-        { 'categories.resale': true },
-      ],
+      project: false,
     }
   }
 
@@ -1107,16 +1102,7 @@ export const buildCRMListingQuery = ({
   } else if (preset === 'resaleHomes') {
     baseQuery = {
       ...similarCommercials,
-      $and: [
-        {
-          $or: [
-            {
-              $and: [{ project: { $ne: true } }, { 'categories.new_construction': false }],
-            },
-            { 'categories.resale': true },
-          ],
-        },
-      ],
+      project: false,
       // has_images: true,
       // coordinates query fields
       ...CRM_COORDINATE_QUERY_FIELDS,

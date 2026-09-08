@@ -155,16 +155,7 @@ const buildCRMMapBaseQuery = (preset: CRMListingPreset): Record<string, unknown>
       },
     ]
   } else if (preset === 'resaleHomes') {
-    baseQuery.$and = [
-      {
-        $or: [
-          {
-            $and: [{ project: { $ne: true } }, { 'categories.new_construction': false }],
-          },
-          { 'categories.resale': true },
-        ],
-      },
-    ]
+    baseQuery.project = false
   } else if (preset === 'featured') {
     // Featured listings always include similar commercials, regardless of Optima CRM global.
     baseQuery.similar_commercials = 'include_similar'
