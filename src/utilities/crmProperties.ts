@@ -244,18 +244,11 @@ export const withSimilarCommercialsDefault = (
   return { ...query, ...getSimilarCommercialsQuery() }
 }
 
-/** Coordinate filters for CRM property queries (matches Optima PHP commercial_properties presets). */
-export const CRM_COORDINATE_QUERY_FIELDS = {
-  latitude: { $exists: true, $ne: '' },
-  longitude: { $exists: true, $ne: '' },
-} as const
-
 export const withCRMCoordinateQueryFields = (
   query: Record<string, unknown>,
 ): Record<string, unknown> => ({
   ...query,
   // as for now not need to pass the latitude and longitude query fields so i have comment it out
-  // ...CRM_COORDINATE_QUERY_FIELDS,
 })
 
 /** Parses admin sort JSON (e.g. `{"created_at": -1}` or `{"updated_at": true}`). */
@@ -927,7 +920,6 @@ export const buildCRMListingQuery = ({
     remove_count: true,
     // has_images: true,
     // coordinates query fields
-    ...CRM_COORDINATE_QUERY_FIELDS,
     status: { $in: ['Available', 'Under Offer'] },
   }
 
@@ -937,7 +929,6 @@ export const buildCRMListingQuery = ({
       sale: true,
       remove_count: true,
       // has_images: true,
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Sold'] },
     }
   } else if (preset === 'forSale') {
@@ -951,7 +942,6 @@ export const buildCRMListingQuery = ({
       },
       // has_images: true,
       // coordinates query fields
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'cityWise') {
@@ -963,7 +953,6 @@ export const buildCRMListingQuery = ({
       archive: {
         $ne: true,
       },
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
       ...(Number.isFinite(cityId) ? { city: { $in: [cityId] } } : {}),
     }
@@ -974,7 +963,6 @@ export const buildCRMListingQuery = ({
       lt_rental: true,
       remove_count: true,
       // has_images: true,
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'forHoliday') {
@@ -984,7 +972,6 @@ export const buildCRMListingQuery = ({
       st_rental: true,
       remove_count: true,
       // has_images: true,
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'seaView') {
@@ -994,7 +981,6 @@ export const buildCRMListingQuery = ({
       remove_count: true,
       // has_images: true,
       // coordinates query fields
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
       $and: [
         {
@@ -1012,7 +998,6 @@ export const buildCRMListingQuery = ({
       },
       // has_images: true,
       // coordinates query fields
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
       $and: [
         {
@@ -1030,7 +1015,6 @@ export const buildCRMListingQuery = ({
       },
       // has_images: true,
       // coordinates query fields
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'newDevelopments') {
@@ -1043,7 +1027,6 @@ export const buildCRMListingQuery = ({
       },
       // has_images: true,
       // coordinates query fields
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
       project: true,
     }
@@ -1054,7 +1037,6 @@ export const buildCRMListingQuery = ({
       remove_count: true,
       // has_images: true,
       // coordinates query fields
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'golf') {
@@ -1064,7 +1046,6 @@ export const buildCRMListingQuery = ({
       remove_count: true,
       archived: { $ne: true },
       // has_images: true,
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
       $and: [
         {
@@ -1085,7 +1066,6 @@ export const buildCRMListingQuery = ({
       sale: true,
       remove_count: true,
       // has_images: true,
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
     }
   } else if (preset === 'resaleHomes') {
@@ -1094,7 +1074,6 @@ export const buildCRMListingQuery = ({
       project: false,
       // has_images: true,
       // coordinates query fields
-      ...CRM_COORDINATE_QUERY_FIELDS,
       status: { $in: ['Available', 'Under Offer'] },
       sale: true,
       remove_count: true,
@@ -1103,7 +1082,6 @@ export const buildCRMListingQuery = ({
     // Favorites fetch by explicit _id $in — do not send similar_commercials.
     baseQuery = {
       // ...similarCommercials,
-      ...CRM_COORDINATE_QUERY_FIELDS,
       remove_count: true,
       // has_images: true,
     }

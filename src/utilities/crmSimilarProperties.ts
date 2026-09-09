@@ -1,5 +1,4 @@
 import {
-  CRM_COORDINATE_QUERY_FIELDS,
   CRM_PROPERTY_ATTACHMENTS_POPULATE,
   extractCRMList,
   fetchCRMPropertiesPost,
@@ -162,7 +161,6 @@ export const buildCRMSimilarPropertiesQuery = ({
   const query: Record<string, unknown> = {
     ...similarCommercials,
     remove_count: true,
-    ...CRM_COORDINATE_QUERY_FIELDS,
     archived: { $ne: true },
     // has_images: true,
     status: { $in: [...SIMILAR_AVAILABLE_STATUSES] },
