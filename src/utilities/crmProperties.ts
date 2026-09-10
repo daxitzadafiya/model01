@@ -914,10 +914,17 @@ export const buildCRMListingQuery = ({
     }
   }
 
+
+  const DEFAULT_QUERY = {
+    remove_count: true,
+    archived: { $ne: true },
+  } as const
+
+
   let defaultSort: Record<string, unknown> | undefined
   let baseQuery: Record<string, unknown> = {
     ...similarCommercials,
-    remove_count: true,
+    ...DEFAULT_QUERY,
     // has_images: true,
     // coordinates query fields
     status: { $in: ['Available', 'Under Offer'] },
@@ -927,19 +934,15 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       ...similarCommercials,
       sale: true,
-      remove_count: true,
+      ...DEFAULT_QUERY,
       // has_images: true,
       status: { $in: ['Sold'] },
     }
   } else if (preset === 'forSale') {
     baseQuery = {
       ...similarCommercials,
-      remove_count: true,
+      ...DEFAULT_QUERY,
       sale: true,
-      // archive
-      archive: {
-        $ne: true,
-      },
       // has_images: true,
       // coordinates query fields
       status: { $in: ['Available', 'Under Offer'] },
@@ -948,11 +951,8 @@ export const buildCRMListingQuery = ({
     const cityId = Number(crmCity)
     baseQuery = {
       ...similarCommercials,
-      remove_count: true,
+      ...DEFAULT_QUERY,
       sale: true,
-      archive: {
-        $ne: true,
-      },
       status: { $in: ['Available', 'Under Offer'] },
       ...(Number.isFinite(cityId) ? { city: { $in: [cityId] } } : {}),
     }
@@ -961,7 +961,7 @@ export const buildCRMListingQuery = ({
       ...similarCommercials,
       rent: true,
       lt_rental: true,
-      remove_count: true,
+      ...DEFAULT_QUERY,
       // has_images: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
@@ -970,7 +970,7 @@ export const buildCRMListingQuery = ({
       ...similarCommercials,
       rent: true,
       st_rental: true,
-      remove_count: true,
+      ...DEFAULT_QUERY,
       // has_images: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
@@ -978,7 +978,7 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       ...similarCommercials,
       sale: true,
-      remove_count: true,
+      ...DEFAULT_QUERY,
       // has_images: true,
       // coordinates query fields
       status: { $in: ['Available', 'Under Offer'] },
@@ -992,10 +992,7 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       ...similarCommercials,
       sale: true,
-      remove_count: true,
-      archive: {
-        $ne: true,
-      },
+      ...DEFAULT_QUERY,
       // has_images: true,
       // coordinates query fields
       status: { $in: ['Available', 'Under Offer'] },
@@ -1009,10 +1006,7 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       ...similarCommercials,
       sale: true,
-      remove_count: true,
-      archive: {
-        $ne: true,
-      },
+      ...DEFAULT_QUERY,
       // has_images: true,
       // coordinates query fields
       status: { $in: ['Available', 'Under Offer'] },
@@ -1021,10 +1015,7 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       ...similarCommercials,
       sale: true,
-      remove_count: true,
-      archive: {
-        $ne: true,
-      },
+      ...DEFAULT_QUERY,
       // has_images: true,
       // coordinates query fields
       status: { $in: ['Available', 'Under Offer'] },
@@ -1034,7 +1025,7 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       ...similarCommercials,
       sale: true,
-      remove_count: true,
+      ...DEFAULT_QUERY,
       // has_images: true,
       // coordinates query fields
       status: { $in: ['Available', 'Under Offer'] },
@@ -1043,17 +1034,16 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       ...similarCommercials,
       sale: true,
-      remove_count: true,
-      archived: { $ne: true },
+      ...DEFAULT_QUERY,
       // has_images: true,
       status: { $in: ['Available', 'Under Offer'] },
       $and: [
         {
           $or: [
             { 'categories.golf': true },
-            { 'views.golf': true },
-            { 'settings.frontline_golf': true },
             { 'settings.close_to_golf': true },
+            { 'settings.frontline_golf': true },
+            { 'views.golf': true },
           ],
         },
       ],
@@ -1064,7 +1054,7 @@ export const buildCRMListingQuery = ({
       similar_commercials: 'include_similar',
       featured: true,
       sale: true,
-      remove_count: true,
+      ...DEFAULT_QUERY,
       // has_images: true,
       status: { $in: ['Available', 'Under Offer'] },
     }
@@ -1072,11 +1062,10 @@ export const buildCRMListingQuery = ({
     baseQuery = {
       ...similarCommercials,
       project: false,
-      // has_images: true,
-      // coordinates query fields
       status: { $in: ['Available', 'Under Offer'] },
       sale: true,
-      remove_count: true,
+      ...DEFAULT_QUERY,
+       // has_images: true,
     }
   } else if (preset === 'favorites') {
     // Favorites fetch by explicit _id $in — do not send similar_commercials.
