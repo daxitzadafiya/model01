@@ -1177,7 +1177,6 @@ export function normalizeCRMProperty(
     getPublishedPropertyAttachmentImage(propertyAttachments, imageSize) ||
     legacyImageUrls[0] ||
     fallbackImageUrl
-
   const localized = resolveCRMPropertyLocalizedTexts(property, locale)
 
   // Prefer CRM `property_name` for cards/listings (matches search_by_property_name).
@@ -1185,12 +1184,12 @@ export function normalizeCRMProperty(
     getCRMLocalizedText(property.property_name, locale) || pickString(property.property_name)
 
   const propertyTitle =
-    propertyName ||
     localized.title ||
     pickString(property.project_name) ||
     pickString(property.display_name) ||
     pickString(property.name) ||
     localized.propertyType ||
+    propertyName ||
     'Property'
 
   const beds =
