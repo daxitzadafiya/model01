@@ -740,7 +740,7 @@ export const buildFilterQuery = (
   if (minPrice !== undefined || maxPrice !== undefined) {
     const priceMin = minPrice !== undefined ? Number(minPrice) : 0
     const priceMax = maxPrice !== undefined ? Number(maxPrice) : 999_999_999
-    query.current_price = [priceMin, priceMax]
+    query.current_price = { $gte: priceMin, $lte: priceMax }
   }
 
   const bedroomCount = parseCountFilterValue(filters.bedrooms, filters.bedroomsCustom)
