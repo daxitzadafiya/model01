@@ -15,6 +15,7 @@ import {
 } from '@/utilities/propertyDetailListingContext'
 import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
 import { getShownReference } from '@/settings/optimaCrm/shared'
+import { formateTitle } from '@/utilities/formateTitle'
 
 export type PropertyCardData = {
   imageResource?: PayloadMedia
@@ -194,7 +195,9 @@ export const PropertyCard: React.FC<Props> = ({
         )}
       </div>
       <h3 className="font-headline-sm text-headline-sm text-primary mb-1 truncate">
-        {property.title}
+        {property.title
+          ? formateTitle(property.title)
+          : ''}
       </h3>
       <div className="flex justify-between items-center mt-2">
         <div className="flex gap-4 text-secondary font-label-sm text-label-sm">

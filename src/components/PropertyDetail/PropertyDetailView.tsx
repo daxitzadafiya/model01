@@ -41,6 +41,7 @@ import {
   clampHolidayGuestCount,
 } from '@/utilities/crmHoliday'
 import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
+import { formateTitle } from '@/utilities/formateTitle'
 
 type Props = {
   contactForm?: Form | null
@@ -226,7 +227,9 @@ export const PropertyDetailView: React.FC<Props> = ({
 
           <div className="flex items-start justify-between gap-3 md:gap-4 mb-2">
             <h1 className="text-[28px] leading-[1.15] md:text-[36px] md:leading-tight lg:text-[40px] font-headline-lg text-primary flex-1 min-w-0">
-              {property.title}
+              {property.title
+                ? formateTitle(property.title)
+                : ''}
             </h1>
             <PropertyDetailFavoriteButton propertyId={property.id} size="responsive" />
           </div>

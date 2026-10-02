@@ -12,6 +12,7 @@ import type { NormalizedCRMProject, ProjectPhaseInfo } from '@/utilities/crmProj
 import { getShownReference } from '@/settings/optimaCrm/shared'
 import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
 import { cn } from '@/utilities/ui'
+import { formateTitle } from '@/utilities/formateTitle'
 
 type Props = {
   project: NormalizedCRMProject
@@ -135,7 +136,9 @@ export const ProjectCard: React.FC<Props> = ({
     <div className="mt-4 md:mt-2 flex flex-1 flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <h3 className="font-headline-sm text-headline-sm text-on-surface line-clamp-2">
-          {project.title}
+          {project.title
+            ? formateTitle(project.title)
+            : ''}
         </h3>
         {shownReference && (
           <span className="font-label-sm text-label-sm text-secondary uppercase whitespace-nowrap shrink-0">

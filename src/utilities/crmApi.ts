@@ -1,38 +1,27 @@
 /**
- * Optima CRM API helpers (client-safe).
- * Browser-used NestJS paths go through same-origin Next.js proxies to avoid CORS.
- * Other CRM paths still call the legacy host directly.
+ * Browser-safe Optima CRM API helpers.
+ *
+ * All CRM requests from browser code must use same-origin Next.js routes.
+ * Credential-bearing upstream URLs are constructed only on the server.
  */
 
-import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
-import { isNestCrmListingPath, resolveCrmApiBaseUrl } from '@/settings/optimaCrm/shared'
-
-export type CRMConfig = {
-  apiUrl: string
-  apiKey: string
+const CRM_PROXY_BY_PATH: Record<string, string> = {
+  properties: '/api/crm/commercial-properties',
+  commercial_properties: '/api/crm/commercial-properties',
+  commercial_types: '/api/crm/commercial-types',
+  'locations/geo-data-if-property-exists':
+    '/api/crm/locations/geo-data-if-property-exists',
 }
 
-/** Same-origin proxy for NestJS property listing endpoints. */
-const NEST_LISTING_PROXY = '/api/crm/commercial-properties'
+function resolveCRMProxy(path: string): string {
+  const resource = path.replace(/^\/+|\/+$/g, '')
+  const proxy = CRM_PROXY_BY_PATH[resource]
 
-export async function getCRMConfig(): Promise<CRMConfig | null> {
-  const settings = resolveOptimaCrmSettings()
-  const apiUrl = settings.apiUrl.trim()
-  const apiKey = settings.apiKey.trim()
+  if (!proxy) {
+    throw new Error(`Browser CRM path is not proxied: ${resource}`)
+  }
 
-  if (!apiUrl || !apiKey) return null
-
-  return { apiUrl, apiKey }
-}
-
-/**
- * properties/* and commercial_properties/* → NestJS MODE base.
- * Other paths → legacy NEXT_PUBLIC_CRM_API_URL.
- */
-export function buildCRMEndpoint(path: string, config: CRMConfig): string {
-  const resource = path.replace(/^\//, '')
-  const baseUrl = resolveCrmApiBaseUrl(resource, config.apiUrl)
-  return `${baseUrl}/${resource}?user_apikey=${encodeURIComponent(config.apiKey)}`
+  return proxy
 }
 
 export async function getFromCRM(
@@ -40,26 +29,10 @@ export async function getFromCRM(
   searchParams: URLSearchParams,
   init?: Omit<RequestInit, 'method'>,
 ): Promise<Response> {
-  if (isNestCrmListingPath(path)) {
-    const queryString = searchParams.toString()
-    const url = queryString ? `${NEST_LISTING_PROXY}?${queryString}` : NEST_LISTING_PROXY
-    return fetch(url, {
-      ...init,
-      method: 'GET',
-      cache: 'no-store',
-    })
-  }
-
-  const config = await getCRMConfig()
-  if (!config) {
-    throw new Error(
-      'CRM API is not configured. Set credentials under Globals → Optima CRM in the admin panel.',
-    )
-  }
-
-  const endpoint = buildCRMEndpoint(path, config)
+  const proxy = resolveCRMProxy(path)
   const queryString = searchParams.toString()
-  const url = queryString ? `${endpoint}&${queryString}` : endpoint
+  const url = queryString ? `${proxy}?${queryString}` : proxy
+
   return fetch(url, {
     ...init,
     method: 'GET',
@@ -72,31 +45,10 @@ export async function postToCRM(
   body: Record<string, unknown>,
   init?: Omit<RequestInit, 'method' | 'body'>,
 ): Promise<Response> {
-  if (isNestCrmListingPath(path)) {
-    const { headers, ...restInit } = init ?? {}
-    return fetch(NEST_LISTING_PROXY, {
-      ...restInit,
-      method: 'POST',
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-      body: JSON.stringify(body),
-    })
-  }
-
-  const config = await getCRMConfig()
-  if (!config) {
-    throw new Error(
-      'CRM API is not configured. Set credentials under Globals → Optima CRM in the admin panel.',
-    )
-  }
-
-  const endpoint = buildCRMEndpoint(path, config)
+  const proxy = resolveCRMProxy(path)
   const { headers, ...restInit } = init ?? {}
 
-  return fetch(endpoint, {
+  return fetch(proxy, {
     ...restInit,
     method: 'POST',
     cache: 'no-store',
