@@ -22,7 +22,7 @@ export async function getCRMConfig(): Promise<CRMConfig | null> {
 
 /**
  * `properties/*` and `commercial_properties/*` → NestJS base (MODE).
- * Other paths (incl. constructions / Yii) → legacy NEXT_PUBLIC_CRM_API_URL / contact URL.
+ * Other paths (incl. constructions / Yii) → legacy NEXT_NODE_URL / contact URL.
  */
 export function buildCRMEndpoint(path: string, config: CRMConfig): string {
   const resource = path.replace(/^\//, '')

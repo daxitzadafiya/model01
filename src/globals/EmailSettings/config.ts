@@ -4,6 +4,7 @@ import { authenticated } from '@/access/authenticated'
 import { a } from '@/utilities/adminI18n'
 import { invalidateEmailTransportCache } from '@/email/dynamicEmailTransport'
 import { defaultClientConfirmationContent } from '@/email/defaultClientConfirmationContent'
+import { defaultDocumentDownloadContent } from '@/email/defaultDocumentDownloadContent'
 import { emailTemplateFields } from '@/fields/emailTemplateFields'
 import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
@@ -254,6 +255,25 @@ export const EmailSettings: GlobalConfig = {
                   fields: emailTemplateFields({
                     subject: 'Thank you for saving your search',
                     content: defaultClientConfirmationContent,
+                  }),
+                },
+                {
+                  name: 'documentDownload',
+                  type: 'group',
+                  label: a(
+                    'admin.emailSettings.clientConfirmation.documentDownload',
+                    'Document download',
+                  ),
+                  admin: {
+                    condition: (_, siblingData) => Boolean(siblingData?.enabled),
+                    description: a(
+                      'admin.emailSettings.clientConfirmation.documentDownload.description',
+                      'Sent only to the visitor. The subject can be edited here. This message is shown under the availability row. Placeholders: {{downloadUrl}}, {{action}}, {{document}}, {{pageUrl}}, and {{reference}}.',
+                    ),
+                  },
+                  fields: emailTemplateFields({
+                    subject: 'Your document download link',
+                    content: defaultDocumentDownloadContent,
                   }),
                 },
               ],

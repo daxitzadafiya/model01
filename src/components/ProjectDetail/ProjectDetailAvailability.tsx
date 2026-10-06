@@ -6,6 +6,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Link2 } from 'lucide-react'
 
+import { useDocumentDownload } from '@/components/DocumentDownload/DocumentDownloadProvider'
 import type { ProjectAvailabilityPhase, ProjectAvailabilityUnit } from '@/utilities/crmProjects'
 import { useTranslation } from '@/utilities/translateClient'
 
@@ -54,6 +55,7 @@ function BoolIcon({ value }: { value: boolean }) {
 }
 
 function PlansDropdown({ floorPlans, plansLabel }: { floorPlans: string[]; plansLabel: string }) {
+  const { requestDownload } = useDocumentDownload()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({})
@@ -128,17 +130,23 @@ function PlansDropdown({ floorPlans, plansLabel }: { floorPlans: string[]; plans
       role="menu"
     >
       {floorPlans.map((url, index) => (
-        <a
+        <button
           key={`${url}-${index}`}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
+          type="button"
           role="menuitem"
-          className="block w-full border-b border-outline-variant/20 px-3 py-2 text-left text-label-sm text-on-surface last:border-b-0 hover:bg-surface-container-low"
-          onClick={() => setOpen(false)}
+          className="block w-full cursor-pointer border-b border-outline-variant/20 px-3 py-2 text-left text-label-sm text-on-surface last:border-b-0 hover:bg-surface-container-low"
+          onClick={() => {
+            setOpen(false)
+            requestDownload({
+              url,
+              actionLabel: plansLabel,
+              documentLabel: `${plansLabel} ${index + 1}`,
+              kind: 'plan',
+            })
+          }}
         >
           {plansLabel} {index + 1}
-        </a>
+        </button>
       ))}
     </div>
   )

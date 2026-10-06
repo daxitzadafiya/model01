@@ -129,3 +129,26 @@ export function buildNotificationEmailPalette(
     border: mixHex(colors.secondary, '#ffffff', 0.82),
   }
 }
+
+export function resolveEmailThemeStyles(
+  theme?: Partial<NotificationEmailTheme> | null,
+): {
+  palette: ResolvedNotificationEmailPalette & { textValue: string; textOnAccent: string }
+  fonts: { body: string; headline: string }
+  googleFontsLink: string
+} {
+  const palette = buildNotificationEmailPalette(theme)
+
+  return {
+    palette: {
+      ...palette,
+      textValue: palette.textPrimary,
+      textOnAccent: '#ffffff',
+    },
+    fonts: {
+      body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+      headline: "Georgia, 'Times New Roman', Times, serif",
+    },
+    googleFontsLink: '',
+  }
+}

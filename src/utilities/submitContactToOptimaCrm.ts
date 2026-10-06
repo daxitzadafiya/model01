@@ -4,6 +4,7 @@ import { mapLocaleToBrochurePdfLang } from '@/utilities/propertyBrochure'
 import {
   COMMERCIAL_PROFILE_TYPE_ONE_FIELD,
   COMMERCIAL_PROFILE_TYPE_TWO_FIELD,
+  PROJECT_REFERENCE_FIELD,
 } from '@/utilities/propertyInquiry'
 
 type SubmissionField = {
@@ -188,7 +189,11 @@ function mapContactToOptimaPayload(
   const surname = pickStringField(payload, [...SURNAME_ALIASES])
   const message = pickStringField(payload, ['message', 'comments'])
   const searchCriteria = pickStringField(payload, ['search_criteria'])
-  const property = pickStringField(payload, ['property', 'reference', '_id'])
+  const projectReference = pickStringField(payload, [PROJECT_REFERENCE_FIELD])
+  const isProject = payload.p_type === 'project'
+  const property = isProject
+    ? undefined
+    : pickStringField(payload, ['property', 'reference', '_id'])
   const toEmail = pickStringField(payload, ['to_email', 'assigned_to'])
 
   if (forename) out.forename = forename
@@ -196,6 +201,7 @@ function mapContactToOptimaPayload(
 
   for (const key of PASSTHROUGH_FIELDS) {
     if (COMMA_LIST_FIELDS.has(key)) continue
+    if (isProject && key === 'transaction_types') continue
     const value = payload[key]
     if (typeof value === 'string' && value.trim()) out[key] = value.trim()
   }
@@ -204,7 +210,8 @@ function mapContactToOptimaPayload(
     out.gdpr_status = toBoolean(payload.gdpr_status)
   }
 
-  const combinedMessage = [message, searchCriteria].filter(Boolean).join('\n\n')
+  const referenceLine = projectReference ? `Reference: ${projectReference}` : undefined
+  const combinedMessage = [message, searchCriteria, referenceLine].filter(Boolean).join('\n\n')
   if (combinedMessage) {
     out.message = combinedMessage
     out.comments = combinedMessage

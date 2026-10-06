@@ -70,6 +70,9 @@ import * as migration_20260901_100000_deepl_source_language from './20260901_100
 import * as migration_20260903_120000_property_filters_delivery_distance from './20260903_120000_property_filters_delivery_distance'
 import * as migration_20260908_120000_property_list_unified_presets from './20260908_120000_property_list_unified_presets'
 
+import * as migration_20261002_160000_email_document_download_template from './20261002_160000_email_document_download_template'
+import * as migration_20261002_180000_document_download_links from './20261002_180000_document_download_links'
+
 export const migrations = [
   {
     up: migration_20260529_072521_kb_short_names.up,
@@ -425,5 +428,15 @@ export const migrations = [
     up: migration_20260908_120000_property_list_unified_presets.up,
     down: migration_20260908_120000_property_list_unified_presets.down,
     name: '20260908_120000_property_list_unified_presets',
+  },
+  {
+    up: migration_20261002_160000_email_document_download_template.up,
+    down: migration_20261002_160000_email_document_download_template.down,
+    name: '20261002_160000_email_document_download_template',
+  },
+  {
+    up: migration_20261002_180000_document_download_links.up,
+    down: migration_20261002_180000_document_download_links.down,
+    name: '20261002_180000_document_download_links',
   },
 ]

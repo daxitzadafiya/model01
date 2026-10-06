@@ -4,6 +4,7 @@ import { Heart, Printer } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
+import { useDocumentDownload } from '@/components/DocumentDownload/DocumentDownloadProvider'
 import { PropertyDetailShareMenu } from '@/components/PropertyDetail/PropertyDetailShareMenu'
 import { usePropertyFavorites } from '@/providers/PropertyFavorites'
 import type { FavoritePropertyId } from '@/utilities/propertyFavorites'
@@ -78,6 +79,7 @@ type FooterActionsProps = {
 }
 
 export const PropertyDetailFooterActions: React.FC<FooterActionsProps> = ({ brochureUrl }) => {
+  const { requestDownload } = useDocumentDownload()
   const printPdfLabel = useTranslation('propertyDetail.actions.printPdf', 'Print PDF')
   const requestViewingLabel = useTranslation(
     'propertyDetail.actions.requestViewing',
@@ -87,18 +89,23 @@ export const PropertyDetailFooterActions: React.FC<FooterActionsProps> = ({ broc
   return (
     <div className="pt-12 flex items-center gap-4">
       {brochureUrl ? (
-        <a
-          href={brochureUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 border border-primary text-primary py-4 rounded-full text-label-nav font-label-nav uppercase text-center hover:bg-primary hover:text-on-primary transition-all duration-300"
+        <button
+          type="button"
+          className="flex-1 cursor-pointer border border-primary text-primary py-4 rounded-full text-label-nav font-label-nav uppercase text-center hover:bg-primary hover:text-on-primary transition-all duration-300"
+          onClick={() =>
+            requestDownload({
+              url: brochureUrl,
+              actionLabel: printPdfLabel,
+              documentLabel: printPdfLabel,
+              kind: 'pdf',
+            })
+          }
         >
           <div className="flex items-center justify-center">
-            {/* add icon */}
             <Printer size={20} className="mr-2" />
             <span>{printPdfLabel}</span>
           </div>
-        </a>
+        </button>
       ) : (
         <Link
           href="#property-inquiry"

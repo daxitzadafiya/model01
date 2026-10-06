@@ -112,12 +112,13 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
         })
 
         setProject(normalized)
-        setInquiry(
-          extractPropertyInquiryContext(raw, {
+        setInquiry({
+          ...extractPropertyInquiryContext(raw, {
             reference: normalized.reference,
             id: normalized.id,
           }),
-        )
+          kind: 'project',
+        })
         const detailSource = raw
         setVideos(resolveCRMPropertyVideos(detailSource, activeLocale))
         setDocuments(

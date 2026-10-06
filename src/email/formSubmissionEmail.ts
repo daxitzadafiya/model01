@@ -7,6 +7,7 @@ import { buildClientConfirmationEmailHtml } from '@/email/buildClientConfirmatio
 import { buildNotificationEmailHtml } from '@/email/buildNotificationEmailHtml'
 import { lexicalToEmailHtml } from '@/email/lexicalToEmailHtml'
 import { loadNotificationEmailBranding } from '@/email/loadNotificationEmailBranding'
+import { sendDocumentDownloadEmail } from '@/email/sendDocumentDownloadEmail'
 import { getEmailSettings, isEmailConfigured } from '@/settings/email/server'
 import { sendConfiguredEmail } from '@/email/sendConfiguredEmail'
 import { getEmailFieldLabelMapping } from '@/utilities/formFieldLabels'
@@ -14,6 +15,14 @@ import {
   COMMERCIAL_PROFILE_TYPE_ONE_FIELD,
   COMMERCIAL_PROFILE_TYPE_TWO_FIELD,
 } from '@/utilities/propertyInquiry'
+import {
+  DOCUMENT_DOWNLOAD_ACTION_FIELD,
+  DOCUMENT_DOWNLOAD_FLAG_FIELD,
+  DOCUMENT_DOWNLOAD_HERO_FIELD,
+  DOCUMENT_DOWNLOAD_LABEL_FIELD,
+  DOCUMENT_DOWNLOAD_PAGE_FIELD,
+  DOCUMENT_DOWNLOAD_URL_FIELD,
+} from '@/utilities/documentDownload'
 import {
   SAVE_SEARCH_FLAG_FIELD,
   SAVE_SEARCH_SUMMARY_FIELD,
@@ -26,7 +35,12 @@ type SubmissionField = {
   value: string | boolean | number | null | undefined
 }
 
-type NotificationTemplate = 'contact' | 'propertyInquiry' | 'holidayBooking' | 'saveSearch'
+type NotificationTemplate =
+  | 'contact'
+  | 'propertyInquiry'
+  | 'holidayBooking'
+  | 'saveSearch'
+  | 'documentDownload'
 
 type NotificationField = {
   label: string
@@ -70,6 +84,12 @@ const INTERNAL_FIELDS = new Set([
   'syncToOptimaCrm',
   'submissionLocale',
   SAVE_SEARCH_FLAG_FIELD,
+  DOCUMENT_DOWNLOAD_FLAG_FIELD,
+  DOCUMENT_DOWNLOAD_URL_FIELD,
+  DOCUMENT_DOWNLOAD_ACTION_FIELD,
+  DOCUMENT_DOWNLOAD_LABEL_FIELD,
+  DOCUMENT_DOWNLOAD_PAGE_FIELD,
+  DOCUMENT_DOWNLOAD_HERO_FIELD,
   'source',
   'cities',
   'lgroups',
@@ -116,6 +136,11 @@ const TEMPLATE_DEFAULTS: Record<
     name: 'New Save Search Request',
     intro: 'A visitor saved a property search and asked to be notified about matching listings.',
   },
+  documentDownload: {
+    subject: 'Document download request',
+    name: 'Document download request',
+    intro: 'A visitor requested a document download from your website.',
+  },
 }
 
 const CLIENT_TEMPLATE_DEFAULTS: Record<NotificationTemplate, { subject: string }> = {
@@ -130,6 +155,9 @@ const CLIENT_TEMPLATE_DEFAULTS: Record<NotificationTemplate, { subject: string }
   },
   saveSearch: {
     subject: 'Thank you for saving your search',
+  },
+  documentDownload: {
+    subject: 'Your document download link',
   },
 }
 
@@ -153,6 +181,62 @@ function isPropertyInquirySubmission(
     getSubmissionValue(submissionData, 'property') ||
     getSubmissionValue(submissionData, 'reference'),
   )
+}
+
+function isDocumentDownloadSubmission(
+  submissionData: SubmissionField[] | null | undefined,
+): boolean {
+  const flag = getSubmissionValue(submissionData, DOCUMENT_DOWNLOAD_FLAG_FIELD).toLowerCase()
+  return flag === 'true' || flag === '1' || flag === 'yes'
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+}
+
+async function buildDocumentDownloadFallbackHtml(
+  payload: Payload,
+  locale: string,
+  variables: Record<string, string>,
+): Promise<string> {
+  const [intro, buttonLabel, actionLabel, documentLabel] = await Promise.all([
+    t(
+      'email.documentDownload.intro',
+      locale,
+      'Thank you. Use the link below to download the document you requested.',
+      payload,
+    ),
+    t('email.documentDownload.button', locale, 'Download document', payload),
+    t('downloadRequest.message.action', locale, 'Action', payload),
+    t('downloadRequest.message.document', locale, 'Document', payload),
+  ])
+
+  const url = variables.downloadUrl?.trim() ?? ''
+  const parts = [`<p>${escapeHtml(intro)}</p>`]
+
+  if (variables.action?.trim()) {
+    parts.push(
+      `<p><strong>${escapeHtml(actionLabel)}:</strong> ${escapeHtml(variables.action.trim())}</p>`,
+    )
+  }
+
+  if (variables.document?.trim()) {
+    parts.push(
+      `<p><strong>${escapeHtml(documentLabel)}:</strong> ${escapeHtml(variables.document.trim())}</p>`,
+    )
+  }
+
+  if (url) {
+    const safeUrl = escapeHtml(url)
+    parts.push(`<p><a href="${safeUrl}">${escapeHtml(buttonLabel)}</a></p>`)
+    parts.push(`<p>${safeUrl}</p>`)
+  }
+
+  return parts.join('')
 }
 
 function isSaveSearchSubmission(submissionData: SubmissionField[] | null | undefined): boolean {
@@ -385,7 +469,7 @@ async function sendNotificationEmail({
     t('email.notification.siteName', normalizedLocale, branding.siteName, payload),
   ])
 
-  const templateVariables = {
+  const templateVariables: Record<string, string> = {
     reference: propertyReference ?? '',
     ...extraTemplateVariables,
   }
@@ -417,24 +501,51 @@ async function sendNotificationEmail({
   const recipient = settings.notifications!.recipientAddress!
   const emailSubject = subjectSuffix ? `${teamSubject} — ${subjectSuffix}` : teamSubject
 
-  await sendConfiguredEmail(payload, {
-    to: recipient,
-    subject: emailSubject,
-    html: notificationHtml,
-    from: `${sender.fromName} <${sender.fromAddress}>`,
-  })
+  if (template !== 'documentDownload') {
+    await sendConfiguredEmail(payload, {
+      to: recipient,
+      subject: emailSubject,
+      html: notificationHtml,
+      from: `${sender.fromName} <${sender.fromAddress}>`,
+    })
+  }
 
+  const downloadUrl = templateVariables.downloadUrl?.trim() ?? ''
+  const forceClientEmail = template === 'documentDownload' && Boolean(downloadUrl)
   const clientConfirmation = emailSettings?.clientConfirmation
-  if (!clientConfirmation?.enabled || !clientEmail) return
+  if ((!clientConfirmation?.enabled && !forceClientEmail) || !clientEmail) return
+
+  const defaultClientSubject =
+    template === 'documentDownload'
+      ? await t(
+          'email.documentDownload.subject',
+          normalizedLocale,
+          clientDefaults.subject,
+          payload,
+        )
+      : clientDefaults.subject
 
   const clientSubject = applyTemplateVariables(
-    clientTemplate?.subject?.trim() || clientDefaults.subject,
+    clientTemplate?.subject?.trim() || defaultClientSubject,
     templateVariables,
   )
-  const clientContentHtml = applyTemplateVariables(
+  let clientContentHtml = applyTemplateVariables(
     (await resolveTemplateContentHtml(payload, clientTemplate, '')) ?? '',
     templateVariables,
   )
+
+  if (template === 'documentDownload') {
+    const fallbackHtml = await buildDocumentDownloadFallbackHtml(
+      payload,
+      normalizedLocale,
+      templateVariables,
+    )
+    if (!clientContentHtml.trim()) {
+      clientContentHtml = fallbackHtml
+    } else if (downloadUrl && !clientContentHtml.includes(downloadUrl)) {
+      clientContentHtml = `${clientContentHtml}${fallbackHtml}`
+    }
+  }
 
   const confirmationHtml = buildClientConfirmationEmailHtml({
     contentHtml: clientContentHtml || undefined,
@@ -460,13 +571,24 @@ export async function sendFormSubmissionNotificationEmail({
 }): Promise<void> {
   const submissionData = (doc.submissionData ?? []) as SubmissionField[]
   const locale = (doc.submissionLocale as string | undefined)?.trim().toLowerCase() || 'en'
-  const isSaveSearch = isSaveSearchSubmission(submissionData)
-  const isPropertyInquiry = !isSaveSearch && isPropertyInquirySubmission(submissionData)
+  const isDocumentDownload = isDocumentDownloadSubmission(submissionData)
+  const isSaveSearch = !isDocumentDownload && isSaveSearchSubmission(submissionData)
+  const isPropertyInquiry =
+    !isDocumentDownload && !isSaveSearch && isPropertyInquirySubmission(submissionData)
   const template: NotificationTemplate = isSaveSearch
     ? 'saveSearch'
     : isPropertyInquiry
       ? 'propertyInquiry'
       : 'contact'
+
+  if (isDocumentDownload) {
+    await sendDocumentDownloadEmail({
+      payload,
+      locale,
+      submissionData,
+    })
+    return
+  }
 
   const [formTitle, formDefinition] = await Promise.all([
     resolveFormTitle(payload, doc.form),

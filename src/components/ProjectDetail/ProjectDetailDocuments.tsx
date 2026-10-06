@@ -4,6 +4,11 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Download, FileText } from 'lucide-react'
 
+import { useDocumentDownload } from '@/components/DocumentDownload/DocumentDownloadProvider'
+import {
+  downloadKindFromDocumentGroup,
+  type DocumentDownloadKind,
+} from '@/utilities/documentDownload'
 import type { CRMPropertyDocumentGroup } from '@/utilities/crmPropertyDocuments'
 import { useTranslation } from '@/utilities/translateClient'
 
@@ -15,11 +20,14 @@ function DocumentMenu({
   label,
   urls,
   openLabel,
+  kind,
 }: {
   label: string
   urls: string[]
   openLabel: string
+  kind: DocumentDownloadKind
 }) {
+  const { requestDownload } = useDocumentDownload()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({})
@@ -84,15 +92,21 @@ function DocumentMenu({
 
   if (urls.length === 1) {
     return (
-      <a
-        href={urls[0]}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-1.5 text-label-sm font-label-sm text-on-surface transition-colors hover:bg-surface-container"
+      <button
+        type="button"
+        className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-md border border-outline-variant/40 bg-surface-container-low px-3 py-1.5 text-label-sm font-label-sm text-on-surface transition-colors hover:bg-surface-container"
+        onClick={() =>
+          requestDownload({
+            url: urls[0],
+            actionLabel: openLabel,
+            documentLabel: label,
+            kind,
+          })
+        }
       >
         <Download size={14} aria-hidden />
         {openLabel}
-      </a>
+      </button>
     )
   }
 
@@ -104,18 +118,24 @@ function DocumentMenu({
       role="menu"
     >
       {urls.map((url, index) => (
-        <a
+        <button
           key={`${url}-${index}`}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
+          type="button"
           role="menuitem"
-          className="flex items-center gap-2 border-b border-outline-variant/20 px-3 py-2.5 text-left text-label-sm text-on-surface last:border-b-0 hover:bg-surface-container-low"
-          onClick={() => setOpen(false)}
+          className="flex w-full cursor-pointer items-center gap-2 border-b border-outline-variant/20 px-3 py-2.5 text-left text-label-sm text-on-surface last:border-b-0 hover:bg-surface-container-low"
+          onClick={() => {
+            setOpen(false)
+            requestDownload({
+              url,
+              actionLabel: openLabel,
+              documentLabel: `${label} ${index + 1}`,
+              kind,
+            })
+          }}
         >
           <FileText size={14} className="shrink-0 text-on-surface-variant" aria-hidden />
           {label} {index + 1}
-        </a>
+        </button>
       ))}
     </div>
   )
@@ -198,7 +218,12 @@ export const ProjectDetailDocuments: React.FC<Props> = ({ groups }) => {
                 </div>
               </div>
 
-              <DocumentMenu label={label} urls={group.urls} openLabel={actionLabel} />
+              <DocumentMenu
+                kind={downloadKindFromDocumentGroup(group.kind)}
+                label={label}
+                openLabel={actionLabel}
+                urls={group.urls}
+              />
             </li>
           )
         })}

@@ -125,7 +125,7 @@ export function getCrmApiMode(): CrmApiMode {
 
 /**
  * NestJS CRM base, selected by NEXT_PUBLIC_CRM_API_MODE.
- * Host only — no `/v3` suffix (unlike legacy NEXT_PUBLIC_CRM_API_URL).
+ * Host only — no `/v3` suffix (unlike legacy NEXT_NODE_URL).
  */
 export function getNestCrmApiBaseUrl(): string {
   const mode = getCrmApiMode()
@@ -136,10 +136,20 @@ export function getNestCrmApiBaseUrl(): string {
   return pickString(fromEnv, '').replace(/\/+$/, '')
 }
 
+
+/** Yii contact host for accounts/index. `dev` uses the dev URL; every other mode uses prod. */
+export function getYiiContactUrl(): string {
+  const fromEnv =
+    getCrmApiMode() === 'dev'
+      ? process.env.NEXT_PUBLIC_CRM_API_URL_DEV
+      : process.env.NEXT_PUBLIC_CRM_API_URL_PROD
+  return pickString(fromEnv, '')
+}
+
 /**
  * Pick API base for a CRM path.
  * - NestJS paths → MODE host when configured
- * - everything else → legacy `NEXT_PUBLIC_CRM_API_URL` (settings.apiUrl)
+ * - everything else → legacy `NEXT_NODE_URL` (settings.apiUrl)
  */
 export function resolveCrmApiBaseUrl(path: string, legacyApiUrl: string): string {
   const legacy = legacyApiUrl.replace(/\/+$/, '')
@@ -171,9 +181,9 @@ export function readOptimaCrmEnvConfig(): Pick<
   const defaults = EMPTY_OPTIMA_CRM_SETTINGS
 
   return {
-    apiUrl: pickString(process.env.NEXT_PUBLIC_CRM_API_URL, defaults.apiUrl),
+    apiUrl: pickString(process.env.NEXT_NODE_URL, defaults.apiUrl),
     apiKey: pickString(process.env.NEXT_PUBLIC_CRM_API_KEY, defaults.apiKey),
-    contactUrl: pickString(process.env.NEXT_PUBLIC_CRM_API_URL_CONTACT, defaults.contactUrl),
+    contactUrl: pickString(getYiiContactUrl(), defaults.contactUrl),
     userKey: pickString(process.env.NEXT_PUBLIC_OPTIMA_USER_KEY, defaults.userKey),
     brochureTemplateId: pickBrochureTemplateId(
       process.env.NEXT_PUBLIC_OPTIMA_BROCHURE_TEMPLATE_ID,

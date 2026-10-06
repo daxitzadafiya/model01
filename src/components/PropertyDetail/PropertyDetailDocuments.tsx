@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 import { ChevronDown, Download, FileText } from 'lucide-react'
 
+import { useDocumentDownload } from '@/components/DocumentDownload/DocumentDownloadProvider'
+import { downloadKindFromDocumentGroup } from '@/utilities/documentDownload'
 import type { CRMPropertyDocumentGroup } from '@/utilities/crmPropertyDocuments'
 import { useTranslation } from '@/utilities/translateClient'
 
@@ -11,11 +13,13 @@ type Props = {
 }
 
 export const PropertyDetailDocuments: React.FC<Props> = ({ groups }) => {
+  const { requestDownload } = useDocumentDownload()
   const heading = useTranslation('propertyDetail.documents.heading', 'Documents of interest')
   const floorPlansLabel = useTranslation('propertyDetail.documents.floorPlans', 'Floor plans')
   const qualityLabel = useTranslation('propertyDetail.documents.qualityReport', 'Quality report')
   const salesLabel = useTranslation('propertyDetail.documents.salesFile', 'Sales file')
   const otherLabel = useTranslation('propertyDetail.documents.other', 'Documents')
+  const downloadLabel = useTranslation('propertyDetail.documents.download', 'Download')
 
   const [open, setOpen] = useState(true)
 
@@ -73,15 +77,22 @@ export const PropertyDetailDocuments: React.FC<Props> = ({ groups }) => {
                     </summary>
                     <div className="absolute left-0 top-[calc(100%+6px)] z-20 min-w-[12rem] overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-bright shadow-lg">
                       {group.urls.map((url, index) => (
-                        <a
+                        <button
                           key={`${url}-${index}`}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block border-b border-outline-variant/20 px-4 py-2.5 text-body-sm font-body-sm text-on-surface last:border-b-0 hover:bg-surface-container-low"
+                          type="button"
+                          className="block w-full cursor-pointer border-b border-outline-variant/20 px-4 py-2.5 text-left text-body-sm font-body-sm text-on-surface last:border-b-0 hover:bg-surface-container-low"
+                          onClick={(event) => {
+                            event.currentTarget.closest('details')?.removeAttribute('open')
+                            requestDownload({
+                              url,
+                              actionLabel: downloadLabel,
+                              documentLabel: `${label} ${index + 1}`,
+                              kind: downloadKindFromDocumentGroup(group.kind),
+                            })
+                          }}
                         >
                           {label} {index + 1}
-                        </a>
+                        </button>
                       ))}
                     </div>
                   </details>
@@ -90,16 +101,22 @@ export const PropertyDetailDocuments: React.FC<Props> = ({ groups }) => {
             }
 
             return (
-              <a
+              <button
                 key={group.kind}
-                href={group.urls[0]}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-surface-bright px-5 py-3 font-label-nav text-label-nav uppercase text-primary transition-colors hover:border-primary hover:bg-primary hover:text-on-primary"
+                type="button"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-primary/30 bg-surface-bright px-5 py-3 font-label-nav text-label-nav uppercase text-primary transition-colors hover:border-primary hover:bg-primary hover:text-on-primary"
+                onClick={() =>
+                  requestDownload({
+                    url: group.urls[0],
+                    actionLabel: downloadLabel,
+                    documentLabel: label,
+                    kind: downloadKindFromDocumentGroup(group.kind),
+                  })
+                }
               >
                 <Download size={18} aria-hidden />
                 <span>{label}</span>
-              </a>
+              </button>
             )
           })}
         </div>

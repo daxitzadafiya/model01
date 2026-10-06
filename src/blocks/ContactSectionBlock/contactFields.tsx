@@ -56,11 +56,17 @@ function hasFieldError(errors: Partial<FieldErrorsImpl> | undefined, name: strin
 
 type BaseFieldProps = {
   name: string
+  /** Unique id when more than one copy of the form is on the page. */
+  domId?: string
   label?: string
   required?: boolean
   errors: any
   register: UseFormRegister<any>
   defaultValue?: string
+}
+
+function resolveDomId(name: string, domId?: string): string {
+  return domId?.trim() || name
 }
 
 type PhoneFieldProps = BaseFieldProps & {
@@ -77,6 +83,7 @@ function isPhoneField(name: string, label?: string): boolean {
 
 function ContactPhoneField({
   name,
+  domId,
   label,
   required,
   errors,
@@ -86,11 +93,12 @@ function ContactPhoneField({
   const translatedLabel = useFormFieldLabel(name, label)
   const requiredMessage = useFormFieldRequiredMessage(name, label)
   const invalidPhoneMessage = useFormFieldInvalidPhoneMessage(name)
+  const inputId = resolveDomId(name, domId)
 
   return (
     <div>
       {translatedLabel && (
-        <label className={labelClassName} htmlFor={name}>
+        <label className={labelClassName} htmlFor={inputId}>
           {translatedLabel}
           {required && ' *'}
         </label>
@@ -107,7 +115,7 @@ function ContactPhoneField({
         render={({ field: { onChange, value, onBlur }, fieldState: { error } }) => (
           <>
             <PhoneInputField
-              id={name}
+              id={inputId}
               invalid={Boolean(error)}
               name={name}
               placeholder={translatedLabel}
@@ -134,6 +142,7 @@ function ContactFieldError({ message }: { message?: string }) {
 
 function ContactFieldWrapper({
   name,
+  domId,
   label,
   required,
   errors,
@@ -142,11 +151,12 @@ function ContactFieldWrapper({
   children,
 }: BaseFieldProps & { children: React.ReactNode; icon?: React.ReactNode; textareaIcon?: boolean }) {
   const message = errors[name]?.message as string | undefined
+  const inputId = resolveDomId(name, domId)
 
   return (
     <div>
       {label && (
-        <label className={labelClassName} htmlFor={name}>
+        <label className={labelClassName} htmlFor={inputId}>
           {label}
           {required && ' *'}
         </label>
@@ -166,6 +176,7 @@ export const ContactTextField: React.FC<
   BaseFieldProps & { control?: Control }
 > = ({
   name,
+  domId,
   label,
   required,
   errors,
@@ -180,6 +191,7 @@ export const ContactTextField: React.FC<
       <ContactPhoneField
         control={control}
         defaultValue={defaultValue}
+        domId={domId}
         errors={errors}
         label={label}
         name={name}
@@ -195,6 +207,7 @@ export const ContactTextField: React.FC<
 
   return (
     <ContactFieldWrapper
+      domId={domId}
       errors={errors}
       icon={<User size={18} strokeWidth={2} />}
       label={translatedLabel}
@@ -206,7 +219,7 @@ export const ContactTextField: React.FC<
         aria-invalid={invalid}
         className={cn(inputClassName, invalid && inputInvalidClassName)}
         defaultValue={defaultValue}
-        id={name}
+        id={resolveDomId(name, domId)}
         placeholder={translatedLabel}
         type="text"
         {...register(name, { required: required ? requiredMessage : false })}
@@ -217,6 +230,7 @@ export const ContactTextField: React.FC<
 
 export const ContactEmailField: React.FC<BaseFieldProps> = ({
   name,
+  domId,
   label,
   required,
   errors,
@@ -230,6 +244,7 @@ export const ContactEmailField: React.FC<BaseFieldProps> = ({
 
   return (
     <ContactFieldWrapper
+      domId={domId}
       errors={errors}
       icon={<Mail size={18} strokeWidth={2} />}
       label={translatedLabel}
@@ -241,7 +256,7 @@ export const ContactEmailField: React.FC<BaseFieldProps> = ({
         aria-invalid={invalid}
         className={cn(inputClassName, invalid && inputInvalidClassName)}
         defaultValue={defaultValue}
-        id={name}
+        id={resolveDomId(name, domId)}
         placeholder={translatedLabel}
         type="email"
         {...register(name, {
@@ -262,6 +277,7 @@ export const ContactNumberField: React.FC<PhoneFieldProps> = (props) => (
 
 export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> = ({
   name,
+  domId,
   label,
   required,
   errors,
@@ -275,6 +291,7 @@ export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> 
 
   return (
     <ContactFieldWrapper
+      domId={domId}
       errors={errors}
       icon={<MessageSquare size={18} strokeWidth={2} />}
       label={translatedLabel}
@@ -287,7 +304,7 @@ export const ContactTextareaField: React.FC<BaseFieldProps & { rows?: number }> 
         aria-invalid={invalid}
         className={cn(inputClassName, invalid && inputInvalidClassName)}
         defaultValue={defaultValue}
-        id={name}
+        id={resolveDomId(name, domId)}
         placeholder={translatedLabel}
         rows={rows}
         {...register(name, { required: required ? requiredMessage : false })}
@@ -331,16 +348,18 @@ function renderCheckboxLabel(label: string, required?: boolean) {
 export const ContactCheckboxField: React.FC<
   CheckboxField & {
     control: Control
+    domId?: string
     errors: Partial<FieldErrorsImpl>
     register: UseFormRegister<any>
   }
-> = ({ name, label, required, control, errors, defaultValue }) => {
+> = ({ name, domId, label, required, control, errors, defaultValue }) => {
   const translatedLabel = useFormFieldLabel(name, label)
   const acceptanceError = useTranslation(
     PRIVACY_POLICY_VALIDATION_KEY,
     PRIVACY_POLICY_VALIDATION_FALLBACK,
   )
   const invalid = hasFieldError(errors, name)
+  const inputId = resolveDomId(name, domId)
 
   return (
     <div>
@@ -357,13 +376,13 @@ export const ContactCheckboxField: React.FC<
               'flex cursor-pointer items-start gap-3 rounded-xl border bg-white px-4 py-3.5 transition-colors border-outline-variant/35 hover:border-tertiary/40 has-focus-visible:border-tertiary has-focus-visible:ring-4 has-focus-visible:ring-tertiary/20',
               invalid && 'contact-field-checkbox--invalid',
             )}
-            htmlFor={name}
+            htmlFor={inputId}
           >
             <CheckboxUi
               aria-invalid={invalid}
               checked={Boolean(value)}
               className={checkboxClassName}
-              id={name}
+              id={inputId}
               onCheckedChange={(checked) => onChange(checked === true)}
             />
             {translatedLabel ? renderCheckboxLabel(translatedLabel, required) : null}
@@ -393,7 +412,10 @@ export const contactFields = {
 function ContactSelectField(
   props: SelectField & { control: Control; errors: Partial<FieldErrorsImpl> },
 ) {
-  const { name, control, errors, label, options, required, defaultValue } = props
+  const { name, control, errors, label, options, required, defaultValue, domId } = props as typeof props & {
+    domId?: string
+  }
+  const inputId = resolveDomId(name, domId)
   const translatedLabel = useFormFieldLabel(name, label)
   const requiredMessage = useFormFieldRequiredMessage(name, label)
   const invalid = hasFieldError(errors, name)
@@ -401,7 +423,7 @@ function ContactSelectField(
   return (
     <div>
       {translatedLabel && (
-        <label className={labelClassName} htmlFor={name}>
+        <label className={labelClassName} htmlFor={inputId}>
           {translatedLabel}
           {required ? ' *' : ''}
         </label>
@@ -419,7 +441,7 @@ function ContactSelectField(
               <SelectTrigger
                 aria-invalid={invalid}
                 className={cn(selectTriggerClassName, invalid && inputInvalidClassName)}
-                id={name}
+                id={inputId}
               >
                 <Tag className={iconClassName} size={18} strokeWidth={2} />
                 <SelectValue placeholder={translatedLabel} />
@@ -443,7 +465,10 @@ function ContactSelectField(
 function ContactCountryField(
   props: CountryField & { control: Control; errors: Partial<FieldErrorsImpl> },
 ) {
-  const { name, control, errors, label, required } = props
+  const { name, control, errors, label, required, domId } = props as typeof props & {
+    domId?: string
+  }
+  const inputId = resolveDomId(name, domId)
   const translatedLabel = useFormFieldLabel(name, label)
   const requiredMessage = useFormFieldRequiredMessage(name, label)
   const invalid = hasFieldError(errors, name)
@@ -451,7 +476,7 @@ function ContactCountryField(
   return (
     <div>
       {translatedLabel && (
-        <label className={labelClassName} htmlFor={name}>
+        <label className={labelClassName} htmlFor={inputId}>
           {translatedLabel}
           {required ? ' *' : ''}
         </label>
@@ -469,7 +494,7 @@ function ContactCountryField(
               <SelectTrigger
                 aria-invalid={invalid}
                 className={cn(selectTriggerClassName, invalid && inputInvalidClassName)}
-                id={name}
+                id={inputId}
               >
                 <Globe className={iconClassName} size={18} strokeWidth={2} />
                 <SelectValue placeholder={translatedLabel} />

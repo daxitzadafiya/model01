@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import React, { useEffect, useMemo, useState } from 'react'
+import { DocumentDownloadProvider } from '@/components/DocumentDownload/DocumentDownloadProvider'
 import { MapPin } from 'lucide-react'
 
 import { DetailReference } from '@/components/DetailReference'
@@ -202,6 +203,11 @@ export const PropertyDetailView: React.FC<Props> = ({
   ].filter((item): item is { icon: string; label: string; value: string } => Boolean(item))
 
   return (
+    <DocumentDownloadProvider
+      contactForm={contactForm}
+      heroImageUrl={property.imageUrl}
+      inquiry={inquiry}
+    >
     <main className="pt-20 md:pt-24 lg:pt-28 bg-surface-bright text-on-surface">
       <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-start mb-16 md:mb-24">
         <div className="lg:col-span-7 xl:col-span-8 lg:sticky lg:top-32 lg:self-start">
@@ -349,5 +355,6 @@ export const PropertyDetailView: React.FC<Props> = ({
         showSoldBadge={showSimilarSoldBadge}
       />
     </main>
+    </DocumentDownloadProvider>
   )
 }

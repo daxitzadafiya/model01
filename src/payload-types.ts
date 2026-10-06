@@ -4293,6 +4293,33 @@ export interface EmailSetting {
         [k: string]: unknown;
       } | null;
     };
+    /**
+     * Sent only to the visitor. The subject can be edited here. This message is shown under the availability row. Placeholders: {{downloadUrl}}, {{action}}, {{document}}, {{pageUrl}}, and {{reference}}.
+     */
+    documentDownload?: {
+      /**
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
+       */
+      subject: string;
+      /**
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
+       */
+      content?: {
+        root: {
+          type: string;
+          children: {
+            type: any;
+            version: number;
+            [k: string]: unknown;
+          }[];
+          direction: ('ltr' | 'rtl') | null;
+          format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+          indent: number;
+          version: number;
+        };
+        [k: string]: unknown;
+      } | null;
+    };
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -4891,6 +4918,12 @@ export interface EmailSettingsSelect<T extends boolean = true> {
               content?: T;
             };
         saveSearch?:
+          | T
+          | {
+              subject?: T;
+              content?: T;
+            };
+        documentDownload?:
           | T
           | {
               subject?: T;

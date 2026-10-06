@@ -1,6 +1,11 @@
 import { isCRMTruthy } from '@/utilities/localizedValue'
 import type { PropertyDetailListingContext } from '@/utilities/propertyDetailListingContext'
 
+export type PropertyInquiryKind = 'property' | 'project'
+
+/** Hidden submission field. Mapped into CRM `message` and `comments`, not sent as its own key. */
+export const PROJECT_REFERENCE_FIELD = 'project_reference'
+
 export type PropertyInquiryContext = {
   reference?: string
   /** CRM MongoDB _id */
@@ -10,6 +15,8 @@ export type PropertyInquiryContext = {
   transactionType?: string
   typeOneKey?: string
   typeTwoKey?: string
+  /** Project detail uses `project` so the CRM lead is not treated as a commercial property. */
+  kind?: PropertyInquiryKind
 }
 
 const pickString = (candidate: unknown, fallback = '') =>
@@ -92,14 +99,20 @@ export const COMMERCIAL_PROFILE_TYPE_TWO_FIELD = 'commercial_profile[type_two][]
 export function buildPropertyInquiryHiddenFields(
   context: PropertyInquiryContext,
 ): Array<{ field: string; value: string }> {
+  const isProject = context.kind === 'project'
   const fields: Array<{ field: string; value: string }> = [
-    { field: 'property', value: context.reference ?? '' },
-    { field: 'p_type', value: 'commercial_property' },
+    { field: 'p_type', value: isProject ? 'project' : 'commercial_property' },
     { field: 'interest', value: context.interestId ?? '' },
     { field: 'to_email', value: context.assignedTo ?? '' },
-    { field: 'transaction_types', value: context.transactionType ?? 'Buy' },
     { field: 'source', value: 'web-client' },
   ]
+
+  if (!isProject) {
+    fields.unshift({ field: 'property', value: context.reference ?? '' })
+    fields.push({ field: 'transaction_types', value: context.transactionType ?? 'Buy' })
+  } else if (context.reference?.trim()) {
+    fields.push({ field: PROJECT_REFERENCE_FIELD, value: context.reference.trim() })
+  }
 
   if (context.otherReference) {
     fields.push({ field: 'other_reference', value: context.otherReference })

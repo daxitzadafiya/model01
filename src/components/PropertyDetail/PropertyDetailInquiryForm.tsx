@@ -20,6 +20,9 @@ type Props = {
 const DEFAULT_MESSAGE_KEY = 'propertyDetail.inquiry.defaultMessage'
 const DEFAULT_MESSAGE_FALLBACK =
   "Hello, I'm interested in this property and would like to visit it.\nThank you."
+const PROJECT_MESSAGE_KEY = 'propertyDetail.inquiry.defaultMessage.project'
+const PROJECT_MESSAGE_FALLBACK =
+  "Hello, I'm interested in this project and would like to visit it.\nThank you."
 
 function resolveMessageFieldName(form: Form): string | undefined {
   for (const field of form.fields ?? []) {
@@ -43,15 +46,23 @@ export const PropertyDetailInquiryForm: React.FC<Props> = ({
   inquiry,
   propertyTitle,
 }) => {
-  const defaultMessage = useTranslation(DEFAULT_MESSAGE_KEY, DEFAULT_MESSAGE_FALLBACK)
+  const isProject = inquiry.kind === 'project'
+  const propertyDefaultMessage = useTranslation(DEFAULT_MESSAGE_KEY, DEFAULT_MESSAGE_FALLBACK)
+  const projectDefaultMessage = useTranslation(PROJECT_MESSAGE_KEY, PROJECT_MESSAGE_FALLBACK)
+  const defaultMessage = isProject ? projectDefaultMessage : propertyDefaultMessage
   const formNotConfigured = useTranslation(
     'propertyDetail.inquiry.formNotConfigured',
     'Contact form is not configured. Add a form titled "Contact Form" in the admin panel.',
   )
-  const heading = useTranslation(
+  const propertyHeading = useTranslation(
     'propertyDetail.inquiry.heading-property-inquiry',
     'Property Inquiry',
   )
+  const projectHeading = useTranslation(
+    'propertyDetail.inquiry.heading-project-inquiry',
+    'Project Inquiry',
+  )
+  const heading = isProject ? projectHeading : propertyHeading
   const resubmitButtonLabel = useTranslation(
     'propertyDetail.inquiry.resubmitButton',
     'Send another inquiry',

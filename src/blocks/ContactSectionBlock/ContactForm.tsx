@@ -17,7 +17,7 @@ import { useDeferredSiteLocale } from '@/utilities/useDeferredSiteLocale'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 import { contactFields } from './contactFields'
-import { formatPhoneE164 } from '@/utilities/phoneValidation'
+import { formatPhoneE164, isValidPhoneValue } from '@/utilities/phoneValidation'
 
 type HiddenFieldValue = string | boolean
 
@@ -41,6 +41,12 @@ type Props = {
   singleColumn?: boolean
   /** Field names to skip rendering (still send via hiddenFields if provided). */
   omitFields?: string[]
+  /** Phone stays optional even when the CMS form marks it required. */
+  optionalPhone?: boolean
+  /** DOM id for this form. Required when more than one copy is on the page. */
+  formDomId?: string
+  /** First/last name and email/phone sit side by side. */
+  pairedFields?: boolean
   /** Hide the form title/heading (e.g. when the parent modal already has one). */
   hideHeading?: boolean
   /** Skip the form's confirmationMessage rich text (avoids duplicating custom success copy). */
@@ -65,6 +71,9 @@ export const ContactForm: React.FC<Props> = ({
   defaultFieldValues,
   singleColumn = false,
   omitFields,
+  optionalPhone = false,
+  formDomId,
+  pairedFields = false,
   hideHeading = false,
   hideConfirmationMessage = false,
   compact = false,
@@ -77,6 +86,8 @@ export const ContactForm: React.FC<Props> = ({
     submitButtonLabel,
     fields: formFields,
   } = formFromProps
+
+  const formElementId = formDomId?.trim() || String(formID)
 
   const { settings: integrations } = useIntegrationsSettings()
   const recaptchaSiteKey = integrations.recaptchaSiteKey
@@ -151,8 +162,13 @@ export const ContactForm: React.FC<Props> = ({
 
     const normalizedData = { ...data }
     for (const [key, value] of Object.entries(normalizedData)) {
-      if (typeof value === 'string' && /phone|mobile|tel/i.test(key)) {
-        normalizedData[key] = formatPhoneE164(value) || value
+      if (typeof value !== 'string' || !/phone|mobile|tel/i.test(key)) continue
+      const formatted = formatPhoneE164(value)
+      if (optionalPhone) {
+        if (formatted && isValidPhoneValue(formatted)) normalizedData[key] = formatted
+        else delete normalizedData[key]
+      } else {
+        normalizedData[key] = formatted || value
       }
     }
 
@@ -238,7 +254,7 @@ export const ContactForm: React.FC<Props> = ({
         <form
           key={locale}
           className={compact ? 'space-y-3' : 'space-y-5'}
-          id={String(formID)}
+          id={formElementId}
           onSubmit={handleSubmit(handleContactSubmit)}
         >
           {eyebrow && (
@@ -279,13 +295,15 @@ export const ContactForm: React.FC<Props> = ({
           <fieldset
             key={locale}
             className={`m-0 min-w-0 border-0 p-0 ${
-              singleColumn
-                ? compact
-                  ? 'grid grid-cols-1 gap-2.5'
-                  : 'grid grid-cols-1 gap-4'
-                : compact
-                  ? 'grid grid-cols-1 gap-2.5 md:grid-cols-2'
-                  : 'grid grid-cols-1 gap-4 md:grid-cols-2'
+              pairedFields
+                ? 'grid grid-cols-2 gap-x-4 gap-y-4'
+                : singleColumn
+                  ? compact
+                    ? 'grid grid-cols-1 gap-2.5'
+                    : 'grid grid-cols-1 gap-4'
+                  : compact
+                    ? 'grid grid-cols-1 gap-2.5 md:grid-cols-2'
+                    : 'grid grid-cols-1 gap-4 md:grid-cols-2'
             }`}
             disabled={isLoading}
           >
@@ -295,8 +313,17 @@ export const ContactForm: React.FC<Props> = ({
 
               const fieldDefaultValue =
                 fieldName && defaultFieldValues ? defaultFieldValues[fieldName] : undefined
-              const resolvedField =
-                fieldDefaultValue != null ? { ...field, defaultValue: fieldDefaultValue } : field
+              const phoneOptional =
+                optionalPhone &&
+                Boolean(fieldName) &&
+                /phone|mobile|tel|cell|cellphone/i.test(
+                  `${fieldName} ${'label' in field && typeof field.label === 'string' ? field.label : ''}`,
+                )
+              const resolvedField = {
+                ...field,
+                ...(fieldDefaultValue != null ? { defaultValue: fieldDefaultValue } : {}),
+                ...(phoneOptional ? { required: false } : {}),
+              }
               const blockType = resolvedField.blockType as string
               const ContactField: React.FC<any> | undefined = (contactFields as any)[blockType]
               const isWideField =
@@ -304,15 +331,22 @@ export const ContactForm: React.FC<Props> = ({
                 blockType === 'message' ||
                 blockType === 'country' ||
                 blockType === 'checkbox'
-              const fieldWrapperClass = !singleColumn && isWideField ? 'md:col-span-2' : ''
+              const fieldWrapperClass = pairedFields
+                ? isWideField
+                  ? 'col-span-2'
+                  : 'min-w-0'
+                : !singleColumn && isWideField
+                  ? 'md:col-span-2'
+                  : ''
 
               if (ContactField) {
                 return (
                   <div className={fieldWrapperClass} key={index}>
                     <ContactField
                       {...resolvedField}
-                      errors={errors}
                       control={control}
+                      domId={fieldName ? `${formElementId}-${fieldName}` : undefined}
+                      errors={errors}
                       register={register}
                     />
                   </div>
@@ -372,11 +406,17 @@ export const ContactForm: React.FC<Props> = ({
                 ? 'cursor-not-allowed opacity-80'
                 : 'cursor-pointer active:scale-95 hover:opacity-90'
             }`}
-            form={String(formID)}
             type="submit"
           >
-            {isLoading && <Loader2 className="animate-spin" size={18} strokeWidth={2} />}
-            {isLoading ? submittingLabel : submitLabelOverride || translatedSubmitLabel}
+            <Loader2
+              aria-hidden
+              className={isLoading ? 'animate-spin' : 'hidden'}
+              size={18}
+              strokeWidth={2}
+            />
+            <span>
+              {isLoading ? submittingLabel : submitLabelOverride || translatedSubmitLabel}
+            </span>
           </button>
 
           {trustNote && (
