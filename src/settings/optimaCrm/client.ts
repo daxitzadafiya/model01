@@ -36,6 +36,7 @@ export function getRuntimeOptimaImageConfig(): OptimaImageConfig {
     agencyId: source.agencyId,
     propertyResizeBase: source.propertyResizeBase,
     siteId: source.siteId,
+    propertyImages: source.propertyImages,
   }
 }
 
@@ -57,6 +58,7 @@ export function getProjectReferenceField(): ProjectReferenceField {
 
 export type {
   OptimaImageConfig,
+  PropertyImageWatermarkMode,
   PropertyReferenceField,
   ProjectReferenceField,
   ResolvedOptimaCrmSettings,

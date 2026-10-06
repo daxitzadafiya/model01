@@ -157,6 +157,45 @@ export const OptimaCrmSettings: GlobalConfig = {
       ],
     },
     {
+      name: 'imageDisplay',
+      type: 'group',
+      label: a('admin.optimaCrmSettings.imageDisplay', 'Images'),
+      fields: [
+        {
+          name: 'propertyImages',
+          type: 'select',
+          label: a(
+            'admin.optimaCrmSettings.imageDisplay.propertyImages',
+            'Property/Project Images',
+          ),
+          defaultValue: 'without_watermark',
+          required: true,
+          options: [
+            {
+              label: a(
+                'admin.optimaCrmSettings.imageDisplay.propertyImages.withoutWatermark',
+                'Without Watermark',
+              ),
+              value: 'without_watermark',
+            },
+            {
+              label: a(
+                'admin.optimaCrmSettings.imageDisplay.propertyImages.withWatermark',
+                'With Watermark',
+              ),
+              value: 'with_watermark',
+            },
+          ],
+          admin: {
+            description: a(
+              'admin.optimaCrmSettings.imageDisplay.propertyImages.description',
+              'Without watermark uses the existing resize URL. With watermark inserts the agency ID from NEXT_PUBLIC_OPTIMA_AGENCY_ID.',
+            ),
+          },
+        },
+      ],
+    },
+    {
       name: 'properties',
       type: 'group',
       label: a('admin.optimaCrmSettings.properties', 'Property queries'),

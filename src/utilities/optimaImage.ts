@@ -134,6 +134,12 @@ function resolveImageBaseForModel(modelName: string): string {
   return stripTrailingSlash(config.commercialImageBase)
 }
 
+/** Append `{model_name}` when the CDN base does not already end with it. */
+function joinModelBase(base: string, modelName: string): string {
+  const normalized = stripTrailingSlash(base)
+  return normalized.endsWith(`/${modelName}`) ? normalized : `${normalized}/${modelName}`
+}
+
 const getAttachmentFileType = (attachment: PropertyAttachment): string => {
   if (typeof attachment.file_type === 'string' && attachment.file_type.trim()) {
     return attachment.file_type.trim().toLowerCase()
@@ -154,8 +160,9 @@ export const isPropertyImageAttachment = (attachment: PropertyAttachment): boole
 /**
  * Builds a property attachment image URL (mirrors PHP attachment logic).
  *
- * - Resize: `{property_img_resize_link}{model_id}/{image_size}/{file}`
- * - Plain: `{com_img}/{model_id}/{file}`
+ * - Resize, without watermark: `{property_img_resize_link}{model_name}/{model_id}/{image_size}/{file}`
+ * - Resize, with watermark: `{image_base}/{model_name}/{agency_id}/{model_id}/{image_size}/{file}`
+ * - Plain (documents): `{com_img}/{model_name}/{model_id}/{file}`
  */
 export const buildPropertyAttachmentImageUrl = (
   attachment: PropertyAttachment,
@@ -167,16 +174,18 @@ export const buildPropertyAttachmentImageUrl = (
   if (!modelName || !modelId || !fileName) return ''
 
   if (imageSize > 0) {
-    const resizeBase = stripTrailingSlash(getRuntimeOptimaImageConfig().propertyResizeBase)
-    const resizeBaseWithModel = resizeBase.endsWith(`/${modelName}`)
-      ? resizeBase
-      : `${resizeBase}/${modelName}`
-    return `${resizeBaseWithModel}/${modelId}/${imageSize}/${fileName}`
+    const config = getRuntimeOptimaImageConfig()
+    if (config.propertyImages === 'with_watermark' && config.agencyId) {
+      const imageBase = joinModelBase(resolveImageBaseForModel(modelName), modelName)
+      return `${imageBase}/${config.agencyId}/${modelId}/${imageSize}/${fileName}`
+    }
+
+    const resizeBase = joinModelBase(config.propertyResizeBase, modelName)
+    return `${resizeBase}/${modelId}/${imageSize}/${fileName}`
   }
 
-  const comImg = resolveImageBaseForModel(modelName)
-  const comImgWithModel = comImg.endsWith(`/${modelName}`) ? comImg : `${comImg}/${modelName}`
-  return `${comImgWithModel}/${modelId}/${fileName}`
+  const comImg = joinModelBase(resolveImageBaseForModel(modelName), modelName)
+  return `${comImg}/${modelId}/${fileName}`
 }
 
 /**

@@ -31,6 +31,16 @@ export const PROJECT_REFERENCE_FIELDS: ProjectReferenceField[] = [
 export const DEFAULT_PROPERTY_REFERENCE_FIELD: PropertyReferenceField = 'reference'
 export const DEFAULT_PROJECT_REFERENCE_FIELD: ProjectReferenceField = 'reference'
 
+/** Gallery URL shape for property and project images. */
+export type PropertyImageWatermarkMode = 'without_watermark' | 'with_watermark'
+
+export const PROPERTY_IMAGE_WATERMARK_MODES: PropertyImageWatermarkMode[] = [
+  'without_watermark',
+  'with_watermark',
+]
+
+export const DEFAULT_PROPERTY_IMAGE_WATERMARK: PropertyImageWatermarkMode = 'without_watermark'
+
 export type ResolvedOptimaCrmSettings = {
   apiUrl: string
   apiKey: string
@@ -47,6 +57,7 @@ export type ResolvedOptimaCrmSettings = {
   similarCommercials: SimilarCommercialsMode
   propertyReferenceField: PropertyReferenceField
   projectReferenceField: ProjectReferenceField
+  propertyImages: PropertyImageWatermarkMode
 }
 
 export type OptimaImageConfig = Pick<
@@ -58,6 +69,7 @@ export type OptimaImageConfig = Pick<
   | 'agencyId'
   | 'propertyResizeBase'
   | 'siteId'
+  | 'propertyImages'
 >
 
 export const IMAGE_DEFAULTS: OptimaImageConfig = {
@@ -68,6 +80,7 @@ export const IMAGE_DEFAULTS: OptimaImageConfig = {
   agencyId: '',
   propertyResizeBase: 'https://images.optima-crm.com/resize/',
   siteId: '237',
+  propertyImages: DEFAULT_PROPERTY_IMAGE_WATERMARK,
 }
 
 export const EMPTY_OPTIMA_CRM_SETTINGS: ResolvedOptimaCrmSettings = {
@@ -250,6 +263,19 @@ function pickProjectReferenceField(
   return fallback
 }
 
+function pickPropertyImageWatermark(
+  value: unknown,
+  fallback: PropertyImageWatermarkMode,
+): PropertyImageWatermarkMode {
+  if (
+    typeof value === 'string' &&
+    PROPERTY_IMAGE_WATERMARK_MODES.includes(value as PropertyImageWatermarkMode)
+  ) {
+    return value as PropertyImageWatermarkMode
+  }
+  return fallback
+}
+
 export function similarCommercialsQueryClause(
   settings: Pick<ResolvedOptimaCrmSettings, 'similarCommercials'> = EMPTY_OPTIMA_CRM_SETTINGS,
 ): { similar_commercials: SimilarCommercialsMode } {
@@ -315,6 +341,7 @@ export function resolveOptimaCrmSettingsFromGlobal(
 ): ResolvedOptimaCrmSettings {
   const properties = doc?.properties
   const reference = doc?.reference
+  const imageDisplay = doc?.imageDisplay
   const defaults = EMPTY_OPTIMA_CRM_SETTINGS
   const fromEnv = readOptimaCrmEnvConfig()
 
@@ -331,6 +358,10 @@ export function resolveOptimaCrmSettingsFromGlobal(
     projectReferenceField: pickProjectReferenceField(
       reference?.projectField,
       defaults.projectReferenceField,
+    ),
+    propertyImages: pickPropertyImageWatermark(
+      imageDisplay?.propertyImages,
+      defaults.propertyImages,
     ),
   }
 }

@@ -72,6 +72,8 @@ import * as migration_20260908_120000_property_list_unified_presets from './2026
 
 import * as migration_20261002_160000_email_document_download_template from './20261002_160000_email_document_download_template'
 import * as migration_20261002_180000_document_download_links from './20261002_180000_document_download_links'
+import * as migration_20261006_120000_optima_image_watermark from './20261006_120000_optima_image_watermark'
+import * as migration_20261006_130000_footer_contact_addresses from './20261006_130000_footer_contact_addresses'
 
 export const migrations = [
   {
@@ -438,5 +440,15 @@ export const migrations = [
     up: migration_20261002_180000_document_download_links.up,
     down: migration_20261002_180000_document_download_links.down,
     name: '20261002_180000_document_download_links',
+  },
+  {
+    up: migration_20261006_120000_optima_image_watermark.up,
+    down: migration_20261006_120000_optima_image_watermark.down,
+    name: '20261006_120000_optima_image_watermark',
+  },
+  {
+    up: migration_20261006_130000_footer_contact_addresses.up,
+    down: migration_20261006_130000_footer_contact_addresses.down,
+    name: '20261006_130000_footer_contact_addresses',
   },
 ]

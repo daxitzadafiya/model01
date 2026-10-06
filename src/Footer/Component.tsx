@@ -64,6 +64,11 @@ export async function Footer() {
   const navItems = footerData?.navItems ?? []
   const contactTitle = footerData?.contactTitle ?? 'CONTACT US'
   const contact = footerData?.contact
+  const addresses = (contact?.addresses ?? []).flatMap((row) => {
+    const address = row?.address?.trim()
+    if (!address) return []
+    return [{ id: row.id, address }]
+  })
   const certificationsTitle = footerData?.certificationsTitle ?? 'CERTIFICATIONS'
   const certifications = footerData?.certifications ?? []
   const certificationsHref = getCMSLinkHref(footerData?.certificationsLink ?? {})
@@ -161,7 +166,7 @@ export async function Footer() {
               {contactTitle}
             </h4>
           )}
-          {(contact?.phone || contact?.email || contact?.address) && (
+          {(contact?.phone || contact?.email || addresses.length > 0) && (
             <ul className="space-y-3 md:space-y-4 font-body-md text-body-md">
               {contact?.phone && (
                 <li className="flex items-center gap-3 text-on-primary">
@@ -185,12 +190,12 @@ export async function Footer() {
                   </a>
                 </li>
               )}
-              {contact?.address && (
-                <li className="flex items-start gap-3 text-on-primary">
+              {addresses.map(({ id, address }) => (
+                <li key={id || address} className="flex items-start gap-3 text-on-primary">
                   <MapPin className="text-tertiary shrink-0" size={18} strokeWidth={2} />
-                  {contact.address}
+                  <span>{address}</span>
                 </li>
-              )}
+              ))}
             </ul>
           )}
         </>

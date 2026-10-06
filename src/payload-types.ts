@@ -3636,7 +3636,15 @@ export interface Footer {
   contact?: {
     phone?: string | null;
     email?: string | null;
-    address?: string | null;
+    /**
+     * Office locations shown in the footer. Switch locale in the admin bar to edit each language; other locales update via DeepL on save.
+     */
+    addresses?:
+      | {
+          address: string;
+          id?: string | null;
+        }[]
+      | null;
   };
   /**
    * When unchecked, this section is hidden on the site.
@@ -4372,6 +4380,12 @@ export interface OptimaCrmSetting {
     propertyResizeBase?: string | null;
     siteId?: string | null;
   };
+  imageDisplay: {
+    /**
+     * Without watermark uses the existing resize URL. With watermark inserts the agency ID from NEXT_PUBLIC_OPTIMA_AGENCY_ID.
+     */
+    propertyImages: 'without_watermark' | 'with_watermark';
+  };
   properties: {
     /**
      * Controls the similar_commercials parameter on all CRM property listing requests.
@@ -4592,7 +4606,12 @@ export interface FooterSelect<T extends boolean = true> {
     | {
         phone?: T;
         email?: T;
-        address?: T;
+        addresses?:
+          | T
+          | {
+              address?: T;
+              id?: T;
+            };
       };
   certificationsShowOnSite?: T;
   certificationsDisplayOrder?: T;
@@ -4958,6 +4977,11 @@ export interface OptimaCrmSettingsSelect<T extends boolean = true> {
         agencyId?: T;
         propertyResizeBase?: T;
         siteId?: T;
+      };
+  imageDisplay?:
+    | T
+    | {
+        propertyImages?: T;
       };
   properties?:
     | T

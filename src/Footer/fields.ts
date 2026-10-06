@@ -143,11 +143,33 @@ export const footerFields: Field[] = [
                 defaultValue: 'info@horizonestates.com',
               },
               {
-                name: 'address',
-                type: 'textarea',
-                localized: true,
-                label: a('admin.footer.contact.address', 'Address'),
-                defaultValue: 'Skoufa 12, Athens',
+                name: 'addresses',
+                type: 'array',
+                minRows: 0,
+                label: a('admin.footer.contact.addresses', 'Addresses'),
+                labels: {
+                  singular: a('admin.footer.contact.addressSingular', 'Address'),
+                  plural: a('admin.footer.contact.addressesPlural', 'Addresses'),
+                },
+                admin: {
+                  initCollapsed: true,
+                  description: a(
+                    'admin.footer.contact.addresses.description',
+                    'Office locations shown in the footer. Switch locale in the admin bar to edit each language; other locales update via DeepL on save.',
+                  ),
+                  components: {
+                    RowLabel: '@/Footer/AddressRowLabel#AddressRowLabel',
+                  },
+                },
+                fields: [
+                  {
+                    name: 'address',
+                    type: 'textarea',
+                    localized: true,
+                    required: true,
+                    label: a('admin.footer.contact.address', 'Address'),
+                  },
+                ],
               },
             ],
           },

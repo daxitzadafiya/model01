@@ -43,7 +43,10 @@ export async function loadEmailFooter(
   return {
     helpTitle: showContact ? doc?.contactTitle?.trim() || '' : '',
     helpText: showBrand ? doc?.tagline?.trim() || '' : '',
-    address: contact?.address?.trim() || '',
+    address: (contact?.addresses ?? [])
+      .map((row) => row?.address?.trim())
+      .filter((value): value is string => Boolean(value))
+      .join('\n'),
     phone: contact?.phone?.trim() || '',
     email: contact?.email?.trim() || '',
     copyright: showBottom ? formatFooterCopyright(doc?.copyrightText?.trim() || '', siteName) : '',

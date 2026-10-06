@@ -276,7 +276,7 @@ export const seed = async ({
         contact: {
           phone: '+30 210 3388 000',
           email: 'info@horizonestates.com',
-          address: 'Skoufa 12, Athens',
+          addresses: [{ address: 'Skoufa 12, Athens' }],
         },
         certificationsTitle: 'CERTIFICATIONS',
         certifications: [

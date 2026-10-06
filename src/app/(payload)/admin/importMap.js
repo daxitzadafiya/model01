@@ -33,6 +33,7 @@ import { FolderTypeField as FolderTypeField_2b8867833a34864a02ddf429b0728a40 } f
 import { RowLabel as RowLabel_ec255a65fa6fa8d1faeb09cf35284224 } from '@/Header/RowLabel'
 import { SocialRowLabel as SocialRowLabel_7301750c868361ace60ca144eb5a30e1 } from '@/Footer/SocialRowLabel'
 import { RowLabel as RowLabel_1f6ff6ff633e3695d348f4f3c58f1466 } from '@/Footer/RowLabel'
+import { AddressRowLabel as AddressRowLabel_6db81147b03fe000fe747dc192ab2366 } from '@/Footer/AddressRowLabel'
 import { CertificationRowLabel as CertificationRowLabel_6f419d2a29ab0c968cc0b28e4576f48a } from '@/Footer/CertificationRowLabel'
 import { LegalRowLabel as LegalRowLabel_06a46d974082a28d7949f6a827bd56a1 } from '@/Footer/LegalRowLabel'
 import { ActiveFontCheckbox as ActiveFontCheckbox_240f4e68792a7c53b1f71817dd421e5d } from '@/globals/Theme/ActiveFontCheckbox'
@@ -90,6 +91,7 @@ export const importMap = {
   "@/Header/RowLabel#RowLabel": RowLabel_ec255a65fa6fa8d1faeb09cf35284224,
   "@/Footer/SocialRowLabel#SocialRowLabel": SocialRowLabel_7301750c868361ace60ca144eb5a30e1,
   "@/Footer/RowLabel#RowLabel": RowLabel_1f6ff6ff633e3695d348f4f3c58f1466,
+  "@/Footer/AddressRowLabel#AddressRowLabel": AddressRowLabel_6db81147b03fe000fe747dc192ab2366,
   "@/Footer/CertificationRowLabel#CertificationRowLabel": CertificationRowLabel_6f419d2a29ab0c968cc0b28e4576f48a,
   "@/Footer/LegalRowLabel#LegalRowLabel": LegalRowLabel_06a46d974082a28d7949f6a827bd56a1,
   "@/globals/Theme/ActiveFontCheckbox#ActiveFontCheckbox": ActiveFontCheckbox_240f4e68792a7c53b1f71817dd421e5d,
