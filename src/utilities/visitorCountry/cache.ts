@@ -1,9 +1,10 @@
-const STORAGE_KEY = 'app-visitor-country'
-/** Cache detected country for 30 days — location rarely changes for the same browser. */
-const TTL_MS = 30 * 24 * 60 * 60 * 1000
+const STORAGE_KEY = 'model01-visitor-country'
+/** Re-detect country every 15 minutes so travel / VPN changes are picked up. */
+export const VISITOR_COUNTRY_TTL_MS = 15 * 60 * 1000
 
 type CachedVisitorCountry = {
   countryCode: string
+  cachedAt?: number
   expiresAt: number
 }
 
@@ -20,7 +21,10 @@ function readEntry(): CachedVisitorCountry | null {
       return null
     }
 
-    if (Date.now() > parsed.expiresAt) {
+    const now = Date.now()
+    const cachedAt = typeof parsed.cachedAt === 'number' ? parsed.cachedAt : 0
+    // Drop expired entries and legacy 30-day caches that have no/stale cachedAt.
+    if (now > parsed.expiresAt || now - cachedAt > VISITOR_COUNTRY_TTL_MS) {
       localStorage.removeItem(STORAGE_KEY)
       return null
     }
@@ -43,9 +47,11 @@ export function writeCachedVisitorCountry(countryCode: string): void {
   if (!normalized || normalized.length !== 2) return
 
   try {
+    const now = Date.now()
     const entry: CachedVisitorCountry = {
       countryCode: normalized,
-      expiresAt: Date.now() + TTL_MS,
+      cachedAt: now,
+      expiresAt: now + VISITOR_COUNTRY_TTL_MS,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entry))
   } catch {

@@ -4,15 +4,18 @@ import { useEffect, useState } from 'react'
 
 import {
   readCachedVisitorCountry,
+  VISITOR_COUNTRY_TTL_MS,
   writeCachedVisitorCountry,
 } from '@/utilities/visitorCountry/cache'
 import { fetchCountryFromIpApi } from '@/utilities/visitorCountry/ipApi'
 
 let inflightLookup: Promise<string | null> | null = null
 
-async function resolveVisitorCountry(): Promise<string | null> {
-  const cached = readCachedVisitorCountry()
-  if (cached) return cached
+async function resolveVisitorCountry(options?: { bypassCache?: boolean }): Promise<string | null> {
+  if (!options?.bypassCache) {
+    const cached = readCachedVisitorCountry()
+    if (cached) return cached
+  }
 
   if (inflightLookup) return inflightLookup
 
@@ -31,7 +34,7 @@ async function resolveVisitorCountry(): Promise<string | null> {
 
 /**
  * Returns a cached ISO country code for the current visitor (e.g. "us", "in").
- * Uses ipapi.co (same as virtual-chatbot) and caches in localStorage for 30 days.
+ * Uses ipapi.co (same as virtual-chatbot) and refreshes the localStorage cache every 15 minutes.
  *
  * Starts as null during SSR and the first client render to avoid hydration mismatches;
  * geo/cached country is applied in useEffect after mount.
@@ -40,22 +43,23 @@ export function useVisitorCountry(): string | null {
   const [countryCode, setCountryCode] = useState<string | null>(null)
 
   useEffect(() => {
-    const cached = readCachedVisitorCountry()
-    if (cached) {
-      setCountryCode(cached)
-      return
-    }
-
     let cancelled = false
 
-    void resolveVisitorCountry().then((resolved) => {
-      if (!cancelled && resolved) {
-        setCountryCode(resolved)
-      }
-    })
+    const applyCountry = (resolved: string | null) => {
+      if (!cancelled && resolved) setCountryCode(resolved)
+    }
+
+    const cached = readCachedVisitorCountry()
+    if (cached) applyCountry(cached)
+    else void resolveVisitorCountry().then(applyCountry)
+
+    const intervalId = window.setInterval(() => {
+      void resolveVisitorCountry({ bypassCache: true }).then(applyCountry)
+    }, VISITOR_COUNTRY_TTL_MS)
 
     return () => {
       cancelled = true
+      window.clearInterval(intervalId)
     }
   }, [])
 
