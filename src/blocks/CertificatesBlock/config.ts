@@ -57,11 +57,17 @@ export const CertificatesBlock: Block = {
           label: a('admin.blocks.certificatesBlock.certificateSubtitleLabel', 'Subtitle'),
         },
         {
-          name: 'image',
-          type: 'upload',
-          relationTo: 'media',
+          name: 'script',
+          type: 'textarea',
           required: true,
-          label: a('admin.blocks.certificatesBlock.certificateImageLabel', 'Image'),
+          label: a('admin.blocks.certificatesBlock.certificateScriptLabel', 'Script'),
+          admin: {
+            description: a(
+              'admin.blocks.certificatesBlock.certificateScriptDescription',
+              'Paste one certificate <script> tag. Only that script is shown on this card.',
+            ),
+            rows: 4,
+          },
         },
       ],
     },

@@ -195,7 +195,7 @@ export const footerFields: Field[] = [
               admin: {
                 description: a(
                   'admin.footer.certificationsLink.description',
-                  'Page opened when a visitor clicks a certification image (e.g. your Certifications page).',
+                  'Page opened from the Certifications title (e.g. your Certifications page).',
                 ),
               },
             },
@@ -212,7 +212,7 @@ export const footerFields: Field[] = [
               initCollapsed: true,
               description: a(
                 'admin.footer.certifications.description',
-                'Certification badges in the footer. Removing a row moves it to Globals Trash.',
+                'Certification widgets in the footer. Rows without a script are hidden on the site. Removing a row moves it to Globals Trash.',
               ),
               components: {
                 RowLabel: '@/Footer/CertificationRowLabel#CertificationRowLabel',
@@ -220,15 +220,15 @@ export const footerFields: Field[] = [
             },
             fields: [
               {
-                name: 'image',
-                type: 'upload',
-                relationTo: 'media',
-                label: a('admin.footer.certifications.image', 'Image'),
+                name: 'script',
+                type: 'textarea',
+                label: a('admin.footer.certifications.script', 'Script'),
                 admin: {
                   description: a(
-                    'admin.footer.certifications.image.description',
-                    'Certification badge or logo image shown in the footer. Rows without an image are hidden on the site.',
+                    'admin.footer.certifications.script.description',
+                    'Paste one certificate <script> tag. Only that script is shown in the footer. Rows without a script are hidden on the site.',
                   ),
+                  rows: 4,
                 },
               },
               {
@@ -238,7 +238,7 @@ export const footerFields: Field[] = [
                 admin: {
                   description: a(
                     'admin.footer.certifications.label.description',
-                    'Optional name for this certification (admin list + image alt fallback).',
+                    'Optional name for this certification in the admin list.',
                   ),
                 },
               },

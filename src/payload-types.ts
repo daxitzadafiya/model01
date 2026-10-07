@@ -1627,7 +1627,10 @@ export interface CertificatesBlock {
   certificates: {
     title: string;
     subtitle?: string | null;
-    image: number | Media;
+    /**
+     * Paste one certificate <script> tag. Only that script is shown on this card.
+     */
+    script: string;
     id?: string | null;
   }[];
   id?: string | null;
@@ -2865,7 +2868,7 @@ export interface CertificatesBlockSelect<T extends boolean = true> {
     | {
         title?: T;
         subtitle?: T;
-        image?: T;
+        script?: T;
         id?: T;
       };
   id?: T;
@@ -3660,7 +3663,7 @@ export interface Footer {
   certificationsColumnWidth?: ('2' | '3' | '4') | null;
   certificationsTitle?: string | null;
   /**
-   * Page opened when a visitor clicks a certification image (e.g. your Certifications page).
+   * Page opened from the Certifications title (e.g. your Certifications page).
    */
   certificationsLink?: {
     type?: ('reference' | 'custom') | null;
@@ -3677,16 +3680,16 @@ export interface Footer {
     url?: string | null;
   };
   /**
-   * Certification badges in the footer. Removing a row moves it to Globals Trash.
+   * Certification widgets in the footer. Rows without a script are hidden on the site. Removing a row moves it to Globals Trash.
    */
   certifications?:
     | {
         /**
-         * Certification badge or logo image shown in the footer. Rows without an image are hidden on the site.
+         * Paste one certificate <script> tag. Only that script is shown in the footer. Rows without a script are hidden on the site.
          */
-        image?: (number | null) | Media;
+        script?: string | null;
         /**
-         * Optional name for this certification (admin list + image alt fallback).
+         * Optional name for this certification in the admin list.
          */
         label?: string | null;
         isDeleted?: boolean | null;
@@ -4628,7 +4631,7 @@ export interface FooterSelect<T extends boolean = true> {
   certifications?:
     | T
     | {
-        image?: T;
+        script?: T;
         label?: T;
         isDeleted?: T;
         deletedAt?: T;

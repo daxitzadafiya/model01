@@ -280,8 +280,8 @@ export const seed = async ({
         },
         certificationsTitle: 'CERTIFICATIONS',
         certifications: [
-          { image: image1Doc.id, label: 'Verified' },
-          { image: image2Doc.id, label: 'Premium' },
+          { label: 'Verified', script: '' },
+          { label: 'Premium', script: '' },
         ],
         copyrightText: 'ALL RIGHTS RESERVED.',
         poweredBy: {

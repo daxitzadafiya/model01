@@ -4,9 +4,9 @@ import Link from 'next/link'
 import React from 'react'
 import { Mail, MapPin, Phone } from 'lucide-react'
 
+import { CertificateScript } from '@/components/CertificateScript'
 import { CMSLink, getCMSLinkHref } from '@/components/Link'
 import { Logo } from '@/components/Logo/Logo'
-import { Media } from '@/components/Media'
 import { SocialIcon } from '@/components/SocialIcon'
 import { getLogoSources } from '@/components/Logo/getLogoSources'
 import { DEFAULT_APP_NAME, getAppName } from '@/utilities/getAppName'
@@ -17,7 +17,7 @@ import {
   DEFAULT_RIGHTS_RESERVED,
 } from '@/Footer/formatCopyright'
 import type { FooterColumnWidth } from '@/Footer/sectionLayoutFields'
-import type { Footer as FooterType, Media as MediaType } from '@/payload-types'
+import type { Footer as FooterType } from '@/payload-types'
 import { cn } from '@/utilities/ui'
 
 const COLUMN_WIDTH_CLASS: Record<FooterColumnWidth, string> = {
@@ -212,43 +212,30 @@ export async function Footer() {
         <>
           {certificationsTitle && (
             <h4 className="font-label-nav text-label-nav text-tertiary uppercase mb-4 md:mb-8">
-              {certificationsTitle}
+              {certificationsHref ? (
+                <Link
+                  href={certificationsHref}
+                  target={certificationsNewTab ? '_blank' : undefined}
+                  rel={certificationsNewTab ? 'noopener noreferrer' : undefined}
+                  className="hover:text-surface-bright transition-colors"
+                >
+                  {certificationsTitle}
+                </Link>
+              ) : (
+                certificationsTitle
+              )}
             </h4>
           )}
           {certifications.length > 0 && (
             <div className="grid grid-cols-2 gap-3 w-full">
-              {certifications.map(({ image, label, id }, i) => {
-                const media = typeof image === 'object' && image !== null ? (image as MediaType) : null
-                if (!media) return null
-
-                const alt = label || media.alt || 'Certification'
-                const badge = (
-                  <div className="relative aspect-4/3 w-full overflow-hidden rounded-sm bg-white shadow-sm transition-opacity hover:opacity-90">
-                    <Media
-                      resource={media}
-                      alt={alt}
-                      fill
-                      imgClassName=""
-                      className="absolute inset-0"
-                    />
-                  </div>
-                )
-
-                if (!certificationsHref) {
-                  return <div key={id || i}>{badge}</div>
-                }
+              {certifications.map(({ script, id }, i) => {
+                const value = script?.trim()
+                if (!value) return null
 
                 return (
-                  <Link
-                    key={id || i}
-                    href={certificationsHref}
-                    target={certificationsNewTab ? '_blank' : undefined}
-                    rel={certificationsNewTab ? 'noopener noreferrer' : undefined}
-                    aria-label={alt}
-                    className="block"
-                  >
-                    {badge}
-                  </Link>
+                  <div key={id || i}>
+                    <CertificateScript script={value} />
+                  </div>
                 )
               })}
             </div>

@@ -3,14 +3,13 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { Media } from '@/components/Media'
+import { CertificateScript } from '@/components/CertificateScript'
 import { useReveal } from '@/utilities/useReveal'
-import type { Media as MediaType } from '@/payload-types'
 
 type CertificateItem = {
   title: string
   subtitle?: string | null
-  image: string | MediaType
+  script?: string | null
 }
 
 type Props = {
@@ -75,6 +74,26 @@ export const CertificatesBlock: React.FC<Props> = ({ subtitle, title, certificat
 
   return (
     <section ref={sectionRef} className="py-16 md:py-24 bg-surface">
+      <style>{`
+        .certificate-logo,
+        .certificate-logo a,
+        .certificate-logo > div {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+        }
+        .certificate-logo img,
+        .certificate-logo svg {
+          display: block !important;
+          height: 7.5rem !important;
+          width: auto !important;
+          max-width: 100% !important;
+          margin: 0 auto !important;
+          object-fit: contain !important;
+          filter: drop-shadow(0 10px 18px rgba(28, 25, 23, 0.12));
+        }
+      `}</style>
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-8 md:mb-12 flex flex-col gap-6 sm:flex-row sm:justify-between sm:items-end reveal">
         <div>
           {subtitle && (
@@ -115,26 +134,21 @@ export const CertificatesBlock: React.FC<Props> = ({ subtitle, title, certificat
           {certificates?.map((certificate, idx) => (
             <div
               key={idx}
-              className="group shrink-0 bg-surface-container-low rounded-xl overflow-hidden"
+              className="group flex h-full shrink-0 flex-col items-center rounded-2xl border border-outline-variant/30 bg-surface-container-lowest px-6 py-8 text-center shadow-[0_10px_28px_rgba(28,25,23,0.05)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(28,25,23,0.08)]"
               style={{ width: cardWidth }}
             >
-              <div className="relative overflow-hidden h-[240px] md:h-[300px]">
-                {typeof certificate.image === 'object' && certificate.image !== null && (
-                  <Media
-                    resource={certificate.image}
-                    fill
-                    imgClassName="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                )}
+              <div className="flex w-full items-center justify-center">
+                {certificate.script?.trim() ? (
+                  <CertificateScript script={certificate.script} className="certificate-logo" />
+                ) : null}
               </div>
-              <div className="p-4 md:p-6">
-                <h3 className="font-headline-sm text-headline-sm text-primary">
-                  {certificate.title}
-                </h3>
-                {certificate.subtitle && (
-                  <p className="mt-2 font-body-sm text-body-sm text-secondary">{certificate.subtitle}</p>
-                )}
-              </div>
+              <div className="mt-6 h-px w-10 bg-tertiary/70" />
+              <h3 className="mt-5 font-headline-sm text-headline-sm text-primary">
+                {certificate.title}
+              </h3>
+              {certificate.subtitle && (
+                <p className="mt-2 font-body-sm text-body-sm text-secondary">{certificate.subtitle}</p>
+              )}
             </div>
           ))}
         </div>
