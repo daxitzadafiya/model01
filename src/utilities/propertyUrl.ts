@@ -19,7 +19,7 @@ const PROJECT_DETAILS_PATH = '/project-details'
 
 /** Extract numeric CRM reference from a URL slug (e.g. `luxury-villa-in-calpe_618268` → `618268`). */
 export function extractReferenceFromSlug(slug: string): string {
-  const segment = decodeURIComponent(slug).split('/').pop() ?? slug
+  const segment = decodeURIComponent(slug).split('?')[0]?.split('/').pop() ?? slug
   const match = segment.match(/_(\d+)$/)
   if (match) return match[1]
   return segment.replace(/^_/, '').trim()
@@ -65,7 +65,7 @@ function pickLocalizedUrlValue(
 }
 
 function normalizeCrmUrlPath(value: string): string {
-  const trimmed = value.trim()
+  const trimmed = value.trim().split('?')[0] ?? ''
   if (!trimmed) return ''
 
   if (/^https?:\/\//i.test(trimmed)) {
@@ -252,7 +252,7 @@ function buildDetailHrefForPath(
   return `${pathPrefix}/_${reference}`
 }
 
-/** Public site href — `/property-details/{locale-specific slug from CRM urls}`. */
+/** Public site href — `/property-details/{slug}`. `?ttype=` is dropped; listing pages append `?for=`. */
 export function resolvePropertyDetailHref(
   property: Record<string, unknown>,
   locale: string,
