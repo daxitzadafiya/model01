@@ -1,5 +1,11 @@
 import type { Field } from 'payload'
 
+import {
+  certificateImageField,
+  certificatePageLinkField,
+  certificateScriptField,
+  certificateTypeField,
+} from '@/fields/certificateSource'
 import { link } from '@/fields/link'
 import { a } from '@/utilities/adminI18n'
 import { softDeleteItemFields } from '@/plugins/trashAndVersions/softDeleteFields'
@@ -186,20 +192,6 @@ export const footerFields: Field[] = [
             label: a('admin.footer.certificationsTitle', 'Certifications Title'),
             defaultValue: 'CERTIFICATIONS',
           },
-          link({
-            appearances: false,
-            disableLabel: true,
-            overrides: {
-              name: 'certificationsLink',
-              label: a('admin.footer.certificationsLink', 'Certifications page'),
-              admin: {
-                description: a(
-                  'admin.footer.certificationsLink.description',
-                  'Page opened from the Certifications title (e.g. your Certifications page).',
-                ),
-              },
-            },
-          }),
           {
             name: 'certifications',
             type: 'array',
@@ -212,25 +204,17 @@ export const footerFields: Field[] = [
               initCollapsed: true,
               description: a(
                 'admin.footer.certifications.description',
-                'Certification widgets in the footer. Rows without a script are hidden on the site. Removing a row moves it to Globals Trash.',
+                'Each row is either a script or an uploaded image. Rows without that content are hidden on the site. Removing a row moves it to Globals Trash.',
               ),
               components: {
                 RowLabel: '@/Footer/CertificationRowLabel#CertificationRowLabel',
               },
             },
             fields: [
-              {
-                name: 'script',
-                type: 'textarea',
-                label: a('admin.footer.certifications.script', 'Script'),
-                admin: {
-                  description: a(
-                    'admin.footer.certifications.script.description',
-                    'Paste one certificate <script> tag. Only that script is shown in the footer. Rows without a script are hidden on the site.',
-                  ),
-                  rows: 4,
-                },
-              },
+              certificateTypeField,
+              certificateScriptField(),
+              certificateImageField(),
+              certificatePageLinkField(),
               {
                 name: 'label',
                 type: 'text',

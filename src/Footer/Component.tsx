@@ -6,6 +6,7 @@ import { Mail, MapPin, Phone } from 'lucide-react'
 
 import { CertificateScript } from '@/components/CertificateScript'
 import { CMSLink, getCMSLinkHref } from '@/components/Link'
+import { Media } from '@/components/Media'
 import { Logo } from '@/components/Logo/Logo'
 import { SocialIcon } from '@/components/SocialIcon'
 import { getLogoSources } from '@/components/Logo/getLogoSources'
@@ -71,8 +72,6 @@ export async function Footer() {
   })
   const certificationsTitle = footerData?.certificationsTitle ?? 'CERTIFICATIONS'
   const certifications = footerData?.certifications ?? []
-  const certificationsHref = getCMSLinkHref(footerData?.certificationsLink ?? {})
-  const certificationsNewTab = Boolean(footerData?.certificationsLink?.newTab)
   const rightsReserved = footerData?.copyrightText ?? DEFAULT_RIGHTS_RESERVED
   const poweredByText = footerData?.poweredBy?.text ?? DEFAULT_POWERED_BY_TEXT
   const poweredByLinkLabel =
@@ -212,23 +211,48 @@ export async function Footer() {
         <>
           {certificationsTitle && (
             <h4 className="font-label-nav text-label-nav text-tertiary uppercase mb-4 md:mb-8">
-              {certificationsHref ? (
-                <Link
-                  href={certificationsHref}
-                  target={certificationsNewTab ? '_blank' : undefined}
-                  rel={certificationsNewTab ? 'noopener noreferrer' : undefined}
-                  className="hover:text-surface-bright transition-colors"
-                >
-                  {certificationsTitle}
-                </Link>
-              ) : (
-                certificationsTitle
-              )}
+              {certificationsTitle}
             </h4>
           )}
           {certifications.length > 0 && (
             <div className="grid grid-cols-2 gap-3 w-full">
-              {certifications.map(({ script, id }, i) => {
+              {certifications.map(({ certificateType, script, image, link, label, id }, i) => {
+                if (certificateType === 'manual') {
+                  const media = typeof image === 'object' && image !== null ? image : null
+                  if (!media) return null
+
+                  const alt = label || media.alt || 'Certification'
+                  const href = getCMSLinkHref(link ?? {})
+                  const badge = (
+                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-sm bg-white shadow-sm transition-opacity hover:opacity-90">
+                      <Media
+                        resource={media}
+                        alt={alt}
+                        fill
+                        imgClassName=""
+                        className="absolute inset-0"
+                      />
+                    </div>
+                  )
+
+                  if (!href) {
+                    return <div key={id || i}>{badge}</div>
+                  }
+
+                  return (
+                    <Link
+                      key={id || i}
+                      href={href}
+                      target={link?.newTab ? '_blank' : undefined}
+                      rel={link?.newTab ? 'noopener noreferrer' : undefined}
+                      aria-label={alt}
+                      className="block"
+                    >
+                      {badge}
+                    </Link>
+                  )
+                }
+
                 const value = script?.trim()
                 if (!value) return null
 

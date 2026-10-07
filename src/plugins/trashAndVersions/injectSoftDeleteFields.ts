@@ -49,6 +49,13 @@ function injectIntoArrayFields(
       }
     }
 
+    if (field.type === 'collapsible' && field.fields) {
+      return {
+        ...field,
+        fields: injectIntoArrayFields(field.fields, spec, nested),
+      }
+    }
+
     return field
   })
 }
@@ -90,6 +97,13 @@ export function injectSoftDeleteFields(
     }
 
     if (field.type === 'group' && field.fields) {
+      return {
+        ...field,
+        fields: injectSoftDeleteFields(field.fields, specs),
+      }
+    }
+
+    if (field.type === 'collapsible' && field.fields) {
       return {
         ...field,
         fields: injectSoftDeleteFields(field.fields, specs),

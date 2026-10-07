@@ -1625,12 +1625,20 @@ export interface CertificatesBlock {
   subtitle?: string | null;
   title: string;
   certificates: {
+    /**
+     * Manual Upload shows an image field. Using Script shows a script field.
+     */
+    certificateType: 'manual' | 'script';
     title: string;
     subtitle?: string | null;
     /**
-     * Paste one certificate <script> tag. Only that script is shown on this card.
+     * Paste one certificate <script> tag. Only that script is shown.
      */
-    script: string;
+    script?: string | null;
+    /**
+     * Certificate image shown when Manual Upload is selected.
+     */
+    image?: (number | null) | Media;
     id?: string | null;
   }[];
   id?: string | null;
@@ -2866,9 +2874,11 @@ export interface CertificatesBlockSelect<T extends boolean = true> {
   certificates?:
     | T
     | {
+        certificateType?: T;
         title?: T;
         subtitle?: T;
         script?: T;
+        image?: T;
         id?: T;
       };
   id?: T;
@@ -3663,31 +3673,39 @@ export interface Footer {
   certificationsColumnWidth?: ('2' | '3' | '4') | null;
   certificationsTitle?: string | null;
   /**
-   * Page opened from the Certifications title (e.g. your Certifications page).
-   */
-  certificationsLink?: {
-    type?: ('reference' | 'custom') | null;
-    newTab?: boolean | null;
-    reference?:
-      | ({
-          relationTo: 'pages';
-          value: number | Page;
-        } | null)
-      | ({
-          relationTo: 'posts';
-          value: number | Post;
-        } | null);
-    url?: string | null;
-  };
-  /**
-   * Certification widgets in the footer. Rows without a script are hidden on the site. Removing a row moves it to Globals Trash.
+   * Each row is either a script or an uploaded image. Rows without that content are hidden on the site. Removing a row moves it to Globals Trash.
    */
   certifications?:
     | {
         /**
-         * Paste one certificate <script> tag. Only that script is shown in the footer. Rows without a script are hidden on the site.
+         * Manual Upload shows an image field. Using Script shows a script field.
+         */
+        certificateType: 'manual' | 'script';
+        /**
+         * Paste one certificate <script> tag. Only that script is shown.
          */
         script?: string | null;
+        /**
+         * Certificate image shown when Manual Upload is selected.
+         */
+        image?: (number | null) | Media;
+        /**
+         * Page opened when a visitor clicks this certificate image.
+         */
+        link?: {
+          type?: ('reference' | 'custom') | null;
+          newTab?: boolean | null;
+          reference?:
+            | ({
+                relationTo: 'pages';
+                value: number | Page;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: number | Post;
+              } | null);
+          url?: string | null;
+        };
         /**
          * Optional name for this certification in the admin list.
          */
@@ -4620,18 +4638,20 @@ export interface FooterSelect<T extends boolean = true> {
   certificationsDisplayOrder?: T;
   certificationsColumnWidth?: T;
   certificationsTitle?: T;
-  certificationsLink?:
-    | T
-    | {
-        type?: T;
-        newTab?: T;
-        reference?: T;
-        url?: T;
-      };
   certifications?:
     | T
     | {
+        certificateType?: T;
         script?: T;
+        image?: T;
+        link?:
+          | T
+          | {
+              type?: T;
+              newTab?: T;
+              reference?: T;
+              url?: T;
+            };
         label?: T;
         isDeleted?: T;
         deletedAt?: T;

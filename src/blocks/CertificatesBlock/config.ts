@@ -1,5 +1,10 @@
 import type { Block } from 'payload'
 
+import {
+  certificateImageField,
+  certificateScriptField,
+  certificateTypeField,
+} from '@/fields/certificateSource'
 import { a } from '@/utilities/adminI18n'
 
 export const CertificatesBlock: Block = {
@@ -43,6 +48,7 @@ export const CertificatesBlock: Block = {
         initCollapsed: true,
       },
       fields: [
+        certificateTypeField,
         {
           name: 'title',
           type: 'text',
@@ -56,19 +62,8 @@ export const CertificatesBlock: Block = {
           localized: true,
           label: a('admin.blocks.certificatesBlock.certificateSubtitleLabel', 'Subtitle'),
         },
-        {
-          name: 'script',
-          type: 'textarea',
-          required: true,
-          label: a('admin.blocks.certificatesBlock.certificateScriptLabel', 'Script'),
-          admin: {
-            description: a(
-              'admin.blocks.certificatesBlock.certificateScriptDescription',
-              'Paste one certificate <script> tag. Only that script is shown on this card.',
-            ),
-            rows: 4,
-          },
-        },
+        certificateScriptField({ required: true }),
+        certificateImageField({ required: true }),
       ],
     },
   ],

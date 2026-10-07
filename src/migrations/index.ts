@@ -75,6 +75,11 @@ import * as migration_20261002_180000_document_download_links from './20261002_1
 import * as migration_20261006_120000_optima_image_watermark from './20261006_120000_optima_image_watermark'
 import * as migration_20261006_130000_footer_contact_addresses from './20261006_130000_footer_contact_addresses'
 import * as migration_20261007_100000_certificate_scripts from './20261007_100000_certificate_scripts'
+import * as migration_20261007_140000_manual_certificates from './20261007_140000_manual_certificates'
+import * as migration_20261007_150000_footer_manual_certificates from './20261007_150000_footer_manual_certificates'
+import * as migration_20261007_160000_drop_footer_manual_certificates_label from './20261007_160000_drop_footer_manual_certificates_label'
+import * as migration_20261007_170000_certificate_type from './20261007_170000_certificate_type'
+import * as migration_20261007_180000_certificate_page_link from './20261007_180000_certificate_page_link'
 
 export const migrations = [
   {
@@ -456,5 +461,30 @@ export const migrations = [
     up: migration_20261007_100000_certificate_scripts.up,
     down: migration_20261007_100000_certificate_scripts.down,
     name: '20261007_100000_certificate_scripts',
+  },
+  {
+    up: migration_20261007_140000_manual_certificates.up,
+    down: migration_20261007_140000_manual_certificates.down,
+    name: '20261007_140000_manual_certificates',
+  },
+  {
+    up: migration_20261007_150000_footer_manual_certificates.up,
+    down: migration_20261007_150000_footer_manual_certificates.down,
+    name: '20261007_150000_footer_manual_certificates',
+  },
+  {
+    up: migration_20261007_160000_drop_footer_manual_certificates_label.up,
+    down: migration_20261007_160000_drop_footer_manual_certificates_label.down,
+    name: '20261007_160000_drop_footer_manual_certificates_label',
+  },
+  {
+    up: migration_20261007_170000_certificate_type.up,
+    down: migration_20261007_170000_certificate_type.down,
+    name: '20261007_170000_certificate_type',
+  },
+  {
+    up: migration_20261007_180000_certificate_page_link.up,
+    down: migration_20261007_180000_certificate_page_link.down,
+    name: '20261007_180000_certificate_page_link',
   },
 ]

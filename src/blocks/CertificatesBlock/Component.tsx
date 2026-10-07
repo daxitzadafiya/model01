@@ -4,12 +4,16 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { CertificateScript } from '@/components/CertificateScript'
+import { Media } from '@/components/Media'
 import { useReveal } from '@/utilities/useReveal'
+import type { Media as MediaType } from '@/payload-types'
 
 type CertificateItem = {
   title: string
   subtitle?: string | null
+  certificateType?: 'manual' | 'script' | null
   script?: string | null
+  image?: number | MediaType | null
 }
 
 type Props = {
@@ -36,6 +40,20 @@ function useCardsPerView() {
   }, [])
 
   return cardsPerView
+}
+
+function CertificateImage({ image, alt }: { image: MediaType; alt: string }) {
+  return (
+    <div className="certificate-logo relative h-[7.5rem] w-full">
+      <Media
+        resource={image}
+        alt={alt}
+        fill
+        imgClassName="object-contain"
+        className="absolute inset-0"
+      />
+    </div>
+  )
 }
 
 export const CertificatesBlock: React.FC<Props> = ({ subtitle, title, certificates }) => {
@@ -138,7 +156,11 @@ export const CertificatesBlock: React.FC<Props> = ({ subtitle, title, certificat
               style={{ width: cardWidth }}
             >
               <div className="flex w-full items-center justify-center">
-                {certificate.script?.trim() ? (
+                {certificate.certificateType === 'manual' &&
+                typeof certificate.image === 'object' &&
+                certificate.image ? (
+                  <CertificateImage image={certificate.image} alt={certificate.title} />
+                ) : certificate.certificateType !== 'manual' && certificate.script?.trim() ? (
                   <CertificateScript script={certificate.script} className="certificate-logo" />
                 ) : null}
               </div>
