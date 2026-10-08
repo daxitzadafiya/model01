@@ -115,6 +115,7 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
         setInquiry({
           ...extractPropertyInquiryContext(raw, {
             reference: normalized.reference,
+            displayReference: normalized.displayReference,
             id: normalized.id,
           }),
           kind: 'project',

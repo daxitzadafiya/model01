@@ -19,6 +19,25 @@ export type PropertyPriceLabels = {
   perPersonPerNight: string
 }
 
+const PRICE_LABELS_WITHOUT_FROM = new Set<string>([
+  PRICE_ON_DEMAND_LABEL,
+  PRICE_ON_REQUEST_LABEL,
+  HOLIDAY_SELECT_DATES_LABEL,
+])
+
+/**
+ * Prefix a holiday rental card price with the English token `from `.
+ * Display localization swaps that token for `propertyList.card.priceFromLabel`.
+ * Demand / request / select-dates labels stay unchanged.
+ * Long-term rentals do not use this prefix.
+ */
+export function withRentalPriceFromPrefix(price: string | undefined): string {
+  const value = price?.trim() ?? ''
+  if (!value || PRICE_LABELS_WITHOUT_FROM.has(value)) return value
+  if (/^from\s+/i.test(value)) return value
+  return `from ${value}`
+}
+
 /** Localize CRM/holiday price strings that are composed in English. */
 export function localizePropertyPrice(
   price: string | undefined,

@@ -41,7 +41,7 @@ function escapeHtml(value: string): string {
 export function buildDocumentDownloadEmailHtml(content: DocumentDownloadEmailContent): string {
   const { palette, fonts, googleFontsLink } = resolveEmailThemeStyles(content.theme)
   const logoSources = getLogoSources(content.logo)
-  const logoUrl = content.logoSrc || logoSources.lightSrc
+  const logoUrl = content.logoSrc ?? logoSources.lightSrc
   const downloadUrl = escapeHtml(content.downloadUrl)
   const hero = content.heroImageUrl?.trim()
   const heroHref = content.heroHref?.trim()

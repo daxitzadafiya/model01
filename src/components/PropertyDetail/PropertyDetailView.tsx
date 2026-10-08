@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { DocumentDownloadProvider } from '@/components/DocumentDownload/DocumentDownloadProvider'
 import { MapPin } from 'lucide-react'
 
@@ -31,16 +31,13 @@ import {
 } from '@/utilities/crmProperties'
 import type { PropertyInquiryContext } from '@/utilities/propertyInquiry'
 import type { CRMPropertyBooking, RentalSeason } from '@/utilities/holidayRentalPricing'
-import {
-  calculateHolidayRentalQuote,
-  formatHolidayStayNightlyRate,
-  formatHolidayStayTotalSummary,
-} from '@/utilities/holidayRentalPricing'
+import { DEFAULT_MINIMUM_STAY } from '@/utilities/holidayRentalPricing'
 import {
   parseHolidayGuestCount,
   resolveMaxHolidayGuests,
   clampHolidayGuestCount,
 } from '@/utilities/crmHoliday'
+import { withRentalPriceFromPrefix } from '@/utilities/localizePropertyPrice'
 import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
 import { formateTitle } from '@/utilities/formateTitle'
 
@@ -64,6 +61,10 @@ type Props = {
   bookings?: CRMPropertyBooking[]
   bookingsRefreshing?: boolean
   onRefreshBookings?: () => Promise<void>
+  /** CRM `minimum_stay.saty_number` — defaults to 1 when absent. */
+  minimumStay?: number
+  /** CRM `security_deposit` from view-by-ref. */
+  securityDeposit?: number
   holidayArrival?: string
   holidayDeparture?: string
   holidayGuests?: string
@@ -118,6 +119,8 @@ export const PropertyDetailView: React.FC<Props> = ({
   bookings = [],
   bookingsRefreshing = false,
   onRefreshBookings,
+  minimumStay = DEFAULT_MINIMUM_STAY,
+  securityDeposit,
   holidayArrival = '',
   holidayDeparture = '',
   holidayGuests = '2',
@@ -141,7 +144,10 @@ export const PropertyDetailView: React.FC<Props> = ({
     'propertyDetail.holiday.selectDatesForPrice',
     'Select dates to view price',
   )
-  const displayPrice = useLocalizedPropertyPrice(property.price)
+  const prefixPriceFrom = isHolidayRental
+  const displayPrice = useLocalizedPropertyPrice(
+    prefixPriceFrom ? withRentalPriceFromPrefix(property.price) : property.price,
+  )
   const statusBadgeDisplay =
     property.statusBadgeLabel === 'SOLD'
       ? soldBadgeLabel
@@ -161,23 +167,6 @@ export const PropertyDetailView: React.FC<Props> = ({
     )
     if (next !== liveGuests) setLiveGuests(next)
   }, [liveGuests, maxGuests])
-
-  const liveHolidayQuote = useMemo(() => {
-    if (!isHolidayRental || !liveArrival || !liveDeparture) return null
-    return calculateHolidayRentalQuote({
-      seasons: rentalSeasons,
-      checkIn: liveArrival,
-      checkOut: liveDeparture,
-      guests: clampHolidayGuestCount(parseHolidayGuestCount(liveGuests), maxGuests),
-    })
-  }, [isHolidayRental, liveArrival, liveDeparture, liveGuests, maxGuests, rentalSeasons])
-
-  const liveNightlyLabel = useLocalizedPropertyPrice(
-    liveHolidayQuote ? formatHolidayStayNightlyRate(liveHolidayQuote) : undefined,
-  )
-  const liveSummaryLabel = useLocalizedPropertyPrice(
-    liveHolidayQuote ? formatHolidayStayTotalSummary(liveHolidayQuote) : undefined,
-  )
 
   const specItems = [
     property.sqft
@@ -256,16 +245,7 @@ export const PropertyDetailView: React.FC<Props> = ({
 
           {isHolidayRental ? (
             <div className="mb-6 md:mb-10">
-              {liveHolidayQuote ? (
-                <>
-                  <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary">
-                    {liveNightlyLabel}
-                  </div>
-                  <p className="mt-2 text-body-md text-on-surface-variant">
-                    {liveSummaryLabel}
-                  </p>
-                </>
-              ) : property.price ? (
+              {property.price ? (
                 <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary">
                   {displayPrice}
                 </div>
@@ -310,10 +290,13 @@ export const PropertyDetailView: React.FC<Props> = ({
           {isHolidayRental && property.reference ? (
             <PropertyHolidayBooking
               propertyReference={property.reference}
+              displayReference={property.displayReference || property.reference}
               propertyTitle={property.title}
               rentalSeasons={rentalSeasons}
               bookings={bookings}
               sleeps={property.sleeps}
+              minimumStay={minimumStay}
+              securityDeposit={securityDeposit}
               arrival={liveArrival}
               departure={liveDeparture}
               guests={liveGuests}
@@ -353,6 +336,7 @@ export const PropertyDetailView: React.FC<Props> = ({
         properties={relatedProperties}
         loading={similarPropertiesLoading}
         showSoldBadge={showSimilarSoldBadge}
+        prefixPriceFrom={prefixPriceFrom}
       />
     </main>
     </DocumentDownloadProvider>

@@ -130,7 +130,7 @@ export const ProjectDetailView: React.FC<Props> = ({
       : project.deliveryLabel
         ? { icon: 'check_circle', label: deliveryLabel, value: project.deliveryLabel }
         : null,
-    project.price ? { icon: 'check_circle', label: priceLabel, value: displayPrice } : null,
+    project.price ? { icon: 'price', label: priceLabel, value: displayPrice } : null,
     totalUnits > 0 ? { icon: 'basement', label: unitsLabel, value: String(totalUnits) } : null,
     project.sqft
       ? { icon: 'straighten', label: livingAreaLabel, value: String(project.sqft) }

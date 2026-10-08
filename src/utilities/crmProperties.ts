@@ -21,6 +21,7 @@ import {
   resolveHolidayGuestsFilterCount,
   resolveHolidayPriceDisplay,
 } from '@/utilities/crmHoliday'
+import { formatPriceAmount } from '@/utilities/formatPriceAmount'
 import { PRICE_ON_REQUEST_LABEL } from '@/utilities/localizePropertyPrice'
 import {
   arrivalDateKeyToUnixSeconds,
@@ -1231,7 +1232,7 @@ export function normalizeCRMProperty(
   const hasPositivePrice = priceValue != null && priceValue > 0
   const formattedRawPrice = hasPositivePrice
     ? typeof rawPrice === 'number'
-      ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(rawPrice)
+      ? formatPriceAmount(rawPrice)
       : pickString(rawPrice)
     : undefined
 
@@ -1265,16 +1266,16 @@ export function normalizeCRMProperty(
     const low = phaseLow != null && phaseLow > 0 ? phaseLow : undefined
     const high = phaseHigh != null && phaseHigh > 0 ? phaseHigh : undefined
     if (low != null && high != null && high !== low) {
-      const lowLabel = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(low)
-      const highLabel = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(high)
+      const lowLabel = formatPriceAmount(low)
+      const highLabel = formatPriceAmount(high)
       resolvedPrice = options.currencySymbolAfter
         ? `${lowLabel} – ${highLabel} €`
         : `€${lowLabel} – €${highLabel}`
     } else if (low != null) {
-      const lowLabel = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(low)
+      const lowLabel = formatPriceAmount(low)
       resolvedPrice = options.currencySymbolAfter ? `${lowLabel} €` : `€${lowLabel}`
     } else if (high != null) {
-      const highLabel = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(high)
+      const highLabel = formatPriceAmount(high)
       resolvedPrice = options.currencySymbolAfter ? `${highLabel} €` : `€${highLabel}`
     } else if (hasPriceOnDemand) {
       resolvedPrice = PRICE_ON_DEMAND_LABEL
@@ -1290,9 +1291,7 @@ export function normalizeCRMProperty(
         pickNumber(activeSeason.price)
       const duration = activeSeason.duration === 'per_month' ? 'month' : 'year'
       if (seasonPrice != null && seasonPrice > 0) {
-        const formatted = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(
-          seasonPrice,
-        )
+        const formatted = formatPriceAmount(seasonPrice)
         resolvedPrice = options.currencySymbolAfter
           ? `${formatted} € per ${duration}`
           : `€${formatted} per ${duration}`

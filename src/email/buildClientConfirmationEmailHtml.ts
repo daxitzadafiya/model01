@@ -9,7 +9,7 @@ import { getServerSideURL } from '@/utilities/getURL'
 export type ClientConfirmationEmailContent = {
   contentHtml?: string
   logo?: Logo | null
-  /** Resolved logo src (base64 data URI or absolute URL). */
+  /** Resolved logo src (`cid:…` for inline attachment, or absolute URL). */
   logoSrc?: string
   theme?: Partial<NotificationEmailTheme> | null
 }

@@ -1,3 +1,5 @@
+import { formatPriceAmount, PRICE_FRACTION_DIGITS } from '@/utilities/formatPriceAmount'
+
 /** Vacation rental pricing — weekly seasonal rates, nights, per-person display. */
 
 export type RentalSeason = {
@@ -20,8 +22,12 @@ export type HolidayRentalQuote = {
   totalPrice: number
   /** Display-only: dailyPrice ÷ guests */
   perPersonPerNight: number
-  minimumPeriod?: number
+  /** Effective minimum nights (property `minimum_stay` and/or season `minimum_period`) */
+  minimumPeriod: number
 }
+
+/** Fallback when CRM `minimum_stay` is missing. */
+export const DEFAULT_MINIMUM_STAY = 1
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
@@ -105,16 +111,33 @@ export const parseRentalSeasons = (property: Record<string, unknown>): RentalSea
   return raw.filter((item): item is RentalSeason => !!item && typeof item === 'object')
 }
 
+/**
+ * CRM property `minimum_stay.saty_number` (API typo) — defaults to 1 when absent.
+ * Also accepts corrected `stay_number` if the CRM ever fixes the key.
+ */
+export const resolvePropertyMinimumStay = (property: Record<string, unknown>): number => {
+  const raw = property.minimum_stay
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const stay = raw as Record<string, unknown>
+    const value = pickNumber(stay.saty_number) ?? pickNumber(stay.stay_number)
+    if (value != null && value > 0) return Math.floor(value)
+  }
+  return DEFAULT_MINIMUM_STAY
+}
+
 export const calculateHolidayRentalQuote = ({
   seasons,
   checkIn,
   checkOut,
   guests = 1,
+  minimumStay = DEFAULT_MINIMUM_STAY,
 }: {
   seasons: RentalSeason[]
   checkIn: string
   checkOut: string
   guests?: number
+  /** Property-level minimum nights from CRM `minimum_stay` (default 1). */
+  minimumStay?: number
 }): HolidayRentalQuote | null => {
   const from = parseDateOnly(checkIn)
   const to = parseDateOnly(checkOut)
@@ -124,7 +147,7 @@ export const calculateHolidayRentalQuote = ({
   if (nights <= 0) return null
 
   let total = 0
-  let minimumPeriod: number | undefined
+  let seasonMinimumPeriod: number | undefined
   const cursor = new Date(from)
 
   for (let night = 0; night < nights; night++) {
@@ -138,8 +161,10 @@ export const calculateHolidayRentalQuote = ({
 
     const seasonMinimum = pickNumber(season.minimum_period)
     if (seasonMinimum != null && seasonMinimum > 0) {
-      minimumPeriod =
-        minimumPeriod == null ? seasonMinimum : Math.max(minimumPeriod, seasonMinimum)
+      seasonMinimumPeriod =
+        seasonMinimumPeriod == null
+          ? seasonMinimum
+          : Math.max(seasonMinimumPeriod, seasonMinimum)
     }
 
     cursor.setDate(cursor.getDate() + 1)
@@ -147,6 +172,10 @@ export const calculateHolidayRentalQuote = ({
 
   const guestCount = Math.max(1, guests)
   const dailyPrice = total / nights
+  const propertyMinimum =
+    minimumStay != null && Number.isFinite(minimumStay) && minimumStay > 0
+      ? Math.floor(minimumStay)
+      : DEFAULT_MINIMUM_STAY
 
   return {
     nights,
@@ -154,15 +183,14 @@ export const calculateHolidayRentalQuote = ({
     dailyPrice,
     totalPrice: total,
     perPersonPerNight: dailyPrice / guestCount,
-    minimumPeriod,
+    minimumPeriod: Math.max(propertyMinimum, seasonMinimumPeriod ?? DEFAULT_MINIMUM_STAY),
   }
 }
 
-export const formatEuro = (amount: number, fractionDigits = 0): string =>
-  `€${amount.toLocaleString('en-US', {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  })}`
+export const HOLIDAY_PRICE_FRACTION_DIGITS = PRICE_FRACTION_DIGITS
+
+/** Format a euro amount; omits trailing `.00` (e.g. €45.56, €56). */
+export const formatEuro = (amount: number): string => `€${formatPriceAmount(amount)}`
 
 export const formatHolidayPerPersonNight = (quote: HolidayRentalQuote): string =>
   `${formatEuro(quote.perPersonPerNight)} per person / night`
@@ -177,14 +205,20 @@ export const formatHolidayStayNightlyRate = (quote: HolidayRentalQuote): string 
   formatHolidayNightlyRate(quote.dailyPrice)
 
 export const formatHolidayTotalSummary = (quote: HolidayRentalQuote): string => {
-  const roundedPerPerson = Math.round(quote.perPersonPerNight)
-  const total = roundedPerPerson * quote.guests * quote.nights
-  return `${formatEuro(roundedPerPerson)} × ${quote.guests} guests × ${quote.nights} nights ≈ ${formatEuro(total)}`
+  const total = quote.perPersonPerNight * quote.guests * quote.nights
+  return `${formatEuro(quote.perPersonPerNight)} × ${quote.guests} guests × ${quote.nights} nights ≈ ${formatEuro(total)}`
 }
 
-export const formatHolidayStayTotalSummary = (quote: HolidayRentalQuote): string => {
-  const roundedNightly = Math.round(quote.dailyPrice)
-  return `${formatEuro(roundedNightly)} × ${quote.nights} nights ≈ ${formatEuro(quote.totalPrice)}`
+export const formatHolidayStayTotalSummary = (quote: HolidayRentalQuote): string =>
+  `${formatEuro(quote.dailyPrice)} × ${quote.nights} nights ≈ ${formatEuro(quote.totalPrice)}`
+
+/** CRM `security_deposit` from property view-by-ref (optional). */
+export const resolvePropertySecurityDeposit = (
+  property: Record<string, unknown>,
+): number | undefined => {
+  const value = pickNumber(property.security_deposit)
+  if (value == null || value < 0) return undefined
+  return value
 }
 
 export type CRMPropertyBooking = {

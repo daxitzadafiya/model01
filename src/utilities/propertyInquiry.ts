@@ -6,8 +6,17 @@ export type PropertyInquiryKind = 'property' | 'project'
 /** Hidden submission field. Mapped into CRM `message` and `comments`, not sent as its own key. */
 export const PROJECT_REFERENCE_FIELD = 'project_reference'
 
+/**
+ * Admin-configured display REF (falls back to system reference).
+ * Used in emails and CRM `message`/`comments` text — not for CRM identity keys.
+ */
+export const DISPLAY_REFERENCE_FIELD = 'display_reference'
+
 export type PropertyInquiryContext = {
+  /** System CRM reference — used for `property` / `project_reference` API identity. */
   reference?: string
+  /** Admin-selected REF for email callouts and CRM message/comments text. */
+  displayReference?: string
   /** CRM MongoDB _id */
   interestId?: string
   otherReference?: string
@@ -57,10 +66,12 @@ export function resolvePropertyInquiryTransactionTypeForContext(
 
 export function extractPropertyInquiryContext(
   raw: Record<string, unknown>,
-  normalized: { reference?: string; id?: string },
+  normalized: { reference?: string; id?: string; displayReference?: string },
   listingContext?: PropertyDetailListingContext,
 ): PropertyInquiryContext {
   const reference = normalized.reference
+  const displayReference =
+    pickString(normalized.displayReference) || pickString(normalized.reference) || undefined
   const interestId = normalized.id
 
   const otherReference = pickString(raw.other_reference) || undefined
@@ -84,6 +95,7 @@ export function extractPropertyInquiryContext(
 
   return {
     reference,
+    displayReference,
     interestId,
     otherReference,
     assignedTo,
@@ -112,6 +124,11 @@ export function buildPropertyInquiryHiddenFields(
     fields.push({ field: 'transaction_types', value: context.transactionType ?? 'Buy' })
   } else if (context.reference?.trim()) {
     fields.push({ field: PROJECT_REFERENCE_FIELD, value: context.reference.trim() })
+  }
+
+  const displayReference = (context.displayReference || context.reference || '').trim()
+  if (displayReference) {
+    fields.push({ field: DISPLAY_REFERENCE_FIELD, value: displayReference })
   }
 
   if (context.otherReference) {

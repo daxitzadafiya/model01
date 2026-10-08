@@ -21,7 +21,7 @@ export type NotificationEmailContent = {
   submittedAt: string
   footer: string
   logo?: Logo | null
-  /** Resolved logo src (base64 data URI or absolute URL). */
+  /** Resolved logo src (`cid:…` for inline attachment, or absolute URL). */
   logoSrc?: string
   siteName: string
   theme?: Partial<NotificationEmailTheme> | null
@@ -64,13 +64,9 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
   // Property reference structured as a prominent premium card at the top
   const referenceCallout = content.propertyReference
     ? `
-        <div style="margin-bottom:26px;background:${palette.calloutBackground};border:1px solid ${palette.border};border-left:3px solid ${palette.accent};border-radius:8px;padding:16px 20px;box-shadow:0 6px 18px ${palette.accentShadow};">
-          <div style="color:${palette.accent};font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-            ${escapeHtml(content.refLabel)}
-          </div>
-          <div style="field-value" style="color:${palette.textPrimary};font-size:14px;line-height:1.6;white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-weight:500;">
-            ${escapeHtml(content.propertyReference)}
-          </div>
+        <div style="margin-bottom:16px;background:${palette.calloutBackground};border:1px solid ${palette.border};border-left:3px solid ${palette.accent};border-radius:6px;padding:12px 16px;box-shadow:0 4px 12px ${palette.accentShadow};">
+          <div style="color:${palette.accent};font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${escapeHtml(content.refLabel)}</div>
+          <div class="field-value" style="color:${palette.textPrimary};font-size:14px;line-height:1.45;white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-weight:500;">${escapeHtml(content.propertyReference)}</div>
         </div>`
     : ''
 
@@ -96,13 +92,13 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
           border-radius: 8px !important;
         }
         .content-td {
-          padding: 24px 20px 8px !important;
+          padding: 24px 20px 0 !important;
         }
         .logo-td {
           padding: 24px 20px 20px !important;
         }
         .fields-wrapper-td {
-          padding: 0 20px 20px !important;
+          padding: 12px 20px 20px !important;
         }
         .footer-td {
           padding: 20px 20px 24px !important;
@@ -119,7 +115,10 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
         border-radius: 6px;
       }
       .email-content p {
-        margin: 0 0 14px;
+        margin: 0 0 8px;
+      }
+      .email-content p:last-child {
+        margin-bottom: 0;
       }
       .email-content a {
         color: ${palette.accent};
@@ -158,11 +157,11 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
 
             <!-- Heading & content -->
             <tr>
-              <td class="content-td" style="padding:32px 40px 12px;background:${palette.cardBackground};" bgcolor="${palette.cardBackground}">
+              <td class="content-td" style="padding:32px 40px 0;background:${palette.cardBackground};" bgcolor="${palette.cardBackground}">
                 <h1 style="margin:0 0 10px;font-size:28px;line-height:1.3;color:${palette.textPrimary};font-family:Georgia,'Times New Roman',Times,serif;font-weight:400;letter-spacing:0.3px;">${escapeHtml(content.name)}</h1>
                 ${
                   content.contentHtml
-                    ? `<div class="email-content" style="margin:0 0 24px;font-size:14px;line-height:1.7;color:${palette.textMuted};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${content.contentHtml}</div>`
+                    ? `<div class="email-content" style="margin:0;font-size:14px;line-height:1.7;color:${palette.textMuted};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">${content.contentHtml}</div>`
                     : ''
                 }
               </td>
@@ -170,7 +169,7 @@ export function buildNotificationEmailHtml(content: NotificationEmailContent): s
 
             <!-- Fields & Callout section -->
             <tr>
-              <td class="fields-wrapper-td" style="padding:0 40px 32px;background:${palette.cardBackground};" bgcolor="${palette.cardBackground}">
+              <td class="fields-wrapper-td" style="padding:12px 40px 32px;background:${palette.cardBackground};" bgcolor="${palette.cardBackground}">
                 <div class="fields-container">
                   ${referenceCallout}
                   ${fieldBlocks}

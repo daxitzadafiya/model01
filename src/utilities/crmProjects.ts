@@ -26,6 +26,7 @@ import { resolveProjectDetailHref, resolvePropertyDetailHref } from '@/utilities
 import { parseCountFilterValue } from '@/utilities/propertyFilterParsing'
 import { resolveOptimaCrmSettings } from '@/settings/optimaCrm/client'
 import { resolveProjectDisplayReference } from '@/settings/optimaCrm/shared'
+import { formatPriceAmount } from '@/utilities/formatPriceAmount'
 
 export type CRMProjectDetailRecord = Record<string, unknown>
 
@@ -43,9 +44,6 @@ const pickNumber = (candidate: unknown): number | undefined => {
   }
   return undefined
 }
-
-const formatPriceAmount = (value: number): string =>
-  new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)
 
 /** CRM often sends `0` when price is unknown — treat as missing for display. */
 const pickPositivePrice = (value: unknown): number | undefined => {

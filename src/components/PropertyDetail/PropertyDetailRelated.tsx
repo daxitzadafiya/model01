@@ -4,18 +4,22 @@ import React, { useMemo } from 'react'
 
 import { PropertiesCarousel, type PropertiesCarouselItem } from '@/components/PropertiesCarousel'
 import type { NormalizedListProperty } from '@/utilities/crmProperties'
+import { withRentalPriceFromPrefix } from '@/utilities/localizePropertyPrice'
 import { useTranslation } from '@/utilities/translateClient'
 
 type Props = {
   properties: NormalizedListProperty[]
   loading?: boolean
   showSoldBadge?: boolean
+  /** Holiday similar cards: "From" before the price. */
+  prefixPriceFrom?: boolean
 }
 
 export const PropertyDetailRelated: React.FC<Props> = ({
   properties,
   loading = false,
   showSoldBadge = false,
+  prefixPriceFrom = false,
 }) => {
   const subtitle = useTranslation('propertyDetail.similar.subtitle', 'Curated Collection')
   const title = useTranslation('propertyDetail.similar.heading', 'Similar Properties')
@@ -36,9 +40,9 @@ export const PropertyDetailRelated: React.FC<Props> = ({
         beds: property.beds,
         baths: property.baths,
         sqft: property.sqft,
-        price: property.price,
+        price: prefixPriceFrom ? withRentalPriceFromPrefix(property.price) : property.price,
       })),
-    [properties],
+    [prefixPriceFrom, properties],
   )
 
   if (!loading && carouselProperties.length === 0) return null

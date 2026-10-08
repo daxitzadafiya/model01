@@ -8,6 +8,7 @@ import {
   formatHolidayStayTotalSummary,
   getDailyRateForSeason,
   parseRentalSeasons,
+  resolvePropertyMinimumStay,
   type HolidayRentalQuote,
 } from '@/utilities/holidayRentalPricing'
 
@@ -109,6 +110,7 @@ export const resolveHolidayPriceDisplay = ({
       checkIn: periodFrom!,
       checkOut: periodTo!,
       guests: parseHolidayGuestCount(guests),
+      minimumStay: resolvePropertyMinimumStay(property),
     })
 
     if (!quote) {

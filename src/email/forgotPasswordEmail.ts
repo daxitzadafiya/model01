@@ -41,7 +41,8 @@ export async function generateForgotPasswordEmailHTML(
     ignoreText: t('authentication:youDidNotRequestPassword'),
     footerText: branding.siteName,
     logo: branding.logo,
-    logoSrc: branding.logoSrc,
+    // Auth emails are HTML-only (no attachments), so use a public absolute URL.
+    logoSrc: branding.logoAbsoluteSrc,
     theme: branding.theme,
   })
 }

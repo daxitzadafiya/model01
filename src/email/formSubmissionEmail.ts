@@ -14,6 +14,8 @@ import { getEmailFieldLabelMapping } from '@/utilities/formFieldLabels'
 import {
   COMMERCIAL_PROFILE_TYPE_ONE_FIELD,
   COMMERCIAL_PROFILE_TYPE_TWO_FIELD,
+  DISPLAY_REFERENCE_FIELD,
+  PROJECT_REFERENCE_FIELD,
 } from '@/utilities/propertyInquiry'
 import {
   DOCUMENT_DOWNLOAD_ACTION_FIELD,
@@ -67,6 +69,8 @@ const INTERNAL_FIELDS = new Set([
   '_id',
   'reference',
   'property',
+  DISPLAY_REFERENCE_FIELD,
+  PROJECT_REFERENCE_FIELD,
   'other_reference',
   'p_type',
   'interest',
@@ -179,7 +183,21 @@ function isPropertyInquirySubmission(
 ): boolean {
   return Boolean(
     getSubmissionValue(submissionData, 'property') ||
-    getSubmissionValue(submissionData, 'reference'),
+    getSubmissionValue(submissionData, 'reference') ||
+    getSubmissionValue(submissionData, PROJECT_REFERENCE_FIELD) ||
+    getSubmissionValue(submissionData, DISPLAY_REFERENCE_FIELD),
+  )
+}
+
+/** Prefer admin display REF for email callouts; fall back to CRM identity refs. */
+function resolveEmailDisplayReference(
+  submissionData: SubmissionField[] | null | undefined,
+): string {
+  return (
+    getSubmissionValue(submissionData, DISPLAY_REFERENCE_FIELD) ||
+    getSubmissionValue(submissionData, 'property') ||
+    getSubmissionValue(submissionData, PROJECT_REFERENCE_FIELD) ||
+    getSubmissionValue(submissionData, 'reference')
   )
 }
 
@@ -356,19 +374,6 @@ function isExcludedEmailField(fieldName: string, form: Form | null): boolean {
   return false
 }
 
-async function formatPropertyReferenceForEmail(
-  payload: Payload,
-  locale: string,
-  reference: string,
-): Promise<string> {
-  const refPrefix = (await t('propertyDetail.map.refPrefix', locale, 'Ref:', payload)).trim()
-  const normalizedRef = reference.trim()
-
-  return refPrefix.endsWith(':')
-    ? `${refPrefix} ${normalizedRef}`
-    : `${refPrefix}: ${normalizedRef}`
-}
-
 async function resolveFieldLabel(
   payload: Payload,
   fieldName: string,
@@ -453,7 +458,8 @@ async function sendNotificationEmail({
     loadNotificationEmailBranding(payload),
   ])
 
-  const { logo, logoSrc, theme } = branding
+  const { logo, logoSrc, logoAttachment, theme } = branding
+  const logoAttachments = logoAttachment ? [logoAttachment] : undefined
 
   const clientTemplate = getClientTemplate(emailSettings, template)
 
@@ -478,15 +484,11 @@ async function sendNotificationEmail({
   const teamName = defaults.name
   const teamContentHtml = await resolveTemplateContentHtml(payload, null, defaults.intro)
 
-  const formattedPropertyReference = propertyReference
-    ? await formatPropertyReferenceForEmail(payload, normalizedLocale, propertyReference)
-    : undefined
-
   const notificationHtml = buildNotificationEmailHtml({
     name: teamName,
     contentHtml: teamContentHtml,
     fields,
-    propertyReference: formattedPropertyReference,
+    propertyReference: propertyReference?.trim() || undefined,
     refLabel,
     submittedAtLabel,
     submittedAt: formatSubmittedAt(normalizedLocale),
@@ -507,6 +509,7 @@ async function sendNotificationEmail({
       subject: emailSubject,
       html: notificationHtml,
       from: `${sender.fromName} <${sender.fromAddress}>`,
+      attachments: logoAttachments,
     })
   }
 
@@ -559,6 +562,7 @@ async function sendNotificationEmail({
     subject: clientSubject,
     html: confirmationHtml,
     from: `${sender.fromName} <${sender.fromAddress}>`,
+    attachments: logoAttachments,
   })
 }
 
@@ -620,7 +624,11 @@ export async function sendFormSubmissionNotificationEmail({
 
   if (isPropertyInquiry) {
     const transactionType = getSubmissionValue(submissionData, 'transaction_types')
-    const enquiryType = resolveEnquiryTypeLabel(transactionType || 'Buy')
+    const enquiryType = await resolveEnquiryTypeLabel(
+      transactionType || 'Buy',
+      locale,
+      payload,
+    )
     fields.push({
       label: await resolveFieldLabel(payload, 'enquiry_type', formDefinition, locale),
       value: enquiryType,
@@ -628,7 +636,7 @@ export async function sendFormSubmissionNotificationEmail({
   }
 
   const propertyReference = isPropertyInquiry
-    ? getSubmissionValue(submissionData, 'property')
+    ? resolveEmailDisplayReference(submissionData)
     : undefined
 
   await sendNotificationEmail({
@@ -644,6 +652,8 @@ export async function sendFormSubmissionNotificationEmail({
 
 export type HolidayBookingEmailInput = {
   property_reference: string
+  /** Admin display REF for email callout; falls back to property_reference. */
+  display_reference?: string
   forename: string
   email: string
   mobile: string
@@ -658,25 +668,34 @@ export type HolidayBookingEmailInput = {
 }
 
 /** Maps CRM / form transaction types to the enquiry-type label shown in emails. */
-export function resolveEnquiryTypeLabel(transactionType?: string): string {
+export async function resolveEnquiryTypeLabel(
+  transactionType: string | undefined,
+  locale: string,
+  payload: Payload,
+): Promise<string> {
   const normalized = transactionType?.trim().toLowerCase() ?? ''
-  if (normalized === 'buy' || normalized === 'sale') return 'Sale Property'
+  if (normalized === 'buy' || normalized === 'sale') {
+    return t('email.notification.enquiryType.sale', locale, 'Sale Property', payload)
+  }
   if (
     normalized === 'short term rental' ||
     normalized === 'short-term rental' ||
     normalized === 'holiday' ||
     normalized === 'holiday rental'
   ) {
-    return 'Holiday Property'
+    return t('email.notification.enquiryType.holiday', locale, 'Holiday Property', payload)
   }
   if (
     normalized === 'long term rental' ||
     normalized === 'long-term rental' ||
     normalized === 'rent'
   ) {
-    return 'Long Term Property'
+    return t('email.notification.enquiryType.longTerm', locale, 'Long Term Property', payload)
   }
-  return transactionType?.trim() || 'Holiday Property'
+  return (
+    transactionType?.trim() ||
+    (await t('email.notification.enquiryType.holiday', locale, 'Holiday Property', payload))
+  )
 }
 
 function padTimeHour(hour: number): string {
@@ -723,7 +742,9 @@ export async function sendHolidayBookingNotificationEmail({
   input: HolidayBookingEmailInput
 }): Promise<void> {
   const locale = input.locale?.trim().toLowerCase() || 'en'
-  const propertyReference = input.property_reference.trim()
+  const systemReference = input.property_reference.trim()
+  const propertyReference =
+    input.display_reference?.trim() || systemReference
   const forename = input.forename.trim()
   const surname = input.surname?.trim() ?? ''
   const email = input.email.trim()
@@ -736,7 +757,13 @@ export async function sendHolidayBookingNotificationEmail({
       ? String(Math.floor(input.guests))
       : ''
   const priceDisplay = formatHolidayPriceForEmail(input.price)
-  const enquiryType = resolveEnquiryTypeLabel('short term rental')
+  const enquiryType = await resolveEnquiryTypeLabel('short term rental', locale, payload)
+  const holidaySubjectSuffix = await t(
+    'email.notification.holidayBooking.subjectSuffix',
+    locale,
+    'Holiday rental',
+    payload,
+  )
 
   const arrivalDisplay = formatHolidayDateTimeForEmail(arrival, HOLIDAY_CHECK_IN_HOUR)
   const departureDisplay = formatHolidayDateTimeForEmail(departure, HOLIDAY_CHECK_OUT_HOUR)
@@ -772,7 +799,7 @@ export async function sendHolidayBookingNotificationEmail({
     template: 'holidayBooking',
     fields,
     propertyReference,
-    subjectSuffix: 'Holiday rental',
+    subjectSuffix: holidaySubjectSuffix,
     clientEmail: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : undefined,
     templateVariables: {
       arrival: arrivalDisplay,

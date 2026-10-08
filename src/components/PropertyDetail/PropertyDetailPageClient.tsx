@@ -28,7 +28,12 @@ import {
 import type { Form } from '@/payload-types'
 import { normalizeCRMListProperty, normalizeCRMProperty } from '@/utilities/crmProperties'
 import { parseCRMPropertyBookings } from '@/utilities/crmHoliday'
-import { parseRentalSeasons } from '@/utilities/holidayRentalPricing'
+import {
+  DEFAULT_MINIMUM_STAY,
+  parseRentalSeasons,
+  resolvePropertyMinimumStay,
+  resolvePropertySecurityDeposit,
+} from '@/utilities/holidayRentalPricing'
 import {
   extractPropertyInquiryContext,
   type PropertyInquiryContext,
@@ -114,6 +119,8 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
   const [inquiry, setInquiry] = useState<PropertyInquiryContext>({})
   const [isHolidayRental, setIsHolidayRental] = useState(false)
   const [rentalSeasons, setRentalSeasons] = useState<ReturnType<typeof parseRentalSeasons>>([])
+  const [minimumStay, setMinimumStay] = useState(DEFAULT_MINIMUM_STAY)
+  const [securityDeposit, setSecurityDeposit] = useState<number | undefined>()
   const [bookings, setBookings] = useState<ReturnType<typeof parseCRMPropertyBookings>>([])
   const [bookingsRefreshing, setBookingsRefreshing] = useState(false)
 
@@ -140,6 +147,8 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
 
       setBookings(parseCRMPropertyBookings(raw))
       setRentalSeasons(parseRentalSeasons(raw))
+      setMinimumStay(resolvePropertyMinimumStay(raw))
+      setSecurityDeposit(resolvePropertySecurityDeposit(raw))
     } catch (error) {
       console.error('Failed to refresh holiday bookings', error)
     } finally {
@@ -265,6 +274,8 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
         setProperty(normalized)
         setIsHolidayRental(isHolidayDetail)
         setRentalSeasons(isProject ? [] : parseRentalSeasons(raw))
+        setMinimumStay(isProject ? DEFAULT_MINIMUM_STAY : resolvePropertyMinimumStay(raw))
+        setSecurityDeposit(isProject ? undefined : resolvePropertySecurityDeposit(raw))
         setBookings(isProject ? [] : parseCRMPropertyBookings(raw))
         setInquiry(extractPropertyInquiryContext(raw, normalized, resolvedListingContext))
         setBrochureUrl(isProject ? undefined : buildPropertyBrochurePdfUrl(raw, activeLocale))
@@ -382,6 +393,8 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
       bookings={bookings}
       bookingsRefreshing={bookingsRefreshing}
       onRefreshBookings={refreshBookings}
+      minimumStay={minimumStay}
+      securityDeposit={securityDeposit}
       holidayArrival={holidayArrival}
       holidayDeparture={holidayDeparture}
       holidayGuests={holidayGuests}

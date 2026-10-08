@@ -4,6 +4,7 @@ import { mapLocaleToBrochurePdfLang } from '@/utilities/propertyBrochure'
 import {
   COMMERCIAL_PROFILE_TYPE_ONE_FIELD,
   COMMERCIAL_PROFILE_TYPE_TWO_FIELD,
+  DISPLAY_REFERENCE_FIELD,
   PROJECT_REFERENCE_FIELD,
 } from '@/utilities/propertyInquiry'
 
@@ -190,6 +191,7 @@ function mapContactToOptimaPayload(
   const message = pickStringField(payload, ['message', 'comments'])
   const searchCriteria = pickStringField(payload, ['search_criteria'])
   const projectReference = pickStringField(payload, [PROJECT_REFERENCE_FIELD])
+  const displayReference = pickStringField(payload, [DISPLAY_REFERENCE_FIELD])
   const isProject = payload.p_type === 'project'
   const property = isProject
     ? undefined
@@ -210,7 +212,12 @@ function mapContactToOptimaPayload(
     out.gdpr_status = toBoolean(payload.gdpr_status)
   }
 
-  const referenceLine = projectReference ? `Reference: ${projectReference}` : undefined
+  // Project leads: append human-readable REF into message/comments (admin display field).
+  // CRM identity keys (`property` / system `project_reference`) stay unchanged above.
+  const messageReference = isProject
+    ? displayReference || projectReference
+    : undefined
+  const referenceLine = messageReference ? `Reference: ${messageReference}` : undefined
   const combinedMessage = [message, searchCriteria, referenceLine].filter(Boolean).join('\n\n')
   if (combinedMessage) {
     out.message = combinedMessage

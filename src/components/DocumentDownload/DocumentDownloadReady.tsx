@@ -17,13 +17,25 @@ export const DocumentDownloadReady: React.FC<Props> = ({
 }) => {
   const fileHref = `/download/${encodeURIComponent(token)}/file`
 
+  // Start the download without navigating the tab away from this page.
+  // A plain <a>.click() replaces the URL with /file and, when the proxy fails,
+  // leaves the visitor on an error/blank page with no obvious retry.
   useEffect(() => {
-    const anchor = document.createElement('a')
-    anchor.href = fileHref
-    anchor.rel = 'noopener'
-    document.body.appendChild(anchor)
-    anchor.click()
-    anchor.remove()
+    const iframe = document.createElement('iframe')
+    iframe.src = fileHref
+    iframe.title = 'Document download'
+    iframe.setAttribute('aria-hidden', 'true')
+    iframe.style.position = 'fixed'
+    iframe.style.width = '0'
+    iframe.style.height = '0'
+    iframe.style.border = '0'
+    iframe.style.opacity = '0'
+    iframe.style.pointerEvents = 'none'
+    document.body.appendChild(iframe)
+
+    return () => {
+      iframe.remove()
+    }
   }, [fileHref])
 
   return (

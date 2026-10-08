@@ -1,7 +1,18 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
-import { AlertCircle, CalendarDays, Check, CircleArrowRight, Lock, Loader2, Users, Clock } from 'lucide-react'
+import React, { useEffect, useMemo, useState } from 'react'
+import {
+  AlertCircle,
+  CalendarDays,
+  Check,
+  CircleArrowRight,
+  Info,
+  Lock,
+  Loader2,
+  Moon,
+  Users,
+  Clock,
+} from 'lucide-react'
 
 import { PropertyHolidayCalendar } from '@/components/PropertyDetail/PropertyHolidayCalendar'
 import { PhoneInputField } from '@/components/PhoneInput/PhoneInputField'
@@ -20,6 +31,8 @@ import {
 import { useSiteLocale } from '@/utilities/useSiteLocale'
 import {
   calculateHolidayRentalQuote,
+  countNights,
+  DEFAULT_MINIMUM_STAY,
   formatEuro,
   isRangeAvailable,
   getBlockedDateKeys,
@@ -42,12 +55,19 @@ const PRIVACY_POLICY_VALIDATION_KEY = 'form.validation.privacyPolicy.required'
 const PRIVACY_POLICY_VALIDATION_FALLBACK = 'You must accept the Privacy Policy to continue.'
 
 type Props = {
+  /** System CRM reference — sent as `property_reference` for Optima identity. */
   propertyReference: string
+  /** Admin display REF for email callout; falls back to propertyReference. */
+  displayReference?: string
   propertyTitle: string
   rentalSeasons: ReturnType<typeof parseRentalSeasons>
   bookings?: CRMPropertyBooking[]
   /** CRM `sleeps` — max guests (falls back to 25). */
   sleeps?: number
+  /** CRM `minimum_stay.saty_number` — defaults to 1 when absent. */
+  minimumStay?: number
+  /** CRM `security_deposit` from view-by-ref. */
+  securityDeposit?: number
   arrival: string
   departure: string
   guests: string
@@ -129,10 +149,13 @@ function renderTermsCheckboxLabel(label: string, privacyPolicyLabel: string) {
 
 export const PropertyHolidayBooking: React.FC<Props> = ({
   propertyReference,
+  displayReference,
   propertyTitle,
   rentalSeasons,
   bookings = [],
   sleeps,
+  minimumStay = DEFAULT_MINIMUM_STAY,
+  securityDeposit,
   arrival,
   departure,
   guests,
@@ -165,23 +188,42 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
     'propertyDetail.inquiry.resubmitButton',
     'Send another inquiry',
   )
-  const nightsLabel = useTranslation('propertyDetail.holiday.nights', 'nights')
   const priceLabel = useTranslation('propertyDetail.holiday.price', 'Price')
   const perPersonPerNightLabel = useTranslation(
     'propertyDetail.holiday.perPersonPerNight',
     'Per Person Per Night',
   )
   const totalNightsLabel = useTranslation(
-    'propertyDetail.holiday.totalNights',
-    'total {nights} nights',
+    'propertyDetail.holiday.totalLabel',
+    'Total',
+  )
+  const cleaningChargesIncludedLabel = useTranslation(
+    'propertyDetail.holiday.cleaningChargesIncluded1',
+    'Your booking price encompasses all essentials, including bedding and towels, electricity, water, and Internet (if available in the property), along with a final cleaning fee. To secure your reservation, please proceed by making the required security deposit payment.',
+  )
+  const securityDepositLabel = useTranslation(
+    'propertyDetail.holiday.securityDeposit',
+    'Security deposit',
   )
   const maximumPersonsLabel = useTranslation(
     'propertyDetail.holiday.maximumPersons',
     'Maximum {count} Persons',
   )
+  const minimumStayLabel = useTranslation(
+    'propertyDetail.holiday.minimumStayLabel',
+    'Minimum {count} nights',
+  )
   const selectDatesHint = useTranslation(
     'propertyDetail.holiday.selectDatesHint',
     'Select arrival and departure dates to see the rental price.',
+  )
+  const priceLoadingLabel = useTranslation(
+    'propertyDetail.holiday.priceLoading',
+    'Calculating price…',
+  )
+  const priceUnavailableLabel = useTranslation(
+    'propertyDetail.holiday.priceUnavailable',
+    'Could not load price for these dates. Please try again.',
   )
   const datesRequiredMessage = useTranslation(
     'propertyDetail.holiday.datesRequired',
@@ -191,9 +233,9 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
     'propertyDetail.holiday.unavailableHint',
     'Selected dates are not available. Please choose different dates.',
   )
-  const minimumStayHint = useTranslation(
-    'propertyDetail.holiday.minimumStayHint',
-    'Minimum stay for this period is',
+  const minimumStayRequiredMessage = useTranslation(
+    'propertyDetail.holiday.minimumStayRequired',
+    'Please select at least {count} nights for this stay.',
   )
   const trustNote = useTranslation(
     'propertyDetail.inquiry.trustNote',
@@ -291,6 +333,9 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [apiTotalPrice, setApiTotalPrice] = useState<number | null>(null)
+  const [priceLoading, setPriceLoading] = useState(false)
+  const [priceError, setPriceError] = useState<string | null>(null)
 
   const { settings: integrations } = useIntegrationsSettings()
   const recaptchaSiteKey = integrations.recaptchaSiteKey
@@ -315,13 +360,84 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
       checkIn: arrival,
       checkOut: departure,
       guests: resolvedGuestCount,
+      minimumStay,
     })
-  }, [arrival, departure, resolvedGuestCount, rentalSeasons])
+  }, [arrival, departure, minimumStay, resolvedGuestCount, rentalSeasons])
+
+  const selectedNights = useMemo(() => {
+    if (!arrival || !departure) return 0
+    const from = parseDateOnly(arrival)
+    const to = parseDateOnly(departure)
+    if (!from || !to) return 0
+    return countNights(from, to)
+  }, [arrival, departure])
 
   const datesAvailable = arrival && departure ? isRangeAvailable(blocked, arrival, departure) : true
 
-  const meetsMinimumStay =
-    !quote?.minimumPeriod || !quote?.nights || quote.nights >= quote.minimumPeriod
+  const effectiveMinimumStay = quote?.minimumPeriod ?? minimumStay
+  const meetsMinimumStay = !quote || quote.nights >= quote.minimumPeriod
+  const showMinimumStayError = Boolean(quote && !meetsMinimumStay)
+
+  // Fetch CRM stay total via our server proxy (API key never reaches the browser).
+  useEffect(() => {
+    if (!arrival || !departure || !propertyReference || selectedNights <= 0 || !datesAvailable) {
+      setApiTotalPrice(null)
+      setPriceLoading(false)
+      setPriceError(null)
+      return
+    }
+
+    const controller = new AbortController()
+    const params = new URLSearchParams({
+      property: propertyReference,
+      from: arrival,
+      to: departure,
+    })
+
+    setPriceLoading(true)
+    setPriceError(null)
+    setApiTotalPrice(null)
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/crm/properties/calculate-rental-price?${params}`, {
+          signal: controller.signal,
+          cache: 'no-store',
+        })
+        const payload = (await response.json().catch(() => null)) as {
+          short_term_rental_price?: number
+          error?: string
+        } | null
+
+        if (!response.ok) {
+          throw new Error(payload?.error ?? `Price lookup failed (${response.status})`)
+        }
+
+        const price = payload?.short_term_rental_price
+        if (typeof price !== 'number' || !Number.isFinite(price)) {
+          throw new Error(priceUnavailableLabel)
+        }
+
+        if (!controller.signal.aborted) {
+          setApiTotalPrice(price)
+          setPriceError(null)
+        }
+      } catch (fetchError) {
+        if (controller.signal.aborted) return
+        console.error('Holiday rental price lookup failed', fetchError)
+        setApiTotalPrice(null)
+        setPriceError(
+          fetchError instanceof Error && fetchError.message
+            ? fetchError.message
+            : priceUnavailableLabel,
+        )
+      } finally {
+        if (!controller.signal.aborted) setPriceLoading(false)
+      }
+    })()
+
+    return () => controller.abort()
+  }, [arrival, departure, datesAvailable, priceUnavailableLabel, propertyReference, selectedNights])
 
   const clearFieldError = (key: keyof BookingFieldErrors) => {
     setFieldErrors((current) => {
@@ -408,7 +524,14 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
       return
     }
 
-    if (!propertyReference || !quote || !datesAvailable || !meetsMinimumStay) {
+    if (
+      !propertyReference ||
+      !quote ||
+      !datesAvailable ||
+      !meetsMinimumStay ||
+      apiTotalPrice == null ||
+      priceLoading
+    ) {
       setError(requiredError)
       return
     }
@@ -422,6 +545,7 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           property_reference: propertyReference,
+          display_reference: (displayReference || propertyReference).trim(),
           forename: form.forename.trim(),
           surname: form.surname.trim(),
           email: form.email.trim(),
@@ -431,7 +555,7 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
           arrival,
           departure,
           locale,
-          price: quote?.totalPrice,
+          price: apiTotalPrice,
           recaptchaToken,
           terms_accepted: termsAccepted,
         }),
@@ -529,7 +653,11 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
     >
       <h2 className="font-headline-md text-headline-md text-primary">{heading}</h2>
 
-      <div>
+      <div
+        className={`rounded-xl transition-colors ${
+          showMinimumStayError ? 'border border-red-300 bg-red-50/70 p-3' : ''
+        }`}
+      >
         <h3 className="mb-3 font-headline-sm text-headline-sm text-primary">{selectDatesTitle}</h3>
         <PropertyHolidayCalendar
           bookings={bookings}
@@ -543,43 +671,73 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
           legendVariant="availability"
         />
         {fieldErrors.dates && <div className="mt-2 text-red-500 text-sm">{fieldErrors.dates}</div>}
+        {showMinimumStayError && (
+          <p className="mt-2 flex items-start gap-1.5 text-body-sm font-medium text-red-700">
+            <AlertCircle className="mt-0.5 shrink-0" size={16} strokeWidth={2} />
+            <span>
+              {minimumStayRequiredMessage.replace('{count}', String(effectiveMinimumStay))}
+            </span>
+          </p>
+        )}
+
+        {(arrival || departure) && (
+          <div
+            className={`mt-3 grid grid-cols-1 gap-px overflow-hidden rounded-xl ${
+              showMinimumStayError
+                ? 'border border-red-200 bg-red-100/60'
+                : 'border border-outline-variant/25 bg-outline-variant/25'
+            }`}
+          >
+            <div className="bg-white px-3 py-2.5">
+              <p className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-on-surface-variant">
+                {checkInLabel}
+              </p>
+              <p className="flex items-center gap-2 text-body-sm font-medium text-on-surface">
+                <CalendarDays size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
+                {arrival ? formatDisplayDate(arrival) : '—'}
+              </p>
+              <p className="mt-1 flex items-center gap-2 text-body-sm font-medium text-on-surface">
+                <Clock size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
+                {arrival ? formatTime(arrival, HOLIDAY_CHECK_IN_HOUR) : '—'}
+              </p>
+            </div>
+            <div className="bg-white px-3 py-2.5">
+              <p className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-on-surface-variant">
+                {checkOutLabel}
+              </p>
+              <p className="flex items-center gap-2 text-body-sm font-medium text-on-surface">
+                <CalendarDays size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
+                {departure ? formatDisplayDate(departure) : '—'}
+              </p>
+              <p className="mt-1 flex items-center gap-2 text-body-sm font-medium text-on-surface">
+                <Clock size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
+                {departure ? formatTime(departure, HOLIDAY_CHECK_OUT_HOUR) : '—'}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {(arrival || departure) && (
-        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-outline-variant/25 bg-outline-variant/25">
-          <div className="bg-white px-3 py-2.5">
-            <p className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-on-surface-variant">
-              {checkInLabel}
-            </p>
-            <p className="flex items-center gap-2 text-body-sm font-medium text-on-surface">
-              <CalendarDays size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
-              {arrival ? formatDisplayDate(arrival) : '—'}
-            </p>
-            <p className="mt-1 flex items-center gap-2 text-body-sm font-medium text-on-surface">
-              <Clock size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
-              {arrival ? formatTime(arrival, HOLIDAY_CHECK_IN_HOUR) : '—'}
-            </p>
-          </div>
-          <div className="bg-white px-3 py-2.5">
-            <p className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-on-surface-variant">
-              {checkOutLabel}
-            </p>
-            <p className="flex items-center gap-2 text-body-sm font-medium text-on-surface">
-              <CalendarDays size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
-              {departure ? formatDisplayDate(departure) : '—'}
-            </p>
-            <p className="mt-1 flex items-center gap-2 text-body-sm font-medium text-on-surface">
-              <Clock size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
-              {departure ? formatTime(departure, HOLIDAY_CHECK_OUT_HOUR) : '—'}
-            </p>
-          </div>
-        </div>
-      )}
-
-      <p className="flex items-center gap-2 text-body-sm font-medium text-on-surface">
-        <Users size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
-        {maximumPersonsLabel.replace('{count}', String(maxGuests))}
-      </p>
+      <div className="space-y-2">
+        <p className="flex items-center gap-2 text-body-sm font-medium text-on-surface">
+          <Users size={15} className="shrink-0 text-tertiary" strokeWidth={2} />
+          {maximumPersonsLabel.replace('{count}', String(maxGuests))}
+        </p>
+        <p
+          className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-body-sm font-medium transition-colors ${
+            showMinimumStayError
+              ? '-mx-2 border border-red-300 bg-red-50 text-red-700'
+              : 'text-on-surface'
+          }`}
+        >
+          <Moon
+            size={15}
+            className={`shrink-0 ${showMinimumStayError ? 'text-red-600' : 'text-tertiary'}`}
+            strokeWidth={2}
+          />
+          {minimumStayLabel.replace('{count}', String(effectiveMinimumStay))}
+        </p>
+      </div>
 
       <CountFilterField
         label={guestsLabel}
@@ -607,23 +765,57 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
                   {perPersonPerNightLabel}
                 </span>
                 <span className="shrink-0 text-body-sm font-semibold text-on-surface">
-                  {formatEuro(Math.round(quote.perPersonPerNight))}
+                  {formatEuro(quote.perPersonPerNight)}
                 </span>
               </div>
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-body-sm text-on-surface-variant">
-                  {totalNightsLabel.replace('{nights}', String(quote.nights))}
+                <span className="inline-flex items-center gap-1 text-body-sm text-on-surface-variant">
+                  {totalNightsLabel}
+                  <span
+                    className="group relative inline-flex shrink-0 outline-none"
+                    tabIndex={0}
+                  >
+                    <Info
+                      aria-label={cleaningChargesIncludedLabel}
+                      className="text-secondary/80 transition-colors group-hover:text-secondary group-focus-visible:text-secondary"
+                      size={14}
+                      strokeWidth={2}
+                    />
+                    <span
+                      role="tooltip"
+                      className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 w-max max-w-[12rem] -translate-x-1/2 rounded-md bg-on-surface px-2 py-1 text-center text-[11px] leading-snug text-surface opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                    >
+                      {cleaningChargesIncludedLabel}
+                    </span>
+                  </span>
                 </span>
                 <span className="shrink-0 text-body-sm font-semibold text-tertiary">
-                  {formatEuro(quote.totalPrice)}
+                  {priceLoading ? (
+                    <span className="inline-flex items-center gap-1.5 text-on-surface-variant">
+                      <Loader2 className="animate-spin" size={14} strokeWidth={2} />
+                      {priceLoadingLabel}
+                    </span>
+                  ) : apiTotalPrice != null ? (
+                    formatEuro(apiTotalPrice)
+                  ) : (
+                    '—'
+                  )}
                 </span>
               </div>
+              {securityDeposit != null && (
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-body-sm text-on-surface-variant">
+                    {securityDepositLabel}
+                  </span>
+                  <span className="shrink-0 text-body-sm font-semibold text-on-surface">
+                    {formatEuro(securityDeposit)}
+                  </span>
+                </div>
+              )}
             </div>
             {!datesAvailable && <p className="pt-1 text-body-sm text-red-600">{unavailableHint}</p>}
-            {!meetsMinimumStay && quote.minimumPeriod && (
-              <p className="pt-1 text-body-sm text-red-600">
-                {minimumStayHint} {quote.minimumPeriod} {nightsLabel}.
-              </p>
+            {datesAvailable && priceError && (
+              <p className="pt-1 text-body-sm text-red-600">{priceError}</p>
             )}
           </div>
         ) : (
@@ -769,10 +961,16 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
 
         <button
           type="submit"
-          disabled={submitting}
-          aria-busy={submitting}
+          disabled={
+            submitting ||
+            showMinimumStayError ||
+            (Boolean(arrival && departure) && (priceLoading || apiTotalPrice == null))
+          }
+          aria-busy={submitting || priceLoading}
           className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-tertiary px-8 py-4 font-label-nav text-label-nav text-white transition ${
-            submitting
+            submitting ||
+            showMinimumStayError ||
+            (Boolean(arrival && departure) && (priceLoading || apiTotalPrice == null))
               ? 'cursor-not-allowed opacity-80'
               : 'cursor-pointer active:scale-95 hover:opacity-90'
           }`}

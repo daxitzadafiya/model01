@@ -2,8 +2,24 @@ import type { ResolvedOptimaCrmSettings } from '@/settings/optimaCrm/shared'
 import { crmServerFetch } from '@/utilities/crmServerFetch'
 import { isAllowedDocumentDownloadUrl } from '@/utilities/documentDownloadToken'
 
-const MAX_REDIRECTS = 3
+const MAX_REDIRECTS = 5
 
+function isHttpUrl(value: string): boolean {
+  try {
+    const protocol = new URL(value).protocol
+    return protocol === 'https:' || protocol === 'http:'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Fetches a CRM document for email download links.
+ *
+ * Only the original URL must be on an allowed CRM host. Later hops are followed
+ * freely over http(s) because Optima often 302s to signed S3/CDN URLs — those
+ * work in a browser but are not on the CRM allowlist.
+ */
 export async function fetchAllowedDocument(
   url: string,
   settings: Pick<
@@ -17,16 +33,23 @@ export async function fetchAllowedDocument(
     | 'propertyResizeBase'
   >,
 ): Promise<Response> {
+  if (!isAllowedDocumentDownloadUrl(url, settings)) {
+    throw new Error('Download URL is not allowed')
+  }
+
   let current = url
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-    if (!isAllowedDocumentDownloadUrl(current, settings)) {
-      throw new Error('Download URL is not allowed')
+    if (hop > 0 && !isHttpUrl(current)) {
+      throw new Error('Download redirect uses an unsupported protocol')
     }
 
     const response = await crmServerFetch(current, {
       method: 'GET',
       redirect: 'manual',
+      headers: {
+        Accept: '*/*',
+      },
     })
 
     if (response.status < 300 || response.status >= 400) return response

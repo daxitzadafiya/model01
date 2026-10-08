@@ -18,7 +18,10 @@ import {
   createDocumentDownloadLink,
   isAllowedDocumentDownloadUrl,
 } from '@/utilities/documentDownloadToken'
-import { PROJECT_REFERENCE_FIELD } from '@/utilities/propertyInquiry'
+import {
+  DISPLAY_REFERENCE_FIELD,
+  PROJECT_REFERENCE_FIELD,
+} from '@/utilities/propertyInquiry'
 import { getServerSideURL } from '@/utilities/getURL'
 import { t } from '@/utilities/translate'
 
@@ -118,6 +121,7 @@ export async function sendDocumentDownloadEmail({
   const pageUrl = sameSiteUrl(fieldValue(submissionData, DOCUMENT_DOWNLOAD_PAGE_FIELD), siteUrl)
   const documentLabel = fieldValue(submissionData, DOCUMENT_DOWNLOAD_LABEL_FIELD)
   const reference =
+    fieldValue(submissionData, DISPLAY_REFERENCE_FIELD) ||
     fieldValue(submissionData, 'property') ||
     fieldValue(submissionData, PROJECT_REFERENCE_FIELD)
   const name = visitorName(submissionData)
@@ -219,5 +223,6 @@ export async function sendDocumentDownloadEmail({
     subject,
     html,
     from: `${sender.fromName} <${sender.fromAddress}>`,
+    attachments: branding.logoAttachment ? [branding.logoAttachment] : undefined,
   })
 }

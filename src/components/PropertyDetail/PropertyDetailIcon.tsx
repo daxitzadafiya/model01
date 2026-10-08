@@ -3,11 +3,13 @@ import {
   ArrowUpRight,
   Bath,
   Bed,
+  Building,
   Building2,
   CheckCircle2,
   CircleParking,
   Cloud,
   Cpu,
+  DollarSign,
   DoorOpen,
   Dumbbell,
   Flame,
@@ -18,10 +20,12 @@ import {
   Mountain,
   PanelTop,
   Phone,
+  Route,
   Ruler,
   Sailboat,
   Shield,
   Smartphone,
+  Sparkles,
   Sun,
   TreePine,
   Trees,
@@ -128,6 +132,12 @@ const PROPERTY_DETAIL_ICONS: Record<string, LucideIcon> = {
   energy_savings_leaf: Leaf,
   co2: Cloud,
   open_in_new: ArrowUpRight,
+
+  //extra
+  street : Route,
+  price : DollarSign,
+  urban : Building,
+  sauna : Sparkles
 }
 
 type Props = {
@@ -143,7 +153,6 @@ export const PropertyDetailIcon: React.FC<Props> = ({
   size = 24,
   strokeWidth = 1.75,
 }) => {
-  // const Icon = PROPERTY_DETAIL_ICONS[name] ?? CheckCircle2
-  const Icon = CheckCircle2
+  const Icon = PROPERTY_DETAIL_ICONS[name] ?? CheckCircle2
   return <Icon className={className} size={size} strokeWidth={strokeWidth} />
 }

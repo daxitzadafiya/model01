@@ -15,11 +15,16 @@ import {
 } from '@/utilities/submitHolidayBookingToOptimaCrm'
 
 export async function POST(request: Request) {
-  let body: CreateHolidayBookingInput & { locale?: string; price?: number | string }
+  let body: CreateHolidayBookingInput & {
+    locale?: string
+    price?: number | string
+    display_reference?: string
+  }
   try {
     body = (await request.json()) as CreateHolidayBookingInput & {
       locale?: string
       price?: number | string
+      display_reference?: string
     }
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
@@ -69,13 +74,14 @@ export async function POST(request: Request) {
     }
   }
 
-  // These restriction fields are only for our server-side gatekeeping.
+  // These restriction fields are only for our server-side gatekeeping / email display.
   // They must not be forwarded to Optima CRM.
   const {
     terms_accepted: _termsAccepted,
     recaptchaToken: _recaptchaToken,
     locale: submissionLocale,
     price: submissionPrice,
+    display_reference: submissionDisplayReference,
     ...crmBody
   } = body
 
@@ -93,6 +99,10 @@ export async function POST(request: Request) {
       payload,
       input: {
         property_reference: crmBody.property_reference,
+        display_reference:
+          typeof submissionDisplayReference === 'string'
+            ? submissionDisplayReference
+            : undefined,
         forename: crmBody.forename,
         surname: crmBody.surname,
         email: crmBody.email,

@@ -40,7 +40,13 @@ export async function GET(request: Request, { params }: Args): Promise<NextRespo
     const upstream = await fetchAllowedDocument(grant.url, settings)
     const contentType = upstream.headers.get('content-type') || 'application/octet-stream'
 
+    // CRM/CDN error pages often come back as HTML with a non-2xx or soft 200.
     if (!upstream.ok || contentType.toLowerCase().includes('text/html')) {
+      console.error('[document-download] upstream rejected', {
+        status: upstream.status,
+        contentType,
+        url: grant.url,
+      })
       return unavailable()
     }
 
@@ -52,11 +58,16 @@ export async function GET(request: Request, { params }: Args): Promise<NextRespo
       headers: {
         'Content-Type': contentType.split(';')[0]?.trim() || 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        'Content-Length': String(body.byteLength),
         'Cache-Control': 'private, no-store',
         'X-Robots-Tag': 'noindex, nofollow',
       },
     })
-  } catch {
+  } catch (error) {
+    console.error('[document-download] proxy failed', {
+      url: grant.url,
+      error: error instanceof Error ? error.message : error,
+    })
     return unavailable()
   }
 }

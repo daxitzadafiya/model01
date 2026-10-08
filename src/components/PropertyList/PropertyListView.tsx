@@ -73,6 +73,7 @@ import {
 } from './propertyListUrl'
 import type { PropertyListInitialData } from './PropertyListServerData'
 import { useTranslation } from '@/utilities/translateClient'
+import { withRentalPriceFromPrefix } from '@/utilities/localizePropertyPrice'
 import { cn } from '@/utilities/ui'
 
 export type { PropertyListInitialData } from './PropertyListServerData'
@@ -869,7 +870,10 @@ const PropertyListViewInner: React.FC<Props> = ({
                   beds: property.beds,
                   baths: property.baths,
                   sqft: property.sqft,
-                  price: property.price,
+                  price:
+                    cardListingContext === 'forHoliday'
+                      ? withRentalPriceFromPrefix(property.price)
+                      : property.price,
                   priceSubtext: property.holidayPriceSummary,
                   statusBadgeLabel: property.statusBadgeLabel,
                 }}

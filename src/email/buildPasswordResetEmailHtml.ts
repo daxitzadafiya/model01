@@ -14,6 +14,7 @@ export type PasswordResetEmailContent = {
   ignoreText: string
   footerText: string
   logo?: Logo | null
+  /** Resolved logo src (`cid:…` for inline attachment, or absolute URL). */
   logoSrc?: string
   theme?: Partial<NotificationEmailTheme> | null
 }
