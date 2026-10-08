@@ -105,7 +105,7 @@ export function usePropertyPriceLabels(): PropertyPriceLabels {
       'propertyList.card.selectDatesForPrice',
       HOLIDAY_SELECT_DATES_LABEL,
     ),
-    from: useTranslation('propertyList.card.priceFrom', 'from'),
+    from: useTranslation('propertyList.card.priceFromLabel', 'From'),
     perNight: useTranslation('propertyList.card.perNight', '/night'),
     perMonth: useTranslation('propertyList.card.perMonth', 'per month'),
     perYear: useTranslation('propertyList.card.perYear', 'per year'),
