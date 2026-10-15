@@ -214,7 +214,7 @@ export const ProjectDetailView: React.FC<Props> = ({
 
           {renderDescription(project.description)}
 
-          <PropertyDetailFooterActions />
+          <PropertyDetailFooterActions className="pt-12" />
         </div>
       </section>
 

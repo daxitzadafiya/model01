@@ -66,18 +66,20 @@ function PropertyDetailSkeleton() {
   return (
     <main className="pt-28 bg-surface-bright">
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-24">
-          <Skeleton className="lg:col-span-7 xl:col-span-8 aspect-[4/3] rounded-lg" />
-          <div className="lg:col-span-5 xl:col-span-4 space-y-6 py-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-x-10 mb-12">
+          <Skeleton className="order-1 lg:col-span-7 lg:col-start-1 lg:row-start-1 xl:col-span-8 aspect-[4/3] rounded-lg" />
+          <div className="order-2 lg:col-span-5 lg:col-start-8 lg:row-start-1 xl:col-span-4 xl:col-start-9 space-y-6 py-2">
             <Skeleton className="h-4 w-48 rounded" />
             <Skeleton className="h-16 w-full rounded" />
             <Skeleton className="h-8 w-40 rounded" />
             <Skeleton className="h-12 w-56 rounded" />
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-full rounded" />
-              <Skeleton className="h-4 w-5/6 rounded" />
-              <Skeleton className="h-4 w-4/6 rounded" />
-            </div>
+            <Skeleton className="h-12 w-full rounded-full" />
+            <Skeleton className="h-12 w-full rounded-full" />
+          </div>
+          <div className="order-3 lg:col-span-7 lg:col-start-1 lg:row-start-2 xl:col-span-8 space-y-3">
+            <Skeleton className="h-4 w-full max-w-2xl rounded" />
+            <Skeleton className="h-4 w-5/6 max-w-2xl rounded" />
+            <Skeleton className="h-4 w-4/6 max-w-xl rounded" />
           </div>
         </div>
       </div>

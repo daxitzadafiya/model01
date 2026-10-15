@@ -80,11 +80,13 @@ type FooterActionsProps = {
   brochureUrl?: string
   /** Holiday rentals only — scrolls to the booking calendar. */
   showBookStay?: boolean
+  className?: string
 }
 
 export const PropertyDetailFooterActions: React.FC<FooterActionsProps> = ({
   brochureUrl,
   showBookStay = false,
+  className = '',
 }) => {
   const { requestDownload } = useDocumentDownload()
   const printPdfLabel = useTranslation('propertyDetail.actions.printPdf', 'Print PDF')
@@ -115,7 +117,9 @@ export const PropertyDetailFooterActions: React.FC<FooterActionsProps> = ({
     : 'flex flex-1 cursor-pointer items-center justify-center border border-primary text-primary py-4 rounded-full text-label-nav font-label-nav uppercase text-center hover:bg-primary hover:text-on-primary transition-all duration-300'
 
   return (
-    <div className={showBookStay ? 'mt-8 flex flex-col gap-2.5 border-t border-outline-variant/50 pt-8' : 'pt-12 flex items-center gap-4'}>
+    <div
+      className={`${showBookStay ? 'flex flex-col gap-2.5' : 'flex items-center gap-3'} ${className}`.trim()}
+    >
       {showBookStay ? (
         <button type="button" className={primaryCtaClassName} onClick={scrollToBooking}>
           <CalendarDays size={18} strokeWidth={1.75} aria-hidden />

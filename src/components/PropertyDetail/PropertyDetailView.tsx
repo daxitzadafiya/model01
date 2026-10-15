@@ -20,6 +20,7 @@ import { PropertyDetailMap } from '@/components/PropertyDetail/PropertyDetailMap
 import { PropertyDetailRelated } from '@/components/PropertyDetail/PropertyDetailRelated'
 import { PropertyDetailSpecs } from '@/components/PropertyDetail/PropertyDetailSpecs'
 import { PropertyDetailVideo } from '@/components/PropertyDetail/PropertyDetailVideo'
+import { PropertyDetailDescription } from '@/components/PropertyDetail/PropertyDetailDescription'
 import { PropertyDetailDocuments } from '@/components/PropertyDetail/PropertyDetailDocuments'
 import type { CRMAmenity, CRMPropertyEnergy } from '@/utilities/crmAmenities'
 import type { CRMPropertyDocumentGroup } from '@/utilities/crmPropertyDocuments'
@@ -68,35 +69,6 @@ type Props = {
   holidayArrival?: string
   holidayDeparture?: string
   holidayGuests?: string
-}
-
-const renderDescription = (description?: string) => {
-  if (!description?.trim()) return null
-
-  const trimmed = description.trim()
-  const looksLikeHtml = /<[a-z][\s\S]*>/i.test(trimmed)
-
-  if (looksLikeHtml) {
-    return (
-      <div
-        className="space-y-6 text-body-lg font-body-lg text-on-surface-variant description-container"
-        dangerouslySetInnerHTML={{ __html: trimmed }}
-      />
-    )
-  }
-
-  const paragraphs = trimmed
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-
-  return (
-    <div className="space-y-6 text-body-lg font-body-lg text-on-surface-variant description-container">
-      {paragraphs.map((paragraph, index) => (
-        <p key={index}>{paragraph}</p>
-      ))}
-    </div>
-  )
 }
 
 export const PropertyDetailView: React.FC<Props> = ({
@@ -191,6 +163,8 @@ export const PropertyDetailView: React.FC<Props> = ({
       : null,
   ].filter((item): item is { icon: string; label: string; value: string } => Boolean(item))
 
+  const hasDescription = Boolean(property.description?.trim())
+
   return (
     <DocumentDownloadProvider
       contactForm={contactForm}
@@ -198,8 +172,8 @@ export const PropertyDetailView: React.FC<Props> = ({
       inquiry={inquiry}
     >
     <main className="pt-20 md:pt-24 lg:pt-28 bg-surface-bright text-on-surface">
-      <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-start mb-16 md:mb-24">
-        <div className="lg:col-span-7 xl:col-span-8 lg:sticky lg:top-32 lg:self-start">
+      <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-x-10 xl:gap-x-14 items-start mb-8 md:mb-12">
+        <div className="order-1 lg:col-span-7 lg:col-start-1 lg:row-start-1 xl:col-span-8">
           <PropertyDetailGallery
             images={property.imageUrls ?? (property.imageUrl ? [property.imageUrl] : [])}
             title={property.title}
@@ -207,7 +181,7 @@ export const PropertyDetailView: React.FC<Props> = ({
           />
         </div>
 
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col h-full py-2">
+        <div className="order-2 flex flex-col lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:sticky lg:top-32 lg:self-start xl:col-span-4 xl:col-start-9">
           <nav className="flex flex-wrap gap-x-2 text-label-sm font-label-sm text-on-surface-variant uppercase mb-4">
             <Link className="hover:text-tertiary transition-colors" href="/">
               {homeLabel}
@@ -244,7 +218,7 @@ export const PropertyDetailView: React.FC<Props> = ({
           />
 
           {isHolidayRental ? (
-            <div className="mb-6 md:mb-10">
+            <div className="mb-5 md:mb-6">
               {property.price ? (
                 <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary">
                   {displayPrice}
@@ -257,16 +231,20 @@ export const PropertyDetailView: React.FC<Props> = ({
             </div>
           ) : (
             property.price && (
-              <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary mb-6 md:mb-10">
+              <div className="text-[26px] md:text-[30px] lg:text-[32px] font-semibold font-headline-md text-tertiary mb-5 md:mb-6">
                 {displayPrice}
               </div>
             )
           )}
 
-          {renderDescription(property.description)}
-
           <PropertyDetailFooterActions brochureUrl={brochureUrl} showBookStay={isHolidayRental} />
         </div>
+
+        {hasDescription ? (
+          <div className="order-3 lg:col-span-7 lg:col-start-1 lg:row-start-2 xl:col-span-8">
+            <PropertyDetailDescription description={property.description} />
+          </div>
+        ) : null}
       </section>
 
       <PropertyDetailSpecs items={specItems} />

@@ -113,7 +113,7 @@ export const PropertyDetailShareMenu: React.FC<PropertyDetailShareMenuProps> = (
         <div
           role="menu"
           aria-label={sharePropertyAria}
-          className="absolute bottom-full right-0 z-30 mb-3 w-56 overflow-hidden rounded-lg bg-primary text-on-primary shadow-2xl border border-outline-variant/20"
+          className="absolute right-0 top-full z-30 mt-3 w-56 overflow-hidden rounded-lg border border-outline-variant/20 bg-primary text-on-primary shadow-2xl"
         >
           <p className="px-4 pt-4 pb-3 font-label-sm text-label-sm uppercase tracking-[0.12em] text-on-primary/90">
             {shareToYourLabel}
