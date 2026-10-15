@@ -2,6 +2,13 @@ import { formatPriceAmount, PRICE_FRACTION_DIGITS } from '@/utilities/formatPric
 
 /** Vacation rental pricing — weekly seasonal rates, nights, per-person display. */
 
+/** Duration discount on a CRM `rental_seasons` entry (`discount_price` is the daily rate). */
+export type RentalSeasonDiscount = {
+  number_days?: number
+  discount_percent?: number
+  discount_price?: number | string
+}
+
 export type RentalSeason = {
   period_from?: string | number
   period_to?: string | number
@@ -12,6 +19,7 @@ export type RentalSeason = {
   gross_price?: number
   pricing_type?: string
   minimum_period?: number
+  discount?: RentalSeasonDiscount | RentalSeasonDiscount[] | null
 }
 
 export type HolidayRentalQuote = {
@@ -104,6 +112,86 @@ export const findSeasonForDate = (
   seasons: RentalSeason[],
   date: Date,
 ): RentalSeason | undefined => seasons.find((season) => seasonCoversDate(season, date))
+
+const collectSeasonDiscountDayPrices = (season: RentalSeason): number[] => {
+  const raw = season.discount
+  if (raw == null) return []
+
+  const items = Array.isArray(raw) ? raw : [raw]
+  const prices: number[] = []
+
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue
+    const price = pickNumber(item.discount_price)
+    if (price != null && price > 0) prices.push(price)
+  }
+
+  return prices
+}
+
+/**
+ * CRM season boundary as an absolute instant.
+ * Unix values are seconds or milliseconds; ISO strings keep their offset.
+ * Unlike `parseSeasonBoundary`, this does not snap to local midnight.
+ */
+const parseSeasonInstantMs = (value: unknown): number | undefined => {
+  if (value == null || value === '') return undefined
+
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    const ms = value < 1_000_000_000_000 ? value * 1000 : value
+    return Number.isFinite(ms) ? ms : undefined
+  }
+
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+
+  if (/^\d+(\.\d+)?$/.test(trimmed)) {
+    const asNumber = Number(trimmed)
+    if (!Number.isFinite(asNumber) || asNumber <= 0) return undefined
+    const ms = asNumber < 1_000_000_000_000 ? asNumber * 1000 : asNumber
+    return Number.isFinite(ms) ? ms : undefined
+  }
+
+  const parsed = Date.parse(trimmed)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+/** `period_to` is present and still later than `now` (full timestamp, not calendar day). */
+const isUpcomingRentalSeason = (season: RentalSeason, nowMs: number): boolean => {
+  const periodToMs = parseSeasonInstantMs(season.period_to)
+  if (periodToMs == null) return false
+  return periodToMs > nowMs
+}
+
+/**
+ * Undated holiday listing rate from upcoming `rental_seasons`.
+ * Lowest `discount_price` when any eligible season has a discount; otherwise lowest `gross_day_price`.
+ */
+export const resolveUndatedHolidayDayPrice = (
+  seasons: RentalSeason[],
+  now: Date = new Date(),
+): number | undefined => {
+  if (seasons.length === 0) return undefined
+
+  const eligible = seasons.filter((season) => isUpcomingRentalSeason(season, now.getTime()))
+  if (eligible.length === 0) return undefined
+
+  const discounted: number[] = []
+  for (const season of eligible) {
+    discounted.push(...collectSeasonDiscountDayPrices(season))
+  }
+  if (discounted.length > 0) return Math.min(...discounted)
+
+  const gross: number[] = []
+  for (const season of eligible) {
+    const price = pickNumber(season.gross_day_price)
+    if (price != null && price > 0) gross.push(price)
+  }
+  if (gross.length > 0) return Math.min(...gross)
+
+  return undefined
+}
 
 export const parseRentalSeasons = (property: Record<string, unknown>): RentalSeason[] => {
   const raw = property.rental_seasons

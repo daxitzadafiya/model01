@@ -1251,7 +1251,7 @@ export function normalizeCRMProperty(
   let holidayPriceValue: number | undefined
 
   if (isHolidayProperty) {
-    // ST rental: active `rental_seasons` nightly rate, else "Price on demand"
+    // ST rental: dated stay uses the quote; undated uses lowest season discount or gross day price.
     const holidayPrice = resolveHolidayPriceDisplay({
       property,
       periodFrom: options.holidayPeriodFrom,

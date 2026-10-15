@@ -116,7 +116,7 @@ export const OptimaCrmSettings: GlobalConfig = {
         {
           name: 'commercialImageBase',
           type: 'text',
-          defaultValue: 'https://images.optima-crm.com/commercial_images',
+          defaultValue: 'https://images.optima-crm.com',
           label: a('admin.optimaCrmSettings.images.commercialImageBase', 'Commercial Image Base'),
         },
         {

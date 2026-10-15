@@ -9,6 +9,7 @@ import {
   getDailyRateForSeason,
   parseRentalSeasons,
   resolvePropertyMinimumStay,
+  resolveUndatedHolidayDayPrice,
   type HolidayRentalQuote,
 } from '@/utilities/holidayRentalPricing'
 
@@ -125,7 +126,10 @@ export const resolveHolidayPriceDisplay = ({
     }
   }
 
-  const nightlyRate = resolveSeasonNightlyRateForDate(property)
+  // No stay selected: lowest discount (else gross) among seasons whose period_to is still ahead.
+  // Missing seasons, or none still open, keep the active-season / on-demand fallback.
+  const undatedRate = resolveUndatedHolidayDayPrice(seasons)
+  const nightlyRate = undatedRate ?? resolveSeasonNightlyRateForDate(property)
   if (nightlyRate != null) {
     return {
       label:

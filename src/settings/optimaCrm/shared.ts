@@ -75,7 +75,7 @@ export type OptimaImageConfig = Pick<
 export const IMAGE_DEFAULTS: OptimaImageConfig = {
   imageUrlWithoutResize: 'https://images.optima-crm.com/cms_medias/',
   imageUrl: 'https://images.optima-crm.com/resize/cms_medias/',
-  commercialImageBase: 'https://images.optima-crm.com/commercial_images',
+  commercialImageBase: 'https://images.optima-crm.com',
   constructionsImageBase: 'https://images.optima-crm.com/constructions_images',
   agencyId: '',
   propertyResizeBase: 'https://images.optima-crm.com/resize/',
