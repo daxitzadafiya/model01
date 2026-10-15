@@ -283,6 +283,12 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
       const count = Number(option.value)
       return Number.isFinite(count) && count >= MIN_HOLIDAY_GUESTS && count <= maxGuests
     })
+    const highestPreset = presets.reduce((highest, option) => {
+      const count = Number(option.value)
+      return Number.isFinite(count) ? Math.max(highest, count) : highest
+    }, 0)
+    // "Need More" is only for capacities above the preset list (1–5).
+    if (maxGuests <= highestPreset) return presets
     return [...presets, { value: COUNT_FILTER_OTHER_VALUE, label: needMoreLabel }]
   }, [maxGuests, needMoreLabel])
 
