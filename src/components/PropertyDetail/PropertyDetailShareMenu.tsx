@@ -43,7 +43,14 @@ function buildShareLinks(
   ]
 }
 
-export const PropertyDetailShareMenu: React.FC = () => {
+type PropertyDetailShareMenuProps = {
+  /** Matches the holiday-rental outline actions so the row shares one height and border. */
+  variant?: 'default' | 'inline'
+}
+
+export const PropertyDetailShareMenu: React.FC<PropertyDetailShareMenuProps> = ({
+  variant = 'default',
+}) => {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const sharePropertyAria = useTranslation('propertyDetail.share.aria', 'Share property')
@@ -93,9 +100,13 @@ export const PropertyDetailShareMenu: React.FC = () => {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="w-14 h-14 rounded-full border border-outline-variant flex items-center justify-center text-primary hover:border-tertiary hover:text-tertiary transition-all cursor-pointer"
+        className={
+          variant === 'inline'
+            ? 'flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full border border-primary/80 text-primary transition-colors duration-300 hover:border-primary hover:bg-primary hover:text-on-primary'
+            : 'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-outline-variant text-primary transition-all hover:border-tertiary hover:text-tertiary'
+        }
       >
-        <Share2 size={22} strokeWidth={1.75} />
+        <Share2 size={variant === 'inline' ? 18 : 22} strokeWidth={1.75} />
       </button>
 
       {open && shareLinks.length > 0 && (

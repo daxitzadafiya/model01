@@ -14,6 +14,7 @@ import {
   Clock,
 } from 'lucide-react'
 
+import { HOLIDAY_BOOKING_SECTION_ID } from '@/components/PropertyDetail/PropertyDetailActions'
 import { PropertyHolidayCalendar } from '@/components/PropertyDetail/PropertyHolidayCalendar'
 import { PhoneInputField } from '@/components/PhoneInput/PhoneInputField'
 import { COUNT_FILTER_OTHER_VALUE, GUEST_OPTIONS } from '@/components/PropertyList/filterOptions'
@@ -648,8 +649,8 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
 
   return (
     <div
-      className="max-lg:static max-lg:top-auto space-y-4 rounded-xl border border-outline-variant/20 bg-white p-4 shadow-2xl sm:p-6 lg:sticky lg:top-32"
-      id="property-holiday-booking"
+      className="max-lg:static max-lg:top-auto relative scroll-mt-28 space-y-4 rounded-xl border border-outline-variant/20 bg-white p-4 shadow-2xl sm:p-6 lg:sticky lg:top-32 lg:scroll-mt-32"
+      id={HOLIDAY_BOOKING_SECTION_ID}
     >
       <h2 className="font-headline-md text-headline-md text-primary">{heading}</h2>
 

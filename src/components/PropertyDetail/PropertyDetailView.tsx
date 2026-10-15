@@ -265,7 +265,7 @@ export const PropertyDetailView: React.FC<Props> = ({
 
           {renderDescription(property.description)}
 
-          <PropertyDetailFooterActions brochureUrl={brochureUrl} />
+          <PropertyDetailFooterActions brochureUrl={brochureUrl} showBookStay={isHolidayRental} />
         </div>
       </section>
 

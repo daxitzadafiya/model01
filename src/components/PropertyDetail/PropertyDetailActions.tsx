@@ -1,6 +1,6 @@
 'use client'
 
-import { Heart, Printer } from 'lucide-react'
+import { CalendarDays, Heart, Printer } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
@@ -74,47 +74,78 @@ export const PropertyDetailFavoriteButton: React.FC<FavoriteButtonProps> = ({
   )
 }
 
+export const HOLIDAY_BOOKING_SECTION_ID = 'property-holiday-booking'
+
 type FooterActionsProps = {
   brochureUrl?: string
+  /** Holiday rentals only — scrolls to the booking calendar. */
+  showBookStay?: boolean
 }
 
-export const PropertyDetailFooterActions: React.FC<FooterActionsProps> = ({ brochureUrl }) => {
+export const PropertyDetailFooterActions: React.FC<FooterActionsProps> = ({
+  brochureUrl,
+  showBookStay = false,
+}) => {
   const { requestDownload } = useDocumentDownload()
   const printPdfLabel = useTranslation('propertyDetail.actions.printPdf', 'Print PDF')
   const requestViewingLabel = useTranslation(
     'propertyDetail.actions.requestViewing',
     'Request Viewing',
   )
+  const bookYourStayLabel = useTranslation(
+    'propertyDetail.actions.bookYourStay',
+    'Book your stay',
+  )
+
+  const scrollToBooking = () => {
+    document.getElementById(HOLIDAY_BOOKING_SECTION_ID)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
+
+  const primaryCtaClassName =
+    'flex h-12 w-full cursor-pointer items-center justify-center gap-2.5 rounded-full bg-tertiary px-6 font-label-nav text-label-nav uppercase tracking-[0.14em] text-white transition-colors duration-300 hover:bg-primary hover:text-on-primary'
+
+  const outlineCtaClassName =
+    'flex h-12 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border border-primary/80 bg-surface-bright px-5 font-label-nav text-label-nav uppercase tracking-[0.12em] text-primary transition-colors duration-300 hover:border-primary hover:bg-primary hover:text-on-primary'
+
+  const utilityCtaClassName = showBookStay
+    ? outlineCtaClassName
+    : 'flex flex-1 cursor-pointer items-center justify-center border border-primary text-primary py-4 rounded-full text-label-nav font-label-nav uppercase text-center hover:bg-primary hover:text-on-primary transition-all duration-300'
 
   return (
-    <div className="pt-12 flex items-center gap-4">
-      {brochureUrl ? (
-        <button
-          type="button"
-          className="flex-1 cursor-pointer border border-primary text-primary py-4 rounded-full text-label-nav font-label-nav uppercase text-center hover:bg-primary hover:text-on-primary transition-all duration-300"
-          onClick={() =>
-            requestDownload({
-              url: brochureUrl,
-              actionLabel: printPdfLabel,
-              documentLabel: printPdfLabel,
-              kind: 'pdf',
-            })
-          }
-        >
-          <div className="flex items-center justify-center">
-            <Printer size={20} className="mr-2" />
-            <span>{printPdfLabel}</span>
-          </div>
+    <div className={showBookStay ? 'mt-8 flex flex-col gap-2.5 border-t border-outline-variant/50 pt-8' : 'pt-12 flex items-center gap-4'}>
+      {showBookStay ? (
+        <button type="button" className={primaryCtaClassName} onClick={scrollToBooking}>
+          <CalendarDays size={18} strokeWidth={1.75} aria-hidden />
+          <span>{bookYourStayLabel}</span>
         </button>
-      ) : (
-        <Link
-          href="#property-inquiry"
-          className="flex-1 border border-primary text-primary py-4 rounded-full text-label-nav font-label-nav uppercase text-center hover:bg-primary hover:text-on-primary transition-all duration-300"
-        >
-          {requestViewingLabel}
-        </Link>
-      )}
-      <PropertyDetailShareMenu />
+      ) : null}
+      <div className={showBookStay ? 'flex items-stretch gap-2.5' : 'contents'}>
+        {brochureUrl ? (
+          <button
+            type="button"
+            className={utilityCtaClassName}
+            onClick={() =>
+              requestDownload({
+                url: brochureUrl,
+                actionLabel: printPdfLabel,
+                documentLabel: printPdfLabel,
+                kind: 'pdf',
+              })
+            }
+          >
+            <Printer size={18} strokeWidth={1.75} className={showBookStay ? undefined : 'mr-2'} aria-hidden />
+            <span>{printPdfLabel}</span>
+          </button>
+        ) : (
+          <Link href="#property-inquiry" className={utilityCtaClassName}>
+            {requestViewingLabel}
+          </Link>
+        )}
+        <PropertyDetailShareMenu variant={showBookStay ? 'inline' : 'default'} />
+      </div>
     </div>
   )
 }
