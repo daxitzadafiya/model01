@@ -19,6 +19,20 @@ export const cmsLocales = [
   { code: 'es', label: 'Spanish' },
   { code: 'it', label: 'Italian' },
   { code: 'nl', label: 'Dutch' },
+  { code: 'fi', label: 'Finnish' },
+  { code: 'ru', label: 'Russian' },
+  { code: 'pl', label: 'Polish' },
+  { code: 'uk', label: 'Ukrainian' },
+  { code: 'ro', label: 'Romanian' },
+  { code: 'tr', label: 'Turkish' },
+  { code: 'hu', label: 'Hungarian' },
+  { code: 'sv', label: 'Swedish' },
+  { code: 'cs', label: 'Czech' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'sr', label: 'Serbian' },
+  { code: 'bg', label: 'Bulgarian' },
+  { code: 'hr', label: 'Croatian' },
+  { code: 'da', label: 'Danish' },
 ] as const
 
 export type Locale = (typeof cmsLocales)[number]['code']
@@ -47,6 +61,20 @@ export const flagCountryOptions = [
   { label: 'Greece', value: 'gr' },
   { label: 'Italy', value: 'it' },
   { label: 'Netherlands', value: 'nl' },
+  { label: 'Finland', value: 'fi' },
+  { label: 'Russia', value: 'ru' },
+  { label: 'Poland', value: 'pl' },
+  { label: 'Ukraine', value: 'ua' },
+  { label: 'Romania', value: 'ro' },
+  { label: 'Turkey', value: 'tr' },
+  { label: 'Hungary', value: 'hu' },
+  { label: 'Sweden', value: 'se' },
+  { label: 'Czech Republic', value: 'cz' },
+  { label: 'Portugal', value: 'pt' },
+  { label: 'Serbia', value: 'rs' },
+  { label: 'Bulgaria', value: 'bg' },
+  { label: 'Croatia', value: 'hr' },
+  { label: 'Denmark', value: 'dk' },
 ] as const
 
 export type FlagCountry = (typeof flagCountryOptions)[number]['value']

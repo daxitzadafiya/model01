@@ -9,6 +9,19 @@ const DEEPL_LOCALE_MAP: Record<string, string> = {
   it: 'IT',
   nl: 'NL',
   el: 'EL',
+  fi: 'FI',
+  ru: 'RU',
+  pl: 'PL',
+  uk: 'UK',
+  ro: 'RO',
+  tr: 'TR',
+  hu: 'HU',
+  sv: 'SV',
+  cs: 'CS',
+  pt: 'PT-PT',
+  bg: 'BG',
+  da: 'DA',
+  // DeepL does not support Serbian (sr) or Croatian (hr) yet
 }
 
 function resolveDeepLLocale(locale: string): string | null {

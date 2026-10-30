@@ -180,7 +180,7 @@ export const Localization: GlobalConfig = {
           },
           admin: {
             description: a(
-              'admin.localization.languages.locale.description',
+              'admin.localization.languages.locale.descriptions',
               `CMS code (not the display name). Pool: ${localeCodes.join(', ')} — only codes you add in src/i18n/locales.ts.`,
             ),
           },

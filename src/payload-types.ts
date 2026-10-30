@@ -121,8 +121,52 @@ export interface Config {
     | ('false' | 'none' | 'null')
     | false
     | null
-    | ('en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl')
-    | ('en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl')[];
+    | (
+        | 'en'
+        | 'de'
+        | 'el'
+        | 'fr'
+        | 'es'
+        | 'it'
+        | 'nl'
+        | 'fi'
+        | 'ru'
+        | 'pl'
+        | 'uk'
+        | 'ro'
+        | 'tr'
+        | 'hu'
+        | 'sv'
+        | 'cs'
+        | 'pt'
+        | 'sr'
+        | 'bg'
+        | 'hr'
+        | 'da'
+      )
+    | (
+        | 'en'
+        | 'de'
+        | 'el'
+        | 'fr'
+        | 'es'
+        | 'it'
+        | 'nl'
+        | 'fi'
+        | 'ru'
+        | 'pl'
+        | 'uk'
+        | 'ro'
+        | 'tr'
+        | 'hu'
+        | 'sv'
+        | 'cs'
+        | 'pt'
+        | 'sr'
+        | 'bg'
+        | 'hr'
+        | 'da'
+      )[];
   globals: {
     header: Header;
     footer: Footer;
@@ -153,7 +197,28 @@ export interface Config {
     integrationsSettings: IntegrationsSettingsSelect<false> | IntegrationsSettingsSelect<true>;
     weatherSettings: WeatherSettingsSelect<false> | WeatherSettingsSelect<true>;
   };
-  locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
+  locale:
+    | 'en'
+    | 'de'
+    | 'el'
+    | 'fr'
+    | 'es'
+    | 'it'
+    | 'nl'
+    | 'fi'
+    | 'ru'
+    | 'pl'
+    | 'uk'
+    | 'ro'
+    | 'tr'
+    | 'hu'
+    | 'sv'
+    | 'cs'
+    | 'pt'
+    | 'sr'
+    | 'bg'
+    | 'hr'
+    | 'da';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -3816,7 +3881,28 @@ export interface Localization {
   /**
    * Shown to first-time visitors (before they pick a language). Options come from Site languages below with “Show on site” enabled.
    */
-  defaultLocale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
+  defaultLocale:
+    | 'en'
+    | 'de'
+    | 'el'
+    | 'fr'
+    | 'es'
+    | 'it'
+    | 'nl'
+    | 'fi'
+    | 'ru'
+    | 'pl'
+    | 'uk'
+    | 'ro'
+    | 'tr'
+    | 'hu'
+    | 'sv'
+    | 'cs'
+    | 'pt'
+    | 'sr'
+    | 'bg'
+    | 'hr'
+    | 'da';
   /**
    * Add languages with + Add Language. Removing a language moves it to Globals Trash. Content locale must be a code from the list (not a display name like "Deutsch").
    */
@@ -3824,9 +3910,30 @@ export interface Localization {
     | {
         enabled?: boolean | null;
         /**
-         * CMS code (not the display name). Pool: en, de, el, fr, es, it, nl — only codes you add in src/i18n/locales.ts.
+         * CMS code (not the display name). Pool: en, de, el, fr, es, it, nl, fi, ru, pl, uk, ro, tr, hu, sv, cs, pt, sr, bg, hr, da — only codes you add in src/i18n/locales.ts.
          */
-        locale: 'en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl';
+        locale:
+          | 'en'
+          | 'de'
+          | 'el'
+          | 'fr'
+          | 'es'
+          | 'it'
+          | 'nl'
+          | 'fi'
+          | 'ru'
+          | 'pl'
+          | 'uk'
+          | 'ro'
+          | 'tr'
+          | 'hu'
+          | 'sv'
+          | 'cs'
+          | 'pt'
+          | 'sr'
+          | 'bg'
+          | 'hr'
+          | 'da';
         /**
          * Header language menu label (e.g. English, Deutsch, Ελληνικά). Edit in English only; other languages refresh via DeepL when English changes on save.
          */
@@ -3835,7 +3942,29 @@ export interface Localization {
          * Header badge (e.g. EN, DE, EL)
          */
         shortCode: string;
-        flag: 'gb' | 'us' | 'de' | 'fr' | 'es' | 'gr' | 'it' | 'nl';
+        flag:
+          | 'gb'
+          | 'us'
+          | 'de'
+          | 'fr'
+          | 'es'
+          | 'gr'
+          | 'it'
+          | 'nl'
+          | 'fi'
+          | 'ru'
+          | 'pl'
+          | 'ua'
+          | 'ro'
+          | 'tr'
+          | 'hu'
+          | 'se'
+          | 'cz'
+          | 'pt'
+          | 'rs'
+          | 'bg'
+          | 'hr'
+          | 'dk';
         isDeleted?: boolean | null;
         deletedAt?: string | null;
         id?: string | null;
@@ -4441,7 +4570,31 @@ export interface DeeplSetting {
   /**
    * Content saved in this language is sent to DeepL to fill the other site languages. Options match Site languages in Globals → Localization. Switch the admin Locale to this language before editing translatable fields.
    */
-  sourceLanguage?: ('en' | 'de' | 'el' | 'fr' | 'es' | 'it' | 'nl') | null;
+  sourceLanguage?:
+    | (
+        | 'en'
+        | 'de'
+        | 'el'
+        | 'fr'
+        | 'es'
+        | 'it'
+        | 'nl'
+        | 'fi'
+        | 'ru'
+        | 'pl'
+        | 'uk'
+        | 'ro'
+        | 'tr'
+        | 'hu'
+        | 'sv'
+        | 'cs'
+        | 'pt'
+        | 'sr'
+        | 'bg'
+        | 'hr'
+        | 'da'
+      )
+    | null;
   /**
    * Use https://api-free.deepl.com for free-tier accounts.
    */
