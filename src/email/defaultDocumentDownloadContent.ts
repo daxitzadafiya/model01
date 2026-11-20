@@ -31,7 +31,7 @@ export const defaultDocumentDownloadContent = {
             format: 0,
             mode: 'normal',
             style: '',
-            text: 'Thank you for your request. Use the button below. This link expires after 30 minutes.',
+            text: 'Thank you for your request. Use the button below. This link expires after 12 hours.',
             version: 1,
           },
         ],

@@ -116,9 +116,14 @@ export const PropertyDetailView: React.FC<Props> = ({
     'propertyDetail.holiday.selectDatesForPrice',
     'Select dates to view price',
   )
-  const prefixPriceFrom = isHolidayRental
+  const [liveArrival, setLiveArrival] = useState(holidayArrival)
+  const [liveDeparture, setLiveDeparture] = useState(holidayDeparture)
+  const [liveGuests, setLiveGuests] = useState(holidayGuests)
+  const hasHolidayStayDates = Boolean(liveArrival.trim() && liveDeparture.trim())
   const displayPrice = useLocalizedPropertyPrice(
-    prefixPriceFrom ? withRentalPriceFromPrefix(property.price) : property.price,
+    isHolidayRental && !hasHolidayStayDates
+      ? withRentalPriceFromPrefix(property.price)
+      : property.price,
   )
   const statusBadgeDisplay =
     property.statusBadgeLabel === 'SOLD'
@@ -127,11 +132,13 @@ export const PropertyDetailView: React.FC<Props> = ({
         ? reservedBadgeLabel
         : undefined
 
-  const [liveArrival, setLiveArrival] = useState(holidayArrival)
-  const [liveDeparture, setLiveDeparture] = useState(holidayDeparture)
-  const [liveGuests, setLiveGuests] = useState(holidayGuests)
-
   const maxGuests = resolveMaxHolidayGuests(property.sleeps)
+
+  useEffect(() => {
+    setLiveArrival(holidayArrival)
+    setLiveDeparture(holidayDeparture)
+    setLiveGuests(holidayGuests)
+  }, [holidayArrival, holidayDeparture, holidayGuests])
 
   useEffect(() => {
     const next = String(
@@ -314,7 +321,7 @@ export const PropertyDetailView: React.FC<Props> = ({
         properties={relatedProperties}
         loading={similarPropertiesLoading}
         showSoldBadge={showSimilarSoldBadge}
-        prefixPriceFrom={prefixPriceFrom}
+        prefixPriceFrom={isHolidayRental}
       />
     </main>
     </DocumentDownloadProvider>

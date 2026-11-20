@@ -190,10 +190,6 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
     'Send another inquiry',
   )
   const priceLabel = useTranslation('propertyDetail.holiday.price', 'Price')
-  const perPersonPerNightLabel = useTranslation(
-    'propertyDetail.holiday.perPersonPerNight',
-    'Per Person Per Night',
-  )
   const totalNightsLabel = useTranslation(
     'propertyDetail.holiday.totalLabel',
     'Total',
@@ -767,14 +763,6 @@ export const PropertyHolidayBooking: React.FC<Props> = ({
           <div className="space-y-3">
             <p className="font-headline-sm text-headline-sm text-primary">{priceLabel}:</p>
             <div className="space-y-2">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-body-sm text-on-surface-variant">
-                  {perPersonPerNightLabel}
-                </span>
-                <span className="shrink-0 text-body-sm font-semibold text-on-surface">
-                  {formatEuro(quote.perPersonPerNight)}
-                </span>
-              </div>
               <div className="flex items-baseline justify-between gap-3">
                 <span className="inline-flex items-center gap-1 text-body-sm text-on-surface-variant">
                   {totalNightsLabel}

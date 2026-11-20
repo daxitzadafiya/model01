@@ -4351,11 +4351,11 @@ export interface EmailSetting {
     enabled?: boolean | null;
     contact?: {
       /**
-       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       subject: string;
       /**
-       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       content?: {
         root: {
@@ -4375,11 +4375,11 @@ export interface EmailSetting {
     };
     propertyInquiry?: {
       /**
-       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       subject: string;
       /**
-       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       content?: {
         root: {
@@ -4402,11 +4402,11 @@ export interface EmailSetting {
      */
     holidayBooking?: {
       /**
-       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       subject: string;
       /**
-       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       content?: {
         root: {
@@ -4429,11 +4429,11 @@ export interface EmailSetting {
      */
     saveSearch?: {
       /**
-       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       subject: string;
       /**
-       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       content?: {
         root: {
@@ -4456,11 +4456,11 @@ export interface EmailSetting {
      */
     documentDownload?: {
       /**
-       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.
+       * Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       subject: string;
       /**
-       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.
+       * Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.
        */
       content?: {
         root: {
@@ -4604,7 +4604,7 @@ export interface DeeplSetting {
   createdAt?: string | null;
 }
 /**
- * Third-party integrations for Google Maps, reCAPTCHA, WhatsApp, and Virtual Assistant. Stored in the database — not in environment variables.
+ * Third-party integrations for Google Maps, reCAPTCHA, WhatsApp, Virtual Assistant, and Google Analytics. Stored in the database — not in environment variables.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "integrationsSettings".
@@ -4648,6 +4648,16 @@ export interface IntegrationsSetting {
     enabled?: boolean | null;
     /**
      * Paste the full script tag, e.g. <script src="https://webchat-api.optimasit.com/widget.js" data-agency-key="your-key" async></script>
+     */
+    embedScript?: string | null;
+  };
+  googleAnalytics?: {
+    /**
+     * Load Google Analytics / gtag tracking on the frontend.
+     */
+    enabled?: boolean | null;
+    /**
+     * Paste a Measurement ID (G-XXXXXXXX) or the full Google Analytics / gtag script snippet from Google.
      */
     embedScript?: string | null;
   };
@@ -5211,6 +5221,12 @@ export interface IntegrationsSettingsSelect<T extends boolean = true> {
         position?: T;
       };
   virtualAssistant?:
+    | T
+    | {
+        enabled?: T;
+        embedScript?: T;
+      };
+  googleAnalytics?:
     | T
     | {
         enabled?: T;

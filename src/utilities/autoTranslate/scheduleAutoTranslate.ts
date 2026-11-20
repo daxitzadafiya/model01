@@ -94,12 +94,18 @@ function shouldSkipGlobalAutoTranslate(
 /**
  * Shared Header/Footer auto-translate hook: empty-only DeepL on source save,
  * Force Translate for overwrite, deferred so the admin save is not blocked.
+ *
+ * When `fillUntranslatedOnEverySourceSave` is true (Email Settings templates),
+ * every source-locale save fills empty targets and source-identical copies
+ * (e.g. English defaults left in `fi`) without requiring an English edit first.
+ * Unique translations are still preserved.
  */
 export function createGlobalAutoTranslateHook(args: {
   slug: GlobalSlug
   registry: DocumentFieldRegistry
+  fillUntranslatedOnEverySourceSave?: boolean
 }): GlobalAfterChangeHook {
-  const { slug, registry } = args
+  const { slug, registry, fillUntranslatedOnEverySourceSave = false } = args
 
   return async ({ doc, previousDoc, req, context }) => {
     const record = doc as unknown as Record<string, unknown>
@@ -116,13 +122,23 @@ export function createGlobalAutoTranslateHook(args: {
       : null
 
     if (!documentHasSourceTranslatableContent(record, registry)) return doc
-    if (!documentLocalizedFieldsChanged(record, previousRecord, registry)) return doc
+    if (
+      !fillUntranslatedOnEverySourceSave &&
+      !documentLocalizedFieldsChanged(record, previousRecord, registry)
+    ) {
+      return doc
+    }
 
     const job: DeferredGlobalJob = {
       slug,
       registry,
       doc: structuredClone(record),
-      previousDoc: previousRecord ? structuredClone(previousRecord) : null,
+      // null previous → source-identical target copy is treated as untranslated
+      previousDoc: fillUntranslatedOnEverySourceSave
+        ? null
+        : previousRecord
+          ? structuredClone(previousRecord)
+          : null,
       sourceLocale,
     }
 

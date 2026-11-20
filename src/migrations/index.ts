@@ -80,6 +80,7 @@ import * as migration_20261007_150000_footer_manual_certificates from './2026100
 import * as migration_20261007_160000_drop_footer_manual_certificates_label from './20261007_160000_drop_footer_manual_certificates_label'
 import * as migration_20261007_170000_certificate_type from './20261007_170000_certificate_type'
 import * as migration_20261007_180000_certificate_page_link from './20261007_180000_certificate_page_link'
+import * as migration_20261116_120000_integrations_google_analytics from './20261116_120000_integrations_google_analytics'
 
 export const migrations = [
   {
@@ -486,5 +487,10 @@ export const migrations = [
     up: migration_20261007_180000_certificate_page_link.up,
     down: migration_20261007_180000_certificate_page_link.down,
     name: '20261007_180000_certificate_page_link',
+  },
+  {
+    up: migration_20261116_120000_integrations_google_analytics.up,
+    down: migration_20261116_120000_integrations_google_analytics.down,
+    name: '20261116_120000_integrations_google_analytics',
   },
 ]

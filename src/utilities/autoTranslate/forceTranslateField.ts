@@ -14,6 +14,7 @@ import {
   buildUpdateDataFromPatches,
   type DocumentFieldRegistry,
 } from './documentTranslate'
+import { EMAIL_SETTINGS_FIELD_REGISTRY } from './emailSettingsFieldRegistry'
 import { isLexicalRichText, lexicalPlainText, translateLexicalRichText } from './lexicalText'
 import { POST_FIELD_REGISTRY } from './postFieldRegistry'
 import { resolveTargetLocales } from './resolveTargetLocales'
@@ -26,6 +27,7 @@ export const FORCE_TRANSLATE_GLOBALS = [
   'propertyMap',
   'propertyFilters',
   'localization',
+  'emailSettings',
 ] as const
 
 export type ForceTranslateCollection = (typeof FORCE_TRANSLATE_COLLECTIONS)[number]
@@ -36,6 +38,14 @@ const COLLECTION_FIELD_REGISTRIES: Partial<
   Record<ForceTranslateCollection, DocumentFieldRegistry>
 > = {
   posts: POST_FIELD_REGISTRY,
+}
+
+/**
+ * Globals with multiple required localized fields (e.g. Email Settings subjects).
+ * Writing only the force-translated path to a sparse locale fails Payload validation.
+ */
+const GLOBAL_FIELD_REGISTRIES: Partial<Record<ForceTranslateGlobal, DocumentFieldRegistry>> = {
+  emailSettings: EMAIL_SETTINGS_FIELD_REGISTRY,
 }
 
 export type ForceTranslateEntity =
@@ -314,7 +324,7 @@ export function parseForceTranslateEntity(body: {
 }
 
 /**
- * Posts (and similar docs) have multiple required localized fields. Writing only
+ * Posts / Email Settings have multiple required localized fields. Writing only
  * the force-translated path to an empty locale fails validation. Fill empty
  * siblings via empty-only patches, then overwrite the requested path.
  */
@@ -330,7 +340,7 @@ async function buildForceTranslateUpdateData(args: {
   const registry =
     args.entity.type === 'collection'
       ? COLLECTION_FIELD_REGISTRIES[args.entity.slug]
-      : undefined
+      : GLOBAL_FIELD_REGISTRIES[args.entity.slug]
 
   if (!registry) {
     return buildUpdateAtPayloadPath(

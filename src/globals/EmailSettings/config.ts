@@ -8,6 +8,8 @@ import { defaultDocumentDownloadContent } from '@/email/defaultDocumentDownloadC
 import { emailTemplateFields } from '@/fields/emailTemplateFields'
 import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
+import { autoTranslateEmailSettingsContent } from './hooks/autoTranslateEmailSettingsContent'
+
 export const EmailSettings: GlobalConfig = {
   slug: 'emailSettings',
   label: a('admin.emailSettings.label', 'Email settings'),
@@ -179,7 +181,7 @@ export const EmailSettings: GlobalConfig = {
           label: a('admin.emailSettings.tabs.clientTemplate', 'Customize client email template'),
           description: a(
             'admin.emailSettings.tabs.clientTemplate.description',
-            'Automated thank-you email sent to the visitor after form submission. Use the locale switcher in the admin bar to edit English, Spanish, German, and other languages — like the language tabs in your CRM.',
+            'Automated thank-you email sent to the visitor after form submission. Edit localized subject and body in the DeepL source language; other locales update via DeepL on save when DeepL is enabled. Use Force Translate on a field to overwrite existing translations. Switch locale in the admin bar to review each language.',
           ),
           fields: [
             {
@@ -285,6 +287,7 @@ export const EmailSettings: GlobalConfig = {
   ],
   hooks: {
     afterChange: [
+      autoTranslateEmailSettingsContent,
       async () => {
         invalidateEmailTransportCache()
         await revalidateCacheTag('global_emailSettings')

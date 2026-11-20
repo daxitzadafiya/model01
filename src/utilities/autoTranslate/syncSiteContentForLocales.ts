@@ -10,6 +10,7 @@ import { seedMissingTranslationLocales } from '@/utilities/seedMissingTranslatio
 import { layoutHasTranslatableBlocks } from './blockRegistry'
 import { COOKIE_CONSENT_FIELD_REGISTRY } from './cookieConsentFieldRegistry'
 import { documentHasSourceTranslatableContent } from './documentTranslate'
+import { EMAIL_SETTINGS_FIELD_REGISTRY } from './emailSettingsFieldRegistry'
 import { FOOTER_FIELD_REGISTRY } from './footerFieldRegistry'
 import { HEADER_FIELD_REGISTRY } from './headerFieldRegistry'
 import { LOCALIZATION_FIELD_REGISTRY } from './localizationFieldRegistry'
@@ -43,7 +44,8 @@ async function syncGlobal(
     | 'cookieConsent'
     | 'propertyMap'
     | 'propertyFilters'
-    | 'localization',
+    | 'localization'
+    | 'emailSettings',
   registry: {
     strings: readonly string[]
     richText: readonly string[]
@@ -234,6 +236,7 @@ export async function syncSiteContentForLocales({
       | 'propertyMap'
       | 'propertyFilters'
       | 'localization'
+      | 'emailSettings'
     registry: { strings: readonly string[]; richText: readonly string[] }
   }> = [
     { slug: 'localization', registry: LOCALIZATION_FIELD_REGISTRY },
@@ -242,6 +245,7 @@ export async function syncSiteContentForLocales({
     { slug: 'cookieConsent', registry: COOKIE_CONSENT_FIELD_REGISTRY },
     { slug: 'propertyMap', registry: PROPERTY_MAP_FIELD_REGISTRY },
     { slug: 'propertyFilters', registry: PROPERTY_FILTERS_FIELD_REGISTRY },
+    { slug: 'emailSettings', registry: EMAIL_SETTINGS_FIELD_REGISTRY },
   ]
 
   for (const { slug, registry } of globals) {

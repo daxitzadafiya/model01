@@ -4,7 +4,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 import type { ResolvedOptimaCrmSettings } from '@/settings/optimaCrm/shared'
 
 /** Download links in the visitor email stop working after this window. */
-export const DOCUMENT_DOWNLOAD_LINK_TTL_MS = 30 * 60 * 1000
+export const DOCUMENT_DOWNLOAD_LINK_TTL_MS = 12 * 60 * 60 * 1000
 
 type DownloadGrant = {
   url: string

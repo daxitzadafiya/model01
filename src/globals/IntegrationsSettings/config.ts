@@ -3,7 +3,10 @@ import type { GlobalConfig } from 'payload'
 import { authenticated } from '@/access/authenticated'
 import { a, aString } from '@/utilities/adminI18n'
 import { invalidateIntegrationsSettingsCache } from '@/settings/integrations/client'
-import { parseVirtualAssistantEmbedScript } from '@/settings/integrations/shared'
+import {
+  parseGoogleAnalyticsEmbedScript,
+  parseVirtualAssistantEmbedScript,
+} from '@/settings/integrations/shared'
 import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
 export const IntegrationsSettings: GlobalConfig = {
@@ -16,7 +19,7 @@ export const IntegrationsSettings: GlobalConfig = {
   admin: {
     description: a(
       'admin.integrationsSettings.description',
-      'Third-party integrations for Google Maps, reCAPTCHA, WhatsApp, and Virtual Assistant. Stored in the database — not in environment variables.',
+      'Third-party integrations for Google Maps, reCAPTCHA, WhatsApp, Virtual Assistant, and Google Analytics. Stored in the database — not in environment variables.',
     ),
     group: a('admin.groups.settings', 'Settings'),
   },
@@ -189,6 +192,72 @@ export const IntegrationsSettings: GlobalConfig = {
               return aString(
                 'admin.integrationsSettings.virtualAssistant.embedScriptInvalid',
                 'Script must include a https:// src and data-agency-key="…"',
+                req?.i18n?.language,
+              )
+            }
+            return true
+          },
+        },
+      ],
+    },
+    {
+      name: 'googleAnalytics',
+      type: 'group',
+      label: a('admin.integrationsSettings.googleAnalytics', 'Google Analytics'),
+      fields: [
+        {
+          name: 'enabled',
+          type: 'checkbox',
+          label: a(
+            'admin.integrationsSettings.googleAnalytics.enabled',
+            'Enable Google Analytics on the website',
+          ),
+          defaultValue: false,
+          admin: {
+            description: a(
+              'admin.integrationsSettings.googleAnalytics.enabled.description',
+              'Load Google Analytics / gtag tracking on the frontend.',
+            ),
+          },
+        },
+        {
+          name: 'embedScript',
+          type: 'textarea',
+          label: a(
+            'admin.integrationsSettings.googleAnalytics.embedScript',
+            'Measurement ID or embed script',
+          ),
+          admin: {
+            description: a(
+              'admin.integrationsSettings.googleAnalytics.embedScript.description',
+              'Paste a Measurement ID (G-XXXXXXXX) or the full Google Analytics / gtag script snippet from Google.',
+            ),
+            condition: (_, siblingData) => siblingData?.enabled === true,
+            rows: 6,
+          },
+          validate: (
+            value: unknown,
+            {
+              siblingData,
+              req,
+            }: { siblingData?: unknown; req?: { i18n?: { language?: string } } },
+          ) => {
+            if (!(siblingData && typeof siblingData === 'object' && 'enabled' in siblingData)) {
+              return true
+            }
+            if ((siblingData as { enabled?: boolean }).enabled !== true) return true
+            if (!value || !String(value).trim()) {
+              return aString(
+                'admin.integrationsSettings.googleAnalytics.embedScriptRequired',
+                'Measurement ID or embed script is required when Google Analytics is enabled',
+                req?.i18n?.language,
+              )
+            }
+            const parsed = parseGoogleAnalyticsEmbedScript(String(value))
+            if (!parsed) {
+              return aString(
+                'admin.integrationsSettings.googleAnalytics.embedScriptInvalid',
+                'Enter a valid Measurement ID (G-… / GT-… / UA-…) or a Google Analytics gtag script that includes one.',
                 req?.i18n?.language,
               )
             }

@@ -16,17 +16,24 @@ export type PublicVirtualAssistantSettings = {
   agencyKey: string
 }
 
+export type PublicGoogleAnalyticsSettings = {
+  enabled: boolean
+  /** GA4 / UA / GT measurement ID, e.g. G-XXXXXXXX */
+  measurementId: string
+}
+
 export type ResolvedIntegrationsSettings = {
   googleMapsApiKey: string
   recaptchaSiteKey: string
   recaptchaSecretKey: string
   whatsapp: PublicWhatsAppSettings
   virtualAssistant: PublicVirtualAssistantSettings
+  googleAnalytics: PublicGoogleAnalyticsSettings
 }
 
 export type PublicIntegrationsSettings = Pick<
   ResolvedIntegrationsSettings,
-  'googleMapsApiKey' | 'recaptchaSiteKey' | 'whatsapp' | 'virtualAssistant'
+  'googleMapsApiKey' | 'recaptchaSiteKey' | 'whatsapp' | 'virtualAssistant' | 'googleAnalytics'
 >
 
 export const EMPTY_WHATSAPP_SETTINGS: PublicWhatsAppSettings = {
@@ -42,12 +49,18 @@ export const EMPTY_VIRTUAL_ASSISTANT_SETTINGS: PublicVirtualAssistantSettings = 
   agencyKey: '',
 }
 
+export const EMPTY_GOOGLE_ANALYTICS_SETTINGS: PublicGoogleAnalyticsSettings = {
+  enabled: false,
+  measurementId: '',
+}
+
 export const EMPTY_INTEGRATIONS_SETTINGS: ResolvedIntegrationsSettings = {
   googleMapsApiKey: '',
   recaptchaSiteKey: '',
   recaptchaSecretKey: '',
   whatsapp: EMPTY_WHATSAPP_SETTINGS,
   virtualAssistant: EMPTY_VIRTUAL_ASSISTANT_SETTINGS,
+  googleAnalytics: EMPTY_GOOGLE_ANALYTICS_SETTINGS,
 }
 
 function pickString(value: unknown, fallback: string): string {
@@ -118,6 +131,61 @@ export function resolveVirtualAssistantSettings(
   }
 }
 
+/**
+ * Accept a bare Measurement ID or a full Google Analytics / gtag snippet.
+ * Returns the first valid G- / GT- / UA- id found.
+ */
+export function parseGoogleAnalyticsEmbedScript(raw: string): { measurementId: string } | null {
+  const text = raw.trim()
+  if (!text) return null
+
+  const bare = text.match(/^(G-[A-Z0-9]+|GT-[A-Z0-9]+|UA-\d+-\d+)$/i)
+  if (bare?.[1]) {
+    return { measurementId: normalizeGaId(bare[1]) }
+  }
+
+  const fromQuery = text.match(/[?&]id=(G-[A-Z0-9]+|GT-[A-Z0-9]+|UA-\d+-\d+)/i)
+  if (fromQuery?.[1]) {
+    return { measurementId: normalizeGaId(fromQuery[1]) }
+  }
+
+  const fromConfig = text.match(
+    /gtag\(\s*['"]config['"]\s*,\s*['"](G-[A-Z0-9]+|GT-[A-Z0-9]+|UA-\d+-\d+)['"]/i,
+  )
+  if (fromConfig?.[1]) {
+    return { measurementId: normalizeGaId(fromConfig[1]) }
+  }
+
+  const anyId = text.match(/\b(G-[A-Z0-9]+|GT-[A-Z0-9]+|UA-\d+-\d+)\b/i)
+  if (anyId?.[1]) {
+    return { measurementId: normalizeGaId(anyId[1]) }
+  }
+
+  return null
+}
+
+function normalizeGaId(value: string): string {
+  const trimmed = value.trim()
+  if (/^UA-/i.test(trimmed)) {
+    const match = trimmed.match(/^UA-(\d+)-(\d+)$/i)
+    return match ? `UA-${match[1]}-${match[2]}` : trimmed
+  }
+  return trimmed.toUpperCase()
+}
+
+export function resolveGoogleAnalyticsSettings(
+  googleAnalytics: IntegrationsSetting['googleAnalytics'] | null | undefined,
+): PublicGoogleAnalyticsSettings {
+  const embedScript = pickString(googleAnalytics?.embedScript, '')
+  const parsed = parseGoogleAnalyticsEmbedScript(embedScript)
+  const enabled = googleAnalytics?.enabled === true && parsed !== null
+
+  return {
+    enabled,
+    measurementId: enabled && parsed ? parsed.measurementId : '',
+  }
+}
+
 export function resolveIntegrationsSettingsFromGlobal(
   doc: IntegrationsSetting | null | undefined,
 ): ResolvedIntegrationsSettings {
@@ -131,6 +199,7 @@ export function resolveIntegrationsSettingsFromGlobal(
     recaptchaSecretKey: pickString(recaptcha?.secretKey, defaults.recaptchaSecretKey),
     whatsapp: resolveWhatsAppSettings(doc?.whatsapp),
     virtualAssistant: resolveVirtualAssistantSettings(doc?.virtualAssistant),
+    googleAnalytics: resolveGoogleAnalyticsSettings(doc?.googleAnalytics),
   }
 }
 
@@ -142,5 +211,6 @@ export function toPublicIntegrationsSettings(
     recaptchaSiteKey: settings.recaptchaSiteKey,
     whatsapp: settings.whatsapp,
     virtualAssistant: settings.virtualAssistant,
+    googleAnalytics: settings.googleAnalytics,
   }
 }

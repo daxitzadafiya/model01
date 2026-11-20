@@ -151,7 +151,7 @@ export async function sendDocumentDownloadEmail({
       t(
         'email.documentDownload.expiry',
         normalizedLocale,
-        'Please download the file soon. After 30 minutes this link will expire and you will need to request it again.',
+        'Please download the file soon. After 12 hours this link will expire and you will need to request it again.',
         payload,
       ),
       t('email.documentDownload.documentLabel', normalizedLocale, 'Document', payload),
@@ -160,7 +160,7 @@ export async function sendDocumentDownloadEmail({
       t(
         'email.documentDownload.availabilityValue',
         normalizedLocale,
-        'This link is valid for 30 minutes.',
+        'This link is valid for 12 hours.',
         payload,
       ),
     ]),

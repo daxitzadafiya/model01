@@ -19,6 +19,7 @@ const ebGaramond = EB_Garamond({
 })
 
 import { CookieConsent } from '@/components/CookieConsent'
+import { GoogleAnalyticsScript } from '@/components/GoogleAnalyticsScript'
 import { VirtualAssistantScript } from '@/components/VirtualAssistantScript'
 import { WhatsAppFloatingButton } from '@/components/WhatsAppFloatingButton'
 import { Footer } from '@/Footer/Component'
@@ -91,6 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <CookieConsent />
           <WhatsAppFloatingButton settings={integrationsSettings.whatsapp} />
           <VirtualAssistantScript settings={integrationsSettings.virtualAssistant} />
+          <GoogleAnalyticsScript settings={integrationsSettings.googleAnalytics} />
         </Providers>
       </body>
     </html>

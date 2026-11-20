@@ -43,7 +43,7 @@ export default async function DocumentDownloadPage({ params: paramsPromise }: Ar
       t(
         'downloadLink.ready.body',
         locale,
-        'If the file does not start downloading, use the button below. This link expires 30 minutes after the email was sent.',
+        'If the file does not start downloading, use the button below. This link expires 12 hours after the email was sent.',
       ),
       t('downloadLink.ready.button', locale, 'Download document'),
     ])
@@ -63,7 +63,7 @@ export default async function DocumentDownloadPage({ params: paramsPromise }: Ar
     t(
       'downloadLink.invalid.body',
       locale,
-      'This link has expired or is not valid. Download links last for 30 minutes. Please request the document again to receive a new link.',
+      'This link has expired or is not valid. Download links last for 12 hours. Please request the document again to receive a new link.',
     ),
     t('downloadLink.invalid.button', locale, 'Request a new download'),
   ])

@@ -849,6 +849,13 @@ const PropertyListViewInner: React.FC<Props> = ({
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {properties.map((property) => {
             const cardListingContext = property.listingContext
+            const hasHolidayStayDates = Boolean(
+              appliedFilters.periodFrom?.trim() && appliedFilters.periodTo?.trim(),
+            )
+            const holidayPrice =
+              cardListingContext === 'forHoliday' && !hasHolidayStayDates
+                ? withRentalPriceFromPrefix(property.price)
+                : property.price
             return (
               <PropertyCard
                 key={property.id ?? property.reference ?? property.title}
@@ -870,11 +877,7 @@ const PropertyListViewInner: React.FC<Props> = ({
                   beds: property.beds,
                   baths: property.baths,
                   sqft: property.sqft,
-                  price:
-                    cardListingContext === 'forHoliday'
-                      ? withRentalPriceFromPrefix(property.price)
-                      : property.price,
-                  priceSubtext: property.holidayPriceSummary,
+                  price: holidayPrice,
                   statusBadgeLabel: property.statusBadgeLabel,
                 }}
                 statusBadgeLabel={resolvePropertyCardStatusBadge({

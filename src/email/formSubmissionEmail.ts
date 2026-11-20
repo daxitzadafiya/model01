@@ -207,56 +207,6 @@ function isDocumentDownloadSubmission(
   const flag = getSubmissionValue(submissionData, DOCUMENT_DOWNLOAD_FLAG_FIELD).toLowerCase()
   return flag === 'true' || flag === '1' || flag === 'yes'
 }
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-}
-
-async function buildDocumentDownloadFallbackHtml(
-  payload: Payload,
-  locale: string,
-  variables: Record<string, string>,
-): Promise<string> {
-  const [intro, buttonLabel, actionLabel, documentLabel] = await Promise.all([
-    t(
-      'email.documentDownload.intro',
-      locale,
-      'Thank you. Use the link below to download the document you requested.',
-      payload,
-    ),
-    t('email.documentDownload.button', locale, 'Download document', payload),
-    t('downloadRequest.message.action', locale, 'Action', payload),
-    t('downloadRequest.message.document', locale, 'Document', payload),
-  ])
-
-  const url = variables.downloadUrl?.trim() ?? ''
-  const parts = [`<p>${escapeHtml(intro)}</p>`]
-
-  if (variables.action?.trim()) {
-    parts.push(
-      `<p><strong>${escapeHtml(actionLabel)}:</strong> ${escapeHtml(variables.action.trim())}</p>`,
-    )
-  }
-
-  if (variables.document?.trim()) {
-    parts.push(
-      `<p><strong>${escapeHtml(documentLabel)}:</strong> ${escapeHtml(variables.document.trim())}</p>`,
-    )
-  }
-
-  if (url) {
-    const safeUrl = escapeHtml(url)
-    parts.push(`<p><a href="${safeUrl}">${escapeHtml(buttonLabel)}</a></p>`)
-    parts.push(`<p>${safeUrl}</p>`)
-  }
-
-  return parts.join('')
-}
-
 function isSaveSearchSubmission(submissionData: SubmissionField[] | null | undefined): boolean {
   const flag = getSubmissionValue(submissionData, SAVE_SEARCH_FLAG_FIELD).toLowerCase()
   if (flag === 'true' || flag === '1' || flag === 'yes') return true
@@ -503,52 +453,30 @@ async function sendNotificationEmail({
   const recipient = settings.notifications!.recipientAddress!
   const emailSubject = subjectSuffix ? `${teamSubject} — ${subjectSuffix}` : teamSubject
 
-  if (template !== 'documentDownload') {
-    await sendConfiguredEmail(payload, {
-      to: recipient,
-      subject: emailSubject,
-      html: notificationHtml,
-      from: `${sender.fromName} <${sender.fromAddress}>`,
-      attachments: logoAttachments,
-    })
-  }
+  // Agency / team notification (same recipient as contact form).
+  await sendConfiguredEmail(payload, {
+    to: recipient,
+    subject: emailSubject,
+    html: notificationHtml,
+    from: `${sender.fromName} <${sender.fromAddress}>`,
+    attachments: logoAttachments,
+  })
 
-  const downloadUrl = templateVariables.downloadUrl?.trim() ?? ''
-  const forceClientEmail = template === 'documentDownload' && Boolean(downloadUrl)
+  // Document-download visitors get a dedicated link email via sendDocumentDownloadEmail.
+  // Skip the generic client confirmation for that template to avoid a second mail.
+  if (template === 'documentDownload' || !clientEmail) return
+
   const clientConfirmation = emailSettings?.clientConfirmation
-  if ((!clientConfirmation?.enabled && !forceClientEmail) || !clientEmail) return
-
-  const defaultClientSubject =
-    template === 'documentDownload'
-      ? await t(
-          'email.documentDownload.subject',
-          normalizedLocale,
-          clientDefaults.subject,
-          payload,
-        )
-      : clientDefaults.subject
+  if (!clientConfirmation?.enabled) return
 
   const clientSubject = applyTemplateVariables(
-    clientTemplate?.subject?.trim() || defaultClientSubject,
+    clientTemplate?.subject?.trim() || clientDefaults.subject,
     templateVariables,
   )
-  let clientContentHtml = applyTemplateVariables(
+  const clientContentHtml = applyTemplateVariables(
     (await resolveTemplateContentHtml(payload, clientTemplate, '')) ?? '',
     templateVariables,
   )
-
-  if (template === 'documentDownload') {
-    const fallbackHtml = await buildDocumentDownloadFallbackHtml(
-      payload,
-      normalizedLocale,
-      templateVariables,
-    )
-    if (!clientContentHtml.trim()) {
-      clientContentHtml = fallbackHtml
-    } else if (downloadUrl && !clientContentHtml.includes(downloadUrl)) {
-      clientContentHtml = `${clientContentHtml}${fallbackHtml}`
-    }
-  }
 
   const confirmationHtml = buildClientConfirmationEmailHtml({
     contentHtml: clientContentHtml || undefined,
@@ -579,19 +507,21 @@ export async function sendFormSubmissionNotificationEmail({
   const isSaveSearch = !isDocumentDownload && isSaveSearchSubmission(submissionData)
   const isPropertyInquiry =
     !isDocumentDownload && !isSaveSearch && isPropertyInquirySubmission(submissionData)
-  const template: NotificationTemplate = isSaveSearch
-    ? 'saveSearch'
-    : isPropertyInquiry
-      ? 'propertyInquiry'
-      : 'contact'
+  const template: NotificationTemplate = isDocumentDownload
+    ? 'documentDownload'
+    : isSaveSearch
+      ? 'saveSearch'
+      : isPropertyInquiry
+        ? 'propertyInquiry'
+        : 'contact'
 
+  // Visitor gets the download link; agency is notified below like contact submissions.
   if (isDocumentDownload) {
     await sendDocumentDownloadEmail({
       payload,
       locale,
       submissionData,
     })
-    return
   }
 
   const [formTitle, formDefinition] = await Promise.all([
@@ -635,9 +565,10 @@ export async function sendFormSubmissionNotificationEmail({
     })
   }
 
-  const propertyReference = isPropertyInquiry
-    ? resolveEmailDisplayReference(submissionData)
-    : undefined
+  const propertyReference =
+    isPropertyInquiry || isDocumentDownload
+      ? resolveEmailDisplayReference(submissionData) || undefined
+      : undefined
 
   await sendNotificationEmail({
     payload,
@@ -646,7 +577,8 @@ export async function sendFormSubmissionNotificationEmail({
     fields,
     propertyReference,
     subjectSuffix: formTitle,
-    clientEmail: getClientEmail(submissionData),
+    // Document download uses sendDocumentDownloadEmail for the visitor.
+    clientEmail: isDocumentDownload ? undefined : getClientEmail(submissionData),
   })
 }
 

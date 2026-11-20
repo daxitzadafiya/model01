@@ -100,7 +100,7 @@ export function emailTemplateFields(defaults?: EmailTemplateFieldDefaults): Fiel
       admin: {
         description: a(
           'admin.fields.emailTemplate.subjectDescription',
-          'Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar to edit each language.',
+          'Email subject line. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.',
         ),
       },
     },
@@ -113,7 +113,7 @@ export function emailTemplateFields(defaults?: EmailTemplateFieldDefaults): Fiel
       admin: {
         description: a(
           'admin.fields.emailTemplate.contentDescription',
-          'Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Switch locale in the admin bar for other languages.',
+          'Design the full email like a document. Use {{reference}} for the property reference (also {{arrival}}, {{departure}}, {{guests}} on holiday booking emails). Edit in the DeepL source language; other languages refresh via DeepL when that source changes on save.',
         ),
       },
       editor: emailTemplateEditor,
