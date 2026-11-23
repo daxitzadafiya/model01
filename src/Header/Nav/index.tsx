@@ -4,7 +4,9 @@ import { usePathname } from 'next/navigation'
 import React from 'react'
 import type { Header as HeaderType } from '@/payload-types'
 import { CMSLink, getCMSLinkHref, isCMSLinkActive } from '@/components/Link'
+import { isLocale, type Locale } from '@/i18n/config'
 import { getHeaderNavLinkClass } from '@/providers/HeroOverlay'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 import { NavDropdown } from './NavDropdown'
 
 type Props = {
@@ -16,8 +18,8 @@ type Props = {
 
 type NavItem = NonNullable<HeaderType['navItems']>[number]
 
-const linkIsActive = (pathname: string, link: NavItem['link']) => {
-  const href = getCMSLinkHref(link)
+const linkIsActive = (pathname: string, link: NavItem['link'], locale: Locale) => {
+  const href = getCMSLinkHref(link, locale)
   return href ? isCMSLinkActive(pathname, href) : false
 }
 
@@ -30,6 +32,8 @@ export const HeaderNav: React.FC<Props> = ({
   onDarkBackground = false,
 }) => {
   const pathname = usePathname()
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
   const navItems = (data?.navItems || []).filter((item) => !item?.isDeleted)
 
   return (
@@ -47,7 +51,7 @@ export const HeaderNav: React.FC<Props> = ({
             <CMSLink
               key={i}
               {...item.link}
-              className={getHeaderNavLinkClass(linkIsActive(pathname, item.link), onDarkBackground)}
+              className={getHeaderNavLinkClass(linkIsActive(pathname, item.link, locale), onDarkBackground)}
             />
           ),
         )}
@@ -78,7 +82,7 @@ export const HeaderNav: React.FC<Props> = ({
                   <div key={i} onClick={onClose} role="presentation">
                     <CMSLink
                       {...item.link}
-                      className={`block py-3 ${getHeaderNavLinkClass(linkIsActive(pathname, item.link), false)}`}
+                      className={`block py-3 ${getHeaderNavLinkClass(linkIsActive(pathname, item.link, locale), false)}`}
                     />
                   </div>
                 ),

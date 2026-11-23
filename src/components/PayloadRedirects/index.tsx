@@ -1,24 +1,42 @@
 import type React from 'react'
 import type { Page, Post } from '@/payload-types'
 
+import type { Locale } from '@/i18n/config'
+import { withLocalePrefix, stripLocalePrefix } from '@/i18n/localePath'
 import { getCachedDocument } from '@/utilities/getDocument'
 import { getCachedRedirects } from '@/utilities/getRedirects'
 import { notFound, redirect } from 'next/navigation'
 
 interface Props {
   disableNotFound?: boolean
+  /** Path without locale prefix, e.g. `/buy` or `/posts/slug`. */
   url: string
+  locale?: Locale
+}
+
+function normalizeRedirectFrom(value: string): string {
+  const path = value.split('?')[0] || '/'
+  const stripped = stripLocalePrefix(path)
+  return stripped.length > 1 && stripped.endsWith('/') ? stripped.slice(0, -1) : stripped
 }
 
 /* This component helps us with SSR based dynamic redirects */
-export const PayloadRedirects: React.FC<Props> = async ({ disableNotFound, url }) => {
+export const PayloadRedirects: React.FC<Props> = async ({ disableNotFound, url, locale }) => {
   const redirects = await getCachedRedirects()()
+  const requestPath = normalizeRedirectFrom(url)
 
-  const redirectItem = redirects.find((redirect) => redirect.from === url)
+  const redirectItem = redirects.find((redirectRow) => {
+    if (!redirectRow.from) return false
+    return normalizeRedirectFrom(redirectRow.from) === requestPath
+  })
 
   if (redirectItem) {
     if (redirectItem.to?.url) {
-      redirect(redirectItem.to.url)
+      const target = redirectItem.to.url
+      if (/^https?:\/\//i.test(target)) {
+        redirect(target)
+      }
+      redirect(locale ? withLocalePrefix(target, locale) : target)
     }
 
     let redirectUrl: string
@@ -39,7 +57,9 @@ export const PayloadRedirects: React.FC<Props> = async ({ disableNotFound, url }
       }`
     }
 
-    if (redirectUrl) redirect(redirectUrl)
+    if (redirectUrl) {
+      redirect(locale ? withLocalePrefix(redirectUrl, locale) : redirectUrl)
+    }
   }
 
   if (disableNotFound) return null

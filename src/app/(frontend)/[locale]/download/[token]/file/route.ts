@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { isLocale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
 import { getOptimaCrmSettings } from '@/settings/optimaCrm/server'
 import { resolveDocumentDownloadLink } from '@/utilities/documentDownloadToken'
 import {
@@ -9,6 +11,7 @@ import {
 
 type Args = {
   params: Promise<{
+    locale: string
     token: string
   }>
 }
@@ -28,11 +31,13 @@ function unavailable(): NextResponse {
 }
 
 export async function GET(request: Request, { params }: Args): Promise<NextResponse> {
-  const { token } = await params
+  const { locale: localeParam, token } = await params
   const grant = await resolveDocumentDownloadLink(token)
 
   if (grant.status !== 'valid') {
-    return NextResponse.redirect(new URL(`/download/${encodeURIComponent(token)}`, request.url))
+    const locale = isLocale(localeParam) ? localeParam : 'en'
+    const path = withLocalePrefix(`/download/${encodeURIComponent(token)}`, locale)
+    return NextResponse.redirect(new URL(path, request.url))
   }
 
   try {
@@ -44,8 +49,6 @@ export async function GET(request: Request, { params }: Args): Promise<NextRespo
     if (!upstream.ok || contentType.toLowerCase().includes('text/html')) {
       console.error('[document-download] upstream rejected', {
         status: upstream.status,
-        contentType,
-        url: grant.url,
       })
       return unavailable()
     }
@@ -63,11 +66,8 @@ export async function GET(request: Request, { params }: Args): Promise<NextRespo
         'X-Robots-Tag': 'noindex, nofollow',
       },
     })
-  } catch (error) {
-    console.error('[document-download] proxy failed', {
-      url: grant.url,
-      error: error instanceof Error ? error.message : error,
-    })
+  } catch {
+    console.error('[document-download] proxy failed')
     return unavailable()
   }
 }

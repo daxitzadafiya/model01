@@ -3871,7 +3871,7 @@ export interface Theme {
   createdAt?: string | null;
 }
 /**
- * Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI) when a Payload UI pack exists (en, de, es, fr, it, nl). Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save. Display names are localized — edit them in the DeepL source language; DeepL fills other languages on save. When DeepL is enabled, newly added or re-enabled languages are auto-filled from the DeepL source language (Settings → DeepL) across Pages, Posts, Header, Footer, Display names, and other localized content (empty fields only).
+ * Languages listed here appear on the website switcher, the admin “Locale” menu (content), and Account → Language (admin UI). Locales without a full Payload UI translation pack (e.g. Finnish) still appear in Account → Language and fall back to English chrome. Content locale must exist in src/i18n/locales.ts. Set the Default language for first-time visitors, add a row per language, then save. Display names are localized — edit them in the DeepL source language; DeepL fills other languages on save. When DeepL is enabled, newly added or re-enabled languages are auto-filled from the DeepL source language (Settings → DeepL) across Pages, Posts, Header, Footer, Display names, and other localized content (empty fields only).
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "localization".

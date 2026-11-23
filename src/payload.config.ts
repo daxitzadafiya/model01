@@ -47,14 +47,7 @@ export default buildConfig({
   // Full pack pool; syncAdminLanguagesFromLocalization() keeps only languages
   // enabled in Globals → Localization (and always keeps `en`).
   i18n: {
-    supportedLanguages: {
-      en: adminLanguagePacks.en,
-      de: adminLanguagePacks.de,
-      es: adminLanguagePacks.es,
-      fr: adminLanguagePacks.fr,
-      it: adminLanguagePacks.it,
-      nl: adminLanguagePacks.nl,
-    },
+    supportedLanguages: { ...adminLanguagePacks },
   },
 
   // localization (content locales — see src/i18n/locales.ts to add codes)

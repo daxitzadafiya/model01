@@ -83,6 +83,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <ThemeStyles />
         <Providers
+          locale={locale}
           optimaCrmSettings={optimaCrmSettings}
           integrationsSettings={integrationsSettings}
         >

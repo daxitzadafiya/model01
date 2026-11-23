@@ -1,3 +1,6 @@
+import type { Locale } from '@/i18n/config'
+import { isLocale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
 import { buildCRMLocaleCandidates, getLocalizedText, isCRMTruthy } from '@/utilities/localizedValue'
 
 export type PropertyListingMode = 'sale' | 'rent'
@@ -227,6 +230,10 @@ export function getPropertyDetailSlug(
   return undefined
 }
 
+function localizeDetailHref(href: string, locale: string): string {
+  return isLocale(locale) ? withLocalePrefix(href, locale as Locale) : href
+}
+
 function buildDetailHrefForPath(
   pathPrefix: string,
   property: Record<string, unknown>,
@@ -237,22 +244,24 @@ function buildDetailHrefForPath(
   const listingMode = options?.listingMode ?? resolvePropertyListingMode(flatProperty)
   const slug = getPropertyDetailSlug(flatProperty, locale, listingMode)
 
+  let href: string | undefined
   if (slug && !isBareReferenceSlug(slug)) {
-    return `${pathPrefix}/${encodeURIComponent(slug)}`
+    href = `${pathPrefix}/${encodeURIComponent(slug)}`
+  } else {
+    const titleSlug = buildPropertyDetailSlugFromTitle(flatProperty, locale, listingMode)
+    if (titleSlug) {
+      href = `${pathPrefix}/${encodeURIComponent(titleSlug)}`
+    } else {
+      const reference = pickPropertyReference(flatProperty)
+      if (!reference) return undefined
+      href = `${pathPrefix}/_${reference}`
+    }
   }
 
-  const titleSlug = buildPropertyDetailSlugFromTitle(flatProperty, locale, listingMode)
-  if (titleSlug) {
-    return `${pathPrefix}/${encodeURIComponent(titleSlug)}`
-  }
-
-  const reference = pickPropertyReference(flatProperty)
-  if (!reference) return undefined
-
-  return `${pathPrefix}/_${reference}`
+  return localizeDetailHref(href, locale)
 }
 
-/** Public site href — `/property-details/{slug}`. `?ttype=` is dropped; listing pages append `?for=`. */
+/** Public site href — `/{locale}/property-details/{slug}`. Listing pages append `?for=`. */
 export function resolvePropertyDetailHref(
   property: Record<string, unknown>,
   locale: string,
@@ -262,7 +271,7 @@ export function resolvePropertyDetailHref(
 }
 
 /**
- * Public project href — `/project-details/{slug}_{id}` (pedro development URL pattern).
+ * Public project href — `/{locale}/project-details/{slug}_{id}`.
  * Uses perma_link / title + numeric reference when CRM sale_url maps are absent.
  */
 export function resolveProjectDetailHref(
@@ -274,7 +283,10 @@ export function resolveProjectDetailHref(
   // Prefer construction perma_link / title slug (same {slug}_{id} shape as pedro).
   const titleSlug = buildPropertyDetailSlugFromTitle(flatProperty, locale, 'sale')
   if (titleSlug) {
-    return `${PROJECT_DETAILS_PATH}/${encodeURIComponent(titleSlug)}`
+    return localizeDetailHref(
+      `${PROJECT_DETAILS_PATH}/${encodeURIComponent(titleSlug)}`,
+      locale,
+    )
   }
 
   return buildDetailHrefForPath(PROJECT_DETAILS_PATH, flatProperty, locale, {

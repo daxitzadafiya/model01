@@ -85,17 +85,33 @@ export function resolveActiveLocale(
   return items[0]?.locale ?? preferredDefault
 }
 
-export const getActiveLocale = cache(async (): Promise<{
+export const getActiveLocale = cache(async (preferredLocale?: string | null): Promise<{
   locale: Locale
   languageMenu: LanguageMenuItem[]
   siteDefaultLocale: Locale
 }> => {
-  const provisional = await getLocale()
+  const pathLocale = preferredLocale && isLocale(preferredLocale) ? preferredLocale : null
+  const provisional = pathLocale ?? (await getLocale())
   let global = await getCachedGlobal('localization', 0, provisional)()
   let mapped = mapGlobalToMenu(global)
   let languageMenu = mapped.length > 0 ? mapped : fallbackMenu
   const siteDefaultLocale = resolveSiteDefaultLocale(global, languageMenu)
   const menuLocales = languageMenu.map((item) => item.locale)
+
+  // Path / header locale wins when it is enabled for the site.
+  if (pathLocale && menuLocales.includes(pathLocale)) {
+    if (pathLocale !== provisional) {
+      global = await getCachedGlobal('localization', 0, pathLocale)()
+      mapped = mapGlobalToMenu(global)
+      languageMenu = mapped.length > 0 ? mapped : fallbackMenu
+    }
+    return {
+      languageMenu,
+      siteDefaultLocale,
+      locale: pathLocale,
+    }
+  }
+
   const cookieLocale = await getLocale(menuLocales, siteDefaultLocale)
   const locale = resolveActiveLocale(cookieLocale, languageMenu, siteDefaultLocale)
 

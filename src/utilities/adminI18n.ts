@@ -10,7 +10,7 @@ import {
 } from '@/i18n/adminLanguagePacks'
 
 /** Admin UI languages used for admin.* DeepL fills (subset of admin language packs). */
-export const ADMIN_I18N_LOCALES = ['en', 'de', 'fr', 'es', 'it', 'nl'] as const
+export const ADMIN_I18N_LOCALES = ['en', 'de', 'fr', 'es', 'it', 'nl', 'sv', 'fi'] as const
 
 export type AdminI18nLocale = (typeof ADMIN_I18N_LOCALES)[number]
 

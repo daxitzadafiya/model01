@@ -9,6 +9,9 @@ import { CoastCityFilterFields } from '@/components/CoastCityFilterFields'
 import DateRangePickerField from '@/components/PropertyList/DateRangePickerField'
 import { CountFilterField } from '@/components/PropertyList/CountFilterField'
 import { CMSLink, getCMSLinkHref } from '@/components/Link'
+import { isLocale, type Locale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 import { HeroBackground } from '@/blocks/HeroBlock/HeroBackground'
 import { HeroWeather } from '@/blocks/HeroBlock/HeroWeather'
 import {
@@ -124,6 +127,8 @@ const HeroBlockContent: React.FC<Props> = (props) => {
   const ref = useReveal()
   useRegisterHeroOverlay()
   const router = useRouter()
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
 
   const saleTabLabel = useTranslation('hero.searchTabs.sale', 'Sale Properties')
   const rentalTabLabel = useTranslation('hero.searchTabs.rental', 'Rental Properties')
@@ -313,8 +318,9 @@ const HeroBlockContent: React.FC<Props> = (props) => {
 
   const searchResultsPath =
     activeTab === 'sale'
-      ? (getCMSLinkHref(searchResultsLink ?? {}) ?? HERO_TAB_PATHS.sale)
-      : HERO_TAB_PATHS[activeTab]
+      ? (getCMSLinkHref(searchResultsLink ?? {}, locale) ??
+        withLocalePrefix(HERO_TAB_PATHS.sale, locale))
+      : withLocalePrefix(HERO_TAB_PATHS[activeTab], locale)
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()

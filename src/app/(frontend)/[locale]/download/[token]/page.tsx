@@ -9,6 +9,7 @@ import { t } from '@/utilities/translate'
 
 type Args = {
   params: Promise<{
+    locale: string
     token: string
   }>
 }
@@ -33,8 +34,8 @@ function sameSiteReturnUrl(pageUrl: string | undefined): string | undefined {
 }
 
 export default async function DocumentDownloadPage({ params: paramsPromise }: Args) {
-  const { token } = await paramsPromise
-  const { locale } = await getActiveLocale()
+  const { locale: localeParam, token } = await paramsPromise
+  const { locale } = await getActiveLocale(localeParam)
   const grant = await resolveDocumentDownloadLink(token)
 
   if (grant.status === 'valid') {
@@ -51,6 +52,7 @@ export default async function DocumentDownloadPage({ params: paramsPromise }: Ar
     return (
       <DocumentDownloadReady
         token={token}
+        locale={locale}
         title={title}
         body={body}
         buttonLabel={buttonLabel}
@@ -76,7 +78,7 @@ export default async function DocumentDownloadPage({ params: paramsPromise }: Ar
         <h1 className="m-0 font-headline-lg text-[clamp(1.8rem,3vw,2.4rem)] font-light leading-tight text-primary">
           {title}
         </h1>
-        <p className="mx-auto mt-4 max-w-md font-body-md text-[15px] font-light leading-relaxed text-on-surface/75">
+        <p className="mx-auto mt-4 max-w-md font-body-md text-[15px] font-normal leading-relaxed text-on-surface/85">
           {body}
         </p>
         {returnUrl ? (

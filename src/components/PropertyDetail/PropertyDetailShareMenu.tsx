@@ -1,5 +1,9 @@
 'use client'
 
+import { isLocale, type Locale } from '@/i18n/config'
+import { withSiteLangQuery } from '@/i18n/siteLangQuery'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
+
 import { Mail, MessageCircle, Share2 } from 'lucide-react'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -13,9 +17,10 @@ type ShareLink = {
   href: string
 }
 
-function getPageUrl(): string {
+function getSharePageUrl(locale: string): string {
   if (typeof window === 'undefined') return ''
-  return window.location.href
+  const safeLocale: Locale = isLocale(locale) ? locale : 'en'
+  return withSiteLangQuery(window.location.href, safeLocale)
 }
 
 function buildShareLinks(
@@ -52,6 +57,7 @@ export const PropertyDetailShareMenu: React.FC<PropertyDetailShareMenuProps> = (
   variant = 'default',
 }) => {
   const [open, setOpen] = useState(false)
+  const locale = useSiteLocale()
   const rootRef = useRef<HTMLDivElement>(null)
   const sharePropertyAria = useTranslation('propertyDetail.share.aria', 'Share property')
   const shareToYourLabel = useTranslation('propertyDetail.share.shareToYour', 'Share to your')
@@ -68,7 +74,7 @@ export const PropertyDetailShareMenu: React.FC<PropertyDetailShareMenuProps> = (
     [emailLabel, facebookLabel, whatsappLabel],
   )
 
-  const pageUrl = open ? getPageUrl() : ''
+  const pageUrl = open ? getSharePageUrl(locale) : ''
   const shareLinks = pageUrl ? buildShareLinks(pageUrl, channelLabels) : []
 
   const closeMenu = useCallback(() => setOpen(false), [])

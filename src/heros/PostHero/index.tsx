@@ -1,4 +1,4 @@
-import { Calendar, ChevronRight, User } from 'lucide-react'
+import { Calendar, ChevronLeft, User } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
@@ -12,7 +12,8 @@ export const PostHero: React.FC<{
   post: Post
   authorLabel: string
   datePublishedLabel: string
-}> = ({ post, authorLabel, datePublishedLabel }) => {
+  backLabel: string
+}> = ({ post, authorLabel, datePublishedLabel, backLabel }) => {
   const { categories, heroImage, populatedAuthors, publishedAt, subtitle, title } = post
 
   const hasAuthors =
@@ -33,8 +34,16 @@ export const PostHero: React.FC<{
   return (
     <header className="pt-20 md:pt-24 pb-6 md:pb-8 bg-surface">
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop">
+        <Link
+          href="/posts"
+          className="inline-flex items-center gap-1 font-label-sm text-label-sm text-secondary hover:text-primary transition-colors"
+        >
+          <ChevronLeft size={16} className="shrink-0" aria-hidden />
+          {backLabel}
+        </Link>
+
         {categoryTitle && (
-          <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest">
+          <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest mt-4 md:mt-5 block">
             {categoryTitle}
           </span>
         )}

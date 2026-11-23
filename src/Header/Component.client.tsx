@@ -34,7 +34,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({
   const { isHeroOverlay } = useHeroOverlay()
   const { count: favoritesCount } = usePropertyFavorites()
   const favoritesLink = data.favoritesLink
-  const favoritesHref = getCMSLinkHref(favoritesLink ?? {}) ?? '/favorites'
+  const favoritesHref = getCMSLinkHref(favoritesLink ?? {}, locale) ?? `/${locale}/favorites`
   const favoritesAriaLabel =
     favoritesLink?.label ||
     (favoritesCount > 0 ? `Favorites, ${favoritesCount} saved` : 'Favorites')
@@ -79,7 +79,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({
       >
         <Link
           className="font-headline-sm text-[13px] sm:text-headline-sm tracking-widest uppercase shrink-0 min-w-0 pr-1 sm:pr-0"
-          href="/"
+          href={`/${locale}`}
         >
           <Logo
             placement="header"

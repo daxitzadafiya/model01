@@ -41,7 +41,7 @@ export function resolveDisplayNameLabel(
 
 /**
  * Keep Account → Language options in sync with Globals → Localization:
- * - add packs for enabled site languages that have a Payload UI pack
+ * - add packs for enabled site languages registered in adminLanguagePacks
  * - remove packs that are no longer enabled (always keeps `en`)
  * - set option labels from Display names for the current admin UI language
  */

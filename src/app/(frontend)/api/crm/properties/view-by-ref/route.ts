@@ -49,7 +49,6 @@ export async function GET(request: Request) {
   const endpoint = `${baseUrl}/properties/view-by-ref?${params.toString()}`
 
   try {
-    console.log('------[GET CRM PROPERTY DETAIL PROXY]------', endpoint)
     const response = await crmServerFetch(endpoint, {
       method: 'GET',
       cache: 'no-store',

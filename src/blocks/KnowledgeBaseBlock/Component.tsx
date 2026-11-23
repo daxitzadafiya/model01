@@ -6,7 +6,7 @@ import React from 'react'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { formatPublishedDate } from '@/utilities/formatDateTime'
 
-import { getCMSLinkHref } from '@/components/Link'
+import { getCMSLinkHref } from '@/components/Link/getCMSLinkHref'
 
 import {
   KnowledgeBaseBlockClient,

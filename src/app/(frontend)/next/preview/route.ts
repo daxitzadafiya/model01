@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation'
 import { NextRequest } from 'next/server'
 
 import configPromise from '@payload-config'
+import { getSiteDefaultLocale } from '@/i18n/getSiteDefaultLocale'
+import { getLocaleFromPathname, withLocalePrefix } from '@/i18n/localePath'
 
 export type PreviewSearchParams = {
   path: string
@@ -55,5 +57,10 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   draft.enable()
 
-  redirect(path)
+  const siteDefault = await getSiteDefaultLocale(payload)
+  const localizedPath = getLocaleFromPathname(path)
+    ? path
+    : withLocalePrefix(path, siteDefault)
+
+  redirect(localizedPath)
 }

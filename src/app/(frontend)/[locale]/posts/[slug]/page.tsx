@@ -6,13 +6,14 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
 import React, { cache } from 'react'
-import RichText from '@/components/RichText'
 
 import type { Post } from '@/payload-types'
 
+import { PostBody } from '@/heros/PostBody'
 import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import type { Locale } from '@/i18n/config'
+import { localeCodes } from '@/i18n/config'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { t } from '@/utilities/translate'
@@ -30,36 +31,39 @@ export async function generateStaticParams() {
     },
   })
 
-  const params = posts.docs.map(({ slug }) => {
-    return { slug }
-  })
-
-  return params
+  return localeCodes.flatMap((locale) =>
+    posts.docs.map(({ slug }) => ({
+      locale,
+      slug,
+    })),
+  )
 }
 
 type Args = {
   params: Promise<{
+    locale: string
     slug?: string
   }>
 }
 
 export default async function Post({ params: paramsPromise }: Args) {
   const { isEnabled: draft } = await draftMode()
-  const { locale } = await getActiveLocale()
-  const { slug = '' } = await paramsPromise
-  // Decode to support slugs with special characters
+  const params = await paramsPromise
+  const { locale } = await getActiveLocale(params.locale)
+  const { slug = '' } = params
   const decodedSlug = decodeURIComponent(slug)
   const url = '/posts/' + decodedSlug
   const post = await queryPostBySlug({ slug: decodedSlug, locale })
 
-  if (!post) return <PayloadRedirects url={url} />
+  if (!post) return <PayloadRedirects url={url} locale={locale} />
 
-  const [authorLabel, datePublishedLabel, relatedPostsTitle, readMoreLabel] =
+  const [authorLabel, datePublishedLabel, relatedPostsTitle, readMoreLabel, backLabel] =
     await Promise.all([
       t('post.authorLabel', locale, 'Author'),
       t('post.datePublishedLabel', locale, 'Date Published'),
       t('post.relatedPostsTitle', locale, 'Related Articles'),
       t('blog.readMore', locale, 'Read More'),
+      t('post.backToBlog', locale, 'Back to Blog'),
     ])
 
   const relatedPosts = post.relatedPosts?.filter(
@@ -67,9 +71,8 @@ export default async function Post({ params: paramsPromise }: Args) {
   )
 
   return (
-    <article className="bg-surface">
-      {/* Allows redirects for valid pages too */}
-      <PayloadRedirects disableNotFound url={url} />
+    <article className="bg-surface-sand">
+      <PayloadRedirects disableNotFound url={url} locale={locale} />
 
       {draft && <LivePreviewListener />}
 
@@ -77,17 +80,10 @@ export default async function Post({ params: paramsPromise }: Args) {
         post={post}
         authorLabel={authorLabel}
         datePublishedLabel={datePublishedLabel}
+        backLabel={backLabel}
       />
 
-      <section className="pt-6 md:pt-8 pb-12 md:pb-16">
-        <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop">
-          <RichText
-            className="w-full prose-headings:font-headline-md prose-headings:text-primary prose-p:text-secondary prose-p:font-body-lg prose-p:leading-relaxed prose-a:text-tertiary prose-a:no-underline hover:prose-a:underline"
-            data={post.content}
-            enableGutter={false}
-          />
-        </div>
-      </section>
+      <PostBody content={post.content} />
 
       {relatedPosts && relatedPosts.length > 0 && (
         <RelatedPosts docs={relatedPosts} readMoreLabel={readMoreLabel} title={relatedPostsTitle} />
@@ -97,13 +93,13 @@ export default async function Post({ params: paramsPromise }: Args) {
 }
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
-  const { locale } = await getActiveLocale()
-  const { slug = '' } = await paramsPromise
-  // Decode to support slugs with special characters
+  const params = await paramsPromise
+  const { locale } = await getActiveLocale(params.locale)
+  const { slug = '' } = params
   const decodedSlug = decodeURIComponent(slug)
   const post = await queryPostBySlug({ slug: decodedSlug, locale })
 
-  return generateMeta({ doc: post })
+  return generateMeta({ doc: post, locale, collection: 'posts' })
 }
 
 const queryPostBySlug = cache(async ({ slug, locale }: { slug: string; locale: Locale }) => {

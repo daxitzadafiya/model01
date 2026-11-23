@@ -26,6 +26,9 @@ import type { Form } from '@/payload-types'
 import type { NormalizedCRMProject } from '@/utilities/crmProjects'
 import type { PropertyInquiryContext } from '@/utilities/propertyInquiry'
 import { useLocalizedPropertyPrice, useTranslation } from '@/utilities/translateClient'
+import { isLocale, type Locale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 import { formateTitle } from '@/utilities/formateTitle'
 
 type Props = {
@@ -84,6 +87,9 @@ export const ProjectDetailView: React.FC<Props> = ({
   relatedProjects = [],
   similarProjectsLoading = false,
 }) => {
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
+  const localizedPortfolioHref = withLocalePrefix(portfolioHref, locale)
   const homeLabel = useTranslation('homeLabel', 'Home')
   const projectsLabel = useTranslation('projectDetail.breadcrumb.projects', 'Projects')
   const refPrefixLabel = useTranslation('propertyDetail.map.refPrefix', 'Ref:')
@@ -151,11 +157,11 @@ export const ProjectDetailView: React.FC<Props> = ({
 
         <div className="lg:col-span-5 xl:col-span-4 flex flex-col h-full py-2">
           <nav className="flex flex-wrap gap-x-2 text-label-sm font-label-sm text-on-surface-variant uppercase mb-4">
-            <Link className="hover:text-tertiary transition-colors" href="/">
+            <Link className="hover:text-tertiary transition-colors" href={`/${locale}`}>
               {homeLabel}
             </Link>
             <span>/</span>
-            <Link className="hover:text-tertiary transition-colors" href={portfolioHref}>
+            <Link className="hover:text-tertiary transition-colors" href={localizedPortfolioHref}>
               {projectsLabel}
             </Link>
             <span>/</span>

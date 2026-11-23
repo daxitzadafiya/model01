@@ -8,6 +8,7 @@ import { getPayload } from 'payload'
 import React from 'react'
 import { notFound } from 'next/navigation'
 
+import { localeCodes } from '@/i18n/config'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { formatPageTitle, getAppName } from '@/utilities/getAppName'
 import { getCachedGlobal } from '@/utilities/getGlobals'
@@ -17,19 +18,20 @@ export const revalidate = 600
 
 type Args = {
   params: Promise<{
+    locale: string
     pageNumber: string
   }>
 }
 
 export default async function Page({ params: paramsPromise }: Args) {
-  const { pageNumber } = await paramsPromise
+  const { locale: localeParam, pageNumber } = await paramsPromise
   const payload = await getPayload({ config: configPromise })
 
   const sanitizedPageNumber = Number(pageNumber)
 
   if (!Number.isInteger(sanitizedPageNumber)) notFound()
 
-  const { locale } = await getActiveLocale()
+  const { locale } = await getActiveLocale(localeParam)
   const postsHeading = await t('posts.heading', locale, 'Posts')
 
   const posts = await payload.find({
@@ -70,12 +72,16 @@ export default async function Page({ params: paramsPromise }: Args) {
 }
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
-  const { pageNumber } = await paramsPromise
+  const { locale: localeParam, pageNumber } = await paramsPromise
+  const { locale } = await getActiveLocale(localeParam)
   const logo = await getCachedGlobal('logo', 0)()
   const appName = getAppName(logo)
 
   return {
     title: formatPageTitle(pageNumber ? `Posts Page ${pageNumber}` : 'Posts', appName),
+    alternates: {
+      canonical: `/${locale}/posts/page/${pageNumber}`,
+    },
   }
 }
 
@@ -88,10 +94,12 @@ export async function generateStaticParams() {
 
   const totalPages = Math.ceil(totalDocs / 10)
 
-  const pages: { pageNumber: string }[] = []
+  const pages: { locale: string; pageNumber: string }[] = []
 
-  for (let i = 1; i <= totalPages; i++) {
-    pages.push({ pageNumber: String(i) })
+  for (const locale of localeCodes) {
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push({ locale, pageNumber: String(i) })
+    }
   }
 
   return pages

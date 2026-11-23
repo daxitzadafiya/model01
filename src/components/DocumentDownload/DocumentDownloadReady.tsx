@@ -2,8 +2,12 @@
 
 import React, { useEffect } from 'react'
 
+import type { Locale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
+
 type Props = {
   token: string
+  locale: Locale
   title: string
   body: string
   buttonLabel: string
@@ -11,11 +15,12 @@ type Props = {
 
 export const DocumentDownloadReady: React.FC<Props> = ({
   token,
+  locale,
   title,
   body,
   buttonLabel,
 }) => {
-  const fileHref = `/download/${encodeURIComponent(token)}/file`
+  const fileHref = withLocalePrefix(`/download/${encodeURIComponent(token)}/file`, locale)
 
   // Start the download without navigating the tab away from this page.
   // A plain <a>.click() replaces the URL with /file and, when the proxy fails,

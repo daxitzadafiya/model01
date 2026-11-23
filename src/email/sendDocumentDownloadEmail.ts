@@ -1,5 +1,8 @@
 import type { Payload } from 'payload'
 
+import { isLocale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
+
 import { buildDocumentDownloadEmailHtml } from '@/email/buildDocumentDownloadEmailHtml'
 import { lexicalToEmailHtml } from '@/email/lexicalToEmailHtml'
 import { loadNotificationEmailBranding } from '@/email/loadNotificationEmailBranding'
@@ -117,7 +120,8 @@ export async function sendDocumentDownloadEmail({
     pageUrl: fieldValue(submissionData, DOCUMENT_DOWNLOAD_PAGE_FIELD),
     filename: fieldValue(submissionData, DOCUMENT_DOWNLOAD_LABEL_FIELD),
   })
-  const downloadUrl = `${siteUrl}/download/${token}`
+  const downloadLocale = isLocale(normalizedLocale) ? normalizedLocale : 'en'
+  const downloadUrl = `${siteUrl}${withLocalePrefix(`/download/${token}`, downloadLocale)}`
   const pageUrl = sameSiteUrl(fieldValue(submissionData, DOCUMENT_DOWNLOAD_PAGE_FIELD), siteUrl)
   const documentLabel = fieldValue(submissionData, DOCUMENT_DOWNLOAD_LABEL_FIELD)
   const reference =

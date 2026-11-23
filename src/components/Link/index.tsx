@@ -1,15 +1,24 @@
+'use client'
+
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { cn } from '@/utilities/ui'
 import Link from 'next/link'
 import React from 'react'
 
 import type { Page, Post } from '@/payload-types'
+import { isLocale, type Locale } from '@/i18n/config'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
+
+import { getCMSLinkHref, isCMSLinkActive } from './getCMSLinkHref'
+
+export { getCMSLinkHref, isCMSLinkActive }
 
 export type CMSLinkType = {
   appearance?: 'inline' | ButtonProps['variant']
   children?: React.ReactNode
   className?: string
   label?: string | null
+  locale?: Locale
   newTab?: boolean | null
   reference?: {
     relationTo: 'pages' | 'posts'
@@ -20,38 +29,6 @@ export type CMSLinkType = {
   url?: string | null
 }
 
-export function getCMSLinkHref({
-  type,
-  reference,
-  url,
-}: Pick<CMSLinkType, 'type' | 'reference' | 'url'>): string | null {
-  // `typeof null === 'object'` — guard null (e.g. trashed / missing populated docs)
-  const value = reference?.value
-  if (type === 'reference' && value && typeof value === 'object' && value.slug) {
-    return reference.relationTo !== 'pages'
-      ? `/${reference.relationTo}/${value.slug}`
-      : `/${value.slug}`
-  }
-
-  return url ?? null
-}
-
-export function isCMSLinkActive(pathname: string, href: string): boolean {
-  const normalize = (path: string) => (path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path)
-  const path = normalize(pathname)
-  const link = normalize(href)
-
-  if (link === '/home' || link === '/') {
-    return path === '/' || path === '/home'
-  }
-
-  if (path === link) {
-    return true
-  }
-
-  return path.startsWith(`${link}/`)
-}
-
 export const CMSLink: React.FC<CMSLinkType> = (props) => {
   const {
     type,
@@ -59,13 +36,17 @@ export const CMSLink: React.FC<CMSLinkType> = (props) => {
     children,
     className,
     label,
+    locale: localeProp,
     newTab,
     reference,
     size: sizeFromProps,
     url,
   } = props
 
-  const href = getCMSLinkHref({ type, reference, url })
+  const siteLocale = useSiteLocale()
+  const resolvedSiteLocale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
+  const locale = localeProp ?? resolvedSiteLocale
+  const href = getCMSLinkHref({ type, reference, url }, locale)
 
   if (!href) return null
 

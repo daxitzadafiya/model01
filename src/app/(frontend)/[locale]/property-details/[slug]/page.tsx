@@ -3,15 +3,21 @@ import { Suspense } from 'react'
 
 import { PropertyDetailPageClient } from '@/components/PropertyDetail/PropertyDetailPageClient'
 import { getContactForm } from '@/utilities/getContactForm'
-import { formatPageTitle, getAppName } from '@/utilities/getAppName'
-import { getCachedGlobal } from '@/utilities/getGlobals'
+import { generatePropertyDetailMeta } from '@/utilities/generateCRMDetailMeta'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const logo = await getCachedGlobal('logo', 0)()
+type Args = {
+  params: Promise<{
+    locale: string
+    slug?: string
+  }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
-  return {
-    title: formatPageTitle('Property Details', getAppName(logo)),
-  }
+export async function generateMetadata({
+  params: paramsPromise,
+}: Args): Promise<Metadata> {
+  const { locale, slug = '' } = await paramsPromise
+  return generatePropertyDetailMeta(decodeURIComponent(slug), locale)
 }
 
 export default async function PropertyDetailsPage() {

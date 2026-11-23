@@ -12,13 +12,20 @@ import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { t } from '@/utilities/translate'
 
 type Args = {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{
     q: string
   }>
 }
-export default async function Page({ searchParams: searchParamsPromise }: Args) {
-  const { q: query } = await searchParamsPromise
-  const { locale } = await getActiveLocale()
+export default async function Page({
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
+}: Args) {
+  const [{ locale: localeParam }, { q: query }] = await Promise.all([
+    paramsPromise,
+    searchParamsPromise,
+  ])
+  const { locale } = await getActiveLocale(localeParam)
   const payload = await getPayload({ config: configPromise })
   const searchHeading = await t('search.heading', locale, 'Search')
   const noResultsLabel = await t('search.noResults', locale, 'No results found.')
@@ -86,10 +93,15 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
   )
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
+  const { locale: localeParam } = await paramsPromise
+  const { locale } = await getActiveLocale(localeParam)
   const logo = await getCachedGlobal('logo', 0)()
 
   return {
     title: formatPageTitle('Search', getAppName(logo)),
+    alternates: {
+      canonical: `/${locale}/search`,
+    },
   }
 }

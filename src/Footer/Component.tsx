@@ -5,7 +5,8 @@ import React from 'react'
 import { Mail, MapPin, Phone } from 'lucide-react'
 
 import { CertificateScript } from '@/components/CertificateScript'
-import { CMSLink, getCMSLinkHref } from '@/components/Link'
+import { CMSLink } from '@/components/Link'
+import { getCMSLinkHref } from '@/components/Link/getCMSLinkHref'
 import { Media } from '@/components/Media'
 import { Logo } from '@/components/Logo/Logo'
 import { SocialIcon } from '@/components/SocialIcon'
@@ -96,7 +97,7 @@ export async function Footer() {
       widthClass: COLUMN_WIDTH_CLASS[resolveColumnWidth(data?.brandColumnWidth)],
       content: (
         <>
-          <Link className="inline-block mb-4 md:mb-8" href="/">
+          <Link className="inline-block mb-4 md:mb-8" href={`/${locale}`}>
             <Logo placement="footer" onDarkBackground sources={logoSources} />
           </Link>
           {tagline && (
@@ -143,6 +144,7 @@ export async function Footer() {
                   <CMSLink
                     className="hover:text-tertiary transition-colors text-on-primary"
                     {...link}
+                    locale={locale}
                   />
                 </li>
               ))}
@@ -222,7 +224,7 @@ export async function Footer() {
                   if (!media) return null
 
                   const alt = label || media.alt || 'Certification'
-                  const href = getCMSLinkHref(link ?? {})
+                  const href = getCMSLinkHref(link ?? {}, locale)
                   const badge = (
                     <div className="relative aspect-4/3 w-full overflow-hidden rounded-sm bg-white shadow-sm transition-opacity hover:opacity-90">
                       <Media

@@ -6,8 +6,10 @@ import { ChevronDown } from 'lucide-react'
 
 import type { Header } from '@/payload-types'
 import { CMSLink, getCMSLinkHref, isCMSLinkActive } from '@/components/Link'
+import { isLocale, type Locale } from '@/i18n/config'
 import { getHeaderNavLinkClass } from '@/providers/HeroOverlay'
 import { cn } from '@/utilities/ui'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 type NavItem = NonNullable<Header['navItems']>[number]
 type NavLink = NavItem['link']
@@ -21,8 +23,8 @@ type Props = {
   onDarkBackground?: boolean
 }
 
-const linkIsActive = (pathname: string, link: NavLink | SubLink) => {
-  const href = getCMSLinkHref(link)
+const linkIsActive = (pathname: string, link: NavLink | SubLink, locale: Locale) => {
+  const href = getCMSLinkHref(link, locale)
   return href ? isCMSLinkActive(pathname, href) : false
 }
 
@@ -34,11 +36,13 @@ export const NavDropdown: React.FC<Props> = ({
   onDarkBackground = false,
 }) => {
   const pathname = usePathname()
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const label = link.label || 'Menu'
-  const isActive = subLinks.some(({ link: subLink }) => linkIsActive(pathname, subLink))
+  const isActive = subLinks.some(({ link: subLink }) => linkIsActive(pathname, subLink, locale))
 
   const clearCloseTimer = () => {
     if (closeTimerRef.current) {
@@ -103,7 +107,7 @@ export const NavDropdown: React.FC<Props> = ({
               <div key={i} onClick={onNavigate} role="presentation">
                 <CMSLink
                   {...subLink}
-                  className={`block py-2 ${getHeaderNavLinkClass(linkIsActive(pathname, subLink), false)}`}
+                  className={`block py-2 ${getHeaderNavLinkClass(linkIsActive(pathname, subLink, locale), false)}`}
                 />
               </div>
             ))}
@@ -149,7 +153,7 @@ export const NavDropdown: React.FC<Props> = ({
                   {...subLink}
                   className={cn(
                     'block px-4 py-2.5 transition-colors duration-150',
-                    getHeaderNavLinkClass(linkIsActive(pathname, subLink), false),
+                    getHeaderNavLinkClass(linkIsActive(pathname, subLink, locale), false),
                   )}
                 />
               </li>

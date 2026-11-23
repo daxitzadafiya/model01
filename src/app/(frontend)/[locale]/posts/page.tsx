@@ -14,8 +14,13 @@ import { t } from '@/utilities/translate'
 
 export const revalidate = 600
 
-export default async function Page() {
-  const { locale } = await getActiveLocale()
+type Args = {
+  params: Promise<{ locale: string }>
+}
+
+export default async function Page({ params: paramsPromise }: Args) {
+  const params = await paramsPromise
+  const { locale } = await getActiveLocale(params.locale)
   const payload = await getPayload({ config: configPromise })
   const postsHeading = await t('posts.heading', locale, 'Posts')
 
@@ -61,10 +66,15 @@ export default async function Page() {
   )
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
+  const params = await paramsPromise
+  const { locale } = await getActiveLocale(params.locale)
   const logo = await getCachedGlobal('logo', 0)()
 
   return {
     title: formatPageTitle('Posts', getAppName(logo)),
+    alternates: {
+      canonical: `/${locale}/posts`,
+    },
   }
 }

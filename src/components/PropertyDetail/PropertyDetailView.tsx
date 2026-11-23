@@ -1,5 +1,9 @@
 'use client'
 
+import { isLocale, type Locale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
+
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 import { DocumentDownloadProvider } from '@/components/DocumentDownload/DocumentDownloadProvider'
@@ -107,11 +111,13 @@ export const PropertyDetailView: React.FC<Props> = ({
   const bedroomsLabel = useTranslation('propertyDetail.specs.bedrooms', 'Bedrooms')
   const bathroomsLabel = useTranslation('propertyDetail.specs.bathrooms', 'Bathrooms')
   const propertyTypeLabel = useTranslation('propertyDetail.specs.propertyType', 'Property Type')
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
   const homeLabel = useTranslation('homeLabel', 'Home')
   const propertiesLabel = useTranslation('propertiesLabel', 'Properties')
   const soldBadgeLabel = useTranslation('propertyList.card.sold', 'Sold')
   const reservedBadgeLabel = useTranslation('propertyList.card.reserved', 'Reserved')
-  const listHref = portfolioHref || '/'
+  const listHref = withLocalePrefix(portfolioHref || '/', locale)
   const selectDatesLabel = useTranslation(
     'propertyDetail.holiday.selectDatesForPrice',
     'Select dates to view price',
@@ -190,7 +196,7 @@ export const PropertyDetailView: React.FC<Props> = ({
 
         <div className="order-2 flex flex-col lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:sticky lg:top-32 lg:self-start xl:col-span-4 xl:col-start-9">
           <nav className="flex flex-wrap gap-x-2 text-label-sm font-label-sm text-on-surface-variant uppercase mb-4">
-            <Link className="hover:text-tertiary transition-colors" href="/">
+            <Link className="hover:text-tertiary transition-colors" href={`/${locale}`}>
               {homeLabel}
             </Link>
             <span>/</span>

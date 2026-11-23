@@ -1,12 +1,13 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState, useTransition } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 
 import { setLocale } from '@/i18n/actions'
 import { dispatchSiteLocaleChange } from '@/i18n/localeEvents'
 import { getMenuItemForLocale, type LanguageMenuItem, type Locale } from '@/i18n/config'
+import { replaceLocalePrefix } from '@/i18n/localePath'
 import { cn } from '@/utilities/ui'
 import { invalidateTranslationsForLocale } from '@/utilities/translationStore'
 
@@ -24,6 +25,7 @@ export const LanguageSwitcher: React.FC<Props> = ({
   onDarkBackground = false,
 }) => {
   const router = useRouter()
+  const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -66,6 +68,15 @@ export const LanguageSwitcher: React.FC<Props> = ({
       dispatchSiteLocaleChange(item.locale)
       invalidateTranslationsForLocale(item.locale)
       await setLocale(item.locale)
+
+      if (typeof window !== 'undefined') {
+        const search = window.location.search
+        const hash = window.location.hash
+        const nextPath = replaceLocalePrefix(pathname || '/', item.locale)
+        const href = `${nextPath}${search}${hash}`
+        router.replace(href, { scroll: false })
+      }
+
       router.refresh()
     })
   }

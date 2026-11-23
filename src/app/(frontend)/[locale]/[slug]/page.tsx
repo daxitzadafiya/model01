@@ -11,6 +11,7 @@ import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { RenderHero } from '@/heros/RenderHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import type { Locale } from '@/i18n/config'
+import { localeCodes } from '@/i18n/config'
 import { getActiveLocale } from '@/i18n/getLanguageMenu'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 
@@ -27,19 +28,22 @@ export async function generateStaticParams() {
     },
   })
 
-  const params = pages.docs
-    ?.filter((doc) => {
-      return doc.slug !== 'home'
-    })
-    .map(({ slug }) => {
-      return { slug }
-    })
+  const slugParams = (pages.docs || [])
+    .filter((doc) => doc.slug && doc.slug !== 'home')
+    .map(({ slug }) => String(slug))
+    .filter(Boolean)
 
-  return params
+  return localeCodes.flatMap((locale) =>
+    slugParams.map((slug) => ({
+      locale,
+      slug,
+    })),
+  )
 }
 
 type Args = {
   params: Promise<{
+    locale: string
     slug?: string
   }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -50,12 +54,9 @@ export default async function Page({
   searchParams: searchParamsPromise,
 }: Args) {
   const { isEnabled: draft } = await draftMode()
-  const [{ locale }, { slug = 'home' }, searchParams] = await Promise.all([
-    getActiveLocale(),
-    paramsPromise,
-    searchParamsPromise,
-  ])
-  // Decode to support slugs with special characters
+  const [params, searchParams] = await Promise.all([paramsPromise, searchParamsPromise])
+  const { locale } = await getActiveLocale(params.locale)
+  const slug = params.slug ?? 'home'
   const decodedSlug = decodeURIComponent(slug)
   const url = '/' + decodedSlug
   let page: RequiredDataFromCollectionSlug<'pages'> | null
@@ -66,12 +67,12 @@ export default async function Page({
   })
 
   // Remove this code once your website is seeded
-  if (!page && slug === 'home') {
+  if (!page && decodedSlug === 'home') {
     page = homeStatic
   }
 
   if (!page) {
-    return <PayloadRedirects url={url} />
+    return <PayloadRedirects url={url} locale={locale} />
   }
 
   const { hero, layout } = page
@@ -79,7 +80,7 @@ export default async function Page({
   return (
     <article className="">
       {/* Allows redirects for valid pages too */}
-      <PayloadRedirects disableNotFound url={url} />
+      <PayloadRedirects disableNotFound url={url} locale={locale} />
 
       {draft && <LivePreviewListener />}
 
@@ -90,16 +91,16 @@ export default async function Page({
 }
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
-  const { locale } = await getActiveLocale()
-  const { slug = 'home' } = await paramsPromise
-  // Decode to support slugs with special characters
+  const params = await paramsPromise
+  const { locale } = await getActiveLocale(params.locale)
+  const slug = params.slug ?? 'home'
   const decodedSlug = decodeURIComponent(slug)
   const page = await queryPageBySlug({
     slug: decodedSlug,
     locale,
   })
 
-  return generateMeta({ doc: page })
+  return generateMeta({ doc: page, locale })
 }
 
 const queryPageBySlug = cache(async ({ slug, locale }: { slug: string; locale: Locale }) => {
