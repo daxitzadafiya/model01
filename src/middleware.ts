@@ -32,22 +32,23 @@ async function resolveFallbackLocale(request: NextRequest): Promise<{
   locale: Locale
   siteDefault: Locale | null
 }> {
-  const visitor = request.cookies.get(localeCookieName)?.value?.trim().toLowerCase()
-  if (visitor && isLocale(visitor)) {
-    const cachedSite = request.cookies.get(siteDefaultLocaleCookieName)?.value?.trim().toLowerCase()
-    return {
-      locale: visitor,
-      siteDefault: cachedSite && isLocale(cachedSite) ? cachedSite : null,
-    }
-  }
+  const cachedSiteRaw = request.cookies
+    .get(siteDefaultLocaleCookieName)
+    ?.value?.trim()
+    .toLowerCase()
+  const cachedSite = cachedSiteRaw && isLocale(cachedSiteRaw) ? cachedSiteRaw : null
 
+  // Bare / unprefixed URLs always follow CMS Localization → Default language.
+  // Do not prefer `payload-locale` here: that cookie remembers the last viewed
+  // locale (e.g. after switching to SV) and would send zariko.com → /sv even when
+  // the admin default is English. Private/incognito has no cookie, so it already
+  // matched CMS default — keep normal browsing consistent with that.
   const fromCms = await fetchCmsDefaultLocale(request)
   if (fromCms) {
     return { locale: fromCms, siteDefault: fromCms }
   }
 
-  const cachedSite = request.cookies.get(siteDefaultLocaleCookieName)?.value?.trim().toLowerCase()
-  if (cachedSite && isLocale(cachedSite)) {
+  if (cachedSite) {
     return { locale: cachedSite, siteDefault: cachedSite }
   }
 
@@ -106,6 +107,8 @@ export async function middleware(request: NextRequest) {
   const hasValidLangQuery = Boolean(langQuery && isLocale(langQuery.trim().toLowerCase()))
 
   // Legacy `?lang=` → prefixed path (even when a prefix is already present).
+  // Use 307 (not 308): locale target depends on CMS default / query and must not be
+  // permanently cached by the browser (that made zariko.com keep opening /sv).
   if (hasValidLangQuery) {
     const { locale: fallback, siteDefault } = await resolveFallbackLocale(request)
     const target = buildLocalePrefixedUrl({
@@ -117,7 +120,7 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = target.pathname
     url.search = target.search
-    return withLocaleCookies(NextResponse.redirect(url, 308), target.locale, siteDefault)
+    return withLocaleCookies(NextResponse.redirect(url, 307), target.locale, siteDefault)
   }
 
   // Already prefixed → sync cookie/header for SSR.
@@ -132,7 +135,7 @@ export async function middleware(request: NextRequest) {
     return nextWithLocale(request, pathLocale, siteDefault)
   }
 
-  // Bare public path (incl. /download/…) → permanent redirect onto a locale prefix.
+  // Bare public path (incl. /download/…) → temporary redirect onto CMS default locale.
   const { locale: fallback, siteDefault } = await resolveFallbackLocale(request)
   const target = buildLocalePrefixedUrl({
     pathname,
@@ -143,7 +146,7 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
   url.pathname = target.pathname
   url.search = target.search
-  return withLocaleCookies(NextResponse.redirect(url, 308), target.locale, siteDefault)
+  return withLocaleCookies(NextResponse.redirect(url, 307), target.locale, siteDefault)
 }
 
 export const config = {
