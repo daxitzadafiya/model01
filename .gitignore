@@ -3,10 +3,13 @@ dist / media
 node_modules
 .DS_Store
 .env
+.env.*
+!.env.example
 .env.production
 .next
 next-env.d.ts
 .vercel
+*.tsbuildinfo
 
 # Payload default media upload directory
 public/robots.txt
@@ -14,11 +17,17 @@ public/sitemap*.xml
 
 backup/
 public/media/
+media/
 
-# Local SQLite (WAL sidecars — not for git)
+# Local SQLite and backups (not for git)
+*.db
+*.db-wal
+*.db-shm
+*.db.bak*
 roumpos.db
 roumpos.db-wal
 roumpos.db-shm
+roumpos.db.bak*
 
 # Playwright
 node_modules/
