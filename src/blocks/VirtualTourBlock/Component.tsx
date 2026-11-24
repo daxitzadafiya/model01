@@ -3,28 +3,14 @@
 import Link from 'next/link'
 import React from 'react'
 import type { Page } from '@/payload-types'
-import { useReveal } from '@/utilities/useReveal'
+import { getCMSLinkHref } from '@/components/Link/getCMSLinkHref'
 import { Media } from '@/components/Media'
+import { isLocale, type Locale } from '@/i18n/config'
 import { cn } from '@/utilities/ui'
+import { useReveal } from '@/utilities/useReveal'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 type Props = Extract<Page['layout'][0], { blockType: 'virtualTourBlock' }>
-
-function getCtaHref(ctaLink: Props['ctaLink']): string | null {
-  if (!ctaLink) return null
-
-  if (
-    ctaLink.type === 'reference' &&
-    typeof ctaLink.reference?.value === 'object' &&
-    ctaLink.reference.value &&
-    'slug' in ctaLink.reference.value &&
-    ctaLink.reference.value.slug
-  ) {
-    const base = ctaLink.reference.relationTo !== 'pages' ? `/${ctaLink.reference.relationTo}` : ''
-    return `${base}/${ctaLink.reference.value.slug}`
-  }
-
-  return ctaLink.url || null
-}
 
 const ctaClassName = cn(
   'inline-flex items-center justify-center px-10 py-4 rounded-full no-underline',
@@ -40,7 +26,9 @@ export const VirtualTourBlock: React.FC<Props> = ({
   backgroundImage,
 }) => {
   const ref = useReveal()
-  const href = getCtaHref(ctaLink)
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
+  const href = getCMSLinkHref(ctaLink, locale)
   const label = buttonText || ctaLink?.label || 'EXPLORE NOW'
   const newTabProps = ctaLink?.newTab
     ? { rel: 'noopener noreferrer' as const, target: '_blank' as const }

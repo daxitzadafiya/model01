@@ -18,7 +18,10 @@ import {
   listingPresetToDetailContext,
   stashPropertyDetailListingContext,
 } from '@/utilities/propertyDetailListingContext'
+import { isLocale, type Locale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
 import { PROJECT_DETAILS_PATH, PROPERTY_DETAILS_PATH } from '@/utilities/propertyUrl'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 import { useTranslation } from '@/utilities/translateClient'
 
 import { PropertyMapView } from './PropertyMapView'
@@ -52,6 +55,8 @@ export const PropertyMapModal: React.FC<Props> = ({
   const closeLabel = useTranslation('propertyMap.modal.closeButton', 'Close')
   const { settings, loading: settingsLoading } = usePropertyMapSettings()
   const router = useRouter()
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
   const [points, setPoints] = useState<MapPropertyPoint[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -132,7 +137,9 @@ export const PropertyMapModal: React.FC<Props> = ({
       const listingContext = listingPresetToDetailContext(listingPreset)
 
       if (listingPreset === 'projects') {
-        router.push(`${PROJECT_DETAILS_PATH}/_${encodeURIComponent(reference)}`)
+        router.push(
+          withLocalePrefix(`${PROJECT_DETAILS_PATH}/_${encodeURIComponent(reference)}`, locale),
+        )
         return
       }
 
@@ -144,12 +151,12 @@ export const PropertyMapModal: React.FC<Props> = ({
       }
 
       const href = appendListingContextToDetailHref(
-        `${PROPERTY_DETAILS_PATH}/_${reference}`,
+        withLocalePrefix(`${PROPERTY_DETAILS_PATH}/_${reference}`, locale),
         listingContext,
       )
-      router.push(href ?? `${PROPERTY_DETAILS_PATH}/_${reference}`)
+      router.push(href ?? withLocalePrefix(`${PROPERTY_DETAILS_PATH}/_${reference}`, locale))
     },
-    [listingPreset, router],
+    [listingPreset, locale, router],
   )
 
   const handleDrawApply = useCallback(

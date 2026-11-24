@@ -7,7 +7,10 @@ import { ArrowRight, Calendar } from 'lucide-react'
 import { Media } from '@/components/Media'
 import { CMSLink, type CMSLinkType } from '@/components/Link'
 import type { Media as MediaType } from '@/payload-types'
+import { isLocale, type Locale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
 import { cn } from '@/utilities/ui'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 import { useTranslation } from '@/utilities/translateClient'
 
 export type ArticleCardData = {
@@ -50,6 +53,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   linkTitle = !!href,
 }) => {
   const description = subtitle ?? excerpt
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
+  const localizedHref = href ? withLocalePrefix(href, locale) : undefined
   const categoryLabel = useTranslation('categoryLabel', category)
   const imageElement =
     typeof image === 'object' && image !== null ? (
@@ -68,8 +74,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       )}
       style={style}
     >
-      {linkImage && href ? (
-        <Link href={href} className="relative overflow-hidden aspect-4/3 block">
+      {linkImage && localizedHref ? (
+        <Link href={localizedHref} className="relative overflow-hidden aspect-4/3 block">
           {imageElement}
         </Link>
       ) : (
@@ -81,8 +87,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           {categoryLabel}
         </span>
         <h3 className="font-headline-sm text-headline-sm text-primary mb-3 leading-snug">
-          {linkTitle && href ? (
-            <Link href={href} className="hover:text-tertiary transition-colors">
+          {linkTitle && localizedHref ? (
+            <Link href={localizedHref} className="hover:text-tertiary transition-colors">
               {title}
             </Link>
           ) : (
@@ -103,8 +109,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
               {date}
             </time>
           )}
-          {href ? (
-            <Link href={href} className={ctaClassName}>
+          {localizedHref ? (
+            <Link href={localizedHref} className={ctaClassName}>
               {readMoreLabel}
               <ArrowRight size={14} aria-hidden />
             </Link>

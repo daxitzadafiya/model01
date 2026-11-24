@@ -4,6 +4,8 @@ import type { Form as FormType, FormFieldBlock } from '@payloadcms/plugin-form-b
 import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 
+import { isLocale, type Locale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
 import { getClientSideURL } from '@/utilities/getURL'
 import { parseFormSubmissionError } from '@/utilities/parseFormSubmissionError'
 import { useSiteLocale } from '@/utilities/useSiteLocale'
@@ -49,6 +51,7 @@ export function useFormSubmission(
   const [error, setError] = useState<{ message: string; status?: string } | undefined>()
   const router = useRouter()
   const submissionLocale = useSiteLocale()
+  const locale: Locale = isLocale(submissionLocale) ? submissionLocale : 'en'
 
   const onSubmit = useCallback(
     (data: FormFieldBlock[]) => {
@@ -102,7 +105,13 @@ export function useFormSubmission(
 
           if (confirmationType === 'redirect' && redirect) {
             const redirectUrl = redirect.url
-            if (redirectUrl) router.push(redirectUrl)
+            if (redirectUrl) {
+              const isExternal =
+                /^https?:\/\//i.test(redirectUrl) ||
+                redirectUrl.startsWith('mailto:') ||
+                redirectUrl.startsWith('tel:')
+              router.push(isExternal ? redirectUrl : withLocalePrefix(redirectUrl, locale))
+            }
           }
         } catch (err) {
           console.warn(err)
@@ -125,6 +134,7 @@ export function useFormSubmission(
       options.syncToOptimaCrm,
       options.extraSubmissionFields,
       submissionLocale,
+      locale,
     ],
   )
 

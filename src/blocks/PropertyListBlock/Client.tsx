@@ -11,7 +11,10 @@ import {
   type PropertyListInitialData,
   type PropertyListServerDataPayload,
 } from '@/components/PropertyList/PropertyListServerData'
+import { isLocale, type Locale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
 import type { CRMListingPreset } from '@/utilities/crmProperties'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 export type PropertyListBlockClientProps = Extract<
   Page['layout'][0],
@@ -47,6 +50,9 @@ export const PropertyListBlockClient: React.FC<Props> = ({
   children,
 }) => {
   const preset = (listingPreset ?? 'forSale') as CRMListingPreset
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
+  const parentHref = withLocalePrefix(breadcrumbParentHref || '/', locale)
 
   const [initialData, setInitialData] = useState<PropertyListInitialData | null>(null)
   const listingKeyRef = useRef(listingKey)
@@ -72,7 +78,7 @@ export const PropertyListBlockClient: React.FC<Props> = ({
               aria-label="Breadcrumb"
             >
               <Link
-                href={breadcrumbParentHref || '/'}
+                href={parentHref}
                 className="text-tertiary hover:text-primary transition-colors"
               >
                 {breadcrumbParentLabel || 'Home'}

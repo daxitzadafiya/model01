@@ -1,3 +1,5 @@
+'use client'
+
 import { Calendar, ChevronLeft, User } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
@@ -5,8 +7,11 @@ import React from 'react'
 import type { Post } from '@/payload-types'
 
 import { Media } from '@/components/Media'
+import { isLocale, type Locale } from '@/i18n/config'
+import { withLocalePrefix } from '@/i18n/localePath'
 import { formatPublishedDate } from '@/utilities/formatDateTime'
 import { formatAuthors } from '@/utilities/formatAuthors'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 export const PostHero: React.FC<{
   post: Post
@@ -14,6 +19,8 @@ export const PostHero: React.FC<{
   datePublishedLabel: string
   backLabel: string
 }> = ({ post, authorLabel, datePublishedLabel, backLabel }) => {
+  const siteLocale = useSiteLocale()
+  const locale: Locale = isLocale(siteLocale) ? siteLocale : 'en'
   const { categories, heroImage, populatedAuthors, publishedAt, subtitle, title } = post
 
   const hasAuthors =
@@ -35,7 +42,7 @@ export const PostHero: React.FC<{
     <header className="pt-20 md:pt-24 pb-6 md:pb-8 bg-surface">
       <div className="max-w-max-width mx-auto px-margin-mobile md:px-margin-tablet lg:px-margin-desktop">
         <Link
-          href="/posts"
+          href={withLocalePrefix('/posts', locale)}
           className="inline-flex items-center gap-1 font-label-sm text-label-sm text-secondary hover:text-primary transition-colors"
         >
           <ChevronLeft size={16} className="shrink-0" aria-hidden />
