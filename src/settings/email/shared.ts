@@ -12,8 +12,29 @@ export type ResolvedEmailSettings = {
     fromName?: string | null
   } | null
   notifications?: {
+    /** One or more addresses, comma-separated. */
     recipientAddress?: string | null
   } | null
+}
+
+const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export function isValidEmailAddress(value: string): boolean {
+  return EMAIL_ADDRESS_PATTERN.test(value)
+}
+
+/** Split a comma-separated recipient string into trimmed non-empty parts. */
+export function parseNotificationRecipients(value: string | null | undefined): string[] {
+  if (!value?.trim()) return []
+  return value
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
+/** Valid notification recipient emails from a comma-separated field value. */
+export function getValidNotificationRecipients(value: string | null | undefined): string[] {
+  return parseNotificationRecipients(value).filter(isValidEmailAddress)
 }
 
 export function isEmailConfigured(
@@ -32,6 +53,6 @@ export function isEmailConfigured(
       smtp.password &&
       sender?.fromAddress &&
       sender.fromName &&
-      notifications?.recipientAddress,
+      getValidNotificationRecipients(notifications?.recipientAddress).length > 0,
   )
 }

@@ -1,11 +1,15 @@
 import type { GlobalConfig } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
-import { a } from '@/utilities/adminI18n'
+import { a, aString } from '@/utilities/adminI18n'
 import { invalidateEmailTransportCache } from '@/email/dynamicEmailTransport'
 import { defaultClientConfirmationContent } from '@/email/defaultClientConfirmationContent'
 import { defaultDocumentDownloadContent } from '@/email/defaultDocumentDownloadContent'
 import { emailTemplateFields } from '@/fields/emailTemplateFields'
+import {
+  isValidEmailAddress,
+  parseNotificationRecipients,
+} from '@/settings/email/shared'
 import { revalidateCacheTag } from '@/utilities/cacheRevalidation'
 
 import { autoTranslateEmailSettingsContent } from './hooks/autoTranslateEmailSettingsContent'
@@ -163,14 +167,39 @@ export const EmailSettings: GlobalConfig = {
               fields: [
                 {
                   name: 'recipientAddress',
-                  type: 'email',
+                  type: 'text',
                   required: true,
-                  label: a('admin.emailSettings.notifications.recipientAddress', 'Notification recipient'),
+                  label: a(
+                    'admin.emailSettings.notifications.recipientAddress',
+                    'Notification recipients',
+                  ),
                   admin: {
                     description: a(
                       'admin.emailSettings.notifications.recipientAddress.description',
-                      'Where contact, property inquiry, and holiday booking notifications are delivered (your team inbox).',
+                      'Comma-separated emails for contact, property inquiry, and holiday booking notifications (e.g. team@example.com, sales@example.com).',
                     ),
+                  },
+                  validate: (
+                    value: string | null | undefined,
+                    { req }: { req?: { i18n?: { language?: string } } },
+                  ) => {
+                    const recipients = parseNotificationRecipients(value)
+                    if (recipients.length === 0) {
+                      return aString(
+                        'admin.emailSettings.notifications.recipientAddress.required',
+                        'Enter at least one email address.',
+                        req?.i18n?.language,
+                      )
+                    }
+                    const invalid = recipients.filter((email) => !isValidEmailAddress(email))
+                    if (invalid.length > 0) {
+                      return `${aString(
+                        'admin.emailSettings.notifications.recipientAddress.invalid',
+                        'Invalid email address',
+                        req?.i18n?.language,
+                      )}: ${invalid.join(', ')}`
+                    }
+                    return true
                   },
                 },
               ],

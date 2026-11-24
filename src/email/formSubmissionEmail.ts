@@ -9,6 +9,7 @@ import { lexicalToEmailHtml } from '@/email/lexicalToEmailHtml'
 import { loadNotificationEmailBranding } from '@/email/loadNotificationEmailBranding'
 import { sendDocumentDownloadEmail } from '@/email/sendDocumentDownloadEmail'
 import { getEmailSettings, isEmailConfigured } from '@/settings/email/server'
+import { getValidNotificationRecipients } from '@/settings/email/shared'
 import { sendConfiguredEmail } from '@/email/sendConfiguredEmail'
 import { getEmailFieldLabelMapping } from '@/utilities/formFieldLabels'
 import {
@@ -450,12 +451,12 @@ async function sendNotificationEmail({
   })
 
   const sender = settings.sender!
-  const recipient = settings.notifications!.recipientAddress!
+  const recipients = getValidNotificationRecipients(settings.notifications!.recipientAddress)
   const emailSubject = subjectSuffix ? `${teamSubject} — ${subjectSuffix}` : teamSubject
 
-  // Agency / team notification (same recipient as contact form).
+  // Agency / team notification — all configured recipients (comma-separated in Email settings).
   await sendConfiguredEmail(payload, {
-    to: recipient,
+    to: recipients,
     subject: emailSubject,
     html: notificationHtml,
     from: `${sender.fromName} <${sender.fromAddress}>`,
