@@ -11,6 +11,7 @@ import {
   PropertyDetailFooterActions,
 } from '@/components/PropertyDetail/PropertyDetailActions'
 import { PropertyDetailAmenities } from '@/components/PropertyDetail/PropertyDetailAmenities'
+import { PropertyDetailFeatures } from '@/components/PropertyDetail/PropertyDetailFeatures'
 import { PropertyDetailGallery } from '@/components/PropertyDetail/PropertyDetailGallery'
 import { PropertyDetailInquiryForm } from '@/components/PropertyDetail/PropertyDetailInquiryForm'
 import { PropertyDetailMap } from '@/components/PropertyDetail/PropertyDetailMap'
@@ -20,6 +21,8 @@ import { ProjectDetailAvailability } from '@/components/ProjectDetail/ProjectDet
 import { ProjectDetailDocuments } from '@/components/ProjectDetail/ProjectDetailDocuments'
 import { ProjectDetailRelated } from '@/components/ProjectDetail/ProjectDetailRelated'
 import type { CRMAmenity } from '@/utilities/crmAmenities'
+import type { CRMPropertyFeatures } from '@/utilities/crmPropertyFeatures'
+import { hasCRMPropertyFeatures } from '@/utilities/crmPropertyFeatures'
 import type { CRMPropertyDocumentGroup } from '@/utilities/crmPropertyDocuments'
 import type { CRMPropertyVideoItem } from '@/utilities/crmPropertyVideo'
 import type { Form } from '@/payload-types'
@@ -36,6 +39,7 @@ type Props = {
   inquiry: PropertyInquiryContext
   project: NormalizedCRMProject
   amenities: CRMAmenity[]
+  features?: CRMPropertyFeatures | null
   videos?: CRMPropertyVideoItem[]
   documents?: CRMPropertyDocumentGroup[]
   latitude?: number
@@ -79,6 +83,7 @@ export const ProjectDetailView: React.FC<Props> = ({
   inquiry,
   project,
   amenities,
+  features = null,
   videos = [],
   documents = [],
   latitude,
@@ -228,7 +233,11 @@ export const ProjectDetailView: React.FC<Props> = ({
 
       <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-16 grid grid-cols-1 gap-12 md:mb-24 md:gap-16 lg:grid-cols-3 lg:gap-24">
         <div className="lg:col-span-2 space-y-12">
-          <PropertyDetailAmenities amenities={amenities} />
+          {features && hasCRMPropertyFeatures(features) ? (
+            <PropertyDetailFeatures features={features} />
+          ) : (
+            <PropertyDetailAmenities amenities={amenities} />
+          )}
           <ProjectDetailDocuments groups={documents} />
 
           {project.availabilityPhases.length === 0 && project.phases.length > 0 ? (

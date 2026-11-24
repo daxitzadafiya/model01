@@ -18,6 +18,10 @@ import {
   type PropertyPriceLabels,
 } from '@/utilities/localizePropertyPrice'
 import {
+  featureValueTranslationKey,
+  type CRMFeatureValue,
+} from '@/utilities/crmPropertyFeatures'
+import {
   getTranslationSnapshot,
   isTranslationResolved,
   requestTranslation,
@@ -179,6 +183,48 @@ export function useTranslatedOptions<T extends { value: string; label: string }>
       setTranslated(mapTranslatedOptions(options, keyPrefix, locale))
     })
   }, [options, keyPrefix, locale])
+
+  return translated
+}
+
+function mapTranslatedFeatureValues(
+  values: readonly CRMFeatureValue[],
+  locale: string,
+): CRMFeatureValue[] {
+  return values.map((value) => {
+    if (value.translate === false) return value
+    return {
+      ...value,
+      label: getTranslationSnapshot(
+        featureValueTranslationKey(value.key),
+        locale,
+        value.label,
+      ),
+    }
+  })
+}
+
+/** Translate CRM feature value labels via the Translations store / DeepL fallback. */
+export function useTranslatedFeatureValues(
+  values: readonly CRMFeatureValue[],
+): CRMFeatureValue[] {
+  const locale = useSiteLocale()
+  const [translated, setTranslated] = useState<CRMFeatureValue[]>(() =>
+    mapTranslatedFeatureValues(values, locale),
+  )
+
+  useEffect(() => {
+    setTranslated(mapTranslatedFeatureValues(values, locale))
+
+    for (const value of values) {
+      if (value.translate === false) continue
+      requestTranslation(featureValueTranslationKey(value.key), locale, value.label)
+    }
+
+    return subscribe(() => {
+      setTranslated(mapTranslatedFeatureValues(values, locale))
+    })
+  }, [values, locale])
 
   return translated
 }

@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react'
 import { ProjectDetailView } from '@/components/ProjectDetail/ProjectDetailView'
 import { Skeleton } from '@/components/ui/skeleton'
 import { normalizeCRMAmenities } from '@/utilities/crmAmenities'
+import { normalizeCRMPropertyFeatures } from '@/utilities/crmPropertyFeatures'
 import {
   fetchCRMProjectDetail,
   fetchCRMProjectRelatedProperties,
@@ -55,6 +56,9 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
   const [notFoundState, setNotFoundState] = useState(false)
   const [project, setProject] = useState<ReturnType<typeof normalizeCRMProject> | null>(null)
   const [amenities, setAmenities] = useState<ReturnType<typeof normalizeCRMAmenities>>([])
+  const [features, setFeatures] = useState<ReturnType<typeof normalizeCRMPropertyFeatures> | null>(
+    null,
+  )
   const [videos, setVideos] = useState<ReturnType<typeof resolveCRMPropertyVideos>>([])
   const [documents, setDocuments] = useState<ReturnType<typeof resolveCRMPropertyDocuments>>([])
   const [inquiry, setInquiry] = useState<PropertyInquiryContext>({})
@@ -129,6 +133,7 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
           }),
         )
         setAmenities(normalizeCRMAmenities(detailSource))
+        setFeatures(normalizeCRMPropertyFeatures(detailSource))
         setLatitude(normalized.latitude)
         setLongitude(normalized.longitude)
         document.title = formatPageTitle(normalized.title)
@@ -174,6 +179,7 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
       inquiry={inquiry}
       project={project}
       amenities={amenities}
+      features={features}
       videos={videos}
       documents={documents}
       latitude={latitude}

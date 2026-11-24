@@ -14,6 +14,7 @@ import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { FLOATING_MENU_Z_INDEX } from '@/utilities/floatingMenuPosition'
 import { cn } from '@/utilities/ui'
 import { useTranslation } from '@/utilities/translateClient'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 type Props = {
   id: string
@@ -110,20 +111,20 @@ const buildMonthGrid = (monthDate: Date): Date[] => {
   })
 }
 
-const formatDateLabel = (value: string): string => {
+const formatDateLabel = (value: string, locale: string): string => {
   const timestamp = Date.parse(`${value}T00:00:00Z`)
   if (!Number.isFinite(timestamp)) return value
-  return new Date(timestamp).toLocaleDateString('en-GB', {
+  return new Date(timestamp).toLocaleDateString(locale || 'en', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   })
 }
 
-const formatDateShort = (value: string): string => {
+const formatDateShort = (value: string, locale: string): string => {
   const timestamp = Date.parse(`${value}T00:00:00Z`)
   if (!Number.isFinite(timestamp)) return value
-  return new Date(timestamp).toLocaleDateString('en-GB', {
+  return new Date(timestamp).toLocaleDateString(locale || 'en', {
     day: '2-digit',
     month: 'short',
   })
@@ -134,7 +135,10 @@ type MonthCalendarProps = {
   today: Date
   fromDate: Date | null
   toDate: Date | null
+  locale: string
   weekdayLabels: Record<(typeof weekdayKeys)[number], string>
+  prevMonthAriaLabel: string
+  nextMonthAriaLabel: string
   compact?: boolean
   onPrevMonth?: () => void
   onNextMonth?: () => void
@@ -146,13 +150,16 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({
   today,
   fromDate,
   toDate,
+  locale,
   weekdayLabels,
+  prevMonthAriaLabel,
+  nextMonthAriaLabel,
   compact = false,
   onPrevMonth,
   onNextMonth,
   onDatePick,
 }) => {
-  const monthLabel = monthDate.toLocaleDateString('en-GB', {
+  const monthLabel = monthDate.toLocaleDateString(locale || 'en', {
     month: 'long',
     year: 'numeric',
   })
@@ -166,7 +173,7 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({
           type="button"
           onClick={onPrevMonth}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low"
-          aria-label="Previous month"
+          aria-label={prevMonthAriaLabel}
         >
           <ChevronLeft size={16} />
         </button>
@@ -177,7 +184,7 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({
           type="button"
           onClick={onNextMonth}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low"
-          aria-label="Next month"
+          aria-label={nextMonthAriaLabel}
         >
           <ChevronRight size={16} />
         </button>
@@ -249,6 +256,7 @@ const DateRangePickerField: React.FC<Props> = ({
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({})
   const isMobile = useMobileDatePicker()
 
+  const locale = useSiteLocale()
   const clearLabel = useTranslation('propertyList.filters.clearFilters', 'Clear Filters')
   const doneLabel = useTranslation('common.done', 'Done')
   const datePlaceholder = useTranslation(
@@ -258,6 +266,11 @@ const DateRangePickerField: React.FC<Props> = ({
   const selectedRangeLabel = useTranslation('propertyList.filters.selectedRange', 'Selected range')
   const checkInLabel = useTranslation('propertyList.holiday.checkIn', 'Check-in')
   const checkOutLabel = useTranslation('propertyList.holiday.checkOut', 'Check-out')
+  const prevMonthAriaLabel = useTranslation(
+    'propertyDetail.holiday.prevMonthAria',
+    'Previous month',
+  )
+  const nextMonthAriaLabel = useTranslation('propertyDetail.holiday.nextMonthAria', 'Next month')
   const weekdayLabels = {
     mon: useTranslation('propertyDetail.holiday.weekdays.mon', 'Mon'),
     tue: useTranslation('propertyDetail.holiday.weekdays.tue', 'Tue'),
@@ -283,12 +296,12 @@ const DateRangePickerField: React.FC<Props> = ({
       const toYear = periodTo.slice(0, 4)
       const sameYear = fromYear === toYear
       return sameYear
-        ? `${formatDateShort(periodFrom)} - ${formatDateShort(periodTo)} ${toYear}`
-        : `${formatDateShort(periodFrom)} ${fromYear} - ${formatDateShort(periodTo)} ${toYear}`
+        ? `${formatDateShort(periodFrom, locale)} - ${formatDateShort(periodTo, locale)} ${toYear}`
+        : `${formatDateShort(periodFrom, locale)} ${fromYear} - ${formatDateShort(periodTo, locale)} ${toYear}`
     }
-    if (periodFrom) return `${formatDateShort(periodFrom)} - ${datePlaceholder}`
+    if (periodFrom) return `${formatDateShort(periodFrom, locale)} - ${datePlaceholder}`
     return datePlaceholder
-  }, [periodFrom, periodTo, datePlaceholder])
+  }, [datePlaceholder, locale, periodFrom, periodTo])
 
   const monthDates = useMemo(() => {
     if (isMobile) return [visibleMonth]
@@ -452,7 +465,7 @@ const DateRangePickerField: React.FC<Props> = ({
             {checkInLabel}
           </p>
           <p className="truncate text-body-sm text-on-surface">
-            {periodFrom ? formatDateLabel(periodFrom) : '—'}
+            {periodFrom ? formatDateLabel(periodFrom, locale) : '—'}
           </p>
         </div>
         <div className="rounded-lg border border-outline-variant/20 bg-surface-container-low px-2.5 py-2 sm:px-3">
@@ -460,7 +473,7 @@ const DateRangePickerField: React.FC<Props> = ({
             {checkOutLabel}
           </p>
           <p className="truncate text-body-sm text-on-surface">
-            {periodTo ? formatDateLabel(periodTo) : '—'}
+            {periodTo ? formatDateLabel(periodTo, locale) : '—'}
           </p>
         </div>
       </div>
@@ -473,7 +486,10 @@ const DateRangePickerField: React.FC<Props> = ({
             today={today}
             fromDate={fromDate}
             toDate={toDate}
+            locale={locale}
             weekdayLabels={weekdayLabels}
+            prevMonthAriaLabel={prevMonthAriaLabel}
+            nextMonthAriaLabel={nextMonthAriaLabel}
             compact={isMobile}
             onPrevMonth={() => moveMonth(-1)}
             onNextMonth={() => moveMonth(1)}

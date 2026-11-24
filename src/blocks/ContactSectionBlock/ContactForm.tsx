@@ -4,7 +4,7 @@ import type { Form as FormType } from '@payloadcms/plugin-form-builder/types'
 import { AlertCircle, Check, CircleArrowRight, Loader2, Lock } from 'lucide-react'
 import React from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useIntegrationsSettings } from '@/hooks/useIntegrationsSettings'
 import RichText from '@/components/RichText'
@@ -141,6 +141,35 @@ export const ContactForm: React.FC<Props> = ({
       setRecaptchaValidationError(null)
     }
   }, [hasSubmitted, formMethods])
+
+  // Translations resolve async; uncontrolled defaultValue only applies on mount.
+  // Keep prefilled fields in sync until the visitor edits them.
+  const previousDefaultFieldValuesRef = useRef<Record<string, string>>({})
+  useEffect(() => {
+    if (!defaultFieldValues) return
+
+    for (const [name, value] of Object.entries(defaultFieldValues)) {
+      if (typeof value !== 'string') continue
+
+      const current = formMethods.getValues(name)
+      const previousDefault = previousDefaultFieldValuesRef.current[name]
+      const { isDirty } = formMethods.getFieldState(name)
+      const stillShowingPreviousDefault =
+        previousDefault != null && typeof current === 'string' && current === previousDefault
+      const shouldApply =
+        !isDirty || current == null || current === '' || stillShowingPreviousDefault
+
+      if (shouldApply && current !== value) {
+        formMethods.setValue(name, value, {
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: false,
+        })
+      }
+    }
+
+    previousDefaultFieldValuesRef.current = defaultFieldValues
+  }, [defaultFieldValues, formMethods])
 
   const resetSubmissionWithRecaptcha = () => {
     setRecaptchaToken('')

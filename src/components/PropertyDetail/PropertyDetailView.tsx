@@ -16,6 +16,7 @@ import {
 } from '@/components/PropertyDetail/PropertyDetailActions'
 import { PropertyDetailAmenities } from '@/components/PropertyDetail/PropertyDetailAmenities'
 import { PropertyDetailEnergy } from '@/components/PropertyDetail/PropertyDetailEnergy'
+import { PropertyDetailFeatures } from '@/components/PropertyDetail/PropertyDetailFeatures'
 import { PropertyDetailGallery } from '@/components/PropertyDetail/PropertyDetailGallery'
 import { PropertyDetailInquiryForm } from '@/components/PropertyDetail/PropertyDetailInquiryForm'
 import { PropertyHolidayBooking } from '@/components/PropertyDetail/PropertyHolidayBooking'
@@ -27,6 +28,8 @@ import { PropertyDetailVideo } from '@/components/PropertyDetail/PropertyDetailV
 import { PropertyDetailDescription } from '@/components/PropertyDetail/PropertyDetailDescription'
 import { PropertyDetailDocuments } from '@/components/PropertyDetail/PropertyDetailDocuments'
 import type { CRMAmenity, CRMPropertyEnergy } from '@/utilities/crmAmenities'
+import type { CRMPropertyFeatures } from '@/utilities/crmPropertyFeatures'
+import { hasCRMPropertyFeatures } from '@/utilities/crmPropertyFeatures'
 import type { CRMPropertyDocumentGroup } from '@/utilities/crmPropertyDocuments'
 import type { CRMPropertyVideoItem } from '@/utilities/crmPropertyVideo'
 import type { Form } from '@/payload-types'
@@ -51,6 +54,7 @@ type Props = {
   inquiry: PropertyInquiryContext
   property: NormalizedCRMProperty
   amenities: CRMAmenity[]
+  features?: CRMPropertyFeatures | null
   energy: CRMPropertyEnergy | null
   relatedProperties: NormalizedListProperty[]
   similarPropertiesLoading?: boolean
@@ -80,6 +84,7 @@ export const PropertyDetailView: React.FC<Props> = ({
   inquiry,
   property,
   amenities,
+  features = null,
   energy,
   relatedProperties,
   similarPropertiesLoading = false,
@@ -264,7 +269,11 @@ export const PropertyDetailView: React.FC<Props> = ({
 
       <section className="max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop mb-16 grid grid-cols-1 gap-12 md:mb-24 md:gap-16 lg:grid-cols-3 lg:gap-24">
         <div className="lg:col-span-2">
-          <PropertyDetailAmenities amenities={amenities} />
+          {features && hasCRMPropertyFeatures(features) ? (
+            <PropertyDetailFeatures features={features} />
+          ) : (
+            <PropertyDetailAmenities amenities={amenities} />
+          )}
           <PropertyDetailEnergy energy={energy ?? { isEmpty: true }} />
           <PropertyDetailDocuments groups={documents} />
           {isHolidayRental && (

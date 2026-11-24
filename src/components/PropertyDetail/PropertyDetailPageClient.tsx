@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { PropertyDetailView } from '@/components/PropertyDetail/PropertyDetailView'
 import { Skeleton } from '@/components/ui/skeleton'
 import { normalizeCRMAmenities, normalizeCRMPropertyEnergy } from '@/utilities/crmAmenities'
+import { normalizeCRMPropertyFeatures } from '@/utilities/crmPropertyFeatures'
 import { fetchCRMPropertyDetail } from '@/utilities/crmPropertyDetail'
 import { fetchCRMProjectDetail } from '@/utilities/crmProjects'
 import {
@@ -107,6 +108,9 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
 
   const [property, setProperty] = useState<ReturnType<typeof normalizeCRMProperty> | null>(null)
   const [amenities, setAmenities] = useState<ReturnType<typeof normalizeCRMAmenities>>([])
+  const [features, setFeatures] = useState<ReturnType<typeof normalizeCRMPropertyFeatures> | null>(
+    null,
+  )
   const [energy, setEnergy] = useState<ReturnType<typeof normalizeCRMPropertyEnergy>>(null)
   const [latitude, setLatitude] = useState<number | undefined>()
   const [longitude, setLongitude] = useState<number | undefined>()
@@ -289,6 +293,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
           }),
         )
         setAmenities(normalizeCRMAmenities(raw))
+        setFeatures(normalizeCRMPropertyFeatures(raw))
         setEnergy(normalizeCRMPropertyEnergy(raw))
         setLatitude(pickNumber(raw.latitude) ?? pickNumber(raw.lat))
         setLongitude(pickNumber(raw.longitude) ?? pickNumber(raw.lng))
@@ -381,6 +386,7 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
       inquiry={inquiry}
       property={property}
       amenities={amenities}
+      features={features}
       energy={energy}
       relatedProperties={relatedProperties}
       similarPropertiesLoading={similarPropertiesLoading}

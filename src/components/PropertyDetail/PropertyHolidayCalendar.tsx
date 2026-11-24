@@ -12,6 +12,7 @@ import {
   type CRMPropertyBooking,
 } from '@/utilities/holidayRentalPricing'
 import { useTranslation } from '@/utilities/translateClient'
+import { useSiteLocale } from '@/utilities/useSiteLocale'
 
 type Props = {
   bookings?: CRMPropertyBooking[]
@@ -84,7 +85,10 @@ type MonthGridProps = {
   departureDate: Date | null
   interactive: boolean
   compact: boolean
+  locale: string
   weekdayLabels: Record<(typeof WEEKDAY_KEYS)[number], string>
+  prevMonthAriaLabel: string
+  nextMonthAriaLabel: string
   onDayClick?: (day: Date) => void
   showMonthLabel?: boolean
   showMonthNav?: boolean
@@ -92,6 +96,12 @@ type MonthGridProps = {
   onPrevMonth?: () => void
   onNextMonth?: () => void
 }
+
+const formatMonthYear = (date: Date, locale: string) =>
+  date.toLocaleDateString(locale || 'en', {
+    month: 'long',
+    year: 'numeric',
+  })
 
 const MonthGrid: React.FC<MonthGridProps> = ({
   monthDate,
@@ -102,7 +112,10 @@ const MonthGrid: React.FC<MonthGridProps> = ({
   departureDate,
   interactive,
   compact,
+  locale,
   weekdayLabels,
+  prevMonthAriaLabel,
+  nextMonthAriaLabel,
   onDayClick,
   showMonthLabel = true,
   showMonthNav = false,
@@ -110,10 +123,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({
   onPrevMonth,
   onNextMonth,
 }) => {
-  const monthLabel = monthDate.toLocaleDateString('en-GB', {
-    month: 'long',
-    year: 'numeric',
-  })
+  const monthLabel = formatMonthYear(monthDate, locale)
 
   const navButtonClass =
     'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors cursor-pointer hover:bg-surface-container-low hover:text-primary disabled:cursor-not-allowed disabled:opacity-30'
@@ -142,7 +152,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({
         <div className="mb-2 flex items-center justify-between gap-2">
           <button
             type="button"
-            aria-label="Previous month"
+            aria-label={prevMonthAriaLabel}
             disabled={!canGoPrev}
             onClick={onPrevMonth}
             className={navButtonClass}
@@ -154,7 +164,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({
           </p>
           <button
             type="button"
-            aria-label="Next month"
+            aria-label={nextMonthAriaLabel}
             onClick={onNextMonth}
             className={navButtonClass}
           >
@@ -235,7 +245,7 @@ const MonthGrid: React.FC<MonthGridProps> = ({
               onClick={interactive && onDayClick ? () => onDayClick(day) : undefined}
               className={buttonClass}
               aria-pressed={isEndpoint || rangePosition === 'middle'}
-              aria-label={day.toLocaleDateString('en-GB', {
+              aria-label={day.toLocaleDateString(locale || 'en', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
@@ -282,8 +292,25 @@ export const PropertyHolidayCalendar: React.FC<Props> = ({
   title,
   className = '',
 }) => {
+  const locale = useSiteLocale()
   const availabilityLabel = useTranslation('propertyDetail.holiday.availability', 'Availability')
   const clearDatesLabel = useTranslation('propertyDetail.holiday.clearDates', 'Clear dates')
+  const checkInOutLabel = useTranslation(
+    'propertyDetail.holiday.legend.checkInOut',
+    'Check-in / out',
+  )
+  const yourStayLabel = useTranslation('propertyDetail.holiday.legend.yourStay', 'Your stay')
+  const enquiryLabel = useTranslation('propertyDetail.holiday.legend.enquiry', 'Enquiry')
+  const bookedLabel = useTranslation('propertyDetail.holiday.legend.booked', 'Booked')
+  const unavailableLabel = useTranslation(
+    'propertyDetail.holiday.legend.unavailable',
+    'Unavailable',
+  )
+  const prevMonthAriaLabel = useTranslation(
+    'propertyDetail.holiday.prevMonthAria',
+    'Previous month',
+  )
+  const nextMonthAriaLabel = useTranslation('propertyDetail.holiday.nextMonthAria', 'Next month')
   const weekdayLabels = {
     mon: useTranslation('propertyDetail.holiday.weekdays.mon', 'Mon'),
     tue: useTranslation('propertyDetail.holiday.weekdays.tue', 'Tue'),
@@ -355,9 +382,7 @@ export const PropertyHolidayCalendar: React.FC<Props> = ({
   const handlePrevMonth = () => setVisibleMonth((current) => addMonths(current, -1))
   const handleNextMonth = () => setVisibleMonth((current) => addMonths(current, 1))
 
-  const monthLabels = monthDates.map((monthDate) =>
-    monthDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
-  )
+  const monthLabels = monthDates.map((monthDate) => formatMonthYear(monthDate, locale))
 
   return (
     <div
@@ -373,7 +398,7 @@ export const PropertyHolidayCalendar: React.FC<Props> = ({
         <div className="flex items-center justify-between gap-2 border-b border-outline-variant/15 px-2 py-3 sm:gap-3 sm:px-3">
           <button
             type="button"
-            aria-label="Previous month"
+            aria-label={prevMonthAriaLabel}
             disabled={!canGoPrev}
             onClick={handlePrevMonth}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full cursor-pointer text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary disabled:pointer-events-none disabled:opacity-30"
@@ -392,7 +417,7 @@ export const PropertyHolidayCalendar: React.FC<Props> = ({
           </div>
           <button
             type="button"
-            aria-label="Next month"
+            aria-label={nextMonthAriaLabel}
             onClick={handleNextMonth}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full cursor-pointer text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary"
           >
@@ -415,7 +440,10 @@ export const PropertyHolidayCalendar: React.FC<Props> = ({
             departureDate={departureDate}
             interactive={interactive}
             compact={compact}
+            locale={locale}
             weekdayLabels={weekdayLabels}
+            prevMonthAriaLabel={prevMonthAriaLabel}
+            nextMonthAriaLabel={nextMonthAriaLabel}
             onDayClick={handleDayClick}
             showMonthLabel={false}
             showMonthNav={months === 1}
@@ -433,25 +461,25 @@ export const PropertyHolidayCalendar: React.FC<Props> = ({
               <>
                 <span className="inline-flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-                  Check-in / out
+                  {checkInOutLabel}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-sm bg-tertiary/25" />
-                  Your stay
+                  {yourStayLabel}
                 </span>
               </>
             )}
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-sm bg-amber-100 ring-1 ring-amber-300/60" />
-              Enquiry
+              {enquiryLabel}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-sm bg-red-100 ring-1 ring-red-300/60" />
-              Booked
+              {bookedLabel}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-sm bg-surface-container-low" />
-              Unavailable
+              {unavailableLabel}
             </span>
           </div>
 

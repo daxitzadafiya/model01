@@ -41,6 +41,9 @@ export const PropertyHolidayBookingsList: React.FC<Props> = ({ bookings = [] }) 
   const nightsLabel = useTranslation('propertyDetail.holiday.nights', 'nights')
   const guestsLabel = useTranslation('propertyList.filters.guests', 'Guests')
   const refLabel = useTranslation('propertyDetail.map.refPrefix', 'Ref:')
+  const enquiryLabel = useTranslation('propertyDetail.holiday.legend.enquiry', 'Enquiry')
+  const bookedLabel = useTranslation('propertyDetail.holiday.legend.booked', 'Booked')
+  const reservedLabel = useTranslation('propertyDetail.holiday.legend.reserved', 'Reserved')
 
   const sorted = useMemo(() => sortBookingsByArrival(bookings), [bookings])
 
@@ -61,10 +64,10 @@ export const PropertyHolidayBookingsList: React.FC<Props> = ({ bookings = [] }) 
           const status = resolveBookingDisplayStatus(booking.status)
           const statusLabel =
             status === 'enquiry'
-              ? 'Enquiry'
+              ? enquiryLabel
               : status === 'booked'
-                ? 'Booked'
-                : booking.status?.trim() || 'Reserved'
+                ? bookedLabel
+                : booking.status?.trim() || reservedLabel
 
           const guestCount = resolveBookingGuestCount(booking)
           const price = resolveBookingPrice(booking)
