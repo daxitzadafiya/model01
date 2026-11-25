@@ -1,7 +1,7 @@
 'use client'
 
 import { notFound, useParams } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import { ProjectDetailView } from '@/components/ProjectDetail/ProjectDetailView'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -23,7 +23,7 @@ import {
 } from '@/utilities/propertyInquiry'
 import { resolveCRMPropertyVideos } from '@/utilities/crmPropertyVideo'
 import { extractReferenceFromSlug } from '@/utilities/propertyUrl'
-import { useSiteLocale } from '@/utilities/useSiteLocale'
+import { useRouteLocale } from '@/utilities/useRouteLocale'
 import { formatPageTitle } from '@/utilities/getAppName'
 
 function ProjectDetailSkeleton() {
@@ -50,10 +50,12 @@ type Props = {
 }
 
 export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
-  const params = useParams<{ slug: string }>()
-  const activeLocale = useSiteLocale()
+  const params = useParams<{ slug: string; locale?: string }>()
+  // URL locale only — avoids double fetch from optimistic language-switch context update.
+  const activeLocale = useRouteLocale()
   const [loading, setLoading] = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
+  const loadSeqRef = useRef(0)
   const [project, setProject] = useState<ReturnType<typeof normalizeCRMProject> | null>(null)
   const [amenities, setAmenities] = useState<ReturnType<typeof normalizeCRMAmenities>>([])
   const [features, setFeatures] = useState<ReturnType<typeof normalizeCRMPropertyFeatures> | null>(
@@ -84,6 +86,7 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
     }
 
     const controller = new AbortController()
+    const loadSeq = ++loadSeqRef.current
 
     const load = async () => {
       setLoading(true)
@@ -97,10 +100,10 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
           similarCommercials: 'exclude_similar',
           init: { signal: controller.signal },
         })
-        if (controller.signal.aborted) return
+        if (controller.signal.aborted || loadSeq !== loadSeqRef.current) return
 
         if (!raw) {
-          setNotFoundState(true)
+          if (loadSeq === loadSeqRef.current) setNotFoundState(true)
           return
         }
 
@@ -108,12 +111,14 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
         const relatedProperties = await fetchCRMProjectRelatedProperties(reference, {
           signal: controller.signal,
         })
-        if (controller.signal.aborted) return
+        if (controller.signal.aborted || loadSeq !== loadSeqRef.current) return
 
         const normalized = normalizeCRMProject(raw, activeLocale, {
           attachmentImageSize: PROPERTY_DETAIL_IMAGE_SIZE,
           relatedProperties,
         })
+
+        if (controller.signal.aborted || loadSeq !== loadSeqRef.current) return
 
         setProject(normalized)
         setInquiry({
@@ -147,22 +152,31 @@ export const ProjectDetailPageClient: React.FC<Props> = ({ contactForm }) => {
               locale: activeLocale,
               signal: controller.signal,
             })
-            if (!controller.signal.aborted) setRelatedProjects(similar)
+            if (!controller.signal.aborted && loadSeq === loadSeqRef.current) {
+              setRelatedProjects(similar)
+            }
           } catch (similarError) {
             if ((similarError as Error).name !== 'AbortError') {
               console.error('Failed to load similar projects', similarError)
-              if (!controller.signal.aborted) setRelatedProjects([])
+              if (!controller.signal.aborted && loadSeq === loadSeqRef.current) {
+                setRelatedProjects([])
+              }
             }
           } finally {
-            if (!controller.signal.aborted) setSimilarProjectsLoading(false)
+            if (!controller.signal.aborted && loadSeq === loadSeqRef.current) {
+              setSimilarProjectsLoading(false)
+            }
           }
         })()
       } catch (error) {
         if ((error as Error).name === 'AbortError') return
+        if (loadSeq !== loadSeqRef.current) return
         console.error('Failed to load project detail', error)
         setNotFoundState(true)
       } finally {
-        if (!controller.signal.aborted) setLoading(false)
+        if (!controller.signal.aborted && loadSeq === loadSeqRef.current) {
+          setLoading(false)
+        }
       }
     }
 

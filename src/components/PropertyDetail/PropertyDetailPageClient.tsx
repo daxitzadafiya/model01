@@ -44,7 +44,7 @@ import { resolveCRMPropertyVideos } from '@/utilities/crmPropertyVideo'
 import { resolveCRMPropertyDocuments } from '@/utilities/crmPropertyDocuments'
 import { buildPropertyBrochurePdfUrl } from '@/utilities/propertyBrochure'
 import { extractReferenceFromSlug } from '@/utilities/propertyUrl'
-import { useSiteLocale } from '@/utilities/useSiteLocale'
+import { useRouteLocale } from '@/utilities/useRouteLocale'
 import { formatPageTitle } from '@/utilities/getAppName'
 
 const pickNumber = (value: unknown): number | undefined => {
@@ -98,9 +98,10 @@ export const PropertyDetailPageClient: React.FC<Props> = ({
   contactForm,
   entityType = 'property',
 }) => {
-  const params = useParams<{ slug: string }>()
+  const params = useParams<{ slug: string; locale?: string }>()
   const searchParams = useSearchParams()
-  const activeLocale = useSiteLocale()
+  // URL locale only — avoids double fetch from optimistic language-switch context update.
+  const activeLocale = useRouteLocale()
   const isProject = entityType === 'project'
   const [loading, setLoading] = useState(true)
   const [notFoundState, setNotFoundState] = useState(false)
