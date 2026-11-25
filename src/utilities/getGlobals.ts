@@ -20,6 +20,7 @@ async function getGlobal<T extends Global>(
     slug,
     depth,
     locale,
+    overrideAccess: true,
   })
 
   // Soft-trashed globals are hidden from the public site; keep a typed shell.
@@ -34,7 +35,20 @@ async function getGlobal<T extends Global>(
 }
 
 /**
- * Returns a unstable_cache function mapped with the cache tag for the slug
+ * Live (uncached) global read — always hits the database.
+ * Use for Settings globals where admin updates must apply immediately.
+ */
+export async function getLiveGlobal<T extends Global>(
+  slug: T,
+  depth = 0,
+  locale?: Locale,
+): Promise<DataFromGlobalSlug<T>> {
+  return getGlobal(slug, depth, locale)
+}
+
+/**
+ * Returns a unstable_cache function mapped with the cache tag for the slug.
+ * Prefer getLiveGlobal for Settings (email, CRM, DeepL, integrations, weather).
  */
 export const getCachedGlobal = <T extends Global>(slug: T, depth = 0, locale?: Locale) => {
   const localeKey = locale ?? 'default'

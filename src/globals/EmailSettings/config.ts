@@ -318,8 +318,10 @@ export const EmailSettings: GlobalConfig = {
     afterChange: [
       autoTranslateEmailSettingsContent,
       async () => {
+        // Drop in-memory SMTP transport so the next send uses the new host/user/pass.
         invalidateEmailTransportCache()
         await revalidateCacheTag('global_emailSettings')
+        await revalidateCacheTag('global_emailSettings_default')
       },
     ],
   },

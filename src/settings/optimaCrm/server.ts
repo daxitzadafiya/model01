@@ -7,12 +7,12 @@ import {
   type ResolvedOptimaCrmSettings,
   type SimilarCommercialsMode,
 } from '@/settings/optimaCrm/shared'
-import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getLiveGlobal } from '@/utilities/getGlobals'
 
+/** Always read Optima CRM settings live from the database (never Next.js cache). */
 export async function getOptimaCrmSettings(): Promise<ResolvedOptimaCrmSettings> {
   try {
-    const getGlobal = getCachedGlobal('optimaCrmSettings', 0)
-    const doc = await getGlobal()
+    const doc = await getLiveGlobal('optimaCrmSettings', 0)
     const resolved = resolveOptimaCrmSettingsFromGlobal(doc)
     // Seed sync runtime config so normalize helpers see admin REF field choices on the server.
     seedOptimaCrmSettings(resolved)

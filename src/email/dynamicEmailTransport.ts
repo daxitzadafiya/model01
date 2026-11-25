@@ -22,6 +22,7 @@ export function invalidateEmailTransportCache(): void {
 function buildTransportSignature(settings: ResolvedEmailSettings): string {
   const smtp = settings.smtp
   const sender = settings.sender
+  const notifications = settings.notifications
 
   return JSON.stringify({
     enabled: settings.enabled,
@@ -32,6 +33,9 @@ function buildTransportSignature(settings: ResolvedEmailSettings): string {
     pass: smtp?.password,
     fromAddress: sender?.fromAddress,
     fromName: sender?.fromName,
+    // Include recipients so any Email settings save that changes delivery
+    // also forces a transport rebuild after cache invalidation.
+    recipientAddress: notifications?.recipientAddress,
   })
 }
 

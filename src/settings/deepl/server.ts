@@ -5,7 +5,7 @@ import {
   resolveDeepLSettingsFromGlobal,
   type ResolvedDeepLSettings,
 } from '@/settings/deepl/shared'
-import { getCachedGlobal } from '@/utilities/getGlobals'
+import { getLiveGlobal } from '@/utilities/getGlobals'
 
 export async function getDeepLSettingsFromPayload(
   payload: Payload,
@@ -22,10 +22,10 @@ export async function getDeepLSettingsFromPayload(
   }
 }
 
+/** Always read DeepL settings live from the database (never Next.js cache). */
 export async function getDeepLSettings(): Promise<ResolvedDeepLSettings> {
   try {
-    const getGlobal = getCachedGlobal('deeplSettings', 0)
-    const doc = await getGlobal()
+    const doc = await getLiveGlobal('deeplSettings', 0)
     return resolveDeepLSettingsFromGlobal(doc)
   } catch {
     return EMPTY_DEEPL_SETTINGS
