@@ -29,6 +29,7 @@ import {
   usePriceRangeOptions,
 } from '@/components/PropertyList/useFilterOptionLabels'
 import {
+  buildPropertyListUrl,
   clearPendingPropertyListFilters,
   normalizePropertyListFilters,
   savePendingPropertyListFilters,
@@ -330,11 +331,15 @@ const HeroBlockContent: React.FC<Props> = (props) => {
     })
     // Only hand filters to the listing page when something is actually set.
     // Empty defaults should use the page's server-rendered listing.
+    // URL params persist filters across detail → back; sessionStorage covers
+    // the Strict Mode remount race before the listing hydrates from the URL.
     if (hasAppliedPropertyFilters(nextFilters)) {
       savePendingPropertyListFilters(nextFilters)
-    } else {
-      clearPendingPropertyListFilters()
+      setMobileSearchOpen(false)
+      router.push(buildPropertyListUrl(searchResultsPath, nextFilters))
+      return
     }
+    clearPendingPropertyListFilters()
     setMobileSearchOpen(false)
     router.push(searchResultsPath)
   }

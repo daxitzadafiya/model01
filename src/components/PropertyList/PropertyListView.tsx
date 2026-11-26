@@ -52,9 +52,10 @@ import { useSortOptions } from './useFilterOptionLabels'
 import { PropertyListFilters as FiltersBar } from './PropertyListFilters'
 import { PropertyListPagination } from './PropertyListPagination'
 import {
+  buildPropertyListHrefWithFilters,
   clearPendingPropertyListFilters,
   normalizePropertyListFilters,
-  stripPropertyFilterSearchParams,
+  parsePropertyFiltersFromSearchParams,
   takePendingPropertyListFilters,
   appendListingContextToDetailHref,
 } from './propertyFilterUrl'
@@ -65,7 +66,7 @@ import {
 } from '@/utilities/propertyDetailListingContext'
 import { resolveHolidayGuestsFilterCount } from '@/utilities/crmHoliday'
 import {
-  buildPropertyListListingHref,
+  buildPropertyListListingQuery,
   parseOrderbyEntriesFromSearchParams,
   parsePropertyListPage,
   parsePropertyListSort,
@@ -241,7 +242,15 @@ const PropertyListViewInner: React.FC<Props> = ({
 
   const getListingHref = useCallback(
     (updates: { page?: number; sort?: string | null; fav?: FavoritesListTab | null }) => {
-      const href = buildPropertyListListingHref(pathname, updates, searchParams, sortOptionsForUrl)
+      // Re-embed applied filters so page/sort navigation cannot drop them if
+      // useSearchParams has not caught up with the latest filter replace yet.
+      const listingQuery = buildPropertyListListingQuery(updates, searchParams, sortOptionsForUrl)
+      const href = buildPropertyListHrefWithFilters(
+        pathname,
+        appliedFilters,
+        listingQuery.startsWith('?') ? listingQuery.slice(1) : listingQuery,
+        updates.page ?? page,
+      )
       if (!isFavoritesList || updates.fav === undefined) return href
 
       const [path, query = ''] = href.split('?')
@@ -254,7 +263,14 @@ const PropertyListViewInner: React.FC<Props> = ({
       const qs = params.toString()
       return qs ? `${path}?${qs}` : path
     },
-    [isFavoritesList, pathname, searchParams, sortOptionsForUrl],
+    [
+      appliedFilters,
+      isFavoritesList,
+      page,
+      pathname,
+      searchParams,
+      sortOptionsForUrl,
+    ],
   )
 
   const navigateServerListing = useCallback(
@@ -430,28 +446,56 @@ const PropertyListViewInner: React.FC<Props> = ({
     router.replace(stripOrderbyFromListingHref(pathname, searchParams), { scroll: false })
   }, [pathname, router, searchParams, sortOptionsForUrl])
 
-  /** Hero search → listing: sessionStorage filters (client fetch only). */
+  /**
+   * Hydrate filters from the listing URL (preferred) or hero sessionStorage.
+   * Filters stay in the query string so browser back from a detail page restores them.
+   */
   useEffect(() => {
+    const fromUrl = normalizePropertyListFilters(
+      parsePropertyFiltersFromSearchParams(new URLSearchParams(window.location.search)),
+    )
+
+    // URL wins — also drop any leftover hero pending so it cannot leak onto
+    // another listing route after client-side navigation.
+    if (hasAppliedPropertyFilters(fromUrl)) {
+      clearPendingPropertyListFilters()
+      setFilters(fromUrl)
+      setAppliedFilters(fromUrl)
+      setLoading(true)
+      setFiltersHydrated(true)
+      return
+    }
+
     const pending = takePendingPropertyListFilters()
     // Default/empty hero searches must stay on the server-rendered listing.
     // Treating them as "pending" disables server mode without triggering a
     // client fetch (filtersAreApplied is false), which yields 0 results.
     if (pending && hasAppliedPropertyFilters(pending)) {
+      const normalized = normalizePropertyListFilters(pending)
       setPendingFiltersApplied(true)
-      setFilters(pending)
-      setAppliedFilters(pending)
+      setFilters(normalized)
+      setAppliedFilters(normalized)
       setPage(1)
       // Avoid showing the server-prefetched default list while we fetch
       // using the Hero-selected pending filters.
       setRawProperties([])
       setTotal(0)
       setLoading(true)
-    } else if (pending) {
-      clearPendingPropertyListFilters()
+      // Persist into the URL so list → detail → back keeps the hero filters.
+      router.replace(
+        buildPropertyListHrefWithFilters(pathname, normalized, window.location.search, 1),
+        { scroll: false },
+      )
+    } else {
+      if (pending) clearPendingPropertyListFilters()
+      // Path changed to a listing with no filters — don't keep prior route state.
+      setPendingFiltersApplied(false)
+      setFilters(EMPTY_PROPERTY_FILTERS)
+      setAppliedFilters(EMPTY_PROPERTY_FILTERS)
     }
-    stripPropertyFilterSearchParams()
+
     setFiltersHydrated(true)
-  }, [])
+  }, [pathname, router])
 
   /**
    * Pre-select the country in the filter UI: the CMS default when it is enabled for this
@@ -667,7 +711,6 @@ const PropertyListViewInner: React.FC<Props> = ({
       ...filters,
       ...nextFilters,
     })
-    const nextFiltersApplied = hasAppliedPropertyFilters(normalized)
     // Drop hero-pending mode so Clear can return to the default server listing.
     // Leaving this true after empty filters skips the default fetch and keeps stale results.
     setPendingFiltersApplied(false)
@@ -676,12 +719,10 @@ const PropertyListViewInner: React.FC<Props> = ({
     setPage(1)
     setLoading(true)
 
-    const willBeServerManaged =
-      serverManaged && !isFavoritesList && !nextFiltersApplied && sort === defaultListSort
-
-    if (willBeServerManaged || isServerManaged) {
-      router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
-    }
+    // Keep applied filters in the URL so detail → back restores the selection.
+    router.replace(buildPropertyListHrefWithFilters(pathname, normalized, searchParams, 1), {
+      scroll: false,
+    })
   }
 
   const handleSortChange = (nextSort: string) => {
@@ -707,18 +748,18 @@ const PropertyListViewInner: React.FC<Props> = ({
   }
 
   const handleMapDrawApply = (references: string[]) => {
-    const nextFilters: PropertyListFilters = {
+    const nextFilters = normalizePropertyListFilters({
       ...appliedFilters,
       mapReferences: references,
       reference: '',
-    }
+    })
     setFilters(nextFilters)
     setAppliedFilters(nextFilters)
     setPage(1)
     setLoading(true)
-    if (isServerManaged) {
-      router.replace(getListingHref({ page: 1, sort: null }), { scroll: false })
-    }
+    router.replace(buildPropertyListHrefWithFilters(pathname, nextFilters, searchParams, 1), {
+      scroll: false,
+    })
   }
 
   const resultsText = useMemo(() => {

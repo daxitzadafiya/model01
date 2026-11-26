@@ -38,12 +38,46 @@ export const normalizePropertyListFilters = (
   mapReferences: Array.isArray(filters.mapReferences)
     ? filters.mapReferences.filter(Boolean)
     : [],
+  delivery: filters.delivery && filters.delivery !== 'any' ? filters.delivery : 'any',
+  distanceToSea:
+    filters.distanceToSea && filters.distanceToSea !== 'any' ? filters.distanceToSea : 'any',
   periodFrom: filters.periodFrom?.trim() ?? '',
   periodTo: filters.periodTo?.trim() ?? '',
   guests: filters.guests && filters.guests !== 'any' ? filters.guests : 'any',
   guestsCustom: filters.guestsCustom?.trim() ?? '',
   totalBudget: filters.totalBudget && filters.totalBudget !== 'any' ? filters.totalBudget : 'any',
 })
+
+/** Query keys written by serializePropertyFiltersToSearchParams (plus legacy aliases). */
+export const PROPERTY_FILTER_SEARCH_PARAM_KEYS = [
+  'reference',
+  'propertyType',
+  'country',
+  'coast',
+  'city',
+  'location',
+  'minPrice',
+  'maxPrice',
+  'bedrooms',
+  'bedroomsCustom',
+  'bathrooms',
+  'bathroomsCustom',
+  'features',
+  'mapReferences',
+  'delivery',
+  'distanceToSea',
+  'periodFrom',
+  'periodTo',
+  'guests',
+  'guestsCustom',
+  'totalBudget',
+] as const
+
+export const clearPropertyFilterSearchParams = (params: URLSearchParams): void => {
+  for (const key of PROPERTY_FILTER_SEARCH_PARAM_KEYS) {
+    params.delete(key)
+  }
+}
 
 export const savePendingPropertyListFilters = (filters: PropertyListFilters): void => {
   if (typeof window === 'undefined') return
@@ -93,10 +127,11 @@ export const clearPendingPropertyListFilters = (): void => {
   sessionStorage.removeItem(PENDING_FILTERS_STORAGE_KEY)
 }
 
-export const stripPropertyFilterSearchParams = (): void => {
-  if (typeof window === 'undefined' || !window.location.search) return
-  window.history.replaceState(null, '', window.location.pathname)
-}
+/**
+ * @deprecated Filters stay in the URL so browser back restores them.
+ * No-op kept for any lingering callers.
+ */
+export const stripPropertyFilterSearchParams = (): void => {}
 
 const splitCsv = (value: string | null): string[] =>
   value
@@ -128,6 +163,14 @@ export const serializePropertyFiltersToSearchParams = (
   if (filters.bathrooms && filters.bathrooms !== 'any') params.set('bathrooms', filters.bathrooms)
   if (filters.bathroomsCustom?.trim()) params.set('bathroomsCustom', filters.bathroomsCustom.trim())
   if (filters.features?.length) params.set('features', filters.features.join(','))
+
+  if (filters.mapReferences?.length) {
+    params.set('mapReferences', filters.mapReferences.join(','))
+  }
+  if (filters.delivery && filters.delivery !== 'any') params.set('delivery', filters.delivery)
+  if (filters.distanceToSea && filters.distanceToSea !== 'any') {
+    params.set('distanceToSea', filters.distanceToSea)
+  }
 
   if (filters.periodFrom?.trim()) params.set('periodFrom', filters.periodFrom.trim())
   if (filters.periodTo?.trim()) params.set('periodTo', filters.periodTo.trim())
@@ -186,6 +229,15 @@ export const parsePropertyFiltersFromSearchParams = (
   const features = splitCsv(searchParams.get('features'))
   if (features.length) filters.features = features
 
+  const mapReferences = splitCsv(searchParams.get('mapReferences'))
+  if (mapReferences.length) filters.mapReferences = mapReferences
+
+  const delivery = searchParams.get('delivery')
+  if (delivery) filters.delivery = delivery
+
+  const distanceToSea = searchParams.get('distanceToSea')
+  if (distanceToSea) filters.distanceToSea = distanceToSea
+
   const periodFrom = searchParams.get('periodFrom')
   if (periodFrom) filters.periodFrom = periodFrom
 
@@ -206,6 +258,33 @@ export const parsePropertyFiltersFromSearchParams = (
 
 export const buildPropertyListUrl = (path: string, filters: PropertyListFilters): string => {
   const params = serializePropertyFiltersToSearchParams(filters)
+  const qs = params.toString()
+  return qs ? `${path}?${qs}` : path
+}
+
+/**
+ * Merge applied filters into the listing URL while preserving non-filter params
+ * (e.g. page, fav). Resets `page` when provided.
+ */
+export const buildPropertyListHrefWithFilters = (
+  path: string,
+  filters: PropertyListFilters,
+  current?: URLSearchParams | string | null,
+  page = 1,
+): string => {
+  const params = new URLSearchParams(
+    typeof current === 'string' ? current : (current?.toString() ?? ''),
+  )
+  clearPropertyFilterSearchParams(params)
+
+  const filterParams = serializePropertyFiltersToSearchParams(filters)
+  filterParams.forEach((value, key) => {
+    params.set(key, value)
+  })
+
+  if (page <= 1) params.delete('page')
+  else params.set('page', String(page))
+
   const qs = params.toString()
   return qs ? `${path}?${qs}` : path
 }
