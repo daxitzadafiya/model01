@@ -3,8 +3,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { unstable_cache } from 'next/cache'
 
-import { localeCodes } from '@/i18n/config'
-import { getLanguageMenuItems } from '@/i18n/getLanguageMenu'
+import { getSiteContentLocales } from '@/i18n/getSiteContentLocales'
 
 const getPagesSitemap = unstable_cache(
   async () => {
@@ -14,7 +13,7 @@ const getPagesSitemap = unstable_cache(
       process.env.VERCEL_PROJECT_PRODUCTION_URL ||
       'https://example.com'
 
-    const [results, languageMenu] = await Promise.all([
+    const [results, locales] = await Promise.all([
       payload.find({
         collection: 'pages',
         overrideAccess: false,
@@ -32,15 +31,10 @@ const getPagesSitemap = unstable_cache(
           updatedAt: true,
         },
       }),
-      getLanguageMenuItems(),
+      getSiteContentLocales(payload),
     ])
 
-    const locales =
-      languageMenu.length > 0 ? languageMenu.map((item) => item.locale) : [...localeCodes]
-
     const dateFallback = new Date().toISOString()
-
-    const staticPaths = ['/search', '/posts']
 
     const pagePaths = (results.docs || [])
       .filter((page) => Boolean(page?.slug))
@@ -50,17 +44,13 @@ const getPagesSitemap = unstable_cache(
       }))
 
     const sitemap = locales.flatMap((locale) => {
-      const staticEntries = staticPaths.map((path) => ({
-        loc: `${SITE_URL}/${locale}${path}`,
-        lastmod: dateFallback,
-      }))
 
       const pageEntries = pagePaths.map(({ path, lastmod }) => ({
         loc: path ? `${SITE_URL}/${locale}${path}` : `${SITE_URL}/${locale}`,
         lastmod,
       }))
 
-      return [...staticEntries, ...pageEntries]
+      return pageEntries
     })
 
     return sitemap

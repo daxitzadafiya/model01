@@ -15,6 +15,9 @@ export const revalidateLocalization: GlobalAfterChangeHook = async ({
     for (const locale of localeCodes) {
       await revalidateCacheTag(`global_localization_${locale}`)
     }
+    // Sitemap locale lists come from Localization → Site languages.
+    await revalidateCacheTag('pages-sitemap')
+    await revalidateCacheTag('posts-sitemap')
   }
 
   try {
